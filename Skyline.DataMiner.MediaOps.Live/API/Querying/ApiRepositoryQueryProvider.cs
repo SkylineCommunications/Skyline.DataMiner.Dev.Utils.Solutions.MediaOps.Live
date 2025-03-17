@@ -1,0 +1,46 @@
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Querying
+{
+	using System;
+	using System.Linq;
+	using System.Linq.Expressions;
+
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
+
+	public class ApiRepositoryQueryProvider<T> : IQueryProvider where T : ApiObject<T>
+	{
+		public ApiRepositoryQueryProvider(Repository<T> repository)
+		{
+			Repository = repository ?? throw new ArgumentNullException(nameof(repository));
+		}
+
+		public Repository<T> Repository { get; }
+
+		public IQueryable CreateQuery(Expression expression)
+		{
+			var elementType = expression.Type.GetGenericArguments()[0];
+			var queryType = typeof(ApiRepositoryQuery<>).MakeGenericType(elementType);
+			return (IQueryable)Activator.CreateInstance(queryType, this, expression);
+		}
+
+		public IQueryable<TElement> CreateQuery<TElement>(Expression expression)
+		{
+			if (typeof(TElement) != typeof(T))
+			{
+				throw new InvalidOperationException($"Invalid element type: expected {typeof(T)}, but got {typeof(TElement)}.");
+			}
+
+			return (IQueryable<TElement>)new ApiRepositoryQuery<T>(this, expression);
+		}
+
+		public object Execute(Expression expression)
+		{
+			return Execute<T>(expression);
+		}
+
+		public TResult Execute<TResult>(Expression expression)
+		{
+			return ApiRepositoryQueryExecutor<T, TResult>.Execute(this, expression);
+		}
+	}
+}
