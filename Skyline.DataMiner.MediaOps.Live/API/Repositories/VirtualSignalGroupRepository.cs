@@ -22,7 +22,7 @@
 
 		protected internal override DomDefinitionId DomDefinition => VirtualSignalGroup.DomDefinition;
 
-		public IEnumerable<VirtualSignalGroup> GetVirtualSignalGroupsContainingEndpoints(IEnumerable<Guid> endpointIds)
+		public IEnumerable<VirtualSignalGroup> GetByEndpointIds(IEnumerable<Guid> endpointIds)
 		{
 			if (endpointIds == null)
 			{
@@ -37,14 +37,14 @@
 			return vsgs;
 		}
 
-		public IEnumerable<VirtualSignalGroup> GetVirtualSignalGroupsContainingEndpoints(IEnumerable<Endpoint> endpoints)
+		public IEnumerable<VirtualSignalGroup> GetByEndpoints(IEnumerable<Endpoint> endpoints)
 		{
 			if (endpoints == null)
 			{
 				throw new ArgumentNullException(nameof(endpoints));
 			}
 
-			return GetVirtualSignalGroupsContainingEndpoints(endpoints.Select(x => x.ID));
+			return GetByEndpointIds(endpoints.Select(x => x.ID));
 		}
 
 		protected override VirtualSignalGroup CreateInstance(DomInstance domInstance)

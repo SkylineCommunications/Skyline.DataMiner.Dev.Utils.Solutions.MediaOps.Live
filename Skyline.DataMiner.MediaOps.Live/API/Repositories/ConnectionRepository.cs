@@ -23,7 +23,7 @@
 
 		protected internal override DomDefinitionId DomDefinition => Connection.DomDefinition;
 
-		public IDictionary<Guid, Connection> GetConnectionsForDestinations(IEnumerable<Guid> destinationEndpointIds)
+		public IDictionary<Guid, Connection> GetByDestinationIds(IEnumerable<Guid> destinationEndpointIds)
 		{
 			if (destinationEndpointIds == null)
 			{
@@ -37,29 +37,29 @@
 				.SafeToDictionary(x => (Guid)x.Destination);
 		}
 
-		public IDictionary<Guid, Connection> GetConnectionsForDestinations(IEnumerable<Endpoint> destinationEndpoints)
+		public IDictionary<Guid, Connection> GetByDestinations(IEnumerable<Endpoint> destinationEndpoints)
 		{
 			if (destinationEndpoints == null)
 			{
 				throw new ArgumentNullException(nameof(destinationEndpoints));
 			}
 
-			return GetConnectionsForDestinations(destinationEndpoints.Select(x => x.ID));
+			return GetByDestinationIds(destinationEndpoints.Select(x => x.ID));
 		}
 
-		public Connection GetConnectionForDestination(Guid destinationEndpointId)
+		public Connection GetByDestinationId(Guid destinationEndpointId)
 		{
-			return GetConnectionsForDestinations(new[] { destinationEndpointId }).Values.SingleOrDefault();
+			return GetByDestinationIds(new[] { destinationEndpointId }).Values.SingleOrDefault();
 		}
 
-		public Connection GetConnectionForDestination(Endpoint destinationEndpoint)
+		public Connection GetByDestination(Endpoint destinationEndpoint)
 		{
 			if (destinationEndpoint == null)
 			{
 				throw new ArgumentNullException(nameof(destinationEndpoint));
 			}
 
-			return GetConnectionForDestination(destinationEndpoint.ID);
+			return GetByDestinationId(destinationEndpoint.ID);
 		}
 
 		protected override Connection CreateInstance(DomInstance domInstance)
