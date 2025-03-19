@@ -1,9 +1,14 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
 {
+	using System;
+	using System.Collections.Generic;
+	using System.Linq;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -16,6 +21,31 @@
 		}
 
 		protected internal override DomDefinitionId DomDefinition => VirtualSignalGroup.DomDefinition;
+
+		public IEnumerable<VirtualSignalGroup> GetVirtualSignalGroupsContainingEndpoints(IEnumerable<Guid> endpointIds)
+		{
+			if (endpointIds == null)
+			{
+				throw new ArgumentNullException(nameof(endpointIds));
+			}
+
+			var vsgs = FilterQueryExecutor.RetrieveFilteredItems(
+				endpointIds,
+				x => VirtualSignalGroupExposers.Endpoint.Equal(x),
+				x => Read(x));
+
+			return vsgs;
+		}
+
+		public IEnumerable<VirtualSignalGroup> GetVirtualSignalGroupsContainingEndpoints(IEnumerable<Endpoint> endpoints)
+		{
+			if (endpoints == null)
+			{
+				throw new ArgumentNullException(nameof(endpoints));
+			}
+
+			return GetVirtualSignalGroupsContainingEndpoints(endpoints.Select(x => x.ID));
+		}
 
 		protected override VirtualSignalGroup CreateInstance(DomInstance domInstance)
 		{

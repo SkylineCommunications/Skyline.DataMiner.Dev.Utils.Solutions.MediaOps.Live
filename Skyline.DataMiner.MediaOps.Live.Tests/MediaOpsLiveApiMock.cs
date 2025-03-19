@@ -78,6 +78,20 @@
 					],
 				};
 				VirtualSignalGroups.CreateOrUpdate([source1, destination1]);
+
+				var connection1 = new Connection
+				{
+					Destination = videoDestination1,
+					ConnectedSource = videoSource1,
+					IsConnected = true,
+				};
+				var connection2 = new Connection
+				{
+					Destination = audioDestination1,
+					ConnectedSource = audioSource1,
+					IsConnected = true,
+				};
+				Connections.CreateOrUpdate([connection1, connection2]);
 			}
 		}
 	}

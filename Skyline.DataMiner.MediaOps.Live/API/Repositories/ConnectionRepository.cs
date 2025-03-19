@@ -1,9 +1,15 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
 {
+	using System;
+	using System.Collections.Generic;
+	using System.Linq;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -16,6 +22,45 @@
 		}
 
 		protected internal override DomDefinitionId DomDefinition => Connection.DomDefinition;
+
+		public IDictionary<Guid, Connection> GetConnectionsForDestinations(IEnumerable<Guid> destinationEndpointIds)
+		{
+			if (destinationEndpointIds == null)
+			{
+				throw new ArgumentNullException(nameof(destinationEndpointIds));
+			}
+
+			return FilterQueryExecutor.RetrieveFilteredItems(
+					destinationEndpointIds,
+					x => ConnectionExposers.Destination.UncheckedEqual(x),
+					x => Read(x))
+				.SafeToDictionary(x => (Guid)x.Destination);
+		}
+
+		public IDictionary<Guid, Connection> GetConnectionsForDestinations(IEnumerable<Endpoint> destinationEndpoints)
+		{
+			if (destinationEndpoints == null)
+			{
+				throw new ArgumentNullException(nameof(destinationEndpoints));
+			}
+
+			return GetConnectionsForDestinations(destinationEndpoints.Select(x => x.ID));
+		}
+
+		public Connection GetConnectionForDestination(Guid destinationEndpointId)
+		{
+			return GetConnectionsForDestinations(new[] { destinationEndpointId }).Values.SingleOrDefault();
+		}
+
+		public Connection GetConnectionForDestination(Endpoint destinationEndpoint)
+		{
+			if (destinationEndpoint == null)
+			{
+				throw new ArgumentNullException(nameof(destinationEndpoint));
+			}
+
+			return GetConnectionForDestination(destinationEndpoint.ID);
+		}
 
 		protected override Connection CreateInstance(DomInstance domInstance)
 		{

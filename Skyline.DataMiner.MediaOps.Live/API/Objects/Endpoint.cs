@@ -117,6 +117,10 @@
 				_domInstance.EndpointInfo.TransportType = value;
 			}
 		}
+
+		public bool IsSource => Role == Role.Source;
+
+		public bool IsDestination => Role == Role.Destination;
 	}
 
 	public static class EndpointExposers
