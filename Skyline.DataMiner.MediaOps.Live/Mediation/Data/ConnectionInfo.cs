@@ -2,7 +2,7 @@
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 
 	public class ConnectionInfo
 	{
@@ -10,7 +10,7 @@
 
 		public EndpointInfo DestinationEndpoint { get; set; }
 
-		public static ConnectionInfo Create(EndpointInstance source, EndpointInstance destination)
+		public static ConnectionInfo Create(Endpoint source, Endpoint destination)
 		{
 			if (source == null)
 			{

@@ -2,7 +2,7 @@
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 
 	public class EndpointInfo
 	{
@@ -18,7 +18,7 @@
 
 		public string Identifier { get; set; }
 
-		public static EndpointInfo Create(EndpointInstance instance)
+		public static EndpointInfo Create(Endpoint instance)
 		{
 			if (instance == null)
 			{
@@ -27,10 +27,10 @@
 
 			return new EndpointInfo
 			{
-				ID = instance.ID.Id,
-				Name = instance.EndpointInfo.Name,
-				Element = instance.EndpointInfo.Element,
-				Identifier = instance.EndpointInfo.Identifier,
+				ID = instance.ID,
+				Name = instance.Name,
+				Element = instance.Element,
+				Identifier = instance.Identifier,
 			};
 		}
 	}

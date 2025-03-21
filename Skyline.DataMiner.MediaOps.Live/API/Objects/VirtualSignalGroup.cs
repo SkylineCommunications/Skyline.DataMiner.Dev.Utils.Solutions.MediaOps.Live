@@ -113,6 +113,24 @@
 		public bool IsSource => Role == Role.Source;
 
 		public bool IsDestination => Role == Role.Destination;
+
+		public IEnumerable<ApiObjectReference<Endpoint>> GetEndpoints()
+		{
+			if (Levels == null)
+			{
+				yield break;
+			}
+
+			foreach (var level in Levels)
+			{
+				if (level.Endpoint == null)
+				{
+					continue;
+				}
+
+				yield return level.Endpoint.Value;
+			}
+		}
 	}
 
 	public static class VirtualSignalGroupExposers

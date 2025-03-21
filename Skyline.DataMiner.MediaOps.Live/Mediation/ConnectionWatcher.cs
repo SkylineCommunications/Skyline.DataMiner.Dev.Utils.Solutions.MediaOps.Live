@@ -5,16 +5,19 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.SubscriptionFilters;
 
+	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.Connection;
+
 	public class ConnectionWatcher : IDisposable
 	{
 		private readonly string _subscriptionSetName;
 
-		private readonly ConcurrentDictionary<Guid, ConnectionInstance> _cache = new ConcurrentDictionary<Guid, ConnectionInstance>();
+		private readonly ConcurrentDictionary<Guid, Connection> _cache = new ConcurrentDictionary<Guid, Connection>();
 
 		public ConnectionWatcher()
 		{
@@ -26,11 +29,11 @@
 			Engine.SLNetRaw.AddSubscription(_subscriptionSetName, subscriptionFilter);
 		}
 
-		public event EventHandler<ConnectionInstance> Changed;
+		public event EventHandler<Connection> Changed;
 
-		public event EventHandler<ConnectionInstance> Removed;
+		public event EventHandler<Connection> Removed;
 
-		public bool TryGetConnection(Guid destinationId, out ConnectionInstance connection)
+		public bool TryGetConnection(Guid destinationId, out Connection connection)
 		{
 			if (destinationId == Guid.Empty)
 			{
@@ -41,19 +44,19 @@
 			return _cache.TryGetValue(destinationId, out connection);
 		}
 
-		public bool TryGetConnection(EndpointInstance destination, out ConnectionInstance connection)
+		public bool TryGetConnection(Endpoint destination, out Connection connection)
 		{
 			if (destination == null)
 			{
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var destinationId = destination.ID.Id;
+			var destinationId = destination.ID;
 
 			return TryGetConnection(destinationId, out connection);
 		}
 
-		public bool IsConnected(EndpointInstance source, EndpointInstance destination)
+		public bool IsConnected(Endpoint source, Endpoint destination)
 		{
 			if (source == null)
 			{
@@ -67,7 +70,7 @@
 
 			if (TryGetConnection(destination, out var connection))
 			{
-				return connection != null && connection.ConnectionInfo.ConnectedSource == source.ID.Id;
+				return connection != null && connection.ConnectedSource == source.ID;
 			}
 
 			return false;
@@ -106,11 +109,11 @@
 					continue;
 				}
 
-				var connection = new ConnectionInstance(instance);
+				var connection = new Connection(instance);
 
-				if (connection.ConnectionInfo?.Destination is Guid destinationId)
+				if (connection.Destination != null)
 				{
-					_cache.TryRemove(destinationId, out _);
+					_cache.TryRemove((Guid)connection.Destination, out _);
 				}
 
 				Removed?.Invoke(this, connection);
@@ -123,11 +126,11 @@
 					continue;
 				}
 
-				var connection = new ConnectionInstance(instance);
+				var connection = new Connection(instance);
 
-				if (connection.ConnectionInfo?.Destination is Guid destinationId && destinationId != Guid.Empty)
+				if (connection.Destination != null)
 				{
-					_cache[destinationId] = connection;
+					_cache[(Guid)connection.Destination] = connection;
 				}
 
 				Changed?.Invoke(this, connection);
