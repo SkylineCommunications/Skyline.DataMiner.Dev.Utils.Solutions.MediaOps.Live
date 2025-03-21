@@ -27,10 +27,7 @@
 
 		public MediaOpsLiveApi(SlcConnectivityManagementHelper helper)
 		{
-			if (helper == null)
-			{
-				throw new ArgumentNullException(nameof(helper));
-			}
+			Helper = helper ?? throw new ArgumentNullException(nameof(helper));
 
 			Endpoints = new EndpointRepository(helper);
 			VirtualSignalGroups = new VirtualSignalGroupRepository(helper);
@@ -39,6 +36,8 @@
 			TransportTypes = new TransportTypeRepository(helper);
 			Connections = new ConnectionRepository(helper);
 		}
+
+		internal SlcConnectivityManagementHelper Helper { get; }
 
 		public EndpointRepository Endpoints { get; }
 

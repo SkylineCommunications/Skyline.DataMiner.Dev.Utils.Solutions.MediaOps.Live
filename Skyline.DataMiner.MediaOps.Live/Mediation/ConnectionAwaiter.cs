@@ -4,12 +4,11 @@
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Automation;
-
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 
 	public static class ConnectionAwaiter
 	{
-		public static bool Wait(IEngine engine, EndpointInstance source, EndpointInstance destination, TimeSpan timeout)
+		public static bool Wait(IEngine engine, Endpoint source, Endpoint destination, TimeSpan timeout)
 		{
 			if (engine == null)
 			{
@@ -32,7 +31,7 @@
 			}
 		}
 
-		public static bool Wait(IEngine engine, ConnectionWatcher connectionWatcher, EndpointInstance source, EndpointInstance destination, TimeSpan timeout)
+		public static bool Wait(IEngine engine, ConnectionWatcher connectionWatcher, Endpoint source, Endpoint destination, TimeSpan timeout)
 		{
 			if (engine == null)
 			{
@@ -56,10 +55,10 @@
 
 			var tsc = new TaskCompletionSource<bool>();
 
-			EventHandler<ConnectionInstance> connectionEventHandler = (s, e) =>
+			EventHandler<Connection> connectionEventHandler = (s, e) =>
 			{
-				if (e.ConnectionInfo.ConnectedSource == source.ID.Id &&
-					e.ConnectionInfo.Destination == destination.ID.Id)
+				if (e.ConnectedSource == source &&
+					e.Destination == destination)
 				{
 					tsc.TrySetResult(true);
 				}
