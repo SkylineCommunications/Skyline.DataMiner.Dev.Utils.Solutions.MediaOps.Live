@@ -9,3 +9,6 @@ trim_trailing_whitespace = true
 
 [*.cs]
 dotnet_sort_system_directives_first = true
+
+# SA1202: Elements should be ordered by access
+dotnet_diagnostic.SA1202.severity = silent
