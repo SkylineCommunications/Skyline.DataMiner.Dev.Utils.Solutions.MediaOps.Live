@@ -9,7 +9,6 @@
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
@@ -18,16 +17,18 @@
 
 	public class TakeHelper
 	{
-		public void Take(IEngine engine, MediaOpsLiveApi api, ICollection<ConnectionRequest> connectionRequests, PerformanceCollector performanceCollector)
+		private readonly MediaOpsLiveApi _api;
+
+		public TakeHelper(MediaOpsLiveApi api)
+		{
+			_api = api ?? throw new ArgumentNullException(nameof(api));
+		}
+
+		public void Take(IEngine engine, ICollection<ConnectionRequest> connectionRequests, PerformanceCollector performanceCollector)
 		{
 			if (engine == null)
 			{
 				throw new ArgumentNullException(nameof(engine));
-			}
-
-			if (api == null)
-			{
-				throw new ArgumentNullException(nameof(api));
 			}
 
 			if (connectionRequests == null)
@@ -54,8 +55,8 @@
 							Task.Run(
 								() =>
 								{
-									GetOrCreateDomConnections(api.Helper, connectionContexts, performanceCollector);
-									NotifyPendingConnections(api.Helper, connectionContexts, performanceCollector);
+									GetOrCreateDomConnections(connectionContexts, performanceCollector);
+									NotifyPendingConnections(connectionContexts, performanceCollector);
 								}),
 							Task.Run(
 								() =>
@@ -66,22 +67,17 @@
 					}
 					finally
 					{
-						ClearPendingSourceOnFailedConnections(api.Helper, connectionContexts, performanceCollector);
+						ClearPendingSourceOnFailedConnections(connectionContexts, performanceCollector);
 					}
 				}
 			}
 		}
 
-		public void Take(IEngine engine, MediaOpsLiveApi api, ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceCollector performanceCollector)
+		public void Take(IEngine engine, ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceCollector performanceCollector)
 		{
 			if (engine == null)
 			{
 				throw new ArgumentNullException(nameof(engine));
-			}
-
-			if (api == null)
-			{
-				throw new ArgumentNullException(nameof(api));
 			}
 
 			if (vsgConnectionRequests == null)
@@ -98,7 +94,7 @@
 			var endpointIds = new HashSet<Guid>();
 			endpointIds.UnionWith(vsgConnectionRequests.SelectMany(x => x.Source.GetEndpoints()).Select(x => x.ID));
 			endpointIds.UnionWith(vsgConnectionRequests.SelectMany(x => x.Destination.GetEndpoints()).Select(x => x.ID));
-			var endpoints = api.Endpoints.Read(endpointIds);
+			var endpoints = _api.Endpoints.Read(endpointIds);
 
 			// create connection requests between endpoints
 			var connectionRequests = new List<ConnectionRequest>();
@@ -131,14 +127,14 @@
 				}
 			}
 
-			Take(engine, api, connectionRequests, performanceCollector);
+			Take(engine, connectionRequests, performanceCollector);
 		}
 
-		private static void GetOrCreateDomConnections(SlcConnectivityManagementHelper helper, ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void GetOrCreateDomConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
 		{
 			using (new PerformanceTracker(performanceCollector))
 			{
-				var connections = helper.GetConnectionsForDestinations(connectionContexts.Select(x => x.Destination.ID));
+				var connections = _api.Helper.GetConnectionsForDestinations(connectionContexts.Select(x => x.Destination.ID));
 
 				foreach (var connectionToCreate in connectionContexts)
 				{
@@ -159,7 +155,7 @@
 			}
 		}
 
-		private static void WaitUntilAllConnected(IEngine engine, ConnectionWatcher connectionWatcher, ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void WaitUntilAllConnected(IEngine engine, ConnectionWatcher connectionWatcher, ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
 		{
 			using (new PerformanceTracker(performanceCollector))
 			{
@@ -170,7 +166,7 @@
 			}
 		}
 
-		private static bool IsConnectionEstablished(IEngine engine, ConnectionWatcher connectionWatcher, CreateConnectionContext connectionContexts, PerformanceCollector performanceCollector)
+		private bool IsConnectionEstablished(IEngine engine, ConnectionWatcher connectionWatcher, CreateConnectionContext connectionContexts, PerformanceCollector performanceCollector)
 		{
 			if (connectionContexts.DomConnection?.ConnectionInfo?.ConnectedSource == connectionContexts.Source?.ID)
 			{
@@ -187,7 +183,7 @@
 			}
 		}
 
-		private static string FindConnectionHandlerScript(IEngine engine, string elementKey)
+		private string FindConnectionHandlerScript(IEngine engine, string elementKey)
 		{
 			var mediationElement = engine.FindElement("MediaOps Mediation PoC");
 
@@ -201,7 +197,7 @@
 			return script;
 		}
 
-		private static void ExecuteConnectionHandlerScripts(IEngine engine, ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void ExecuteConnectionHandlerScripts(IEngine engine, ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
 		{
 			using (new PerformanceTracker(performanceCollector))
 			{
@@ -214,7 +210,7 @@
 			}
 		}
 
-		private static void ExecuteConnectionHandlerScript(IEngine engine, string elementKey, IEnumerable<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void ExecuteConnectionHandlerScript(IEngine engine, string elementKey, IEnumerable<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
 		{
 			using (var tracker = new PerformanceTracker(performanceCollector))
 			{
@@ -244,7 +240,7 @@
 			}
 		}
 
-		private static void NotifyPendingConnections(SlcConnectivityManagementHelper helper, ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void NotifyPendingConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
 		{
 			using (new PerformanceTracker(performanceCollector))
 			using (new ConnectionUpdateLock())
@@ -266,12 +262,12 @@
 
 				if (updatedConnections.Count > 0)
 				{
-					helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
 				}
 			}
 		}
 
-		private static void ClearPendingSourceOnFailedConnections(SlcConnectivityManagementHelper helper, ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void ClearPendingSourceOnFailedConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
 		{
 			var failedConnections = connectionContexts.Where(x => !x.HasSucceeded).ToList();
 
@@ -284,7 +280,7 @@
 			using (new ConnectionUpdateLock())
 			{
 				// refresh DOM connections
-				RefreshDomConnections(helper, failedConnections, performanceCollector);
+				RefreshDomConnections(failedConnections, performanceCollector);
 
 				// update connections
 				var updatedConnections = new List<ConnectionInstance>();
@@ -309,16 +305,16 @@
 
 				if (updatedConnections.Count > 0)
 				{
-					helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
 				}
 			}
 		}
 
-		private static void RefreshDomConnections(SlcConnectivityManagementHelper helper, ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void RefreshDomConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
 		{
 			using (new PerformanceTracker(performanceCollector))
 			{
-				var newConnections = helper.GetConnections(connectionContexts.Select(x => x.DomConnection.ID.Id));
+				var newConnections = _api.Helper.GetConnections(connectionContexts.Select(x => x.DomConnection.ID.Id));
 
 				foreach (var connectionToCreate in connectionContexts)
 				{
