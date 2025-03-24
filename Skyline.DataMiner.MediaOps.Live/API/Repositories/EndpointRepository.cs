@@ -1,9 +1,13 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
 {
+	using System;
+	using System.Collections.Generic;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -16,6 +20,40 @@
 		}
 
 		protected internal override DomDefinitionId DomDefinition => Endpoint.DomDefinition;
+
+		public IEnumerable<Endpoint> GetByElement(string dmaElementId)
+		{
+			if (String.IsNullOrWhiteSpace(dmaElementId))
+			{
+				throw new ArgumentException($"'{nameof(dmaElementId)}' cannot be null or whitespace.", nameof(dmaElementId));
+			}
+
+			var filter = DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(dmaElementId);
+
+			return Read(filter);
+		}
+
+		public IEnumerable<Endpoint> GetByElementAndIdentifiers(string dmaElementId, IEnumerable<string> identifiers)
+		{
+			if (String.IsNullOrWhiteSpace(dmaElementId))
+			{
+				throw new ArgumentException($"'{nameof(dmaElementId)}' cannot be null or whitespace.", nameof(dmaElementId));
+			}
+
+			if (identifiers == null)
+			{
+				throw new ArgumentNullException(nameof(identifiers));
+			}
+
+			FilterElement<DomInstance> CreateFilter(string identifier) =>
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(dmaElementId)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Identifier).Equal(identifier));
+
+			return FilterQueryExecutor.RetrieveFilteredItems(
+					identifiers,
+					x => CreateFilter(x),
+					x => Read(x));
+		}
 
 		protected override Endpoint CreateInstance(DomInstance domInstance)
 		{
