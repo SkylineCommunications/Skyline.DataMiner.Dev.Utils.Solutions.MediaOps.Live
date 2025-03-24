@@ -15,6 +15,8 @@
 
 		public object NewValue { get; set; }
 
+		public bool IsForcePush { get; }
+
 		public IDictionary<string, object[]> UpdatedRows { get; set; }
 
 		public ICollection<string> DeletedRows { get; set; }
