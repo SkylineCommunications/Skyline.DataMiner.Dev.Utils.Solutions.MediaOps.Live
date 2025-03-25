@@ -9,6 +9,7 @@
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
@@ -91,10 +92,7 @@
 			}
 
 			// load all endpoints
-			var endpointIds = new HashSet<Guid>();
-			endpointIds.UnionWith(vsgConnectionRequests.SelectMany(x => x.Source.GetEndpoints()).Select(x => x.ID));
-			endpointIds.UnionWith(vsgConnectionRequests.SelectMany(x => x.Destination.GetEndpoints()).Select(x => x.ID));
-			var endpoints = _api.Endpoints.Read(endpointIds);
+			var endpoints = LoadEndpoints(vsgConnectionRequests, performanceCollector);
 
 			// create connection requests between endpoints
 			var connectionRequests = new List<ConnectionRequest>();
@@ -128,6 +126,19 @@
 			}
 
 			Take(engine, connectionRequests, performanceCollector);
+		}
+
+		private IDictionary<Guid, Endpoint> LoadEndpoints(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceCollector performanceCollector)
+		{
+			using (new PerformanceTracker(performanceCollector))
+			{
+				var endpointIds = vsgConnectionRequests.SelectMany(x => x.Source.GetEndpoints())
+						.Concat(vsgConnectionRequests.SelectMany(x => x.Destination.GetEndpoints()))
+						.Select(x => x.ID)
+						.Distinct();
+
+				return _api.Endpoints.Read(endpointIds);
+			}
 		}
 
 		private void GetOrCreateDomConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
