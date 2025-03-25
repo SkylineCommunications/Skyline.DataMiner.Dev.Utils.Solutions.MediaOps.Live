@@ -138,7 +138,7 @@
 
 		private IDictionary<Guid, Endpoint> LoadEndpoints(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				var endpointIds = vsgConnectionRequests.SelectMany(x => x.Source.GetEndpoints())
 						.Concat(vsgConnectionRequests.SelectMany(x => x.Destination.GetEndpoints()))
@@ -151,7 +151,7 @@
 
 		private void GetOrCreateDomConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				var connections = _api.Helper.GetConnectionsForDestinations(connectionContexts.Select(x => x.Destination.ID));
 
@@ -176,7 +176,7 @@
 
 		private void WaitUntilAllConnected(IEngine engine, ConnectionWatcher connectionWatcher, ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				Parallel.ForEach(connectionContexts, ctc =>
 				{
@@ -193,10 +193,10 @@
 				return true;
 			}
 
-			using (var tracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				tracker.AddMetadata("Source", connectionContexts.Source?.Name);
-				tracker.AddMetadata("Destination", connectionContexts.Destination?.Name);
+				performanceTracker.AddMetadata("Source", connectionContexts.Source?.Name);
+				performanceTracker.AddMetadata("Destination", connectionContexts.Destination?.Name);
 
 				return ConnectionAwaiter.Wait(engine, connectionWatcher, connectionContexts.Source, connectionContexts.Destination, TimeSpan.FromSeconds(5));
 			}
@@ -218,7 +218,7 @@
 
 		private void ExecuteConnectionHandlerScripts(IEngine engine, ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				foreach (var group in connectionContexts.GroupBy(x => x.Destination.Element))
 				{
@@ -231,7 +231,7 @@
 
 		private void ExecuteConnectionHandlerScript(IEngine engine, string elementKey, IEnumerable<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (var tracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				var createConnectionsRequest = new CreateConnectionsRequest
 				{
@@ -241,7 +241,7 @@
 				var script = FindConnectionHandlerScript(engine, elementKey);
 				engine.GenerateInformation($"Connection handler script: {script}");
 
-				tracker.AddMetadata("Script", script);
+				performanceTracker.AddMetadata("Script", script);
 
 				var subScript = engine.PrepareSubScript(script);
 				subScript.Synchronous = true;
@@ -261,7 +261,7 @@
 
 		private void NotifyPendingConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			using (new ConnectionUpdateLock())
 			{
 				var updatedConnections = new List<ConnectionInstance>();
@@ -295,7 +295,7 @@
 				return;
 			}
 
-			using (new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			using (new ConnectionUpdateLock())
 			{
 				// refresh DOM connections
@@ -331,7 +331,7 @@
 
 		private void RefreshDomConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				var newConnections = _api.Helper.GetConnections(connectionContexts.Select(x => x.DomConnection.ID.Id));
 
