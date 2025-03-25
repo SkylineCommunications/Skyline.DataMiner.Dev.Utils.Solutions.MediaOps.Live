@@ -42,35 +42,9 @@
 				throw new ArgumentNullException(nameof(performanceCollector));
 			}
 
-			using (new PerformanceTracker(performanceCollector))
+			using (var performanceTracker = new PerformanceTracker(performanceCollector))
 			{
-				var connectionContexts = connectionRequests
-					.Select(x => new CreateConnectionContext(x))
-					.ToList();
-
-				using (var connectionWatcher = new ConnectionWatcher())
-				{
-					try
-					{
-						Task.WaitAll(
-							Task.Run(
-								() =>
-								{
-									GetOrCreateDomConnections(connectionContexts, performanceCollector);
-									NotifyPendingConnections(connectionContexts, performanceCollector);
-								}),
-							Task.Run(
-								() =>
-								{
-									ExecuteConnectionHandlerScripts(engine, connectionContexts, performanceCollector);
-									WaitUntilAllConnected(engine, connectionWatcher, connectionContexts, performanceCollector);
-								}));
-					}
-					finally
-					{
-						ClearPendingSourceOnFailedConnections(connectionContexts, performanceCollector);
-					}
-				}
+				TakeInternal(engine, connectionRequests, performanceTracker);
 			}
 		}
 
@@ -91,46 +65,80 @@
 				throw new ArgumentNullException(nameof(performanceCollector));
 			}
 
-			// load all endpoints
-			var endpoints = LoadEndpoints(vsgConnectionRequests, performanceCollector);
-
-			// create connection requests between endpoints
-			var connectionRequests = new List<ConnectionRequest>();
-
-			foreach (var vsgConnectionRequest in vsgConnectionRequests)
+			using (var performanceTracker = new PerformanceTracker(performanceCollector))
 			{
-				var source = vsgConnectionRequest.Source;
-				var destination = vsgConnectionRequest.Destination;
+				// load all endpoints
+				var endpoints = LoadEndpoints(vsgConnectionRequests, performanceTracker);
 
-				var join = source.Levels.Join(
-					destination.Levels,
-					left => left.Level,
-					right => right.Level,
-					(left, right) => new { Level = left.Level, SourceLevel = left, DistinationLevel = right });
+				// create connection requests between endpoints
+				var connectionRequests = new List<ConnectionRequest>();
 
-				foreach (var item in join)
+				foreach (var vsgConnectionRequest in vsgConnectionRequests)
 				{
-					var filterLevels = vsgConnectionRequest.Levels != null;
+					var source = vsgConnectionRequest.Source;
+					var destination = vsgConnectionRequest.Destination;
 
-					if (filterLevels && !vsgConnectionRequest.Levels.Any(l => l.ID == item.Level))
+					var join = source.Levels.Join(
+						destination.Levels,
+						left => left.Level,
+						right => right.Level,
+						(left, right) => new { Level = left.Level, SourceLevel = left, DestinationLevel = right });
+
+					foreach (var item in join)
 					{
-						continue;
+						var filterLevels = vsgConnectionRequest.Levels != null;
+
+						if (filterLevels && !vsgConnectionRequest.Levels.Any(l => l.ID == item.Level))
+						{
+							continue;
+						}
+
+						endpoints.TryGetValue((Guid)item.SourceLevel.Endpoint, out var sourceEndpoint);
+						endpoints.TryGetValue((Guid)item.DestinationLevel.Endpoint, out var destinationEndpoint);
+
+						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint);
+						connectionRequests.Add(request);
 					}
-
-					endpoints.TryGetValue((Guid)item.SourceLevel.Endpoint, out var sourceEndpoint);
-					endpoints.TryGetValue((Guid)item.DistinationLevel.Endpoint, out var destinationEndpoint);
-
-					var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint);
-					connectionRequests.Add(request);
 				}
-			}
 
-			Take(engine, connectionRequests, performanceCollector);
+				TakeInternal(engine, connectionRequests, performanceTracker); 
+			}
 		}
 
-		private IDictionary<Guid, Endpoint> LoadEndpoints(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceCollector performanceCollector)
+		private void TakeInternal(IEngine engine, ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceCollector))
+			var connectionContexts = connectionRequests
+				.Select(x => new CreateConnectionContext(x))
+				.ToList();
+
+			using (var connectionWatcher = new ConnectionWatcher())
+			{
+				try
+				{
+					Task.WaitAll(
+						Task.Run(
+							() =>
+							{
+								GetOrCreateDomConnections(connectionContexts, performanceTracker);
+								NotifyPendingConnections(connectionContexts, performanceTracker);
+							}),
+						Task.Run(
+							() =>
+							{
+								ExecuteConnectionHandlerScripts(engine, connectionContexts, performanceTracker);
+								WaitUntilAllConnected(engine, connectionWatcher, connectionContexts, performanceTracker);
+							}));
+				}
+				finally
+				{
+					ClearPendingSourceOnFailedConnections(connectionContexts, performanceTracker);
+				}
+			}
+		}
+
+		private IDictionary<Guid, Endpoint> LoadEndpoints(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
+		{
+			using (new PerformanceTracker(performanceTracker))
 			{
 				var endpointIds = vsgConnectionRequests.SelectMany(x => x.Source.GetEndpoints())
 						.Concat(vsgConnectionRequests.SelectMany(x => x.Destination.GetEndpoints()))
@@ -141,9 +149,9 @@
 			}
 		}
 
-		private void GetOrCreateDomConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void GetOrCreateDomConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceCollector))
+			using (new PerformanceTracker(performanceTracker))
 			{
 				var connections = _api.Helper.GetConnectionsForDestinations(connectionContexts.Select(x => x.Destination.ID));
 
@@ -166,18 +174,18 @@
 			}
 		}
 
-		private void WaitUntilAllConnected(IEngine engine, ConnectionWatcher connectionWatcher, ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void WaitUntilAllConnected(IEngine engine, ConnectionWatcher connectionWatcher, ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceCollector))
+			using (new PerformanceTracker(performanceTracker))
 			{
 				Parallel.ForEach(connectionContexts, ctc =>
 				{
-					ctc.HasSucceeded = IsConnectionEstablished(engine, connectionWatcher, ctc, performanceCollector);
+					ctc.HasSucceeded = IsConnectionEstablished(engine, connectionWatcher, ctc, performanceTracker);
 				});
 			}
 		}
 
-		private bool IsConnectionEstablished(IEngine engine, ConnectionWatcher connectionWatcher, CreateConnectionContext connectionContexts, PerformanceCollector performanceCollector)
+		private bool IsConnectionEstablished(IEngine engine, ConnectionWatcher connectionWatcher, CreateConnectionContext connectionContexts, PerformanceTracker performanceTracker)
 		{
 			if (connectionContexts.DomConnection?.ConnectionInfo?.ConnectedSource == connectionContexts.Source?.ID)
 			{
@@ -185,7 +193,7 @@
 				return true;
 			}
 
-			using (var tracker = new PerformanceTracker(performanceCollector))
+			using (var tracker = new PerformanceTracker(performanceTracker))
 			{
 				tracker.AddMetadata("Source", connectionContexts.Source?.Name);
 				tracker.AddMetadata("Destination", connectionContexts.Destination?.Name);
@@ -208,22 +216,22 @@
 			return script;
 		}
 
-		private void ExecuteConnectionHandlerScripts(IEngine engine, ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void ExecuteConnectionHandlerScripts(IEngine engine, ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceCollector))
+			using (new PerformanceTracker(performanceTracker))
 			{
 				foreach (var group in connectionContexts.GroupBy(x => x.Destination.Element))
 				{
 					var elementKey = group.Key;
 
-					ExecuteConnectionHandlerScript(engine, elementKey, group, performanceCollector);
+					ExecuteConnectionHandlerScript(engine, elementKey, group, performanceTracker);
 				}
 			}
 		}
 
-		private void ExecuteConnectionHandlerScript(IEngine engine, string elementKey, IEnumerable<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void ExecuteConnectionHandlerScript(IEngine engine, string elementKey, IEnumerable<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (var tracker = new PerformanceTracker(performanceCollector))
+			using (var tracker = new PerformanceTracker(performanceTracker))
 			{
 				var createConnectionsRequest = new CreateConnectionsRequest
 				{
@@ -251,9 +259,9 @@
 			}
 		}
 
-		private void NotifyPendingConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void NotifyPendingConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceCollector))
+			using (new PerformanceTracker(performanceTracker))
 			using (new ConnectionUpdateLock())
 			{
 				var updatedConnections = new List<ConnectionInstance>();
@@ -278,7 +286,7 @@
 			}
 		}
 
-		private void ClearPendingSourceOnFailedConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void ClearPendingSourceOnFailedConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
 			var failedConnections = connectionContexts.Where(x => !x.HasSucceeded).ToList();
 
@@ -287,11 +295,11 @@
 				return;
 			}
 
-			using (new PerformanceTracker(performanceCollector))
+			using (new PerformanceTracker(performanceTracker))
 			using (new ConnectionUpdateLock())
 			{
 				// refresh DOM connections
-				RefreshDomConnections(failedConnections, performanceCollector);
+				RefreshDomConnections(failedConnections, performanceTracker);
 
 				// update connections
 				var updatedConnections = new List<ConnectionInstance>();
@@ -321,9 +329,9 @@
 			}
 		}
 
-		private void RefreshDomConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceCollector performanceCollector)
+		private void RefreshDomConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceCollector))
+			using (new PerformanceTracker(performanceTracker))
 			{
 				var newConnections = _api.Helper.GetConnections(connectionContexts.Select(x => x.DomConnection.ID.Id));
 
