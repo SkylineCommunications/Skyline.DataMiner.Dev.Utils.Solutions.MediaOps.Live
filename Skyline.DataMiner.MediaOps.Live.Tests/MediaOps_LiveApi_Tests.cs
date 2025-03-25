@@ -114,26 +114,44 @@
 		}
 
 		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Delete()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var endpoints = api.Endpoints.ReadAll().ToList();
+
+			var endpoint0 = endpoints[0];
+			var id0 = endpoints[0].ID;
+
+			api.Endpoints.Delete(endpoint0);
+
+			var endpoint_read = api.Endpoints.Read(id0);
+			Assert.IsNull(endpoint_read);
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_CreateDelete()
 		{
-			var ip = _api.TransportTypes.ReadAll().Single();
+			var api = new MediaOpsLiveApiMock();
+
+			var ip = api.TransportTypes.ReadAll().Single();
 
 			CollectionAssert.AreEquivalent(
 				new[] { ip },
-				_api.TransportTypes.ReadAll().ToList());
+				api.TransportTypes.ReadAll().ToList());
 
 			var sdi = new TransportType { Name = "SDI" };
-			_api.TransportTypes.Create(sdi);
+			api.TransportTypes.Create(sdi);
 
 			CollectionAssert.AreEquivalent(
 				new[] { ip, sdi },
-				_api.TransportTypes.ReadAll().ToList());
+				api.TransportTypes.ReadAll().ToList());
 
-			_api.TransportTypes.Delete(sdi);
+			api.TransportTypes.Delete(sdi);
 
 			CollectionAssert.AreEquivalent(
 				new[] { ip },
-				_api.TransportTypes.ReadAll().ToList());
+				api.TransportTypes.ReadAll().ToList());
 		}
 	}
 }
