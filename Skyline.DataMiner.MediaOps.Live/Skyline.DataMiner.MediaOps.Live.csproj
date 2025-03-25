@@ -8,8 +8,8 @@
 		<Copyright>Copyright © 2025</Copyright>
 		<AssemblyName>Skyline.DataMiner.MediaOps.Live</AssemblyName>
 		<RootNamespace>Skyline.DataMiner.MediaOps.Live</RootNamespace>
-		<AssemblyVersion>1.0.0.1</AssemblyVersion>
-		<FileVersion>1.0.0.1</FileVersion>
+		<AssemblyVersion>1.0.0.2</AssemblyVersion>
+		<FileVersion>1.0.0.2</FileVersion>
 
 		<PackageId>Skyline.DataMiner.MediaOps.Live</PackageId>
 		<PackageTags>Skyline;DataMiner</PackageTags>
