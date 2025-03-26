@@ -6,6 +6,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Messages;
 
 	public class MediaOpsLiveApi
 	{
@@ -22,6 +23,14 @@
 			if (helper == null)
 			{
 				throw new ArgumentNullException(nameof(helper));
+			}
+		}
+
+		public MediaOpsLiveApi(Func<DMSMessage[], DMSMessage[]> messageHandler) : this(new SlcConnectivityManagementHelper(messageHandler))
+		{
+			if (messageHandler == null)
+			{
+				throw new ArgumentNullException(nameof(messageHandler));
 			}
 		}
 
