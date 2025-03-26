@@ -44,7 +44,7 @@ erDiagram
 
     "Category" ||--o| "Category" : ""
     "Virtual Signal Group" ||--|{ "Levels" : "multi section"
-    "Virtual Signal Group" }|--|o "Category" : ""
+    "Virtual Signal Group" }|--|o "Category" : "multi section"
     "Endpoint" }|--|| "Connection" : ""
     "Endpoint" ||--|| "Transport Type" : ""
     "Levels" ||--|| "Endpoint" : ""
