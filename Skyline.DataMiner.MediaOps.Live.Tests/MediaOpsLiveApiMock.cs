@@ -3,14 +3,15 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
 
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{
 		public MediaOpsLiveApiMock()
-			: base(DomHelperMock.Create(SlcConnectivityManagementIds.ModuleId))
+			: base(CreateMessageHandler(out var messageHandler).HandleMessages)
 		{
+			MessageHandler = messageHandler;
+
 			var transportType = new TransportType { Name = "IP" };
 			TransportTypes.Create(transportType);
 
@@ -93,6 +94,14 @@
 				};
 				Connections.CreateOrUpdate([connection1, connection2]);
 			}
+		}
+
+		public DomSLNetMessageHandler MessageHandler { get; }
+
+		private static DomSLNetMessageHandler CreateMessageHandler(out DomSLNetMessageHandler handler)
+		{
+			handler = new DomSLNetMessageHandler();
+			return handler;
 		}
 	}
 }

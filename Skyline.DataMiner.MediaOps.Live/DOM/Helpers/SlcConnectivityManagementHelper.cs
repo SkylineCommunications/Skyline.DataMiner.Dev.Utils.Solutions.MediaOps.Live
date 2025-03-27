@@ -14,15 +14,11 @@
 
 	public class SlcConnectivityManagementHelper : DomModuleHelperBase
 	{
-		public SlcConnectivityManagementHelper(DomHelper domHelper) : base(SlcConnectivityManagementIds.ModuleId, domHelper)
+		public SlcConnectivityManagementHelper(Func<DMSMessage[], DMSMessage[]> messageHandler) : base(SlcConnectivityManagementIds.ModuleId, messageHandler)
 		{
 		}
 
 		public SlcConnectivityManagementHelper(IEngine engine) : base(SlcConnectivityManagementIds.ModuleId, engine)
-		{
-		}
-
-		public SlcConnectivityManagementHelper(Func<DMSMessage[], DMSMessage[]> messageHandler) : base(SlcConnectivityManagementIds.ModuleId, messageHandler)
 		{
 		}
 

@@ -8,28 +8,23 @@
 
 	public abstract class DomModuleHelperBase
 	{
-		protected DomModuleHelperBase(string moduleId, DomHelper domHelper)
+		protected DomModuleHelperBase(string moduleId, Func<DMSMessage[], DMSMessage[]> messageHandler)
 		{
 			ModuleId = moduleId ?? throw new ArgumentNullException(nameof(moduleId));
-			DomHelper = domHelper ?? throw new ArgumentNullException(nameof(domHelper));
+			MessageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
 
-			if (DomHelper.ModuleId != ModuleId)
-			{
-				throw new ArgumentException("Module ID doesn't match");
-			}
+			DomHelper = new DomHelper(messageHandler, moduleId);
 		}
 
 		protected DomModuleHelperBase(string moduleId, IEngine engine) : this(moduleId, engine.SendSLNetMessages)
 		{
 		}
 
-		protected DomModuleHelperBase(string moduleId, Func<DMSMessage[], DMSMessage[]> messageHandler) : this(moduleId, new DomHelper(messageHandler, moduleId))
-		{
-		}
-
 		public string ModuleId { get; }
 
 		public DomHelper DomHelper { get; }
+
+		protected Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
 
 		public static implicit operator DomHelper(DomModuleHelperBase helper)
 		{

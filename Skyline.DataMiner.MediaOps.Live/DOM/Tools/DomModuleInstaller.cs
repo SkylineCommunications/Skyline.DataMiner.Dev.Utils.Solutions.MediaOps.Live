@@ -8,16 +8,17 @@
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
+	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Sections;
 
 	public static class DomModuleInstaller
 	{
-		public static void Install(IEngine engine, IDomModuleInfo domModuleInfo, Action<string> logAction)
+		public static void Install(Func<DMSMessage[], DMSMessage[]> messageHandler, IDomModuleInfo domModuleInfo, Action<string> logAction)
 		{
-			if (engine == null)
+			if (messageHandler == null)
 			{
-				throw new ArgumentNullException(nameof(engine));
+				throw new ArgumentNullException(nameof(messageHandler));
 			}
 
 			if (domModuleInfo == null)
@@ -25,8 +26,8 @@
 				throw new ArgumentNullException(nameof(domModuleInfo));
 			}
 
-			var moduleSettingsHelper = new ModuleSettingsHelper(engine.SendSLNetMessages);
-			var domHelper = new DomHelper(engine.SendSLNetMessages, domModuleInfo.ModuleId);
+			var moduleSettingsHelper = new ModuleSettingsHelper(messageHandler);
+			var domHelper = new DomHelper(messageHandler, domModuleInfo.ModuleId);
 
 			CreateOrUpdateModuleSettings(moduleSettingsHelper, domModuleInfo.ModuleSettings, logAction);
 
