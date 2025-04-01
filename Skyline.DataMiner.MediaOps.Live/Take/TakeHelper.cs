@@ -116,18 +116,20 @@
 				try
 				{
 					Task.WaitAll(
-						Task.Run(
+						Task.Factory.StartNew(
 							() =>
 							{
 								GetOrCreateDomConnections(connectionContexts, performanceTracker);
 								NotifyPendingConnections(connectionContexts, performanceTracker);
-							}),
-						Task.Run(
+							},
+							TaskCreationOptions.LongRunning),
+						Task.Factory.StartNew(
 							() =>
 							{
 								ExecuteConnectionHandlerScripts(engine, connectionContexts, performanceTracker);
 								WaitUntilAllConnected(engine, connectionWatcher, connectionContexts, performanceTracker);
-							}));
+							},
+							TaskCreationOptions.LongRunning));
 				}
 				finally
 				{
