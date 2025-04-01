@@ -131,6 +131,26 @@
 				yield return level.Endpoint.Value;
 			}
 		}
+
+		public bool ContainsEndpoint(ApiObjectReference<Endpoint> endpoint)
+		{
+			if (Levels == null)
+			{
+				return false;
+			}
+
+			return Levels.Any(x => x.Endpoint == endpoint);
+		}
+
+		public bool ContainsLevel(ApiObjectReference<Level> level)
+		{
+			if (Levels == null)
+			{
+				return false;
+			}
+
+			return Levels.Any(x => x.Level == level);
+		}
 	}
 
 	public static class VirtualSignalGroupExposers

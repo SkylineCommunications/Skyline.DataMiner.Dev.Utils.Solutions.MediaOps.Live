@@ -101,7 +101,7 @@
 					}
 				}
 
-				TakeInternal(engine, connectionRequests, performanceTracker); 
+				TakeInternal(engine, connectionRequests, performanceTracker);
 			}
 		}
 
@@ -262,26 +262,30 @@
 		private void NotifyPendingConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (new ConnectionUpdateLock())
 			{
-				var updatedConnections = new List<ConnectionInstance>();
+				var destinationEndpointIds = connectionContexts.Select(x => x.Destination.ID).Distinct().ToList();
 
-				foreach (var connectionToCreate in connectionContexts)
+				using (new MultiConnectionUpdateLock(destinationEndpointIds))
 				{
-					var connection = connectionToCreate.DomConnection;
-					var sourceId = connectionToCreate.Source?.ID;
+					var updatedConnections = new List<ConnectionInstance>();
 
-					if (connection.ConnectionInfo.ConnectedSource != sourceId &&
-						connection.ConnectionInfo.PendingConnectedSource != sourceId)
+					foreach (var connectionToCreate in connectionContexts)
 					{
-						connection.ConnectionInfo.PendingConnectedSource = sourceId;
-						updatedConnections.Add(connection);
-					}
-				}
+						var connection = connectionToCreate.DomConnection;
+						var sourceId = connectionToCreate.Source?.ID;
 
-				if (updatedConnections.Count > 0)
-				{
-					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+						if (connection.ConnectionInfo.ConnectedSource != sourceId &&
+							connection.ConnectionInfo.PendingConnectedSource != sourceId)
+						{
+							connection.ConnectionInfo.PendingConnectedSource = sourceId;
+							updatedConnections.Add(connection);
+						}
+					}
+
+					if (updatedConnections.Count > 0)
+					{
+						_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+					}
 				}
 			}
 		}
@@ -296,35 +300,39 @@
 			}
 
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (new ConnectionUpdateLock())
 			{
-				// refresh DOM connections
-				RefreshDomConnections(failedConnections, performanceTracker);
+				var destinationEndpointIds = failedConnections.Select(x => x.Destination.ID).Distinct().ToList();
 
-				// update connections
-				var updatedConnections = new List<ConnectionInstance>();
-
-				foreach (var connectionToCreate in failedConnections)
+				using (new MultiConnectionUpdateLock(destinationEndpointIds))
 				{
-					var connection = connectionToCreate.DomConnection;
-					var sourceId = connectionToCreate.Source?.ID;
+					// refresh DOM connections
+					RefreshDomConnections(failedConnections, performanceTracker);
 
-					if (connection.ConnectionInfo.PendingConnectedSource != null)
+					// update connections
+					var updatedConnections = new List<ConnectionInstance>();
+
+					foreach (var connectionToCreate in failedConnections)
 					{
-						if (connection.ConnectionInfo.PendingConnectedSource != sourceId)
+						var connection = connectionToCreate.DomConnection;
+						var sourceId = connectionToCreate.Source?.ID;
+
+						if (connection.ConnectionInfo.PendingConnectedSource != null)
 						{
-							// this is already a pending source from another connect, skip updating this connection
-							continue;
+							if (connection.ConnectionInfo.PendingConnectedSource != sourceId)
+							{
+								// this is already a pending source from another connect, skip updating this connection
+								continue;
+							}
+
+							connection.ConnectionInfo.PendingConnectedSource = null;
+							updatedConnections.Add(connection);
 						}
-
-						connection.ConnectionInfo.PendingConnectedSource = null;
-						updatedConnections.Add(connection);
 					}
-				}
 
-				if (updatedConnections.Count > 0)
-				{
-					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+					if (updatedConnections.Count > 0)
+					{
+						_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+					}
 				}
 			}
 		}

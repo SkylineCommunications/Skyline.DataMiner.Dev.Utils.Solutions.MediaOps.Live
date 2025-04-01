@@ -40,11 +40,12 @@
 				throw new ArgumentNullException(nameof(connectionInfos));
 			}
 
-			using (new ConnectionUpdateLock())
+			var destinationEndpointIds = connectionInfos.Select(x => x.DestinationEndpoint.ID).Distinct().ToList();
+
+			using (new MultiConnectionUpdateLock(destinationEndpointIds))
 			{
 				var updatedConnections = new List<ConnectionInstance>();
 
-				var destinationEndpointIds = connectionInfos.Select(x => x.DestinationEndpoint.ID).Distinct();
 				var connectionsByDestination = _helper.GetConnectionsForDestinations(destinationEndpointIds);
 
 				foreach (var connectionInfo in connectionInfos)

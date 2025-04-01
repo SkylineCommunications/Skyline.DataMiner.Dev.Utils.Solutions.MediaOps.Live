@@ -10,12 +10,26 @@
 
 		private bool _isDisposed;
 
-		public ConnectionUpdateLock()
+		public ConnectionUpdateLock(Guid id)
 		{
-			var mutexKey = $@"Global\Skyline_DataMiner_MediaOps_{nameof(ConnectionUpdateLock)}";
+			if (id == Guid.Empty)
+			{
+				throw new ArgumentException("ID cannot be an empty GUID.", nameof(id));
+			}
+
+			var mutexKey = $@"Global\Skyline_DataMiner_MediaOps_{nameof(ConnectionUpdateLock)}_{id}";
 
 			_mutex = new Mutex(false, mutexKey);
-			_hasLock = _mutex.WaitOne();
+
+			try
+			{
+				_hasLock = _mutex.WaitOne(TimeSpan.Zero, false);
+			}
+			catch
+			{
+				_mutex.Dispose();
+				throw;
+			}
 		}
 
 		~ConnectionUpdateLock()
@@ -36,12 +50,22 @@
 				return;
 			}
 
-			if (_hasLock)
+			if (disposing)
 			{
-				_mutex.ReleaseMutex();
-			}
+				if (_hasLock)
+				{
+					try
+					{
+						_mutex.ReleaseMutex();
+					}
+					catch (Exception)
+					{
+						// Mutex was already released or not owned.
+					}
+				}
 
-			_mutex.Dispose();
+				_mutex.Dispose();
+			}
 
 			_isDisposed = true;
 		}
