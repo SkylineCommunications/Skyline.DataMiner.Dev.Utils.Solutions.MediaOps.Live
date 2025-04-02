@@ -5,6 +5,7 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
@@ -12,14 +13,17 @@
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
-		private readonly SlcConnectivityManagementHelper _helper;
-
 		public ConnectionHandlerEngine(IEngine engine)
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
-			_helper = new SlcConnectivityManagementHelper(engine);
+			Helper = new SlcConnectivityManagementHelper(engine);
+			Api = new MediaOpsLiveApi(Helper);
 		}
+
+		protected SlcConnectivityManagementHelper Helper { get; }
+
+		public MediaOpsLiveApi Api { get; }
 
 		public IEngine Engine { get; }
 
@@ -46,7 +50,7 @@
 			{
 				var updatedConnections = new List<ConnectionInstance>();
 
-				var connectionsByDestination = _helper.GetConnectionsForDestinations(destinationEndpointIds);
+				var connectionsByDestination = Helper.GetConnectionsForDestinations(destinationEndpointIds);
 
 				foreach (var connectionInfo in connectionInfos)
 				{
@@ -70,7 +74,7 @@
 				if (updatedConnections.Count > 0)
 				{
 					Engine.GenerateInformation($"Updating {updatedConnections.Count} connections...");
-					_helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+					Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
 				}
 			}
 		}
