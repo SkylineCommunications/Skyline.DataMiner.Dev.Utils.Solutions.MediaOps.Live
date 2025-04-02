@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Threading;
 	using System.Threading.Tasks;
 
 	using Newtonsoft.Json;
@@ -115,25 +116,44 @@
 			{
 				try
 				{
-					Task.WaitAll(
-						Task.Factory.StartNew(
-							() =>
+					var lockEvent = new ManualResetEvent(false);
+
+					var notifyPendingConnectionsTask = Task.Factory.StartNew(
+						() =>
+						{
+							var destinationEndpointIds = connectionContexts.Select(x => x.Destination.ID).Distinct().ToList();
+
+							using (new MultiConnectionUpdateLock(destinationEndpointIds))
 							{
+								lockEvent.Set();
 								GetOrCreateDomConnections(connectionContexts, performanceTracker);
 								NotifyPendingConnections(connectionContexts, performanceTracker);
-							},
-							TaskCreationOptions.LongRunning),
-						Task.Factory.StartNew(
-							() =>
-							{
-								ExecuteConnectionHandlerScripts(engine, connectionContexts, performanceTracker);
-								WaitUntilAllConnected(engine, connectionWatcher, connectionContexts, performanceTracker);
-							},
-							TaskCreationOptions.LongRunning));
+							}
+						},
+						TaskCreationOptions.LongRunning);
+
+					// wait until the lock is acquired
+					lockEvent.WaitOne();
+
+					ExecuteConnectionHandlerScripts(engine, connectionContexts, performanceTracker);
+
+					// Notify pending connections task runs in parallel with setting up the connections
+					notifyPendingConnectionsTask.Wait();
+
+					WaitUntilAllConnected(engine, connectionWatcher, connectionContexts, performanceTracker);
 				}
 				finally
 				{
-					ClearPendingSourceOnFailedConnections(connectionContexts, performanceTracker);
+					var failedConnections = connectionContexts.Where(x => !x.HasSucceeded).ToList();
+					if (failedConnections.Count > 0)
+					{
+						var destinationEndpointIds = failedConnections.Select(x => x.Destination.ID).Distinct().ToList();
+
+						using (new MultiConnectionUpdateLock(destinationEndpointIds))
+						{
+							ClearPendingSourceOnFailedConnections(failedConnections, performanceTracker);
+						}
+					}
 				}
 			}
 		}
@@ -180,10 +200,21 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				Parallel.ForEach(connectionContexts, ctc =>
+				var tasks = new List<Task>();
+
+				foreach (var connectionToCreate in connectionContexts)
 				{
-					ctc.HasSucceeded = IsConnectionEstablished(engine, connectionWatcher, ctc, performanceTracker);
-				});
+					var task = Task.Factory.StartNew(
+						() =>
+						{
+							connectionToCreate.HasSucceeded = IsConnectionEstablished(engine, connectionWatcher, connectionToCreate, performanceTracker);
+						},
+						TaskCreationOptions.LongRunning);
+
+					tasks.Add(task);
+				}
+
+				Task.WaitAll(tasks.ToArray());
 			}
 		}
 
@@ -265,76 +296,59 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var destinationEndpointIds = connectionContexts.Select(x => x.Destination.ID).Distinct().ToList();
+				var updatedConnections = new List<ConnectionInstance>();
 
-				using (new MultiConnectionUpdateLock(destinationEndpointIds))
+				foreach (var connectionToCreate in connectionContexts)
 				{
-					var updatedConnections = new List<ConnectionInstance>();
+					var connection = connectionToCreate.DomConnection;
+					var sourceId = connectionToCreate.Source?.ID;
 
-					foreach (var connectionToCreate in connectionContexts)
+					if (connection.ConnectionInfo.ConnectedSource != sourceId &&
+						connection.ConnectionInfo.PendingConnectedSource != sourceId)
 					{
-						var connection = connectionToCreate.DomConnection;
-						var sourceId = connectionToCreate.Source?.ID;
-
-						if (connection.ConnectionInfo.ConnectedSource != sourceId &&
-							connection.ConnectionInfo.PendingConnectedSource != sourceId)
-						{
-							connection.ConnectionInfo.PendingConnectedSource = sourceId;
-							updatedConnections.Add(connection);
-						}
+						connection.ConnectionInfo.PendingConnectedSource = sourceId;
+						updatedConnections.Add(connection);
 					}
+				}
 
-					if (updatedConnections.Count > 0)
-					{
-						_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
-					}
+				if (updatedConnections.Count > 0)
+				{
+					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
 				}
 			}
 		}
 
-		private void ClearPendingSourceOnFailedConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
+		private void ClearPendingSourceOnFailedConnections(ICollection<CreateConnectionContext> failedConnections, PerformanceTracker performanceTracker)
 		{
-			var failedConnections = connectionContexts.Where(x => !x.HasSucceeded).ToList();
-
-			if (failedConnections.Count == 0)
-			{
-				return;
-			}
-
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var destinationEndpointIds = failedConnections.Select(x => x.Destination.ID).Distinct().ToList();
+				// refresh DOM connections
+				RefreshDomConnections(failedConnections, performanceTracker);
 
-				using (new MultiConnectionUpdateLock(destinationEndpointIds))
+				// update connections
+				var updatedConnections = new List<ConnectionInstance>();
+
+				foreach (var connectionToCreate in failedConnections)
 				{
-					// refresh DOM connections
-					RefreshDomConnections(failedConnections, performanceTracker);
+					var connection = connectionToCreate.DomConnection;
+					var sourceId = connectionToCreate.Source?.ID;
 
-					// update connections
-					var updatedConnections = new List<ConnectionInstance>();
-
-					foreach (var connectionToCreate in failedConnections)
+					if (connection.ConnectionInfo.PendingConnectedSource != null)
 					{
-						var connection = connectionToCreate.DomConnection;
-						var sourceId = connectionToCreate.Source?.ID;
-
-						if (connection.ConnectionInfo.PendingConnectedSource != null)
+						if (connection.ConnectionInfo.PendingConnectedSource != sourceId)
 						{
-							if (connection.ConnectionInfo.PendingConnectedSource != sourceId)
-							{
-								// this is already a pending source from another connect, skip updating this connection
-								continue;
-							}
-
-							connection.ConnectionInfo.PendingConnectedSource = null;
-							updatedConnections.Add(connection);
+							// this is already a pending source from another connect, skip updating this connection
+							continue;
 						}
-					}
 
-					if (updatedConnections.Count > 0)
-					{
-						_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+						connection.ConnectionInfo.PendingConnectedSource = null;
+						updatedConnections.Add(connection);
 					}
+				}
+
+				if (updatedConnections.Count > 0)
+				{
+					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
 				}
 			}
 		}

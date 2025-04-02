@@ -3,7 +3,6 @@
 	using System;
 	using System.Linq;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Interfaces;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Apps.Modules;
