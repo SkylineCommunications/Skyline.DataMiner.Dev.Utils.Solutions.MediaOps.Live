@@ -25,7 +25,7 @@
 				throw new ArgumentNullException(nameof(filterResolver));
 			}
 
-			return SplitFilter(ids, filterProvider).SelectMany(filterResolver);
+			return SplitFilter(ids, filterProvider).AsParallel().SelectMany(filterResolver);
 		}
 
 		public static long CountFilteredItems<TId, TFilter>(IEnumerable<TId> ids, Func<TId, FilterElement<TFilter>> filterProvider, Func<FilterElement<TFilter>, long> filterCountResolver)
@@ -45,7 +45,7 @@
 				throw new ArgumentNullException(nameof(filterCountResolver));
 			}
 
-			return SplitFilter(ids, filterProvider).Sum(filterCountResolver);
+			return SplitFilter(ids, filterProvider).AsParallel().Sum(filterCountResolver);
 		}
 
 		private static IEnumerable<FilterElement<TFilter>> SplitFilter<TId, TFilter>(IEnumerable<TId> ids, Func<TId, FilterElement<TFilter>> filterProvider)
