@@ -312,7 +312,8 @@
 			}
 
 			FilterElement<DomInstance> CreateFilter(Guid destinationEndpointId) =>
-				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination).Equal(destinationEndpointId);
+				DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Connection.Id)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination).Equal(destinationEndpointId));
 
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					destinationEndpointIds,
