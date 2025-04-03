@@ -86,7 +86,7 @@
 				var filter = filterProvider(id);
 				var subfilterCount = filter.flatten().Sum(CountSubFilters);
 
-				if (count + subfilterCount > limit && batch.Any())
+				if (count + subfilterCount > limit && batch.Count > 0)
 				{
 					yield return new ORFilterElement<TFilter>(batch.ToArray());
 
@@ -99,7 +99,7 @@
 			}
 
 			// don't forget the last items
-			if (batch.Any())
+			if (batch.Count > 0)
 			{
 				yield return new ORFilterElement<TFilter>(batch.ToArray());
 			}
