@@ -272,7 +272,6 @@
 				};
 
 				var script = FindConnectionHandlerScript(engine, elementKey);
-				engine.GenerateInformation($"Connection handler script: {script}");
 
 				performanceTracker.AddMetadata("Script", script);
 
