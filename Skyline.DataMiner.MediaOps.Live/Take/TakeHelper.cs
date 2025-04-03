@@ -99,7 +99,7 @@
 							throw new InvalidOperationException($"Couldn't find endpoint for source level with ID '{sourceLevel.ID}' in virtual signal group '{source.Name}'");
 						}
 
-						if (!source.TryGetEndpointForLevel(destinationLevel, out var destinationEndpointRef) ||
+						if (!destination.TryGetEndpointForLevel(destinationLevel, out var destinationEndpointRef) ||
 							!endpoints.TryGetValue(destinationEndpointRef, out var destinationEndpoint))
 						{
 							throw new InvalidOperationException($"Couldn't find endpoint for destination level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
