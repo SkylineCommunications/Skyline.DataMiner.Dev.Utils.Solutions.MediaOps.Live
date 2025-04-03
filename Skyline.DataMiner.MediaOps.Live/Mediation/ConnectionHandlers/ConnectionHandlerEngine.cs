@@ -44,7 +44,7 @@
 				throw new ArgumentNullException(nameof(connectionInfos));
 			}
 
-			var destinationEndpointIds = connectionInfos.Select(x => x.DestinationEndpoint.ID).Distinct().ToList();
+			var destinationEndpointIds = connectionInfos.Select(x => x.DestinationEndpoint.ID).ToList();
 
 			using (new MultiConnectionUpdateLock(destinationEndpointIds))
 			{

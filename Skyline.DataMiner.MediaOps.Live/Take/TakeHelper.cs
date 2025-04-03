@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using System.Threading;
 	using System.Threading.Tasks;
 
 	using Newtonsoft.Json;
@@ -79,23 +78,32 @@
 					var source = vsgConnectionRequest.Source;
 					var destination = vsgConnectionRequest.Destination;
 
-					var join = source.Levels.Join(
-						destination.Levels,
-						left => left.Level,
-						right => right.Level,
-						(left, right) => new { Level = left.Level, SourceLevel = left, DestinationLevel = right });
-
-					foreach (var item in join)
+					var levelMappings = vsgConnectionRequest.LevelMappings;
+					if (levelMappings == null || levelMappings.Count == 0)
 					{
-						var filterLevels = vsgConnectionRequest.Levels != null;
+						// create default level mappings
+						// connect same levels between source and destination
+						levelMappings = source.Levels.Select(x => x.Level)
+							.Intersect(destination.Levels.Select(x => x.Level))
+							.Select(x => new LevelMapping(x.Value))
+							.ToList();
+					}
 
-						if (filterLevels && !vsgConnectionRequest.Levels.Any(l => l.ID == item.Level))
+					foreach (var levelMapping in levelMappings)
+					{
+						var (sourceLevel, destinationLevel) = levelMapping;
+
+						if (!source.TryGetEndpointForLevel(sourceLevel, out var sourceEndpointRef) ||
+							!endpoints.TryGetValue(sourceEndpointRef, out var sourceEndpoint))
 						{
-							continue;
+							throw new InvalidOperationException($"Couldn't find endpoint for source level with ID '{sourceLevel.ID}' in virtual signal group '{source.Name}'");
 						}
 
-						endpoints.TryGetValue((Guid)item.SourceLevel.Endpoint, out var sourceEndpoint);
-						endpoints.TryGetValue((Guid)item.DestinationLevel.Endpoint, out var destinationEndpoint);
+						if (!source.TryGetEndpointForLevel(destinationLevel, out var destinationEndpointRef) ||
+							!endpoints.TryGetValue(destinationEndpointRef, out var destinationEndpoint))
+						{
+							throw new InvalidOperationException($"Couldn't find endpoint for destination level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
+						}
 
 						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint);
 						connectionRequests.Add(request);
@@ -108,53 +116,70 @@
 
 		private void TakeInternal(IEngine engine, ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker)
 		{
-			var connectionContexts = connectionRequests
-				.Select(x => new CreateConnectionContext(x))
-				.ToList();
-
-			using (var connectionWatcher = new ConnectionWatcher())
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				try
+				var connectionContexts = connectionRequests
+					.Select(x => new CreateConnectionContext(x))
+					.ToList();
+
+				using (var connectionWatcher = new ConnectionWatcher())
 				{
-					var lockEvent = new ManualResetEvent(false);
-
-					var notifyPendingConnectionsTask = Task.Factory.StartNew(
-						() =>
-						{
-							var destinationEndpointIds = connectionContexts.Select(x => x.Destination.ID).Distinct().ToList();
-
-							using (new MultiConnectionUpdateLock(destinationEndpointIds))
-							{
-								lockEvent.Set();
-								GetOrCreateDomConnections(connectionContexts, performanceTracker);
-								NotifyPendingConnections(connectionContexts, performanceTracker);
-							}
-						},
-						TaskCreationOptions.LongRunning);
-
-					// wait until the lock is acquired
-					lockEvent.WaitOne();
-
-					ExecuteConnectionHandlerScripts(engine, connectionContexts, performanceTracker);
-
-					// Notify pending connections task runs in parallel with setting up the connections
-					notifyPendingConnectionsTask.Wait();
-
-					WaitUntilAllConnected(engine, connectionWatcher, connectionContexts, performanceTracker);
-				}
-				finally
-				{
-					var failedConnections = connectionContexts.Where(x => !x.HasSucceeded).ToList();
-					if (failedConnections.Count > 0)
+					try
 					{
-						var destinationEndpointIds = failedConnections.Select(x => x.Destination.ID).Distinct().ToList();
+						var lockAcquired = new TaskCompletionSource<bool>();
 
-						using (new MultiConnectionUpdateLock(destinationEndpointIds))
-						{
-							ClearPendingSourceOnFailedConnections(failedConnections, performanceTracker);
-						}
+						var notifyPendingConnectionsTask = StartNotifyPendingConnectionsTask(connectionContexts, lockAcquired, performanceTracker);
+
+						// Ensure the lock is acquired before proceeding
+						// this prevents the connection handler script to already update the connections before we have set the pending source
+						lockAcquired.Task.Wait();
+
+						ExecuteConnectionHandlerScripts(engine, connectionContexts, performanceTracker);
+
+						// Notify pending connections task runs in parallel with setting up the connections
+						notifyPendingConnectionsTask.Wait();
+
+						WaitUntilAllConnected(engine, connectionWatcher, connectionContexts, performanceTracker);
+					}
+					finally
+					{
+						HandleFailedConnections(connectionContexts, performanceTracker);
 					}
 				}
+			}
+		}
+
+		private Task StartNotifyPendingConnectionsTask(ICollection<CreateConnectionContext> connectionContexts, TaskCompletionSource<bool> lockAcquired, PerformanceTracker performanceTracker)
+		{
+			return Task.Factory.StartNew(
+				() =>
+				{
+					var destinationEndpointIds = connectionContexts.Select(x => x.Destination.ID).ToList();
+
+					using (CreateConnectionUpdateLock(destinationEndpointIds, performanceTracker))
+					{
+						lockAcquired.SetResult(true); // Signal that lock is acquired
+						GetOrCreateDomConnections(connectionContexts, performanceTracker);
+						NotifyPendingConnections(connectionContexts, performanceTracker);
+					}
+				},
+				TaskCreationOptions.LongRunning);
+		}
+
+		private void HandleFailedConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
+		{
+			var failedConnections = connectionContexts.Where(x => !x.HasSucceeded).ToList();
+			if (failedConnections.Count == 0)
+			{
+				return;
+			}
+
+			var destinationEndpointIds = failedConnections.Select(x => x.Destination.ID).ToList();
+
+			using (CreateConnectionUpdateLock(destinationEndpointIds, performanceTracker))
+			{
+				RefreshDomConnections(failedConnections, performanceTracker);
+				ClearPendingSourceOnFailedConnections(failedConnections, performanceTracker);
 			}
 		}
 
@@ -321,9 +346,6 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				// refresh DOM connections
-				RefreshDomConnections(failedConnections, performanceTracker);
-
 				// update connections
 				var updatedConnections = new List<ConnectionInstance>();
 
@@ -365,6 +387,14 @@
 						connectionToCreate.DomConnection = newConnection;
 					}
 				}
+			}
+		}
+
+		private MultiConnectionUpdateLock CreateConnectionUpdateLock(ICollection<Guid> destinationEndpointIds, PerformanceTracker performanceTracker)
+		{
+			using (new PerformanceTracker(performanceTracker))
+			{
+				return new MultiConnectionUpdateLock(destinationEndpointIds);
 			}
 		}
 	}

@@ -7,7 +7,7 @@
 
 	public class VsgConnectionRequest
 	{
-		public VsgConnectionRequest(VirtualSignalGroup source, VirtualSignalGroup destination, ICollection<Level> levels = null)
+		public VsgConnectionRequest(VirtualSignalGroup source, VirtualSignalGroup destination, ICollection<LevelMapping> levelMappings = null)
 		{
 			if (source == null)
 			{
@@ -31,13 +31,13 @@
 
 			Source = source;
 			Destination = destination;
-			Levels = levels;
+			LevelMappings = levelMappings;
 		}
 
 		public VirtualSignalGroup Source { get; }
 
 		public VirtualSignalGroup Destination { get; }
 
-		public ICollection<Level> Levels { get; }
+		public ICollection<LevelMapping> LevelMappings { get; }
 	}
 }

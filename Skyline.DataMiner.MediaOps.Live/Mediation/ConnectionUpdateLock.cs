@@ -32,40 +32,26 @@
 			}
 		}
 
-		~ConnectionUpdateLock()
-		{
-			Dispose(false);
-		}
-
 		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		private void Dispose(bool disposing)
 		{
 			if (_isDisposed)
 			{
 				return;
 			}
 
-			if (disposing)
+			if (_hasLock)
 			{
-				if (_hasLock)
+				try
 				{
-					try
-					{
-						_mutex.ReleaseMutex();
-					}
-					catch (Exception)
-					{
-						// Mutex was already released or not owned.
-					}
+					_mutex.ReleaseMutex();
 				}
-
-				_mutex.Dispose();
+				catch (Exception)
+				{
+					// Mutex was already released or not owned.
+				}
 			}
+
+			_mutex.Dispose();
 
 			_isDisposed = true;
 		}
