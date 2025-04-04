@@ -23,9 +23,9 @@
 		{
 			_subscriptionSetName = $"{nameof(ConnectionWatcher)}_{Guid.NewGuid()}";
 
-			Engine.SLNetRaw.OnNewMessage += Connection_OnNewMessage;
-
 			var subscriptionFilter = new ModuleEventSubscriptionFilter<DomInstancesChangedEventMessage>(SlcConnectivityManagementIds.ModuleId);
+
+			Engine.SLNetRaw.OnNewMessage += Connection_OnNewMessage;
 			Engine.SLNetRaw.AddSubscription(_subscriptionSetName, subscriptionFilter);
 		}
 

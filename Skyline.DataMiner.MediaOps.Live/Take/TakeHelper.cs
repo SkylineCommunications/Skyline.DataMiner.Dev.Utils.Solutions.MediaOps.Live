@@ -193,7 +193,11 @@
 						.Select(x => x.ID)
 						.Distinct();
 
-				return _api.Endpoints.Read(endpointIds);
+				var result = _api.Endpoints.Read(endpointIds);
+
+				performanceTracker.AddMetadata("Number of Endpoints", Convert.ToString(result.Count));
+
+				return result;
 			}
 		}
 
@@ -201,7 +205,8 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var connections = _api.Helper.GetConnectionsForDestinations(connectionContexts.Select(x => x.Destination.ID));
+				var ids = connectionContexts.Select(x => x.Destination.ID);
+				var connections = _api.Helper.GetConnectionsForDestinations(ids);
 
 				foreach (var connectionToCreate in connectionContexts)
 				{
@@ -336,6 +341,8 @@
 					}
 				}
 
+				performanceTracker.AddMetadata("Number of Connections", Convert.ToString(updatedConnections.Count));
+
 				if (updatedConnections.Count > 0)
 				{
 					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
@@ -368,6 +375,8 @@
 					}
 				}
 
+				performanceTracker.AddMetadata("Number of Connections", Convert.ToString(updatedConnections.Count));
+
 				if (updatedConnections.Count > 0)
 				{
 					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
@@ -379,7 +388,8 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var newConnections = _api.Helper.GetConnections(connectionContexts.Select(x => x.DomConnection.ID.Id));
+				var ids = connectionContexts.Select(x => x.DomConnection.ID.Id);
+				var newConnections = _api.Helper.GetConnections(ids);
 
 				foreach (var connectionToCreate in connectionContexts)
 				{
