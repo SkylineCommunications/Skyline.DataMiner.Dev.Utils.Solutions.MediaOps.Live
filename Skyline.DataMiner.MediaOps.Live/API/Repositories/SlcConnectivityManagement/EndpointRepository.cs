@@ -1,9 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
@@ -23,7 +24,7 @@
 
 		public IEnumerable<Endpoint> GetByElement(string dmaElementId)
 		{
-			if (String.IsNullOrWhiteSpace(dmaElementId))
+			if (string.IsNullOrWhiteSpace(dmaElementId))
 			{
 				throw new ArgumentException($"'{nameof(dmaElementId)}' cannot be null or whitespace.", nameof(dmaElementId));
 			}
@@ -35,7 +36,7 @@
 
 		public IEnumerable<Endpoint> GetByElementAndIdentifiers(string dmaElementId, IEnumerable<string> identifiers)
 		{
-			if (String.IsNullOrWhiteSpace(dmaElementId))
+			if (string.IsNullOrWhiteSpace(dmaElementId))
 			{
 				throw new ArgumentException($"'{nameof(dmaElementId)}' cannot be null or whitespace.", nameof(dmaElementId));
 			}

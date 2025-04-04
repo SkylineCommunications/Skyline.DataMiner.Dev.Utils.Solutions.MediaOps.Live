@@ -1,17 +1,18 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation
+﻿using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
+
+namespace Skyline.DataMiner.MediaOps.Live.Mediation
 {
 	using System;
 	using System.Collections.Concurrent;
 	using System.Linq;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.SubscriptionFilters;
 
-	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.Connection;
+	using Connection = Connection;
 
 	public class ConnectionWatcher : IDisposable
 	{

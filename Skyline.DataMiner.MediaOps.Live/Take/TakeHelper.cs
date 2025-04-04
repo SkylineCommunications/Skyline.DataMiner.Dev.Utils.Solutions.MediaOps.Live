@@ -10,7 +10,7 @@
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
@@ -175,7 +175,7 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var connections = _api.Helper.GetConnectionsForDestinations(connectionContexts.Select(x => x.Destination.ID));
+				var connections = _api.ConnectivityManagerHelper.GetConnectionsForDestinations(connectionContexts.Select(x => x.Destination.ID));
 
 				foreach (var connectionToCreate in connectionContexts)
 				{
@@ -312,7 +312,7 @@
 
 				if (updatedConnections.Count > 0)
 				{
-					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+					_api.ConnectivityManagerHelper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
 				}
 			}
 		}
@@ -347,7 +347,7 @@
 
 				if (updatedConnections.Count > 0)
 				{
-					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+					_api.ConnectivityManagerHelper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
 				}
 			}
 		}
@@ -356,7 +356,7 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var newConnections = _api.Helper.GetConnections(connectionContexts.Select(x => x.DomConnection.ID.Id));
+				var newConnections = _api.ConnectivityManagerHelper.GetConnections(connectionContexts.Select(x => x.DomConnection.ID.Id));
 
 				foreach (var connectionToCreate in connectionContexts)
 				{

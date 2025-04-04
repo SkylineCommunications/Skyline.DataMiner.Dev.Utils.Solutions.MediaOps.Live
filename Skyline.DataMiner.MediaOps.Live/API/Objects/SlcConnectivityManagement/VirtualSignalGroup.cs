@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement
 {
 	using System;
 	using System.Collections;
@@ -6,6 +6,7 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
@@ -69,11 +70,11 @@
 			}
 		}
 
-		public Enums.Role Role
+		public Role Role
 		{
 			get
 			{
-				return (Enums.Role)(int)_domInstance.VirtualSignalGroupInfo.Role;
+				return (Role)(int)_domInstance.VirtualSignalGroupInfo.Role;
 			}
 
 			set

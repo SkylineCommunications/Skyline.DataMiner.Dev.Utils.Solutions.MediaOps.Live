@@ -4,7 +4,7 @@
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 
 	public static class ConnectionAwaiter
 	{

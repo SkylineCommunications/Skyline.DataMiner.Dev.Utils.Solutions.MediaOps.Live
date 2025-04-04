@@ -1,6 +1,7 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcConnectivityManagement
 {
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;

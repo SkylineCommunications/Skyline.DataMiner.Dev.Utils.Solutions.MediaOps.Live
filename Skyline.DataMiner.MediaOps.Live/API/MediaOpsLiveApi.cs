@@ -4,9 +4,11 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
 	using Skyline.DataMiner.Net.Messages;
@@ -17,14 +19,17 @@
 		public MediaOpsLiveApi(Func<DMSMessage[], DMSMessage[]> messageHandler)
 		{
 			MessageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
-			Helper = new SlcConnectivityManagementHelper(messageHandler);
+			ConnectivityManagerHelper = new SlcConnectivityManagementHelper(messageHandler);
+			OrchestrationHelper = new SlcOrchestrationHelper(messageHandler);
 
-			Endpoints = new EndpointRepository(Helper);
-			VirtualSignalGroups = new VirtualSignalGroupRepository(Helper);
-			Levels = new LevelRepository(Helper);
-			Categories = new CategoryRepository(Helper);
-			TransportTypes = new TransportTypeRepository(Helper);
-			Connections = new ConnectionRepository(Helper);
+			Endpoints = new EndpointRepository(ConnectivityManagerHelper);
+			VirtualSignalGroups = new VirtualSignalGroupRepository(ConnectivityManagerHelper);
+			Levels = new LevelRepository(ConnectivityManagerHelper);
+			Categories = new CategoryRepository(ConnectivityManagerHelper);
+			TransportTypes = new TransportTypeRepository(ConnectivityManagerHelper);
+			Connections = new ConnectionRepository(ConnectivityManagerHelper);
+
+			OrchestrationEvents = new OrchestrationEventRepository(OrchestrationHelper);
 		}
 
 		public MediaOpsLiveApi(IEngine engine) : this(engine.SendSLNetMessages)
@@ -35,21 +40,11 @@
 			}
 		}
 
-		public MediaOpsLiveApi(SlcConnectivityManagementHelper helper)
-		{
-			Helper = helper ?? throw new ArgumentNullException(nameof(helper));
-
-			Endpoints = new EndpointRepository(helper);
-			VirtualSignalGroups = new VirtualSignalGroupRepository(helper);
-			Levels = new LevelRepository(helper);
-			Categories = new CategoryRepository(helper);
-			TransportTypes = new TransportTypeRepository(helper);
-			Connections = new ConnectionRepository(helper);
-		}
-
 		internal Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
 
-		internal SlcConnectivityManagementHelper Helper { get; }
+		internal SlcConnectivityManagementHelper ConnectivityManagerHelper { get; }
+
+		internal SlcOrchestrationHelper OrchestrationHelper { get; }
 
 		public EndpointRepository Endpoints { get; }
 
@@ -63,6 +58,8 @@
 
 		public ConnectionRepository Connections { get; }
 
+		public OrchestrationEventRepository OrchestrationEvents { get; }
+
 		public bool IsInstalled()
 		{
 			var moduleSettingsHelper = new ModuleSettingsHelper(MessageHandler);
@@ -75,7 +72,7 @@
 				return false;
 			}
 
-			var definitions = Helper.DomHelper.DomDefinitions.ReadAll()
+			var definitions = ConnectivityManagerHelper.DomHelper.DomDefinitions.ReadAll()
 				.Select(x => x.ID)
 				.ToList();
 
