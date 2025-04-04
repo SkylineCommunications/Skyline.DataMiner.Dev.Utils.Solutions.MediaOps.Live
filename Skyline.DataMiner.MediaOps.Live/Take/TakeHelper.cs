@@ -96,13 +96,13 @@
 						if (!source.TryGetEndpointForLevel(sourceLevel, out var sourceEndpointRef) ||
 							!endpoints.TryGetValue(sourceEndpointRef, out var sourceEndpoint))
 						{
-							throw new InvalidOperationException($"Couldn't find endpoint for source level with ID '{sourceLevel.ID}' in virtual signal group '{source.Name}'");
+							throw new InvalidOperationException($"Couldn't find source endpoint for level with ID '{sourceLevel.ID}' in virtual signal group '{source.Name}'");
 						}
 
 						if (!destination.TryGetEndpointForLevel(destinationLevel, out var destinationEndpointRef) ||
 							!endpoints.TryGetValue(destinationEndpointRef, out var destinationEndpoint))
 						{
-							throw new InvalidOperationException($"Couldn't find endpoint for destination level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
+							throw new InvalidOperationException($"Couldn't find destination endpoint for level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
 						}
 
 						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint);
@@ -122,14 +122,12 @@
 					.Select(x => new CreateConnectionContext(x))
 					.ToList();
 
-				using (var connectionWatcher = new ConnectionWatcher())
+				var notifyPendingConnectionsTask = StartNotifyPendingConnectionsTask(connectionContexts, out var lockAcquired, performanceTracker);
+
+				using (var connectionWatcher = SubscribeDomConnections(performanceTracker))
 				{
 					try
 					{
-						var lockAcquired = new TaskCompletionSource<bool>();
-
-						var notifyPendingConnectionsTask = StartNotifyPendingConnectionsTask(connectionContexts, lockAcquired, performanceTracker);
-
 						// Ensure the lock is acquired before proceeding
 						// this prevents the connection handler script to already update the connections before we have set the pending source
 						lockAcquired.Task.Wait();
@@ -149,8 +147,11 @@
 			}
 		}
 
-		private Task StartNotifyPendingConnectionsTask(ICollection<CreateConnectionContext> connectionContexts, TaskCompletionSource<bool> lockAcquired, PerformanceTracker performanceTracker)
+		private Task StartNotifyPendingConnectionsTask(ICollection<CreateConnectionContext> connectionContexts, out TaskCompletionSource<bool> lockAcquired, PerformanceTracker performanceTracker)
 		{
+			var localLockAcquired = new TaskCompletionSource<bool>();
+			lockAcquired = localLockAcquired; // assign to the out parameter
+
 			return Task.Factory.StartNew(
 				() =>
 				{
@@ -158,7 +159,7 @@
 
 					using (CreateConnectionUpdateLock(destinationEndpointIds, performanceTracker))
 					{
-						lockAcquired.SetResult(true); // Signal that lock is acquired
+						localLockAcquired.SetResult(true); // Signal that lock is acquired
 						GetOrCreateDomConnections(connectionContexts, performanceTracker);
 						NotifyPendingConnections(connectionContexts, performanceTracker);
 					}
@@ -387,6 +388,14 @@
 						connectionToCreate.DomConnection = newConnection;
 					}
 				}
+			}
+		}
+
+		private ConnectionWatcher SubscribeDomConnections(PerformanceTracker performanceTracker)
+		{
+			using (new PerformanceTracker(performanceTracker))
+			{
+				return new ConnectionWatcher();
 			}
 		}
 
