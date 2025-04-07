@@ -1,8 +1,8 @@
-﻿using System;
-using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-
-namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 {
+	using System;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+
 	using SlcConnectivityManagement;
 
 	public class Connection

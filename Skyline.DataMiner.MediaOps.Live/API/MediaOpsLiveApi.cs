@@ -40,6 +40,18 @@
 			}
 		}
 
+		public MediaOpsLiveApi(SlcConnectivityManagementHelper helper)
+		{
+			ConnectivityManagerHelper = helper ?? throw new ArgumentNullException(nameof(helper));
+
+			Endpoints = new EndpointRepository(helper);
+			VirtualSignalGroups = new VirtualSignalGroupRepository(helper);
+			Levels = new LevelRepository(helper);
+			Categories = new CategoryRepository(helper);
+			TransportTypes = new TransportTypeRepository(helper);
+			Connections = new ConnectionRepository(helper);
+		}
+
 		internal Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
 
 		internal SlcConnectivityManagementHelper ConnectivityManagerHelper { get; }
@@ -72,12 +84,17 @@
 				return false;
 			}
 
-			var definitions = ConnectivityManagerHelper.DomHelper.DomDefinitions.ReadAll()
+			var connectivityManagementDefinitions = ConnectivityManagerHelper.DomHelper.DomDefinitions.ReadAll()
 				.Select(x => x.ID)
 				.ToList();
 
-			return definitions.Contains(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup) &&
-				   definitions.Contains(SlcConnectivityManagementIds.Definitions.Endpoint);
+			var orchestrationDefinitions = OrchestrationHelper.DomHelper.DomDefinitions.ReadAll()
+				.Select(x => x.ID)
+				.ToList();
+
+			return connectivityManagementDefinitions.Contains(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup) &&
+				   connectivityManagementDefinitions.Contains(SlcConnectivityManagementIds.Definitions.Endpoint) &&
+				   orchestrationDefinitions.Contains(SlcOrchestrationIds.Definitions.OrchestrationEvent);
 		}
 	}
 }
