@@ -19,17 +19,17 @@
 		public MediaOpsLiveApi(Func<DMSMessage[], DMSMessage[]> messageHandler)
 		{
 			MessageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
-			ConnectivityManagerHelper = new SlcConnectivityManagementHelper(messageHandler);
-			OrchestrationHelper = new SlcOrchestrationHelper(messageHandler);
+			SlcConnectivityManagerHelper = new SlcConnectivityManagementHelper(messageHandler);
+			SlcOrchestrationHelper = new SlcOrchestrationHelper(messageHandler);
 
-			Endpoints = new EndpointRepository(ConnectivityManagerHelper);
-			VirtualSignalGroups = new VirtualSignalGroupRepository(ConnectivityManagerHelper);
-			Levels = new LevelRepository(ConnectivityManagerHelper);
-			Categories = new CategoryRepository(ConnectivityManagerHelper);
-			TransportTypes = new TransportTypeRepository(ConnectivityManagerHelper);
-			Connections = new ConnectionRepository(ConnectivityManagerHelper);
+			Endpoints = new EndpointRepository(SlcConnectivityManagerHelper);
+			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagerHelper);
+			Levels = new LevelRepository(SlcConnectivityManagerHelper);
+			Categories = new CategoryRepository(SlcConnectivityManagerHelper);
+			TransportTypes = new TransportTypeRepository(SlcConnectivityManagerHelper);
+			Connections = new ConnectionRepository(SlcConnectivityManagerHelper);
 
-			OrchestrationEvents = new OrchestrationEventRepository(OrchestrationHelper);
+			OrchestrationEvents = new OrchestrationEventRepository(SlcOrchestrationHelper);
 		}
 
 		public MediaOpsLiveApi(IEngine engine) : this(engine.SendSLNetMessages)
@@ -42,9 +42,9 @@
 
 		internal Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
 
-		internal SlcConnectivityManagementHelper ConnectivityManagerHelper { get; }
+		internal SlcConnectivityManagementHelper SlcConnectivityManagerHelper { get; }
 
-		internal SlcOrchestrationHelper OrchestrationHelper { get; }
+		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
 
 		public EndpointRepository Endpoints { get; }
 
@@ -72,11 +72,11 @@
 				return false;
 			}
 
-			var connectivityManagementDefinitions = ConnectivityManagerHelper.DomHelper.DomDefinitions.ReadAll()
+			var connectivityManagementDefinitions = SlcConnectivityManagerHelper.DomHelper.DomDefinitions.ReadAll()
 				.Select(x => x.ID)
 				.ToList();
 
-			var orchestrationDefinitions = OrchestrationHelper.DomHelper.DomDefinitions.ReadAll()
+			var orchestrationDefinitions = SlcOrchestrationHelper.DomHelper.DomDefinitions.ReadAll()
 				.Select(x => x.ID)
 				.ToList();
 
