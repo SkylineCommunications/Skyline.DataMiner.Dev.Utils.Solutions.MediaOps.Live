@@ -17,15 +17,14 @@
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
-			Helper = new SlcConnectivityManagementHelper(engine);
-			Api = new MediaOpsLiveApi(Helper);
+			Api = new MediaOpsLiveApi(engine);
 		}
 
-		protected SlcConnectivityManagementHelper Helper { get; }
+		public IEngine Engine { get; }
 
 		public MediaOpsLiveApi Api { get; }
 
-		public IEngine Engine { get; }
+		protected SlcConnectivityManagementHelper Helper => Api.SlcConnectivityManagementHelper;
 
 		public void RegisterConnection(ConnectionInfo connectionInfo)
 		{

@@ -17,14 +17,14 @@
 		public MediaOpsLiveApi(Func<DMSMessage[], DMSMessage[]> messageHandler)
 		{
 			MessageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
-			Helper = new SlcConnectivityManagementHelper(messageHandler);
+			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(messageHandler);
 
-			Endpoints = new EndpointRepository(Helper);
-			VirtualSignalGroups = new VirtualSignalGroupRepository(Helper);
-			Levels = new LevelRepository(Helper);
-			Categories = new CategoryRepository(Helper);
-			TransportTypes = new TransportTypeRepository(Helper);
-			Connections = new ConnectionRepository(Helper);
+			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper);
+			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper);
+			Levels = new LevelRepository(SlcConnectivityManagementHelper);
+			Categories = new CategoryRepository(SlcConnectivityManagementHelper);
+			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
+			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
 		}
 
 		public MediaOpsLiveApi(IEngine engine) : this(engine.SendSLNetMessages)
@@ -35,21 +35,9 @@
 			}
 		}
 
-		public MediaOpsLiveApi(SlcConnectivityManagementHelper helper)
-		{
-			Helper = helper ?? throw new ArgumentNullException(nameof(helper));
-
-			Endpoints = new EndpointRepository(helper);
-			VirtualSignalGroups = new VirtualSignalGroupRepository(helper);
-			Levels = new LevelRepository(helper);
-			Categories = new CategoryRepository(helper);
-			TransportTypes = new TransportTypeRepository(helper);
-			Connections = new ConnectionRepository(helper);
-		}
-
 		internal Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
 
-		internal SlcConnectivityManagementHelper Helper { get; }
+		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		public EndpointRepository Endpoints { get; }
 
@@ -75,7 +63,7 @@
 				return false;
 			}
 
-			var definitions = Helper.DomHelper.DomDefinitions.ReadAll()
+			var definitions = SlcConnectivityManagementHelper.DomHelper.DomDefinitions.ReadAll()
 				.Select(x => x.ID)
 				.ToList();
 

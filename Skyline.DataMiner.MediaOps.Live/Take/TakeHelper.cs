@@ -206,7 +206,7 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				var ids = connectionContexts.Select(x => x.Destination.ID);
-				var connections = _api.Helper.GetConnectionsForDestinations(ids);
+				var connections = _api.SlcConnectivityManagementHelper.GetConnectionsForDestinations(ids);
 
 				foreach (var connectionToCreate in connectionContexts)
 				{
@@ -345,7 +345,7 @@
 
 				if (updatedConnections.Count > 0)
 				{
-					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+					_api.SlcConnectivityManagementHelper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
 				}
 			}
 		}
@@ -379,7 +379,7 @@
 
 				if (updatedConnections.Count > 0)
 				{
-					_api.Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
+					_api.SlcConnectivityManagementHelper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
 				}
 			}
 		}
@@ -389,7 +389,7 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				var ids = connectionContexts.Select(x => x.DomConnection.ID.Id);
-				var newConnections = _api.Helper.GetConnections(ids);
+				var newConnections = _api.SlcConnectivityManagementHelper.GetConnections(ids);
 
 				foreach (var connectionToCreate in connectionContexts)
 				{
