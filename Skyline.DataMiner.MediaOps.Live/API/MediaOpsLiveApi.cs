@@ -40,18 +40,6 @@
 			}
 		}
 
-		public MediaOpsLiveApi(SlcConnectivityManagementHelper helper)
-		{
-			ConnectivityManagerHelper = helper ?? throw new ArgumentNullException(nameof(helper));
-
-			Endpoints = new EndpointRepository(helper);
-			VirtualSignalGroups = new VirtualSignalGroupRepository(helper);
-			Levels = new LevelRepository(helper);
-			Categories = new CategoryRepository(helper);
-			TransportTypes = new TransportTypeRepository(helper);
-			Connections = new ConnectionRepository(helper);
-		}
-
 		internal Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
 
 		internal SlcConnectivityManagementHelper ConnectivityManagerHelper { get; }

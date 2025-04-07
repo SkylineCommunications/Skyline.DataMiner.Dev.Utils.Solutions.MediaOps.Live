@@ -152,6 +152,23 @@
 
 			return Levels.Any(x => x.Level == level);
 		}
+
+		public bool TryGetEndpointForLevel(ApiObjectReference<Level> level, out ApiObjectReference<Endpoint> endpoint)
+		{
+			if (Levels != null)
+			{
+				var levelEndpoint = Levels.FirstOrDefault(x => x.Level == level);
+
+				if (levelEndpoint != null && levelEndpoint.Endpoint != null)
+				{
+					endpoint = levelEndpoint.Endpoint.Value;
+					return true;
+				}
+			}
+
+			endpoint = null;
+			return false;
+		}
 	}
 
 	public static class VirtualSignalGroupExposers

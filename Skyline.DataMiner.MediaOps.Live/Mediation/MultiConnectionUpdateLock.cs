@@ -17,7 +17,7 @@
 			}
 
 			// Sort IDs to ensure a consistent locking order, preventing deadlocks
-			foreach (var id in ids.OrderBy(id => id))
+			foreach (var id in ids.Distinct().OrderBy(id => id))
 			{
 				try
 				{
@@ -32,36 +32,20 @@
 			}
 		}
 
-		~MultiConnectionUpdateLock()
-		{
-			Dispose(false);
-		}
-
 		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		private void Dispose(bool disposing)
 		{
 			if (_isDisposed)
 			{
 				return;
 			}
 
-			if (disposing)
+			// Release locks in reverse order
+			for (int i = _locks.Count - 1; i >= 0; i--)
 			{
-				// Release locks in reverse order
-				_locks.Reverse();
-
-				foreach (var lockInstance in _locks)
-				{
-					lockInstance.Dispose();
-				}
-
-				_locks.Clear();
+				_locks[i].Dispose();
 			}
+
+			_locks.Clear();
 
 			_isDisposed = true;
 		}

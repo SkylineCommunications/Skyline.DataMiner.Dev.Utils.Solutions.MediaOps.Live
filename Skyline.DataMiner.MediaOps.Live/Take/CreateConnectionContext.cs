@@ -6,7 +6,7 @@
 
 	internal class CreateConnectionContext
 	{
-		public CreateConnectionContext(ConnectionRequest request)
+		internal CreateConnectionContext(ConnectionRequest request)
 		{
 			if (request == null)
 			{
@@ -15,22 +15,6 @@
 
 			Source = request.Source;
 			Destination = request.Destination;
-		}
-
-		public CreateConnectionContext(Endpoint source, Endpoint destination)
-		{
-			if (source == null)
-			{
-				// ignore
-			}
-
-			if (destination == null)
-			{
-				throw new ArgumentNullException(nameof(destination));
-			}
-
-			Source = source;
-			Destination = destination;
 		}
 
 		public Endpoint Source { get; }
