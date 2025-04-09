@@ -205,6 +205,9 @@
 					EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
 					return true;
 
+				case SlcOrchestrationIds.Enums.EventState.Cancelled:
+					return true;
+
 				default:
 					// Transition not allowed;
 					return false;
@@ -224,6 +227,9 @@
 				case SlcOrchestrationIds.Enums.EventState.Draft:
 				case SlcOrchestrationIds.Enums.EventState.Cancelled:
 					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
+					return true;
+
+				case SlcOrchestrationIds.Enums.EventState.Confirmed:
 					return true;
 
 				default:
@@ -247,10 +253,18 @@
 					EventState = SlcOrchestrationIds.Enums.EventState.Draft;
 					return true;
 
+				case SlcOrchestrationIds.Enums.EventState.Draft:
+					return true;
+
 				default:
 					// Transition not allowed;
 					return false;
 			}
+		}
+
+		internal void Save(DomHelper helper)
+		{
+			_domInstance.Save(helper);
 		}
 	}
 }

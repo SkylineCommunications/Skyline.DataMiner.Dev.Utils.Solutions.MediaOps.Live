@@ -36,14 +36,17 @@
 			return Read(filter);
 		}
 
-		public void CreateOrUpdateOrchestrationEvents(IEnumerable<OrchestrationEvent> events)
+		public IEnumerable<OrchestrationEvent> CreateOrUpdateOrchestrationEvents(IEnumerable<OrchestrationEvent> events)
 		{
-			CreateOrUpdate(events);
+			var results = CreateOrUpdateWithResult(events);
+
+			return results.SuccessfulItems.Select(item => new OrchestrationEvent(item));
 		}
 
-		public void CreateOrUpdateOrchestrationEvent(OrchestrationEvent orchestrationEvent)
+		public OrchestrationEvent CreateOrUpdateOrchestrationEvent(OrchestrationEvent orchestrationEvent)
 		{
-			CreateOrUpdate(new HashSet<OrchestrationEvent> { orchestrationEvent });
+			orchestrationEvent.Save(Helper);
+			return orchestrationEvent;
 		}
 
 		public void DeleteOrchestrationEvent(Guid domInstanceId)

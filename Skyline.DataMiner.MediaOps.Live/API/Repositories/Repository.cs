@@ -4,6 +4,8 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Net.Messages;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Querying;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -62,6 +64,17 @@
 
 			var domInstances = instances.Select(x => x.DomInstance.ToInstance()).ToList();
 			Helper.DomInstances.CreateOrUpdateInBatches(domInstances).ThrowOnFailure();
+		}
+
+		public virtual BulkCreateOrUpdateResult<DomInstance, DomInstanceId> CreateOrUpdateWithResult(IEnumerable<T> instances)
+		{
+			if (instances == null)
+			{
+				throw new ArgumentNullException(nameof(instances));
+			}
+
+			var domInstances = instances.Select(x => x.DomInstance.ToInstance()).ToList();
+			return Helper.DomInstances.CreateOrUpdateInBatches(domInstances);
 		}
 
 		public virtual void Delete(T instance)
