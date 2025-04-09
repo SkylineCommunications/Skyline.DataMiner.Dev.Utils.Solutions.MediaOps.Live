@@ -1,8 +1,9 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
+	using API.Objects.SlcConnectivityManagement;
+
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
 
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi

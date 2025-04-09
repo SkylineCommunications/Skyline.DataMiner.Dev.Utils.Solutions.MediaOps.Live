@@ -7,7 +7,7 @@
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 {
 	using System;
-
+	using System.ComponentModel;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
 
@@ -124,7 +124,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 
@@ -140,6 +139,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public LevelInstance() : base(SlcConnectivityManagementIds.Definitions.Level)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -151,6 +151,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.Level))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.Level)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -164,7 +165,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(LevelInfo.ToSection());
@@ -204,6 +205,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public ConnectionInstance() : base(SlcConnectivityManagementIds.Definitions.Connection)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -215,6 +217,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.Connection))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.Connection)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -228,7 +231,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(ConnectionInfo.ToSection());
@@ -268,6 +271,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public CategoryInstance() : base(SlcConnectivityManagementIds.Definitions.Category)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -279,6 +283,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.Category))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.Category)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -292,7 +297,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(CategoryInfo.ToSection());
@@ -332,6 +337,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public EndpointInstance() : base(SlcConnectivityManagementIds.Definitions.Endpoint)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -343,6 +349,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.Endpoint))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.Endpoint)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -356,7 +363,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(EndpointInfo.ToSection());
@@ -396,6 +403,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public VirtualSignalGroupInstance() : base(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -407,6 +415,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -425,7 +434,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			foreach (var item in VirtualSignalGroupLevels)
@@ -471,6 +480,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public TransportTypeInstance() : base(SlcConnectivityManagementIds.Definitions.TransportType)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -482,6 +492,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.TransportType))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.TransportType)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -495,7 +506,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(TransportTypeInfo.ToSection());
@@ -535,7 +546,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Linq;
-
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Apps.Sections.Sections;
 	using Skyline.DataMiner.Net.Messages;
@@ -660,7 +670,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.CategoryInfo.Name) == null)
 				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -787,7 +797,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint) == null)
 				throw new InvalidOperationException("'Endpoint' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -1002,7 +1012,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination) == null)
 				throw new InvalidOperationException("'Destination' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -1195,7 +1205,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public IList<Guid> Categories { get; private set; }
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Name) == null)
 				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -1564,7 +1574,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.EndpointInfo.Name) == null)
 				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -1654,7 +1664,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name) == null)
 				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -1824,7 +1834,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<Int64>(SlcConnectivityManagementIds.Sections.LevelInfo.Number) == null)
 				throw new InvalidOperationException("'Number' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");

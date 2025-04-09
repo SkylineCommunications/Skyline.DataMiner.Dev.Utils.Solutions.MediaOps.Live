@@ -7,9 +7,7 @@
 	using Model.SlcOrchestration;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
-	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -24,11 +22,29 @@
 		{
 		}
 
-		#region Virtual Signal Groups
+		#region Orchestration Events
 
 		public IEnumerable<OrchestrationEventInstance> GetAllOrchestrationEvents()
 		{
 			var filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id);
+
+			return GetOrchestrationEventIterator(filter);
+		}
+
+		public IEnumerable<OrchestrationEventInstance> GetAllOrchestrationEvents(string jobReference)
+		{
+			var filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference).Equal(jobReference));
+
+			return GetOrchestrationEventIterator(filter);
+		}
+
+		public IEnumerable<OrchestrationEventInstance> GetOrchestrationEvents(FilterElement<DomInstance> filter)
+		{
+			if (filter == null)
+			{
+				throw new ArgumentNullException(nameof(filter));
+			}
 
 			return GetOrchestrationEventIterator(filter);
 		}

@@ -62,15 +62,14 @@
 		{
 			get
 			{
-				return DomSection.OrchestrationScriptArguments;
+				return DomSection.OrchestrationScriptArgumentsList;
 			}
 
 			set
 			{
-				DomSection.OrchestrationScriptArguments.Clear();
-				DomSection.OrchestrationScriptArguments.AddRange(value);
+				DomSection.OrchestrationScriptArgumentsList.Clear();
+				DomSection.OrchestrationScriptArgumentsList.AddRange(value);
 			}
 		}
 	}
 }
-

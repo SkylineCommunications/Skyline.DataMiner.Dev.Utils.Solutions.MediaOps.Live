@@ -19,15 +19,15 @@
 		public MediaOpsLiveApi(Func<DMSMessage[], DMSMessage[]> messageHandler)
 		{
 			MessageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
-			SlcConnectivityManagerHelper = new SlcConnectivityManagementHelper(messageHandler);
+			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(messageHandler);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(messageHandler);
 
-			Endpoints = new EndpointRepository(SlcConnectivityManagerHelper);
-			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagerHelper);
-			Levels = new LevelRepository(SlcConnectivityManagerHelper);
-			Categories = new CategoryRepository(SlcConnectivityManagerHelper);
-			TransportTypes = new TransportTypeRepository(SlcConnectivityManagerHelper);
-			Connections = new ConnectionRepository(SlcConnectivityManagerHelper);
+			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper);
+			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper);
+			Levels = new LevelRepository(SlcConnectivityManagementHelper);
+			Categories = new CategoryRepository(SlcConnectivityManagementHelper);
+			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
+			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
 
 			OrchestrationEvents = new OrchestrationEventRepository(SlcOrchestrationHelper);
 		}
@@ -42,7 +42,7 @@
 
 		internal Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
 
-		internal SlcConnectivityManagementHelper SlcConnectivityManagerHelper { get; }
+		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
 
@@ -72,7 +72,7 @@
 				return false;
 			}
 
-			var connectivityManagementDefinitions = SlcConnectivityManagerHelper.DomHelper.DomDefinitions.ReadAll()
+			var connectivityManagementDefinitions = SlcConnectivityManagementHelper.DomHelper.DomDefinitions.ReadAll()
 				.Select(x => x.ID)
 				.ToList();
 

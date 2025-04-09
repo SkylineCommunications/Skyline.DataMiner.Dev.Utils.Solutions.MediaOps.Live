@@ -7,9 +7,7 @@
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Linq;
-
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Sections;
@@ -98,7 +96,12 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 
 		public static bool operator ==(DomInstanceBase left, DomInstanceBase right)
 		{
-			return EqualityComparer<DomInstanceBase>.Default.Equals(left, right);
+			if (left is null)
+			{
+				return right is null;
+			}
+
+			return left.Equals(right);
 		}
 
 		public static bool operator !=(DomInstanceBase left, DomInstanceBase right)
@@ -141,8 +144,40 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 		/// <summary>
 		/// Return the DOM Instance object with all the fields filled in according to this object.
 		/// </summary>
-		public abstract DomInstance ToInstance();
+		public DomInstance ToInstance()
+		{
+			BeforeToInstance();
+			var instance = InternalToInstance();
+			AfterToInstance();
+			return instance;
+		}
+
+		/// <summary>
+		/// Optional method that runs before the internal ToInstance method runs.
+		/// </summary>
+		protected virtual void BeforeToInstance()
+		{
+		}
+
+		/// <summary>
+		/// Return the DOM Instance object with all the fields filled in according to this object.
+		/// </summary>
+		protected abstract DomInstance InternalToInstance();
+		/// <summary>
+		/// Optional method that runs after the internal ToInstance method runs.
+		/// </summary>
+		protected virtual void AfterToInstance()
+		{
+		}
+
 		protected abstract void InitializeProperties();
+		/// <summary>
+		/// Optional method that runs after the object is constructed and the initialize has ran.
+		/// </summary>
+		protected virtual void AfterLoad()
+		{
+		}
+
 		public override int GetHashCode()
 		{
 			return this.ID.GetHashCode();
@@ -155,7 +190,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 
 		public bool Equals(DomInstanceBase other)
 		{
-			if (other == null)
+			if (other is null)
 			{
 				return false;
 			}
@@ -178,9 +213,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Linq;
-
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
 
@@ -192,6 +225,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 			if (id == null)
 				throw new ArgumentNullException("id");
 			this.section = new Section(id);
+			AfterLoad();
 		}
 
 		protected DomSectionBase(SectionDefinition definition)
@@ -199,6 +233,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 			if (definition == null)
 				throw new ArgumentNullException("definition");
 			this.section = new Section(definition);
+			AfterLoad();
 		}
 
 		protected DomSectionBase(Section section)
@@ -206,6 +241,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 			if (section == null)
 				throw new ArgumentNullException("section");
 			this.section = section;
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -256,7 +292,12 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 
 		public static bool operator ==(DomSectionBase left, DomSectionBase right)
 		{
-			return EqualityComparer<DomSectionBase>.Default.Equals(left, right);
+			if (left is null)
+			{
+				return right is null;
+			}
+
+			return left.Equals(right);
 		}
 
 		public static bool operator !=(DomSectionBase left, DomSectionBase right)
@@ -269,9 +310,38 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 			return $"{this.section.SectionDefinitionID}";
 		}
 
+		/// <summary>
+		/// Optional method that runs at the end of the constructor.
+		/// </summary>
+		public virtual void AfterLoad()
+		{
+		}
+
 		public virtual Section ToSection()
 		{
+			BeforeToSection();
+			var section = InternalToSection();
+			AfterToSection();
+			return section;
+		}
+
+		/// <summary>
+		/// Optional method that runs before the internal ToSection method runs.
+		/// </summary>
+		public virtual void BeforeToSection()
+		{
+		}
+
+		protected virtual Section InternalToSection()
+		{
 			return this.section;
+		}
+
+		/// <summary>
+		/// Optional method that runs after the internal ToSection method runs.
+		/// </summary>
+		public virtual void AfterToSection()
+		{
 		}
 
 		public override int GetHashCode()
@@ -286,7 +356,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 
 		public bool Equals(DomSectionBase other)
 		{
-			if (other == null)
+			if (other is null)
 			{
 				return false;
 			}

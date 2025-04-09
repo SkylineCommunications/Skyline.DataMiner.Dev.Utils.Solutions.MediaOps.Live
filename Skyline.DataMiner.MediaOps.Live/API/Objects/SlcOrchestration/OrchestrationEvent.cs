@@ -1,12 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-
-namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 {
 	using System;
+	using System.Collections.Generic;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 
@@ -16,13 +14,17 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 
 		private readonly WrappedList<NodeConfigurationSection, NodeConfiguration> _wrappedNodeConfigurations;
 
+		private bool _existsOnDom;
+
 		public OrchestrationEvent() : this(new OrchestrationEventInstance())
 		{
+			_existsOnDom = false;
 		}
 
 		internal OrchestrationEvent(OrchestrationEventInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
+			_existsOnDom = true;
 
 			_wrappedNodeConfigurations = new WrappedList<NodeConfigurationSection, NodeConfiguration>(
 				_domInstance.NodeConfiguration,
@@ -108,7 +110,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 				return _domInstance.OrchestrationEventInfo.EventState;
 			}
 
-			set
+			protected set
 			{
 				_domInstance.OrchestrationEventInfo.EventState = value;
 			}
@@ -158,13 +160,96 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 		{
 			get
 			{
-				return _domInstance.GlobalConfiguration.OrchestrationScriptArguments;
+				return _domInstance.GlobalConfiguration.OrchestrationScriptArgumentsList;
 			}
 
 			set
 			{
-				_domInstance.GlobalConfiguration.OrchestrationScriptArguments.Clear();
-				_domInstance.GlobalConfiguration.OrchestrationScriptArguments.AddRange(value);
+				_domInstance.GlobalConfiguration.OrchestrationScriptArgumentsList.Clear();
+				_domInstance.GlobalConfiguration.OrchestrationScriptArgumentsList.AddRange(value);
+			}
+		}
+
+		public Guid DomInstanceId
+		{
+			get
+			{
+				return _domInstance.ID.Id;
+			}
+		}
+
+		protected bool ExistsOnDom
+		{
+			get
+			{
+				return _existsOnDom;
+			}
+
+			set
+			{
+				_existsOnDom = value;
+			}
+		}
+
+		public bool TryCancel()
+		{
+			if (!ExistsOnDom)
+			{
+				EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
+				return true;
+			}
+
+			switch (EventState)
+			{
+				case SlcOrchestrationIds.Enums.EventState.Confirmed:
+					EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
+					return true;
+
+				default:
+					// Transition not allowed;
+					return false;
+			}
+		}
+
+		public bool TryConfirm()
+		{
+			if (!ExistsOnDom)
+			{
+				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
+				return true;
+			}
+
+			switch (EventState)
+			{
+				case SlcOrchestrationIds.Enums.EventState.Draft:
+				case SlcOrchestrationIds.Enums.EventState.Cancelled:
+					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
+					return true;
+
+				default:
+					// Transition not allowed;
+					return false;
+			}
+		}
+
+		public bool TrySetToDraft()
+		{
+			if (!ExistsOnDom)
+			{
+				EventState = SlcOrchestrationIds.Enums.EventState.Draft;
+				return true;
+			}
+
+			switch (EventState)
+			{
+				case SlcOrchestrationIds.Enums.EventState.Confirmed:
+				case SlcOrchestrationIds.Enums.EventState.Cancelled:
+					EventState = SlcOrchestrationIds.Enums.EventState.Draft;
+					return true;
+
+				default:
+					// Transition not allowed;
+					return false;
 			}
 		}
 	}

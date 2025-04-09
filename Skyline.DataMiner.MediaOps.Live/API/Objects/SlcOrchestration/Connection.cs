@@ -1,8 +1,9 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 {
 	using System;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using System.Collections.Generic;
 
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using SlcConnectivityManagement;
 
 	public class Connection
@@ -68,6 +69,20 @@
 			set
 			{
 				DomSection.DestinationVSG = value;
+			}
+		}
+
+		public IList<LevelMapping> LevelMappings
+		{
+			get
+			{
+				return DomSection.LevelMappingList;
+			}
+
+			set
+			{
+				DomSection.LevelMappingList.Clear();
+				DomSection.LevelMappingList.AddRange(value);
 			}
 		}
 	}

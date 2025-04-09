@@ -1,0 +1,45 @@
+﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
+{
+	using System;
+	using System.Collections.Generic;
+	using System.Linq;
+
+	using API.Objects.SlcOrchestration;
+
+	using Newtonsoft.Json;
+
+	public partial class ConnectionSection
+	{
+		public List<LevelMapping> LevelMappingList
+		{
+			get;
+			private set;
+		}
+
+		public override void AfterLoad()
+		{
+			if (String.IsNullOrEmpty(LevelMapping))
+			{
+				LevelMappingList = new List<LevelMapping>();
+			}
+			else
+			{
+				try
+				{
+					LevelMappingList = JsonConvert.DeserializeObject<List<LevelMapping>>(LevelMapping);
+				}
+				catch
+				{
+					LevelMappingList = new List<LevelMapping>();
+				}
+			}
+		}
+
+		public override void BeforeToSection()
+		{
+			LevelMapping = LevelMappingList != null && LevelMappingList.Any()
+				? JsonConvert.SerializeObject(LevelMappingList)
+				: null;
+		}
+	}
+}

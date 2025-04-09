@@ -4,11 +4,10 @@
 //     Changes to this file will be lost if the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 {
 	using System;
-	using System.ComponentModel;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
 
@@ -34,7 +33,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 				Configuring = 1,
 				Cancelled = 2,
 				Completed = 3,
-				Failed = 4
+				Failed = 4,
+				Draft = 5,
 			}
 		}
 
@@ -105,8 +105,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Messages;
 
 	/// <summary>
 	/// Represents a wrapper class for accessing a OrchestrationEventInstance DOM instance.
@@ -120,6 +120,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		public OrchestrationEventInstance() : base(SlcOrchestrationIds.Definitions.OrchestrationEvent)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -131,6 +132,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			if (!domInstance.DomDefinitionId.Equals(SlcOrchestrationIds.Definitions.OrchestrationEvent))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcOrchestrationIds.Definitions.OrchestrationEvent)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -159,7 +161,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			foreach (var item in Connection)
@@ -214,14 +216,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Collections.ObjectModel;
-	using System.Linq;
-	using Newtonsoft.Json;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
-	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Apps.Sections.Sections;
-	using Skyline.DataMiner.Net.Messages;
+
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model;
 	using Skyline.DataMiner.Net.Sections;
 
 	/// <summary>
@@ -472,7 +468,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<String>(SlcOrchestrationIds.Sections.Connection.SourceNodeID) == null)
 				throw new InvalidOperationException("'SourceNodeID' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -494,14 +490,11 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	/// </summary>
 	public partial class GlobalConfigurationSection : DomSectionBase
 	{
-		private List<OrchestrationScriptArgument> _nodeConfigurations;
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="GlobalConfigurationSection"/> class. Creates an empty <see cref="GlobalConfigurationSection"/> object with default settings.
 		/// </summary>
 		public GlobalConfigurationSection() : base(SlcOrchestrationIds.Sections.GlobalConfiguration.Id)
 		{
-			_nodeConfigurations = new List<OrchestrationScriptArgument>();
 		}
 
 		/// <summary>
@@ -521,7 +514,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			}
 
 			this.section = section;
-			LoadNodeConfigurationListFromSection(section);
 		}
 
 		/// <summary>
@@ -582,51 +574,31 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
 		/// </list>
 		/// </remarks>
-		public List<OrchestrationScriptArgument> OrchestrationScriptArguments
+		public String OrchestrationScriptArguments
 		{
 			get
 			{
-				return _nodeConfigurations;
-			}
-		}
-
-		/// <inheritdoc />
-		public override Section ToSection()
-		{
-			WriteNodeConfigurationListToSection();
-
-			return section;
-		}
-
-		private void LoadNodeConfigurationListFromSection(Section section)
-		{
-			var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptArguments);
-			if (wrapper == null)
-			{
-				_nodeConfigurations = new List<OrchestrationScriptArgument>();
-			}
-			else
-			{
-				try
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptArguments);
+				if (wrapper != null)
 				{
-					_nodeConfigurations = JsonConvert.DeserializeObject<List<OrchestrationScriptArgument>>((String)wrapper.Value);
+					return (String)wrapper.Value;
 				}
-				catch
+				else
 				{
-					_nodeConfigurations = new List<OrchestrationScriptArgument>();
+					return null;
 				}
 			}
-		}
 
-		private void WriteNodeConfigurationListToSection()
-		{
-			if (_nodeConfigurations == null || !_nodeConfigurations.Any())
+			set
 			{
-				section.RemoveFieldValueById(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptArguments);
-			}
-			else
-			{
-				section.AddOrUpdateValue(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptArguments, (String)JsonConvert.SerializeObject(_nodeConfigurations));
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptArguments);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptArguments, (String)value);
+				}
 			}
 		}
 	}
@@ -637,14 +609,11 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	/// </summary>
 	public partial class NodeConfigurationSection : DomSectionBase
 	{
-		private List<OrchestrationScriptArgument> _nodeConfigurations;
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="NodeConfigurationSection"/> class. Creates an empty <see cref="NodeConfigurationSection"/> object with default settings.
 		/// </summary>
 		public NodeConfigurationSection() : base(SlcOrchestrationIds.Sections.NodeConfiguration.Id)
 		{
-			_nodeConfigurations = new List<OrchestrationScriptArgument>();
 		}
 
 		/// <summary>
@@ -664,7 +633,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			}
 
 			this.section = section;
-			LoadNodeConfigurationListFromSection(section);
 		}
 
 		/// <summary>
@@ -811,56 +779,42 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
 		/// </list>
 		/// </remarks>
-		public List<OrchestrationScriptArgument> OrchestrationScriptArguments
+		public String OrchestrationScriptArguments
 		{
 			get
 			{
-				return _nodeConfigurations;
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.NodeConfiguration.OrchestrationScriptArguments);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.NodeConfiguration.OrchestrationScriptArguments);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.NodeConfiguration.OrchestrationScriptArguments, (String)value);
+				}
 			}
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
-			WriteNodeConfigurationListToSection();
-
 			if (section.GetValue<String>(SlcOrchestrationIds.Sections.NodeConfiguration.NodeID) == null)
 				throw new InvalidOperationException("'NodeID' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			if (section.GetValue<String>(SlcOrchestrationIds.Sections.NodeConfiguration.NodeLabel) == null)
 				throw new InvalidOperationException("'NodeLabel' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
-		}
-
-		private void LoadNodeConfigurationListFromSection(Section section)
-		{
-			var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.NodeConfiguration.OrchestrationScriptArguments);
-			if (wrapper == null)
-			{
-				_nodeConfigurations = new List<OrchestrationScriptArgument>();
-			}
-			else
-			{
-				try
-				{
-					_nodeConfigurations = JsonConvert.DeserializeObject<List<OrchestrationScriptArgument>>((String)wrapper.Value);
-				}
-				catch
-				{
-					_nodeConfigurations = new List<OrchestrationScriptArgument>();
-				}
-			}
-		}
-
-		private void WriteNodeConfigurationListToSection()
-		{
-			if (_nodeConfigurations == null || !_nodeConfigurations.Any())
-			{
-				section.RemoveFieldValueById(SlcOrchestrationIds.Sections.NodeConfiguration.OrchestrationScriptArguments);
-			}
-			else
-			{
-				section.AddOrUpdateValue(SlcOrchestrationIds.Sections.NodeConfiguration.OrchestrationScriptArguments, (String)JsonConvert.SerializeObject(_nodeConfigurations));
-			}
 		}
 	}
 
@@ -1198,7 +1152,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<String>(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventName) == null)
 				throw new InvalidOperationException("'EventName' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");

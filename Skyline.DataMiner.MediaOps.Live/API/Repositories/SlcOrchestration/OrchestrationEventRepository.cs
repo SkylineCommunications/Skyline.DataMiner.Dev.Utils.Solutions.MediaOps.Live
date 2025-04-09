@@ -3,17 +3,18 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Runtime.Remoting.Messaging;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	using SLDataGateway.API.Types.Querying;
+
+	using Comparer = Net.Messages.SLDataGateway.Comparer;
 
 	public class OrchestrationEventRepository : Repository<OrchestrationEvent>
 	{
@@ -22,6 +23,100 @@
 		}
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
+
+		public IEnumerable<OrchestrationEvent> GetByJobReference(string jobReference)
+		{
+			if (string.IsNullOrWhiteSpace(jobReference))
+			{
+				throw new ArgumentException($"'{nameof(jobReference)}' cannot be null or whitespace.", nameof(jobReference));
+			}
+
+			var filter = DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference).Equal(jobReference);
+
+			return Read(filter);
+		}
+
+		public void CreateOrUpdateOrchestrationEvents(IEnumerable<OrchestrationEvent> events)
+		{
+			CreateOrUpdate(events);
+		}
+
+		public void CreateOrUpdateOrchestrationEvent(OrchestrationEvent orchestrationEvent)
+		{
+			CreateOrUpdate(new HashSet<OrchestrationEvent> { orchestrationEvent });
+		}
+
+		public void DeleteOrchestrationEvent(Guid domInstanceId)
+		{
+			Delete(GetByDomInstanceId(domInstanceId));
+		}
+
+		public void DeleteOrchestrationEvent(OrchestrationEvent orchestrationEvent)
+		{
+			Delete(orchestrationEvent);
+		}
+
+		public void DeleteOrchestrationEvents(IEnumerable<OrchestrationEvent> orchestrationEvents)
+		{
+			Delete(orchestrationEvents);
+		}
+
+		public OrchestrationEvent GetByDomInstanceId(Guid domInstanceId)
+		{
+			var filter = DomInstanceExposers.Id.Equal(domInstanceId);
+
+			var result = Read(filter);
+
+			if (result == null || !result.Any())
+			{
+				return null;
+			}
+
+			return result.First();
+		}
+
+		public bool TrySetToDraftEventByDomInstanceId(Guid domInstanceId)
+		{
+
+			return UpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Draft);
+		}
+
+		public bool TryConfirmEventByDomInstanceId(Guid domInstanceId)
+		{
+
+			return UpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Confirmed);
+		}
+
+		public bool TryCancelEventByDomInstanceId(Guid domInstanceId)
+		{
+			return UpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Cancelled);
+		}
+
+		internal bool UpdateState(Guid domInstanceId, SlcOrchestrationIds.Enums.EventState state)
+		{
+			OrchestrationEvent orchestrationEvent = GetByDomInstanceId(domInstanceId);
+
+			if (orchestrationEvent == null)
+			{
+				throw new NotSupportedException(
+					$"Event with DOM instance id {nameof(domInstanceId)} could not be found");
+			}
+
+			switch (state)
+			{
+				case SlcOrchestrationIds.Enums.EventState.Cancelled:
+					return orchestrationEvent.TryCancel();
+
+				case SlcOrchestrationIds.Enums.EventState.Confirmed:
+					return orchestrationEvent.TryConfirm();
+
+				case SlcOrchestrationIds.Enums.EventState.Draft:
+					return orchestrationEvent.TrySetToDraft();
+
+				default:
+					return false;
+			}
+		}
 
 		protected override OrchestrationEvent CreateInstance(DomInstance domInstance)
 		{
