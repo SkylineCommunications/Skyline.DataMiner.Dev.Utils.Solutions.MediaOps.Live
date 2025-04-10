@@ -136,11 +136,11 @@
 
 						// Notify pending connections task runs in parallel with setting up the connections
 						notifyPendingConnectionsTask.Wait();
-
 						WaitUntilAllConnected(engine, connectionWatcher, connectionContexts, performanceTracker);
 					}
 					finally
 					{
+						notifyPendingConnectionsTask.Wait();
 						HandleFailedConnections(connectionContexts, performanceTracker);
 					}
 				}
@@ -179,7 +179,9 @@
 
 			using (CreateConnectionUpdateLock(destinationEndpointIds, performanceTracker))
 			{
-				RefreshDomConnections(failedConnections, performanceTracker);
+				// refresh DOM connections
+				GetOrCreateDomConnections(failedConnections, performanceTracker);
+
 				ClearPendingSourceOnFailedConnections(failedConnections, performanceTracker);
 			}
 		}
@@ -380,23 +382,6 @@
 				if (updatedConnections.Count > 0)
 				{
 					_api.SlcConnectivityManagementHelper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
-				}
-			}
-		}
-
-		private void RefreshDomConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				var ids = connectionContexts.Select(x => x.DomConnection.ID.Id);
-				var newConnections = _api.SlcConnectivityManagementHelper.GetConnections(ids);
-
-				foreach (var connectionToCreate in connectionContexts)
-				{
-					if (newConnections.TryGetValue(connectionToCreate.DomConnection.ID.Id, out var newConnection))
-					{
-						connectionToCreate.DomConnection = newConnection;
-					}
 				}
 			}
 		}
