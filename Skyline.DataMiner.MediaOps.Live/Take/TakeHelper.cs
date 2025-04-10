@@ -178,14 +178,17 @@
 				return;
 			}
 
-			var destinationEndpointIds = failedConnections.Select(x => x.Destination.ID).ToList();
-
-			using (CreateConnectionUpdateLock(destinationEndpointIds, performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				// refresh DOM connections
-				GetOrCreateDomConnections(failedConnections, performanceTracker);
+				var destinationEndpointIds = failedConnections.Select(x => x.Destination.ID).ToList();
 
-				ClearPendingSourceOnFailedConnections(failedConnections, performanceTracker);
+				using (CreateConnectionUpdateLock(destinationEndpointIds, performanceTracker))
+				{
+					// refresh DOM connections
+					GetOrCreateDomConnections(failedConnections, performanceTracker);
+
+					ClearPendingSourceOnFailedConnections(failedConnections, performanceTracker);
+				}
 			}
 		}
 
