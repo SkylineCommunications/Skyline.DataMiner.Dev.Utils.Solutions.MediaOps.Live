@@ -22,6 +22,8 @@
 
 		public Endpoint Destination { get; }
 
+		public string ConnectionHandlerScript { get; set; }
+
 		public ConnectionInstance DomConnection { get; set; }
 
 		public bool HasSucceeded { get; set; }
