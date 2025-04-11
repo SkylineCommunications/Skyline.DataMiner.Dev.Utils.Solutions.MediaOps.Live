@@ -16,7 +16,7 @@
 			private set;
 		}
 
-		public override void AfterLoad()
+		protected override void AfterLoad()
 		{
 			if (String.IsNullOrEmpty(OrchestrationScriptArguments))
 			{
@@ -28,7 +28,7 @@
 			}
 		}
 
-		public override void BeforeToSection()
+        protected override void BeforeToSection()
 		{
 			OrchestrationScriptArguments = OrchestrationScriptArgumentsList != null && OrchestrationScriptArgumentsList.Any()
 				? JsonConvert.SerializeObject(OrchestrationScriptArgumentsList)

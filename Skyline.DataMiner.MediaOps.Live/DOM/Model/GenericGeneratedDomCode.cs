@@ -236,10 +236,15 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 			AfterLoad();
 		}
 
-		protected DomSectionBase(Section section)
+		protected DomSectionBase(Section section, SectionDefinitionID id)
 		{
 			if (section == null)
 				throw new ArgumentNullException("section");
+			if (!section.SectionDefinitionID.Equals(id))
+			{
+				throw new ArgumentException($"The given section, is not of type '{nameof(id)}'", nameof(section));
+			}
+
 			this.section = section;
 			AfterLoad();
 		}
@@ -313,7 +318,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 		/// <summary>
 		/// Optional method that runs at the end of the constructor.
 		/// </summary>
-		public virtual void AfterLoad()
+		protected virtual void AfterLoad()
 		{
 		}
 
@@ -328,7 +333,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 		/// <summary>
 		/// Optional method that runs before the internal ToSection method runs.
 		/// </summary>
-		public virtual void BeforeToSection()
+		protected virtual void BeforeToSection()
 		{
 		}
 
@@ -340,7 +345,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 		/// <summary>
 		/// Optional method that runs after the internal ToSection method runs.
 		/// </summary>
-		public virtual void AfterToSection()
+		/// <param name="section">The section that was build by the internal ToSection.</param>
+		protected virtual void AfterToSection()
 		{
 		}
 

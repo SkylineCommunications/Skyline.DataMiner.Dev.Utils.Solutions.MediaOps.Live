@@ -81,21 +81,21 @@
 		public bool TrySetToDraftEventByDomInstanceId(Guid domInstanceId)
 		{
 
-			return UpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Draft);
+			return TryUpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Draft);
 		}
 
 		public bool TryConfirmEventByDomInstanceId(Guid domInstanceId)
 		{
 
-			return UpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Confirmed);
+			return TryUpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Confirmed);
 		}
 
 		public bool TryCancelEventByDomInstanceId(Guid domInstanceId)
 		{
-			return UpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Cancelled);
+			return TryUpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Cancelled);
 		}
 
-		internal bool UpdateState(Guid domInstanceId, SlcOrchestrationIds.Enums.EventState state)
+		internal bool TryUpdateState(Guid domInstanceId, SlcOrchestrationIds.Enums.EventState state)
 		{
 			OrchestrationEvent orchestrationEvent = GetByDomInstanceId(domInstanceId);
 

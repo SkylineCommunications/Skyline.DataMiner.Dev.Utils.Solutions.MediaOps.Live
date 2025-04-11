@@ -7,7 +7,7 @@
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 {
 	using System;
-
+	using System.ComponentModel;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
 
@@ -34,7 +34,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 				Cancelled = 2,
 				Completed = 3,
 				Failed = 4,
-				Draft = 5,
+				Draft = 5
 			}
 		}
 
@@ -107,6 +107,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	using System.Linq;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Messages;
 
 	/// <summary>
 	/// Represents a wrapper class for accessing a OrchestrationEventInstance DOM instance.
@@ -216,8 +217,13 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 {
 	using System;
-
+	using System.Collections.Generic;
+	using System.Collections.ObjectModel;
+	using System.Linq;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model;
+	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Apps.Sections.Sections;
+	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Sections;
 
 	/// <summary>
@@ -237,19 +243,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		/// Initializes a new instance of the <see cref="ConnectionSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
 		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="ConnectionSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public ConnectionSection(Section section) : base(SlcOrchestrationIds.Sections.Connection.Id)
+		public ConnectionSection(Section section) : base(section, SlcOrchestrationIds.Sections.Connection.Id)
 		{
-			if (section == null)
-			{
-				return;
-			}
-
-			if (!section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.Connection.Id))
-			{
-				throw new ArgumentException($"The given section, is not of type '{nameof(SlcOrchestrationIds.Sections.Connection.Id)}'", nameof(section));
-			}
-
-			this.section = section;
 		}
 
 		/// <summary>
@@ -501,19 +496,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		/// Initializes a new instance of the <see cref="GlobalConfigurationSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
 		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="GlobalConfigurationSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public GlobalConfigurationSection(Section section) : base(SlcOrchestrationIds.Sections.GlobalConfiguration.Id)
+		public GlobalConfigurationSection(Section section) : base(section, SlcOrchestrationIds.Sections.GlobalConfiguration.Id)
 		{
-			if (section == null)
-			{
-				return;
-			}
-
-			if (!section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.GlobalConfiguration.Id))
-			{
-				throw new ArgumentException($"The given section, is not of type '{nameof(SlcOrchestrationIds.Sections.GlobalConfiguration.Id)}'", nameof(section));
-			}
-
-			this.section = section;
 		}
 
 		/// <summary>
@@ -620,19 +604,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		/// Initializes a new instance of the <see cref="NodeConfigurationSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
 		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="NodeConfigurationSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public NodeConfigurationSection(Section section) : base(SlcOrchestrationIds.Sections.NodeConfiguration.Id)
+		public NodeConfigurationSection(Section section) : base(section, SlcOrchestrationIds.Sections.NodeConfiguration.Id)
 		{
-			if (section == null)
-			{
-				return;
-			}
-
-			if (!section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.NodeConfiguration.Id))
-			{
-				throw new ArgumentException($"The given section, is not of type '{nameof(SlcOrchestrationIds.Sections.NodeConfiguration.Id)}'", nameof(section));
-			}
-
-			this.section = section;
 		}
 
 		/// <summary>
@@ -835,19 +808,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		/// Initializes a new instance of the <see cref="OrchestrationEventInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
 		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="OrchestrationEventInfoSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public OrchestrationEventInfoSection(Section section) : base(SlcOrchestrationIds.Sections.OrchestrationEventInfo.Id)
+		public OrchestrationEventInfoSection(Section section) : base(section, SlcOrchestrationIds.Sections.OrchestrationEventInfo.Id)
 		{
-			if (section == null)
-			{
-				return;
-			}
-
-			if (!section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.OrchestrationEventInfo.Id))
-			{
-				throw new ArgumentException($"The given section, is not of type '{nameof(SlcOrchestrationIds.Sections.OrchestrationEventInfo.Id)}'", nameof(section));
-			}
-
-			this.section = section;
 		}
 
 		/// <summary>

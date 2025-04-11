@@ -16,7 +16,7 @@
 			private set;
 		}
 
-		public override void AfterLoad()
+        protected override void AfterLoad()
 		{
 			if (String.IsNullOrEmpty(LevelMapping))
 			{
@@ -28,7 +28,7 @@
 			}
 		}
 
-		public override void BeforeToSection()
+        protected override void BeforeToSection()
 		{
 			LevelMapping = LevelMappingList != null && LevelMappingList.Any()
 				? JsonConvert.SerializeObject(LevelMappingList)
