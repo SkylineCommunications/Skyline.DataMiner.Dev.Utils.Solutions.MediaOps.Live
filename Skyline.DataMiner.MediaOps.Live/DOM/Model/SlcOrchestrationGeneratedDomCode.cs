@@ -202,9 +202,26 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		protected override void InitializeProperties()
 		{
 			Connection = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.Connection.Id)).Select(section => new ConnectionSection(section)).ToList();
-			GlobalConfiguration = new GlobalConfigurationSection(domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.GlobalConfiguration.Id)));
+			var _globalConfiguration = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.GlobalConfiguration.Id));
+			if (_globalConfiguration is null)
+			{
+				GlobalConfiguration = new GlobalConfigurationSection();
+			}
+			else
+			{
+				GlobalConfiguration = new GlobalConfigurationSection(_globalConfiguration);
+			}
+
 			NodeConfiguration = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.NodeConfiguration.Id)).Select(section => new NodeConfigurationSection(section)).ToList();
-			OrchestrationEventInfo = new OrchestrationEventInfoSection(domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.OrchestrationEventInfo.Id)));
+			var _orchestrationEventInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.OrchestrationEventInfo.Id));
+			if (_orchestrationEventInfo is null)
+			{
+				OrchestrationEventInfo = new OrchestrationEventInfoSection();
+			}
+			else
+			{
+				OrchestrationEventInfo = new OrchestrationEventInfoSection(_orchestrationEventInfo);
+			}
 		}
 	}
 }

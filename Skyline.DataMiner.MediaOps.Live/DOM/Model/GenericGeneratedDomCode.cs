@@ -238,8 +238,13 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 
 		protected DomSectionBase(Section section, SectionDefinitionID id)
 		{
-			if (section?.SectionDefinitionID == null)
+			if (section == null)
 				throw new ArgumentNullException("section");
+			if (section.SectionDefinitionID == null)
+			{
+				throw new ArgumentException("The given section doesn't have a valid SectionDefinitionId.", nameof(section));
+			}
+
 			if (!section.SectionDefinitionID.Equals(id))
 			{
 				throw new ArgumentException($"The given section, is not of type '{nameof(id)}'", nameof(section));
