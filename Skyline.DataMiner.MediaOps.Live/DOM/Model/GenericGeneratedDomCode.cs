@@ -238,7 +238,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 
 		protected DomSectionBase(Section section, SectionDefinitionID id)
 		{
-			if (section == null)
+			if (section?.SectionDefinitionID == null)
 				throw new ArgumentNullException("section");
 			if (!section.SectionDefinitionID.Equals(id))
 			{
