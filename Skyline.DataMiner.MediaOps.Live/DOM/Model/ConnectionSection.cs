@@ -24,14 +24,7 @@
 			}
 			else
 			{
-				try
-				{
-					LevelMappingList = JsonConvert.DeserializeObject<List<LevelMapping>>(LevelMapping);
-				}
-				catch
-				{
-					LevelMappingList = new List<LevelMapping>();
-				}
+				LevelMappingList = JsonConvert.DeserializeObject<List<LevelMapping>>(LevelMapping);
 			}
 		}
 

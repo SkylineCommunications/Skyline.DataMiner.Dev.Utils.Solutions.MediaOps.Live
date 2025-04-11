@@ -24,14 +24,7 @@
 			}
 			else
 			{
-				try
-				{
-					OrchestrationScriptArgumentsList = JsonConvert.DeserializeObject<List<OrchestrationScriptArgument>>(OrchestrationScriptArguments);
-				}
-				catch
-				{
-					OrchestrationScriptArgumentsList = new List<OrchestrationScriptArgument>();
-				}
+				OrchestrationScriptArgumentsList = JsonConvert.DeserializeObject<List<OrchestrationScriptArgument>>(OrchestrationScriptArguments);
 			}
 		}
 
