@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Newtonsoft.Json;
 
@@ -10,6 +11,11 @@
 
 	public abstract class ConnectionHandler
 	{
+		private static readonly JsonSerializerSettings _jsonSerializerSettings = new JsonSerializerSettings
+		{
+			NullValueHandling = NullValueHandling.Ignore,
+		};
+
 		protected ConnectionHandler()
 		{
 		}
@@ -25,6 +31,9 @@
 
 			switch (inputData.Action)
 			{
+				case ConnectionHandlerInputData.ScriptAction.GetSupportedElements:
+					HandleGetSupportedElements(engine, inputData);
+					break;
 				case ConnectionHandlerInputData.ScriptAction.GetSubscriptionInfo:
 					HandleGetSubscriptionInfo(engine, inputData);
 					break;
@@ -39,22 +48,30 @@
 			}
 		}
 
+		public abstract IEnumerable<ElementInfo> GetSupportedElements(IEngine engine, IEnumerable<ElementInfo> elements);
+
 		public abstract IEnumerable<SubscriptionInfo> GetSubscriptionInfo(IEngine engine);
 
 		public abstract void ProcessParameterUpdate(IEngine engine, IConnectionHandlerEngine connectionEngine, ParameterUpdate update);
 
 		public abstract void Connect(IEngine engine, IConnectionHandlerEngine connectionEngine, CreateConnectionsRequest createConnectionsRequest);
 
+		private void HandleGetSupportedElements(IEngine engine, ConnectionHandlerInputData inputData)
+		{
+			var elementInfos = inputData.Deserialize<ICollection<ElementInfo>>();
+
+			elementInfos = GetSupportedElements(engine, elementInfos).ToList();
+
+			var serialized = JsonConvert.SerializeObject(elementInfos, _jsonSerializerSettings);
+
+			engine.AddScriptOutput("output", serialized);
+		}
+
 		private void HandleGetSubscriptionInfo(IEngine engine, ConnectionHandlerInputData inputData)
 		{
 			var subscriptionInfo = GetSubscriptionInfo(engine);
 
-			var settings = new JsonSerializerSettings
-			{
-				NullValueHandling = NullValueHandling.Ignore,
-			};
-
-			var serialized = JsonConvert.SerializeObject(subscriptionInfo, settings);
+			var serialized = JsonConvert.SerializeObject(subscriptionInfo, _jsonSerializerSettings);
 
 			engine.AddScriptOutput("output", serialized);
 		}
