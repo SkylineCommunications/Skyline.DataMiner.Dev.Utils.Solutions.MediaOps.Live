@@ -2,7 +2,6 @@
 	<PropertyGroup>
 		<TargetFramework>net48</TargetFramework>
 		<OutputType>Library</OutputType>
-		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<AssemblyTitle>Skyline.DataMiner.MediaOps.Live</AssemblyTitle>
 		<Product>Skyline.DataMiner.MediaOps.Live</Product>
 		<Copyright>Copyright © 2025</Copyright>
