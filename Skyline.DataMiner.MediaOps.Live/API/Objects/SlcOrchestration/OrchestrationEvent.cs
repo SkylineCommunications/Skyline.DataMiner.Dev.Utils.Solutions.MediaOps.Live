@@ -12,9 +12,6 @@
 	{
 		private readonly OrchestrationEventInstance _domInstance;
 
-		private readonly WrappedList<NodeConfigurationSection, NodeConfiguration> _wrappedNodeConfigurations;
-		private readonly WrappedList<ConnectionSection, Connection> _wrappedConnections;
-
 		private bool _existsOnDom;
 
 		public OrchestrationEvent() : this(new OrchestrationEventInstance())
@@ -26,16 +23,6 @@
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
 			_existsOnDom = true;
-
-			_wrappedNodeConfigurations = new WrappedList<NodeConfigurationSection, NodeConfiguration>(
-				_domInstance.NodeConfiguration,
-				x => new NodeConfiguration(x),
-				x => x.DomSection);
-
-			_wrappedConnections = new WrappedList<ConnectionSection, Connection>(
-				_domInstance.Connection,
-				x => new Connection(x),
-				x => x.DomSection);
 		}
 
 		internal OrchestrationEvent(DomInstance domInstance) : this(new OrchestrationEventInstance(domInstance))
@@ -135,31 +122,16 @@
 			}
 		}
 
-		public IList<NodeConfiguration> NodeConfigurations
+		public ApiObjectReference<Configuration>? Configuration
 		{
 			get
 			{
-				return _wrappedNodeConfigurations;
+				return _domInstance.Configuration.ConfigurationInfo;
 			}
 
 			set
 			{
-				_wrappedNodeConfigurations.Clear();
-				_wrappedNodeConfigurations.AddRange(value);
-			}
-		}
-
-		public IList<Connection> Connections
-		{
-			get
-			{
-				return _wrappedConnections;
-			}
-
-			set
-			{
-				_wrappedConnections.Clear();
-				_wrappedConnections.AddRange(value);
+				_domInstance.Configuration.ConfigurationInfo = value;
 			}
 		}
 
@@ -190,7 +162,7 @@
 			}
 		}
 
-		public Guid DomInstanceId
+		public Guid Id
 		{
 			get
 			{

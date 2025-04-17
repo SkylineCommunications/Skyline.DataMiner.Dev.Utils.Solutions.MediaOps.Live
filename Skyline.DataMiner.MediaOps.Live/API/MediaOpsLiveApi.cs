@@ -30,6 +30,7 @@
 			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
 
 			OrchestrationEvents = new OrchestrationEventRepository(SlcOrchestrationHelper);
+			Configurations = new ConfigurationRepository(SlcOrchestrationHelper);
 		}
 
 		public MediaOpsLiveApi(IEngine engine) : this(engine.SendSLNetMessages)
@@ -45,6 +46,8 @@
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+
+		internal ConfigurationRepository Configurations { get; }
 
 		public EndpointRepository Endpoints { get; }
 

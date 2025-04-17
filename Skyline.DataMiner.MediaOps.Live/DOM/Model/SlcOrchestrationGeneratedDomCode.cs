@@ -40,6 +40,13 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 
 		public static class Sections
 		{
+			public static class Configuration
+			{
+				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("8686091c-ec37-46b4-b2c7-46965720defb"))
+				{ ModuleId = "(slc)orchestration" };
+				public static FieldDescriptorID ConfigurationInfo { get; } = new FieldDescriptorID(new Guid("4c3f6b83-c169-48f6-bc92-3b648d9f520c"));
+			}
+
 			public static class Connection
 			{
 				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("a99e83c5-e900-4f84-b0b1-5ce96a4ae540"))
@@ -86,6 +93,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		public static class Definitions
 		{
 			public static DomDefinitionId OrchestrationEvent { get; } = new DomDefinitionId(new Guid("f9085d46-a0f8-466a-8b97-bffb60e611d0"))
+			{ ModuleId = "(slc)orchestration" };
+			public static DomDefinitionId Configuration { get; } = new DomDefinitionId(new Guid("b9c839e6-9167-4265-8483-43b192e49f93"))
 			{ ModuleId = "(slc)orchestration" };
 		}
 
@@ -137,19 +146,14 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <summary>
-		/// Gets or sets the Connection section of the DOM Instance.
+		/// Gets or sets the Configuration section of the DOM Instance.
 		/// </summary>
-		public IList<ConnectionSection> Connection { get; private set; }
+		public ConfigurationSection Configuration { get; set; }
 
 		/// <summary>
 		/// Gets or sets the GlobalConfiguration section of the DOM Instance.
 		/// </summary>
 		public GlobalConfigurationSection GlobalConfiguration { get; set; }
-
-		/// <summary>
-		/// Gets or sets the NodeConfiguration section of the DOM Instance.
-		/// </summary>
-		public IList<NodeConfigurationSection> NodeConfiguration { get; private set; }
 
 		/// <summary>
 		/// Gets or sets the OrchestrationEventInfo section of the DOM Instance.
@@ -165,19 +169,14 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
-			foreach (var item in Connection)
+			if (!Configuration.IsEmpty)
 			{
-				domInstance.Sections.Add(item.ToSection());
+				domInstance.Sections.Add(Configuration.ToSection());
 			}
 
 			if (!GlobalConfiguration.IsEmpty)
 			{
 				domInstance.Sections.Add(GlobalConfiguration.ToSection());
-			}
-
-			foreach (var item in NodeConfiguration)
-			{
-				domInstance.Sections.Add(item.ToSection());
 			}
 
 			domInstance.Sections.Add(OrchestrationEventInfo.ToSection());
@@ -201,7 +200,16 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 
 		protected override void InitializeProperties()
 		{
-			Connection = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.Connection.Id)).Select(section => new ConnectionSection(section)).ToList();
+			var _configuration = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.Configuration.Id));
+			if (_configuration is null)
+			{
+				Configuration = new ConfigurationSection();
+			}
+			else
+			{
+				Configuration = new ConfigurationSection(_configuration);
+			}
+
 			var _globalConfiguration = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.GlobalConfiguration.Id));
 			if (_globalConfiguration is null)
 			{
@@ -212,7 +220,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 				GlobalConfiguration = new GlobalConfigurationSection(_globalConfiguration);
 			}
 
-			NodeConfiguration = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.NodeConfiguration.Id)).Select(section => new NodeConfigurationSection(section)).ToList();
 			var _orchestrationEventInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.OrchestrationEventInfo.Id));
 			if (_orchestrationEventInfo is null)
 			{
@@ -222,6 +229,87 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			{
 				OrchestrationEventInfo = new OrchestrationEventInfoSection(_orchestrationEventInfo);
 			}
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a ConfigurationInstance DOM instance.
+	/// The <see cref="ConfigurationInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	public partial class ConfigurationInstance : DomInstanceBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ConfigurationInstance"/> class. Creates an empty <see cref="ConfigurationInstance"/> instance with default settings.
+		/// </summary>
+		public ConfigurationInstance() : base(SlcOrchestrationIds.Definitions.Configuration)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ConfigurationInstance"/> class using the specified <paramref name="domInstance"/> for initializing the object.
+		/// </summary>
+		/// <param name="domInstance">The <see cref="DomInstance"/> object that provides data for initializing the <see cref="ConfigurationInstance"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public ConfigurationInstance(DomInstance domInstance) : base(domInstance)
+		{
+			if (!domInstance.DomDefinitionId.Equals(SlcOrchestrationIds.Definitions.Configuration))
+				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcOrchestrationIds.Definitions.Configuration)}'", nameof(domInstance));
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Gets or sets the Connection section of the DOM Instance.
+		/// </summary>
+		public IList<ConnectionSection> Connection { get; private set; }
+
+		/// <summary>
+		/// Gets or sets the NodeConfiguration section of the DOM Instance.
+		/// </summary>
+		public IList<NodeConfigurationSection> NodeConfiguration { get; private set; }
+
+		public static explicit operator ConfigurationInstance(DomInstance instance)
+		{
+			return new ConfigurationInstance(instance);
+		}
+
+		/// <inheritdoc />
+		protected override DomInstance InternalToInstance()
+		{
+			domInstance.Sections.Clear();
+			foreach (var item in Connection)
+			{
+				domInstance.Sections.Add(item.ToSection());
+			}
+
+			foreach (var item in NodeConfiguration)
+			{
+				domInstance.Sections.Add(item.ToSection());
+			}
+
+			return domInstance;
+		}
+
+		/// <inheritdoc />
+		public override void Save(DomHelper helper)
+		{
+			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
+			var instance = ToInstance();
+			if (exist == null)
+			{
+				domInstance = helper.DomInstances.Create(instance);
+			}
+			else
+			{
+				domInstance = helper.DomInstances.Update(instance);
+			}
+		}
+
+		protected override void InitializeProperties()
+		{
+			Connection = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.Connection.Id)).Select(section => new ConnectionSection(section)).ToList();
+			NodeConfiguration = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.NodeConfiguration.Id)).Select(section => new NodeConfigurationSection(section)).ToList();
 		}
 	}
 }
@@ -242,6 +330,71 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	using Skyline.DataMiner.Net.Apps.Sections.Sections;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Sections;
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a ConfigurationSection section.
+	/// The <see cref="ConfigurationSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	public partial class ConfigurationSection : DomSectionBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ConfigurationSection"/> class. Creates an empty <see cref="ConfigurationSection"/> object with default settings.
+		/// </summary>
+		public ConfigurationSection() : base(SlcOrchestrationIds.Sections.Configuration.Id)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ConfigurationSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// </summary>
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="ConfigurationSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public ConfigurationSection(Section section) : base(section, SlcOrchestrationIds.Sections.Configuration.Id)
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the ConfigurationInfo field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public Guid? ConfigurationInfo
+		{
+			get
+			{
+				var wrapper = section.GetValue<Guid>(SlcOrchestrationIds.Sections.Configuration.ConfigurationInfo);
+				if (wrapper != null)
+				{
+					return (Guid?)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.Configuration.ConfigurationInfo);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.Configuration.ConfigurationInfo, (Guid)value);
+				}
+			}
+		}
+	}
 
 	/// <summary>
 	/// Represents a wrapper class for accessing a ConnectionSection section.
