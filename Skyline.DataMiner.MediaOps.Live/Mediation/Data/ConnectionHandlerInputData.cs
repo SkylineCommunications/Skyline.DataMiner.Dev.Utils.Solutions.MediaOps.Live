@@ -35,6 +35,7 @@
 
 		public enum ScriptAction
 		{
+			GetSupportedElements,
 			GetSubscriptionInfo,
 			HandleParameterUpdate,
 			Connect,

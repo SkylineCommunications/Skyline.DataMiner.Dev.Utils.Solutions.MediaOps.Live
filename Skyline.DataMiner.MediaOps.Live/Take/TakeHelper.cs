@@ -8,6 +8,8 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
@@ -132,15 +134,16 @@
 						// this prevents the connection handler script to already update the connections before we have set the pending source
 						lockAcquired.Task.Wait();
 
+						FindConnectionHandlerScripts(engine, connectionContexts, performanceTracker);
 						ExecuteConnectionHandlerScripts(engine, connectionContexts, performanceTracker);
 
 						// Notify pending connections task runs in parallel with setting up the connections
 						notifyPendingConnectionsTask.Wait();
-
 						WaitUntilAllConnected(engine, connectionWatcher, connectionContexts, performanceTracker);
 					}
 					finally
 					{
+						notifyPendingConnectionsTask.Wait();
 						HandleFailedConnections(connectionContexts, performanceTracker);
 					}
 				}
@@ -175,12 +178,17 @@
 				return;
 			}
 
-			var destinationEndpointIds = failedConnections.Select(x => x.Destination.ID).ToList();
-
-			using (CreateConnectionUpdateLock(destinationEndpointIds, performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				RefreshDomConnections(failedConnections, performanceTracker);
-				ClearPendingSourceOnFailedConnections(failedConnections, performanceTracker);
+				var destinationEndpointIds = failedConnections.Select(x => x.Destination.ID).ToList();
+
+				using (CreateConnectionUpdateLock(destinationEndpointIds, performanceTracker))
+				{
+					// refresh DOM connections
+					GetOrCreateDomConnections(failedConnections, performanceTracker);
+
+					ClearPendingSourceOnFailedConnections(failedConnections, performanceTracker);
+				}
 			}
 		}
 
@@ -265,10 +273,19 @@
 			}
 		}
 
-		private string FindConnectionHandlerScript(IEngine engine, string elementKey)
+		private string FindConnectionHandlerScript(IEngine engine, IDmsElement element)
 		{
-			var mediationElement = engine.FindElement("MediaOps Mediation PoC");
+			var hostingAgentId = element.Host.Id;
 
+			var mediationElement = engine.FindElementsByProtocol(Constants.MediationProtocolName)
+				.FirstOrDefault(e => e.RawInfo.HostingAgentID == hostingAgentId);
+
+			if (mediationElement == null)
+			{
+				throw new InvalidOperationException($"Couldn't find MediaOps mediation element on hosting agent {hostingAgentId}");
+			}
+
+			var elementKey = element.DmsElementId.Value;
 			var script = Convert.ToString(mediationElement.GetParameterByPrimaryKey(1003, elementKey));
 
 			if (String.IsNullOrEmpty(script))
@@ -279,20 +296,46 @@
 			return script;
 		}
 
-		private void ExecuteConnectionHandlerScripts(IEngine engine, ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
+		private void FindConnectionHandlerScripts(IEngine engine, ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
+				var dms = engine.GetDms();
+
 				foreach (var group in connectionContexts.GroupBy(x => x.Destination.Element))
 				{
 					var elementKey = group.Key;
+					var element = dms.GetElement(new DmsElementId(elementKey));
 
-					ExecuteConnectionHandlerScript(engine, elementKey, group, performanceTracker);
+					var script = FindConnectionHandlerScript(engine, element);
+
+					if (String.IsNullOrWhiteSpace(script))
+					{
+						throw new InvalidOperationException($"Couldn't determine connection handler script for element {element}");
+					}
+
+					foreach (var connection in group)
+					{
+						connection.ConnectionHandlerScript = script;
+					}
 				}
 			}
 		}
 
-		private void ExecuteConnectionHandlerScript(IEngine engine, string elementKey, IEnumerable<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
+		private void ExecuteConnectionHandlerScripts(IEngine engine, ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				foreach (var group in connectionContexts.GroupBy(x => x.ConnectionHandlerScript))
+				{
+					var script = group.Key;
+
+					ExecuteConnectionHandlerScript(engine, script, group, performanceTracker);
+				}
+			}
+		}
+
+		private void ExecuteConnectionHandlerScript(IEngine engine, string scriptName, IEnumerable<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -301,11 +344,9 @@
 					Connections = connectionContexts.Select(x => ConnectionInfo.Create(x.Source, x.Destination)).ToArray(),
 				};
 
-				var script = FindConnectionHandlerScript(engine, elementKey);
+				performanceTracker.AddMetadata("Script", scriptName);
 
-				performanceTracker.AddMetadata("Script", script);
-
-				var subScript = engine.PrepareSubScript(script);
+				var subScript = engine.PrepareSubScript(scriptName);
 				subScript.Synchronous = true;
 				subScript.ExtendedErrorInfo = true;
 

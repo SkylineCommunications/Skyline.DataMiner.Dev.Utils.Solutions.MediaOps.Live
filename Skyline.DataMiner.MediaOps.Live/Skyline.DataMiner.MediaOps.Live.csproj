@@ -2,14 +2,11 @@
 	<PropertyGroup>
 		<TargetFramework>net48</TargetFramework>
 		<OutputType>Library</OutputType>
-		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<AssemblyTitle>Skyline.DataMiner.MediaOps.Live</AssemblyTitle>
 		<Product>Skyline.DataMiner.MediaOps.Live</Product>
 		<Copyright>Copyright © 2025</Copyright>
 		<AssemblyName>Skyline.DataMiner.MediaOps.Live</AssemblyName>
 		<RootNamespace>Skyline.DataMiner.MediaOps.Live</RootNamespace>
-		<AssemblyVersion>1.0.0.2</AssemblyVersion>
-		<FileVersion>1.0.0.2</FileVersion>
 
 		<PackageId>Skyline.DataMiner.MediaOps.Live</PackageId>
 		<PackageTags>Skyline;DataMiner</PackageTags>
@@ -25,12 +22,13 @@
 		<Description>Provides an API and helper classes for MediaOps Live.</Description>
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.MediaOps.Live</RepositoryUrl>
-	</PropertyGroup>
 
-	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-		<Version>1.0.1</Version>
-		<PackageVersion>1.0.1</PackageVersion>
-		<AssemblyVersion>1.0.1.1</AssemblyVersion>
+		<Deterministic>false</Deterministic>
+		<VersionPrefix>1.0</VersionPrefix>
+		<VersionSuffix>$([System.DateTime]::Now.ToString(`yyyy.Mdd`))</VersionSuffix>
+		<Version>$(VersionPrefix).$(VersionSuffix)</Version>
+		<FileVersion>$(Version)</FileVersion>
+		<AssemblyVersion>$(VersionPrefix).*</AssemblyVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
