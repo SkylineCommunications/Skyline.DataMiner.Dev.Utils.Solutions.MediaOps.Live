@@ -424,22 +424,6 @@
 			}
 		}
 
-		private void RefreshDomConnections(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				var newConnections = _api.SlcConnectivityManagementHelper.GetConnections(connectionContexts.Select(x => x.DomConnection.ID.Id));
-
-				foreach (var connectionToCreate in connectionContexts)
-				{
-					if (newConnections.TryGetValue(connectionToCreate.DomConnection.ID.Id, out var newConnection))
-					{
-						connectionToCreate.DomConnection = newConnection;
-					}
-				}
-			}
-		}
-
 		private ConnectionWatcher SubscribeDomConnections(PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
