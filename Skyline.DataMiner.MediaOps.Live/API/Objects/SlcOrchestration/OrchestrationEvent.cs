@@ -278,7 +278,7 @@
 						break;
 					}
 
-					EventState = state;
+					_domInstance.OrchestrationEventInfo.EventState = state;
 					return;
 			}
 
