@@ -16,13 +16,11 @@
 
 		public OrchestrationEvent() : this(new OrchestrationEventInstance())
 		{
-			_existsOnDom = false;
 		}
 
 		internal OrchestrationEvent(OrchestrationEventInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
-			_existsOnDom = true;
 		}
 
 		internal OrchestrationEvent(DomInstance domInstance) : this(new OrchestrationEventInstance(domInstance))
@@ -170,22 +168,11 @@
 			}
 		}
 
-		protected bool ExistsOnDom
-		{
-			get
-			{
-				return _existsOnDom;
-			}
-
-			set
-			{
-				_existsOnDom = value;
-			}
-		}
+		protected bool SavedOnDom => _domInstance.ID.Id != Guid.Empty;
 
 		public bool TryCancel()
 		{
-			if (!ExistsOnDom)
+			if (!SavedOnDom)
 			{
 				_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
 				return true;
@@ -208,7 +195,7 @@
 
 		public bool TryConfirm()
 		{
-			if (!ExistsOnDom)
+			if (!SavedOnDom)
 			{
 				_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
 				return true;
@@ -232,7 +219,7 @@
 
 		public bool TrySetToDraft()
 		{
-			if (!ExistsOnDom)
+			if (!SavedOnDom)
 			{
 				_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
 				return true;
@@ -272,7 +259,7 @@
 					break;
 
 				default:
-					if (ExistsOnDom)
+					if (SavedOnDom)
 					{
 						result = false;
 						break;
