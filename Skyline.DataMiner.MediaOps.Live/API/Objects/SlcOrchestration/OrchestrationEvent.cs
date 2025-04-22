@@ -103,9 +103,9 @@
 				return _domInstance.OrchestrationEventInfo.EventState;
 			}
 
-			protected set
+			set
 			{
-				_domInstance.OrchestrationEventInfo.EventState = value;
+				ApplyEventState(value);
 			}
 		}
 
@@ -251,6 +251,40 @@
 				default:
 					// Transition not allowed;
 					return false;
+			}
+		}
+
+		private void ApplyEventState(SlcOrchestrationIds.Enums.EventState? state)
+		{
+			bool result;
+			switch (state)
+			{
+				case SlcOrchestrationIds.Enums.EventState.Cancelled:
+					result = TryCancel();
+					break;
+
+				case SlcOrchestrationIds.Enums.EventState.Confirmed:
+					result = TryConfirm();
+					break;
+
+				case SlcOrchestrationIds.Enums.EventState.Draft:
+					result = TrySetToDraft();
+					break;
+
+				default:
+					if (ExistsOnDom)
+					{
+						result = false;
+						break;
+					}
+
+					EventState = state;
+					return;
+			}
+
+			if (!result)
+			{
+				throw new ArgumentException($"Event state transition from {EventState.ToString()} to {state.ToString()} not allowed.");
 			}
 		}
 
