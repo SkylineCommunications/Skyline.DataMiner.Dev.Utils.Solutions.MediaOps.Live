@@ -16,6 +16,7 @@
 
 		public OrchestrationEvent() : this(new OrchestrationEventInstance())
 		{
+			_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
 		}
 
 		internal OrchestrationEvent(OrchestrationEventInstance domInstance) : base(domInstance)
@@ -168,18 +169,11 @@
 			}
 		}
 
-		protected bool SavedOnDom => _domInstance.ID.Id != Guid.Empty;
-
 		public bool TryCancel()
 		{
-			if (!SavedOnDom)
-			{
-				_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
-				return true;
-			}
-
 			switch (EventState)
 			{
+				case null:
 				case SlcOrchestrationIds.Enums.EventState.Confirmed:
 					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
 					return true;
@@ -195,14 +189,9 @@
 
 		public bool TryConfirm()
 		{
-			if (!SavedOnDom)
-			{
-				_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
-				return true;
-			}
-
 			switch (EventState)
 			{
+				case null:
 				case SlcOrchestrationIds.Enums.EventState.Draft:
 				case SlcOrchestrationIds.Enums.EventState.Cancelled:
 					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
@@ -219,14 +208,9 @@
 
 		public bool TrySetToDraft()
 		{
-			if (!SavedOnDom)
-			{
-				_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
-				return true;
-			}
-
 			switch (EventState)
 			{
+				case null:
 				case SlcOrchestrationIds.Enums.EventState.Confirmed:
 				case SlcOrchestrationIds.Enums.EventState.Cancelled:
 					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
@@ -259,19 +243,13 @@
 					break;
 
 				default:
-					if (SavedOnDom)
-					{
-						result = false;
-						break;
-					}
-
 					_domInstance.OrchestrationEventInfo.EventState = state;
 					return;
 			}
 
 			if (!result)
 			{
-				throw new ArgumentException($"Event state transition from {EventState.ToString()} to {state.ToString()} not allowed.");
+				throw new ArgumentException($"Event state {state.ToString()} can not be applied.");
 			}
 		}
 
