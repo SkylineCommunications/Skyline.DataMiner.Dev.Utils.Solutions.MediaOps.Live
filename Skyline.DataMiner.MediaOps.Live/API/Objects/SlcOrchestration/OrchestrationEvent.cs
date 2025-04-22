@@ -187,14 +187,14 @@
 		{
 			if (!ExistsOnDom)
 			{
-				EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
+				_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
 				return true;
 			}
 
 			switch (EventState)
 			{
 				case SlcOrchestrationIds.Enums.EventState.Confirmed:
-					EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
+					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
 					return true;
 
 				case SlcOrchestrationIds.Enums.EventState.Cancelled:
@@ -210,7 +210,7 @@
 		{
 			if (!ExistsOnDom)
 			{
-				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
+				_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
 				return true;
 			}
 
@@ -218,7 +218,7 @@
 			{
 				case SlcOrchestrationIds.Enums.EventState.Draft:
 				case SlcOrchestrationIds.Enums.EventState.Cancelled:
-					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
+					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
 					return true;
 
 				case SlcOrchestrationIds.Enums.EventState.Confirmed:
@@ -234,7 +234,7 @@
 		{
 			if (!ExistsOnDom)
 			{
-				EventState = SlcOrchestrationIds.Enums.EventState.Draft;
+				_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
 				return true;
 			}
 
@@ -242,7 +242,7 @@
 			{
 				case SlcOrchestrationIds.Enums.EventState.Confirmed:
 				case SlcOrchestrationIds.Enums.EventState.Cancelled:
-					EventState = SlcOrchestrationIds.Enums.EventState.Draft;
+					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
 					return true;
 
 				case SlcOrchestrationIds.Enums.EventState.Draft:
