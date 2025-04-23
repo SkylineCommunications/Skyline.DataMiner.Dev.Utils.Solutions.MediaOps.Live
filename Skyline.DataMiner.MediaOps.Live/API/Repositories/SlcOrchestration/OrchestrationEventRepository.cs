@@ -18,15 +18,18 @@
 
 	public class OrchestrationEventRepository : Repository<OrchestrationEvent>
 	{
+		private readonly ConfigurationRepository _configurationHelper;
+
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper) : base(helper)
 		{
+			_configurationHelper = new ConfigurationRepository(helper);
 		}
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
 
-		public IEnumerable<OrchestrationEvent> GetByJobReference(string jobReference)
+		public IEnumerable<OrchestrationEvent> GetEventsByJobReference(string jobReference)
 		{
-			if (string.IsNullOrWhiteSpace(jobReference))
+			if (String.IsNullOrWhiteSpace(jobReference))
 			{
 				throw new ArgumentException($"'{nameof(jobReference)}' cannot be null or whitespace.", nameof(jobReference));
 			}
@@ -34,6 +37,65 @@
 			var filter = DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference).Equal(jobReference);
 
 			return Read(filter);
+		}
+
+		public IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(string jobReference)
+		{
+			var events = GetEventsByJobReference(jobReference);
+			return GetEventsAsEventConfigurations(events).Values;
+		}
+
+		public OrchestrationEvent GetEventById(Guid domInstanceId)
+		{
+			var filter = DomInstanceExposers.Id.Equal(domInstanceId);
+
+			var result = Read(filter);
+
+			IEnumerable<OrchestrationEvent> orchestrationEvents = result.ToList();
+
+			return !orchestrationEvents.Any() ? null : orchestrationEvents.First();
+		}
+
+		public OrchestrationEventConfiguration GetEventConfigurationbyId(Guid domInstanceId)
+		{
+			var orchestrationEvent = GetEventById(domInstanceId);
+
+			if (orchestrationEvent == null)
+			{
+				return null;
+			}
+
+			return GetEventsAsEventConfigurations(orchestrationEvent);
+		}
+
+		public OrchestrationEventConfiguration GetEventsAsEventConfigurations(OrchestrationEvent orchestrationEvent)
+		{
+			if (orchestrationEvent == null)
+			{
+				throw new ArgumentNullException(nameof(orchestrationEvent));
+			}
+
+			return GetEventsAsEventConfigurations(new List<OrchestrationEvent> { orchestrationEvent }).Values.FirstOrDefault();
+		}
+
+		public Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
+		{
+			if (events == null)
+			{
+				throw new ArgumentNullException(nameof(events));
+			}
+
+			IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
+			List<Guid> instancesToRetrieve = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID).ToList();
+
+			IDictionary<Guid, Configuration> configurationMapping = GetConfigurationInstances(instancesToRetrieve);
+
+			return orchestrationEvents
+				.ToDictionary(
+					x => x.ID,
+					x => x.ToOrchestrationEventConfiguration(configurationMapping.TryGetValue(x.ConfigurationReference.GetValueOrDefault(), out Configuration configuration)
+						? configuration.DomInstance
+						: new DomInstance()));
 		}
 
 		public IEnumerable<OrchestrationEvent> CreateOrUpdateOrchestrationEvents(IEnumerable<OrchestrationEvent> events)
@@ -51,7 +113,7 @@
 
 		public void DeleteOrchestrationEvent(Guid domInstanceId)
 		{
-			Delete(GetByDomInstanceId(domInstanceId));
+			Delete(GetEventById(domInstanceId));
 		}
 
 		public void DeleteOrchestrationEvent(OrchestrationEvent orchestrationEvent)
@@ -62,63 +124,6 @@
 		public void DeleteOrchestrationEvents(IEnumerable<OrchestrationEvent> orchestrationEvents)
 		{
 			Delete(orchestrationEvents);
-		}
-
-		public OrchestrationEvent GetByDomInstanceId(Guid domInstanceId)
-		{
-			var filter = DomInstanceExposers.Id.Equal(domInstanceId);
-
-			var result = Read(filter);
-
-			if (result == null || !result.Any())
-			{
-				return null;
-			}
-
-			return result.First();
-		}
-
-		public bool TrySetToDraftEventByDomInstanceId(Guid domInstanceId)
-		{
-
-			return TryUpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Draft);
-		}
-
-		public bool TryConfirmEventByDomInstanceId(Guid domInstanceId)
-		{
-
-			return TryUpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Confirmed);
-		}
-
-		public bool TryCancelEventByDomInstanceId(Guid domInstanceId)
-		{
-			return TryUpdateState(domInstanceId, SlcOrchestrationIds.Enums.EventState.Cancelled);
-		}
-
-		internal bool TryUpdateState(Guid domInstanceId, SlcOrchestrationIds.Enums.EventState state)
-		{
-			OrchestrationEvent orchestrationEvent = GetByDomInstanceId(domInstanceId);
-
-			if (orchestrationEvent == null)
-			{
-				throw new NotSupportedException(
-					$"Event with DOM instance id {nameof(domInstanceId)} could not be found");
-			}
-
-			switch (state)
-			{
-				case SlcOrchestrationIds.Enums.EventState.Cancelled:
-					return orchestrationEvent.TryCancel();
-
-				case SlcOrchestrationIds.Enums.EventState.Confirmed:
-					return orchestrationEvent.TryConfirm();
-
-				case SlcOrchestrationIds.Enums.EventState.Draft:
-					return orchestrationEvent.TrySetToDraft();
-
-				default:
-					return false;
-			}
 		}
 
 		protected override OrchestrationEvent CreateInstance(DomInstance domInstance)
@@ -174,6 +179,11 @@
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
+		}
+
+		private IDictionary<Guid, Configuration> GetConfigurationInstances(IEnumerable<Guid> instanceGuids)
+		{
+			return _configurationHelper.Read(instanceGuids);
 		}
 	}
 }

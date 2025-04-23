@@ -12,8 +12,6 @@
 	{
 		private readonly OrchestrationEventInstance _domInstance;
 
-		private bool _existsOnDom;
-
 		public OrchestrationEvent() : this(new OrchestrationEventInstance())
 		{
 			_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
@@ -121,7 +119,7 @@
 			}
 		}
 
-		public ApiObjectReference<Configuration>? Configuration
+		internal ApiObjectReference<Configuration>? ConfigurationReference
 		{
 			get
 			{
@@ -134,7 +132,7 @@
 			}
 		}
 
-		public string GlobalOrchestrationScript
+		internal string GlobalOrchestrationScript
 		{
 			get
 			{
@@ -147,7 +145,7 @@
 			}
 		}
 
-		public IList<OrchestrationScriptArgument> GlobalOrchestrationScriptArguments
+		internal IList<OrchestrationScriptArgument> GlobalOrchestrationScriptArguments
 		{
 			get
 			{
@@ -161,12 +159,14 @@
 			}
 		}
 
-		public Guid Id
+		internal OrchestrationEventConfiguration ToOrchestrationEventConfiguration(DomInstance configurationDomInstance)
 		{
-			get
-			{
-				return _domInstance.ID.Id;
-			}
+			return new OrchestrationEventConfiguration(_domInstance, new ConfigurationInstance(configurationDomInstance));
+		}
+
+		internal OrchestrationEventConfiguration ToOrchestrationEventConfiguration(Configuration configuration)
+		{
+			return new OrchestrationEventConfiguration(_domInstance, new ConfigurationInstance(configuration.DomInstance));
 		}
 
 		public bool TryCancel()

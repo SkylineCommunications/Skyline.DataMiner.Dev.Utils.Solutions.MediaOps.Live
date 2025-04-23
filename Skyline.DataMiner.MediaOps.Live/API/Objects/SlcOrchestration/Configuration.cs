@@ -75,5 +75,10 @@
 				return _domInstance.ID.Id;
 			}
 		}
+
+		internal void Save(DomHelper helper)
+		{
+			_domInstance.Save(helper);
+		}
 	}
 }

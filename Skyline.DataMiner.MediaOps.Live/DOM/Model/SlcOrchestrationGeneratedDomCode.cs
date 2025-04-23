@@ -146,7 +146,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <summary>
-		/// Gets or sets the Configuration section of the DOM Instance.
+		/// Gets or sets the ConfigurationReference section of the DOM Instance.
 		/// </summary>
 		public ConfigurationSection Configuration { get; set; }
 
