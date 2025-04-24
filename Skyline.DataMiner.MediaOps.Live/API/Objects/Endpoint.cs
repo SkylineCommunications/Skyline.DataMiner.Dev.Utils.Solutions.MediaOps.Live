@@ -105,6 +105,21 @@
 			}
 		}
 
+		public TransportTypeTsoip TransportTypeTSoIP
+		{
+			get
+			{
+				return _domInstance.TransportTypeTsoip != null
+					? new TransportTypeTsoip(_domInstance.TransportTypeTsoip)
+					: null;
+			}
+
+			set
+			{
+				_domInstance.TransportTypeTsoip = value?.DomSection;
+			}
+		}
+
 		public ApiObjectReference<TransportType>? TransportType
 		{
 			get
