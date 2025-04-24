@@ -4,30 +4,46 @@
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 
+	/// <summary>
+	/// Information about an orchestration event.
+	/// The event configuration is referenced but can not be viewed or edited from this object.
+	/// To update the event configuration, convert to <see cref="OrchestrationEventConfiguration"/> object.
+	/// </summary>
 	public class OrchestrationEvent : ApiObject<OrchestrationEvent>
 	{
 		private readonly OrchestrationEventInstance _domInstance;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class.
+		/// </summary>
 		public OrchestrationEvent() : this(new OrchestrationEventInstance())
 		{
 			_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class, inheriting the data from the given <see cref="OrchestrationEventInstance"/> object.
+		/// </summary>
 		internal OrchestrationEvent(OrchestrationEventInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
 		}
-
+		
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class, inheriting the data from the given <see cref="DomInstance"/> object.
+		/// </summary>
 		internal OrchestrationEvent(DomInstance domInstance) : this(new OrchestrationEventInstance(domInstance))
 		{
 		}
 
 		internal static DomDefinitionId DomDefinition => SlcOrchestrationIds.Definitions.OrchestrationEvent;
 
+		/// <summary>
+		/// Gets or sets the name of the event.
+		/// </summary>
 		public string Name
 		{
 			get
@@ -41,6 +57,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the type of the event.
+		/// </summary>
 		public SlcOrchestrationIds.Enums.EventType? EventType
 		{
 			get
@@ -54,6 +73,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Gets the failure information, in case of a failed event.
+		/// </summary>
 		public string FailureInfo
 		{
 			get
@@ -61,12 +83,15 @@
 				return _domInstance.OrchestrationEventInfo.FailureInfo;
 			}
 
-			set
+			internal set
 			{
 				_domInstance.OrchestrationEventInfo.FailureInfo = value;
 			}
 		}
 
+		/// <summary>
+		/// Gets the reference to the DataMiner reservation corresponding to this event.
+		/// </summary>
 		public Guid? ReservationInstance
 		{
 			get
@@ -74,12 +99,15 @@
 				return _domInstance.OrchestrationEventInfo.ReservationInstance;
 			}
 
-			set
+			internal set
 			{
 				_domInstance.OrchestrationEventInfo.ReservationInstance = value;
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the string reference to the job that corresponds to this event.
+		/// </summary>
 		public string JobReference
 		{
 			get
@@ -93,6 +121,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the state of the event.
+		/// </summary>
 		public SlcOrchestrationIds.Enums.EventState? EventState
 		{
 			get
@@ -106,6 +137,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the time at which the event will execute.
+		/// </summary>
 		public DateTime? EventTime
 		{
 			get
@@ -169,6 +203,10 @@
 			return new OrchestrationEventConfiguration(_domInstance, new ConfigurationInstance(configuration.DomInstance));
 		}
 
+		/// <summary>
+		/// Apply the <see cref="SlcOrchestrationIds.Enums.EventState.Cancelled"/> state to the booking. This is only allowed if the current state is Confirmed.
+		/// </summary>
+		/// <returns>True if the new state could be applied, false if the state was blocked.</returns>
 		public bool TryCancel()
 		{
 			switch (EventState)
@@ -187,6 +225,10 @@
 			}
 		}
 
+		/// <summary>
+		/// Apply the <see cref="SlcOrchestrationIds.Enums.EventState.Confirmed"/> state to the booking. This is only allowed if the current state is Cancelled or Draft.
+		/// </summary>
+		/// <returns>True if the new state could be applied, false if the state was blocked.</returns>
 		public bool TryConfirm()
 		{
 			switch (EventState)
@@ -206,6 +248,10 @@
 			}
 		}
 
+		/// <summary>
+		/// Apply the <see cref="SlcOrchestrationIds.Enums.EventState.Draft"/> state to the booking. This is only allowed if the current state is Confirmed or Cancelled.
+		/// </summary>
+		/// <returns>True if the new state could be applied, false if the state was blocked.</returns>
 		public bool TrySetToDraft()
 		{
 			switch (EventState)
@@ -243,7 +289,7 @@
 					break;
 
 				default:
-					_domInstance.OrchestrationEventInfo.EventState = state;
+					// Other states not supported for now.
 					return;
 			}
 
@@ -251,11 +297,6 @@
 			{
 				throw new ArgumentException($"Event state {state.ToString()} can not be applied.");
 			}
-		}
-
-		internal void Save(DomHelper helper)
-		{
-			_domInstance.Save(helper);
 		}
 	}
 }

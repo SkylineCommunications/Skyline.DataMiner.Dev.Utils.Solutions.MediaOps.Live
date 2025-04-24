@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -68,12 +69,12 @@
 			}
 		}
 
-		public Guid Id
+		internal bool IsEmpty()
 		{
-			get
-			{
-				return _domInstance.ID.Id;
-			}
+			bool emptyNodes = NodeConfigurations == null || !NodeConfigurations.Any();
+			bool emptyConnections = Connections == null || !Connections.Any();
+
+			return emptyConnections && emptyNodes;
 		}
 
 		internal void Save(DomHelper helper)

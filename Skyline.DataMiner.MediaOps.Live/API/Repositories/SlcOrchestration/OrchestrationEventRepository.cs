@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using System.Runtime.Remoting.Messaging;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -27,6 +26,12 @@
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
 
+		/// <summary>
+		/// Get all <see cref="OrchestrationEvent"/> objects that contains the given job reference value.
+		/// </summary>
+		/// <param name="jobReference">Job reference value to filter.</param>
+		/// <returns>A collection of <see cref="OrchestrationEvent"/> objects that contains the given job reference value.</returns>
+		/// <exception cref="ArgumentException"><param name="jobReference"> can not be null or whitespace.</param></exception>
 		public IEnumerable<OrchestrationEvent> GetEventsByJobReference(string jobReference)
 		{
 			if (String.IsNullOrWhiteSpace(jobReference))
@@ -39,15 +44,37 @@
 			return Read(filter);
 		}
 
+		/// <summary>
+		/// Get all <see cref="OrchestrationEventConfiguration"/> objects that contains the given job reference value.
+		/// </summary>
+		/// <param name="jobReference">Job reference value to filter.</param>
+		/// <returns>A collection of <see cref="OrchestrationEventConfiguration"/> objects that contains the given job reference value.</returns>
+		/// <exception cref="ArgumentException"><param name="jobReference"> can not be null or whitespace.</param></exception>
 		public IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(string jobReference)
 		{
+			if (String.IsNullOrWhiteSpace(jobReference))
+			{
+				throw new ArgumentException($"'{nameof(jobReference)}' cannot be null or whitespace.", nameof(jobReference));
+			}
+
 			var events = GetEventsByJobReference(jobReference);
 			return GetEventsAsEventConfigurations(events).Values;
 		}
 
-		public OrchestrationEvent GetEventById(Guid domInstanceId)
+		/// <summary>
+		/// Get the <see cref="OrchestrationEvent"/> object that matches the given event ID value.
+		/// </summary>
+		/// <param name="eventId">The ID of the instance to lookup.</param>
+		/// <returns>A <see cref="OrchestrationEvent"/> object that matches the given event ID value, or null if no match is found.</returns>
+		/// <exception cref="ArgumentException"><param name="eventId"> can not be an empty <see cref="Guid"/>>.</param></exception>
+		public OrchestrationEvent GetEventById(Guid eventId)
 		{
-			var filter = DomInstanceExposers.Id.Equal(domInstanceId);
+			if (eventId == Guid.Empty)
+			{
+				throw new ArgumentException($"'{nameof(eventId)}' cannot be empty.", nameof(eventId));
+			}
+
+			var filter = DomInstanceExposers.Id.Equal(eventId);
 
 			var result = Read(filter);
 
@@ -56,9 +83,20 @@
 			return !orchestrationEvents.Any() ? null : orchestrationEvents.First();
 		}
 
-		public OrchestrationEventConfiguration GetEventConfigurationbyId(Guid domInstanceId)
+		/// <summary>
+		/// Get the <see cref="OrchestrationEventConfiguration"/> object that matches the given event ID value.
+		/// </summary>
+		/// <param name="eventId">The ID of the instance to lookup.</param>
+		/// <returns>A <see cref="OrchestrationEventConfiguration"/> object that matches the given event ID value, or null if no match is found.</returns>
+		/// <exception cref="ArgumentException"><param name="eventId"> can not be an empty <see cref="Guid"/>>.</param></exception>
+		public OrchestrationEventConfiguration GetEventConfigurationById(Guid eventId)
 		{
-			var orchestrationEvent = GetEventById(domInstanceId);
+			if (eventId == Guid.Empty)
+			{
+				throw new ArgumentException($"'{nameof(eventId)}' cannot be empty.", nameof(eventId));
+			}
+
+			var orchestrationEvent = GetEventById(eventId);
 
 			if (orchestrationEvent == null)
 			{
@@ -68,16 +106,28 @@
 			return GetEventsAsEventConfigurations(orchestrationEvent);
 		}
 
-		public OrchestrationEventConfiguration GetEventsAsEventConfigurations(OrchestrationEvent orchestrationEvent)
+		/// <summary>
+		/// Convert a <see cref="OrchestrationEvent"/> object to a <see cref="OrchestrationEventConfiguration"/> object by retrieving configuration data from DataMiner.
+		/// </summary>
+		/// <param name="event">The <see cref="OrchestrationEvent"/> object to convert.</param>
+		/// <returns>The <see cref="OrchestrationEventConfiguration"/> object that corresponds to the given input, or null if the operation failed.</returns>
+		/// <exception cref="ArgumentNullException"><param name="event">can not be null</param></exception>
+		public OrchestrationEventConfiguration GetEventsAsEventConfigurations(OrchestrationEvent @event)
 		{
-			if (orchestrationEvent == null)
+			if (@event == null)
 			{
-				throw new ArgumentNullException(nameof(orchestrationEvent));
+				throw new ArgumentNullException(nameof(@event));
 			}
 
-			return GetEventsAsEventConfigurations(new List<OrchestrationEvent> { orchestrationEvent }).Values.FirstOrDefault();
+			return GetEventsAsEventConfigurations(new List<OrchestrationEvent> { @event }).Values.FirstOrDefault();
 		}
 
+		/// <summary>
+		/// Convert a collection of <see cref="OrchestrationEvent"/> objects to <see cref="OrchestrationEventConfiguration"/> objects by retrieving configuration data from DataMiner.
+		/// </summary>
+		/// <param name="events">The <see cref="OrchestrationEvent"/> objects to convert.</param>
+		/// <returns>A mapping of each event ID to the converted <see cref="OrchestrationEventConfiguration"/> object.</returns>
+		/// <exception cref="ArgumentNullException"><param name="events">can not be null</param></exception>
 		public Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
 		{
 			if (events == null)
@@ -98,32 +148,94 @@
 						: new DomInstance()));
 		}
 
-		public IEnumerable<OrchestrationEvent> CreateOrUpdateOrchestrationEvents(IEnumerable<OrchestrationEvent> events)
+		/// <summary>
+		/// Saves a list of new or updated <see cref="OrchestrationEvent"/> objects to the DataMiner System.
+		/// </summary>
+		/// <param name="events">A list of configured or updated event configurations.</param>
+		/// <returns>Returns a list of all successfully saved event configurations.</returns>
+		public IEnumerable<OrchestrationEvent> CreateOrUpdateEvents(IEnumerable<OrchestrationEvent> events)
 		{
 			var results = CreateOrUpdateWithResult(events);
 
 			return results.SuccessfulItems.Select(item => new OrchestrationEvent(item));
 		}
 
-		public OrchestrationEvent CreateOrUpdateOrchestrationEvent(OrchestrationEvent orchestrationEvent)
+		/// <summary>
+		/// Saves a list of new or updated <see cref="OrchestrationEventConfiguration"/> objects to the DataMiner System.
+		/// </summary>
+		/// <param name="events">A list of configured or updated event configurations.</param>
+		/// <returns>Returns a list of all successfully saved <see cref="OrchestrationEventConfiguration"/> objects.</returns>
+		public IEnumerable<OrchestrationEventConfiguration> CreateOrUpdateEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
 		{
-			orchestrationEvent.Save(Helper);
-			return orchestrationEvent;
+			List<Configuration> configsToDelete = new List<Configuration>();
+			List<Configuration> configsToWrite = new List<Configuration>();
+
+			IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations = events.ToList();
+			foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+			{
+				if (orchestrationEventConfiguration.Configuration.IsEmpty())
+				{
+					orchestrationEventConfiguration.ConfigurationReference = null;
+					configsToDelete.Add(orchestrationEventConfiguration.Configuration);
+				}
+
+				orchestrationEventConfiguration.ConfigurationReference = orchestrationEventConfiguration.Configuration.ID;
+				configsToWrite.Add(orchestrationEventConfiguration.Configuration);
+			}
+
+			_configurationHelper.Delete(configsToDelete);
+			_configurationHelper.CreateOrUpdate(configsToWrite);
+
+			var results = CreateOrUpdateWithResult(orchestrationEventConfigurations);
+
+			return orchestrationEventConfigurations.Where(config => results.SuccessfulIds.Contains(config.DomInstance.ID));
 		}
 
-		public void DeleteOrchestrationEvent(Guid domInstanceId)
+		/// <summary>
+		/// Saves a new or updated event to the DataMiner System.
+		/// </summary>
+		/// <param name="event">The configured or updated event.</param>
+		/// <returns>Returns the <see cref="OrchestrationEvent"/> object as saved on DataMiner, or null if the event was not correctly saved.</returns>
+		public OrchestrationEvent CreateOrUpdateEvent(OrchestrationEvent @event)
 		{
-			Delete(GetEventById(domInstanceId));
+			var result = CreateOrUpdateEvents(new List<OrchestrationEvent> { @event });
+
+			return result.FirstOrDefault();
 		}
 
-		public void DeleteOrchestrationEvent(OrchestrationEvent orchestrationEvent)
+		/// <summary>
+		/// Delete an event with the given event ID from the DataMiner system.
+		/// </summary>
+		/// <param name="eventId">ID of the event that will be deleted.</param>
+		public void DeleteEvent(Guid eventId)
 		{
+			OrchestrationEvent orchestrationEvent = GetEventById(eventId);
+
 			Delete(orchestrationEvent);
 		}
 
-		public void DeleteOrchestrationEvents(IEnumerable<OrchestrationEvent> orchestrationEvents)
+		/// <summary>
+		/// Delete a <see cref="OrchestrationEvent"/> object from the DataMiner system.
+		/// </summary>
+		/// <param name="event">The event to be deleted.</param>
+		public void DeleteEvent(OrchestrationEvent @event)
 		{
-			Delete(orchestrationEvents);
+			if (@event.ConfigurationReference.HasValue)
+			{
+				_configurationHelper.Delete(GetConfigurationInstances(new List<Guid> { @event.ConfigurationReference.Value.ID }).Values);
+			}
+
+			Delete(@event);
+		}
+
+
+		/// <summary>
+		/// Delete a collection of <see cref="OrchestrationEvent"/> objects from the DataMiner system.
+		/// </summary>
+		/// <param name="events">The events to be deleted.</param>
+		public void DeleteEvents(IEnumerable<OrchestrationEvent> events)
+		{
+			Delete(events);
 		}
 
 		protected override OrchestrationEvent CreateInstance(DomInstance domInstance)

@@ -1,13 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 {
-	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 
-	using Net.Messages.SLDataGateway;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 
@@ -15,16 +9,26 @@
 	{
 		private Configuration configuration;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationEventConfiguration"/> class.
+		/// </summary>
 		public OrchestrationEventConfiguration() : this(new OrchestrationEventInstance(), new ConfigurationInstance())
 		{
 		}
-
+		
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationEventConfiguration"/> class, inheriting the data from the given <see cref="OrchestrationEventInstance"/> and <see cref="ConfigurationInstance"/> object.
+		/// </summary>
 		internal OrchestrationEventConfiguration(OrchestrationEventInstance domInstance, ConfigurationInstance configurationInstance) : base(domInstance)
 		{
 			configuration = new Configuration(configurationInstance);
+			ConfigurationReference = configurationInstance.ID.Id;
 		}
 
-		internal OrchestrationEventConfiguration(DomInstance domInstance, DomInstance configurationInstance) : this(new OrchestrationEventInstance(domInstance), new ConfigurationInstance(configurationInstance))
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationEventConfiguration"/> class, inheriting the data from the given <see cref="DomInstance"/> objects.
+		/// </summary>
+		internal OrchestrationEventConfiguration(DomInstance eventInstance, DomInstance configurationInstance) : this(new OrchestrationEventInstance(eventInstance), new ConfigurationInstance(configurationInstance))
 		{
 		}
 
@@ -32,6 +36,9 @@
 
 		public Configuration Configuration => configuration;
 
+		/// <summary>
+		/// Gets or sets the script that will execute during the global orchestration step of the event.
+		/// </summary>
 		public new string GlobalOrchestrationScript
 		{
 			get
@@ -45,6 +52,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets a list of input arguments for the script in case a global orchestration script is set to execute.
+		/// </summary>
 		public new IList<OrchestrationScriptArgument> GlobalOrchestrationScriptArguments
 		{
 			get
@@ -71,12 +81,6 @@
 			}
 
 			configuration = new Configuration(configurationDomInstance);
-		}
-
-		internal void Save(DomHelper helper)
-		{
-			configuration.Save(helper);
-			base.Save(helper);
 		}
 	}
 }
