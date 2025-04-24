@@ -98,7 +98,12 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 
 		public static bool operator ==(DomInstanceBase left, DomInstanceBase right)
 		{
-			return EqualityComparer<DomInstanceBase>.Default.Equals(left, right);
+			if (left is null)
+			{
+				return right is null;
+			}
+
+			return left.Equals(right);
 		}
 
 		public static bool operator !=(DomInstanceBase left, DomInstanceBase right)
@@ -141,8 +146,40 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 		/// <summary>
 		/// Return the DOM Instance object with all the fields filled in according to this object.
 		/// </summary>
-		public abstract DomInstance ToInstance();
+		public DomInstance ToInstance()
+		{
+			BeforeToInstance();
+			var instance = InternalToInstance();
+			AfterToInstance();
+			return instance;
+		}
+
+		/// <summary>
+		/// Optional method that runs before the internal ToInstance method runs.
+		/// </summary>
+		protected virtual void BeforeToInstance()
+		{
+		}
+
+		/// <summary>
+		/// Return the DOM Instance object with all the fields filled in according to this object.
+		/// </summary>
+		protected abstract DomInstance InternalToInstance();
+		/// <summary>
+		/// Optional method that runs after the internal ToInstance method runs.
+		/// </summary>
+		protected virtual void AfterToInstance()
+		{
+		}
+
 		protected abstract void InitializeProperties();
+		/// <summary>
+		/// Optional method that runs after the object is constructed and the initialize has ran.
+		/// </summary>
+		protected virtual void AfterLoad()
+		{
+		}
+
 		public override int GetHashCode()
 		{
 			return this.ID.GetHashCode();
@@ -155,7 +192,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 
 		public bool Equals(DomInstanceBase other)
 		{
-			if (other == null)
+			if (other is null)
 			{
 				return false;
 			}
@@ -178,7 +215,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Linq;
 
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
@@ -192,6 +228,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 			if (id == null)
 				throw new ArgumentNullException("id");
 			this.section = new Section(id);
+			AfterLoad();
 		}
 
 		protected DomSectionBase(SectionDefinition definition)
@@ -199,13 +236,25 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 			if (definition == null)
 				throw new ArgumentNullException("definition");
 			this.section = new Section(definition);
+			AfterLoad();
 		}
 
-		protected DomSectionBase(Section section)
+		protected DomSectionBase(Section section, SectionDefinitionID id)
 		{
 			if (section == null)
 				throw new ArgumentNullException("section");
+			if (section.SectionDefinitionID == null)
+			{
+				throw new ArgumentException("The given section doesn't have a valid SectionDefinitionId.", nameof(section));
+			}
+
+			if (!section.SectionDefinitionID.Equals(id))
+			{
+				throw new ArgumentException($"The given section, is not of type '{nameof(id)}'", nameof(section));
+			}
+
 			this.section = section;
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -256,7 +305,12 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 
 		public static bool operator ==(DomSectionBase left, DomSectionBase right)
 		{
-			return EqualityComparer<DomSectionBase>.Default.Equals(left, right);
+			if (left is null)
+			{
+				return right is null;
+			}
+
+			return left.Equals(right);
 		}
 
 		public static bool operator !=(DomSectionBase left, DomSectionBase right)
@@ -269,9 +323,38 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 			return $"{this.section.SectionDefinitionID}";
 		}
 
+		/// <summary>
+		/// Optional method that runs at the end of the constructor.
+		/// </summary>
+		protected virtual void AfterLoad()
+		{
+		}
+
 		public virtual Section ToSection()
 		{
+			BeforeToSection();
+			var section = InternalToSection();
+			AfterToSection();
+			return section;
+		}
+
+		/// <summary>
+		/// Optional method that runs before the internal ToSection method runs.
+		/// </summary>
+		protected virtual void BeforeToSection()
+		{
+		}
+
+		protected virtual Section InternalToSection()
+		{
 			return this.section;
+		}
+
+		/// <summary>
+		/// Optional method that runs after the internal ToSection method runs.
+		/// </summary>
+		protected virtual void AfterToSection()
+		{
 		}
 
 		public override int GetHashCode()
@@ -286,7 +369,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 
 		public bool Equals(DomSectionBase other)
 		{
-			if (other == null)
+			if (other is null)
 			{
 				return false;
 			}
@@ -309,6 +392,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 {
 	using System;
+	using System.ComponentModel;
 
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
@@ -377,6 +461,15 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				public static FieldDescriptorID TransportType { get; } = new FieldDescriptorID(new Guid("64cc245e-5a0a-4479-9766-a93a7c090255"));
 			}
 
+			public static class TransportTypeTsoip
+			{
+				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("6d130f78-b4f4-4ee1-974d-27997a57502e"))
+				{ ModuleId = "(slc)connectivity_management" };
+				public static FieldDescriptorID SourceIP { get; } = new FieldDescriptorID(new Guid("a77067fb-c978-4c19-862c-871015609518"));
+				public static FieldDescriptorID MulticastIP { get; } = new FieldDescriptorID(new Guid("17fd8b18-bce5-4dd5-9892-ace39e8e01b0"));
+				public static FieldDescriptorID Port { get; } = new FieldDescriptorID(new Guid("4608640f-fda1-4bf9-98c2-2e7d752ad6cf"));
+			}
+
 			public static class TransportTypeInfo
 			{
 				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("57558fef-283c-4b4d-84f8-f411a26e546c"))
@@ -442,6 +535,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public LevelInstance() : base(SlcConnectivityManagementIds.Definitions.Level)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -453,6 +547,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.Level))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.Level)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -466,7 +561,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(LevelInfo.ToSection());
@@ -490,7 +585,15 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 
 		protected override void InitializeProperties()
 		{
-			LevelInfo = new LevelInfoSection(domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.LevelInfo.Id)));
+			var _levelInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.LevelInfo.Id));
+			if (_levelInfo is null)
+			{
+				LevelInfo = new LevelInfoSection();
+			}
+			else
+			{
+				LevelInfo = new LevelInfoSection(_levelInfo);
+			}
 		}
 	}
 
@@ -506,6 +609,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public ConnectionInstance() : base(SlcConnectivityManagementIds.Definitions.Connection)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -517,6 +621,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.Connection))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.Connection)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -530,7 +635,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(ConnectionInfo.ToSection());
@@ -554,7 +659,15 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 
 		protected override void InitializeProperties()
 		{
-			ConnectionInfo = new ConnectionInfoSection(domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.ConnectionInfo.Id)));
+			var _connectionInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.ConnectionInfo.Id));
+			if (_connectionInfo is null)
+			{
+				ConnectionInfo = new ConnectionInfoSection();
+			}
+			else
+			{
+				ConnectionInfo = new ConnectionInfoSection(_connectionInfo);
+			}
 		}
 	}
 
@@ -570,6 +683,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public CategoryInstance() : base(SlcConnectivityManagementIds.Definitions.Category)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -581,6 +695,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.Category))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.Category)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -594,7 +709,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(CategoryInfo.ToSection());
@@ -618,7 +733,15 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 
 		protected override void InitializeProperties()
 		{
-			CategoryInfo = new CategoryInfoSection(domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.CategoryInfo.Id)));
+			var _categoryInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.CategoryInfo.Id));
+			if (_categoryInfo is null)
+			{
+				CategoryInfo = new CategoryInfoSection();
+			}
+			else
+			{
+				CategoryInfo = new CategoryInfoSection(_categoryInfo);
+			}
 		}
 	}
 
@@ -634,6 +757,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public EndpointInstance() : base(SlcConnectivityManagementIds.Definitions.Endpoint)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -645,6 +769,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.Endpoint))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.Endpoint)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -652,16 +777,26 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// </summary>
 		public EndpointInfoSection EndpointInfo { get; set; }
 
+		/// <summary>
+		/// Gets or sets the TransportTypeTsoip section of the DOM Instance.
+		/// </summary>
+		public TransportTypeTsoipSection TransportTypeTsoip { get; set; }
+
 		public static explicit operator EndpointInstance(DomInstance instance)
 		{
 			return new EndpointInstance(instance);
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(EndpointInfo.ToSection());
+			if (!TransportTypeTsoip.IsEmpty)
+			{
+				domInstance.Sections.Add(TransportTypeTsoip.ToSection());
+			}
+
 			return domInstance;
 		}
 
@@ -682,7 +817,25 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 
 		protected override void InitializeProperties()
 		{
-			EndpointInfo = new EndpointInfoSection(domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.EndpointInfo.Id)));
+			var _endpointInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.EndpointInfo.Id));
+			if (_endpointInfo is null)
+			{
+				EndpointInfo = new EndpointInfoSection();
+			}
+			else
+			{
+				EndpointInfo = new EndpointInfoSection(_endpointInfo);
+			}
+
+			var _transportTypeTsoip = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id));
+			if (_transportTypeTsoip is null)
+			{
+				TransportTypeTsoip = new TransportTypeTsoipSection();
+			}
+			else
+			{
+				TransportTypeTsoip = new TransportTypeTsoipSection(_transportTypeTsoip);
+			}
 		}
 	}
 
@@ -698,6 +851,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public VirtualSignalGroupInstance() : base(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -709,6 +863,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -727,7 +882,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			foreach (var item in VirtualSignalGroupLevels)
@@ -757,7 +912,15 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		protected override void InitializeProperties()
 		{
 			VirtualSignalGroupLevels = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Id)).Select(section => new VirtualSignalGroupLevelsSection(section)).ToList();
-			VirtualSignalGroupInfo = new VirtualSignalGroupInfoSection(domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Id)));
+			var _virtualSignalGroupInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Id));
+			if (_virtualSignalGroupInfo is null)
+			{
+				VirtualSignalGroupInfo = new VirtualSignalGroupInfoSection();
+			}
+			else
+			{
+				VirtualSignalGroupInfo = new VirtualSignalGroupInfoSection(_virtualSignalGroupInfo);
+			}
 		}
 	}
 
@@ -773,6 +936,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public TransportTypeInstance() : base(SlcConnectivityManagementIds.Definitions.TransportType)
 		{
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -784,6 +948,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.TransportType))
 				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.TransportType)}'", nameof(domInstance));
 			InitializeProperties();
+			AfterLoad();
 		}
 
 		/// <summary>
@@ -797,7 +962,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override DomInstance ToInstance()
+		protected override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(TransportTypeInfo.ToSection());
@@ -821,7 +986,15 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 
 		protected override void InitializeProperties()
 		{
-			TransportTypeInfo = new TransportTypeInfoSection(domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Id)));
+			var _transportTypeInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Id));
+			if (_transportTypeInfo is null)
+			{
+				TransportTypeInfo = new TransportTypeInfoSection();
+			}
+			else
+			{
+				TransportTypeInfo = new TransportTypeInfoSection(_transportTypeInfo);
+			}
 		}
 	}
 }
@@ -860,19 +1033,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// Initializes a new instance of the <see cref="CategoryInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
 		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="CategoryInfoSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public CategoryInfoSection(Section section) : base(SlcConnectivityManagementIds.Sections.CategoryInfo.Id)
+		public CategoryInfoSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.CategoryInfo.Id)
 		{
-			if (section == null)
-			{
-				return;
-			}
-
-			if (!section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.CategoryInfo.Id))
-			{
-				throw new ArgumentException($"The given section, is not of type '{nameof(SlcConnectivityManagementIds.Sections.CategoryInfo.Id)}'", nameof(section));
-			}
-
-			this.section = section;
 		}
 
 		/// <summary>
@@ -962,7 +1124,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.CategoryInfo.Name) == null)
 				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -987,19 +1149,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// Initializes a new instance of the <see cref="VirtualSignalGroupLevelsSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
 		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="VirtualSignalGroupLevelsSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public VirtualSignalGroupLevelsSection(Section section) : base(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Id)
+		public VirtualSignalGroupLevelsSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Id)
 		{
-			if (section == null)
-			{
-				return;
-			}
-
-			if (!section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Id))
-			{
-				throw new ArgumentException($"The given section, is not of type '{nameof(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Id)}'", nameof(section));
-			}
-
-			this.section = section;
 		}
 
 		/// <summary>
@@ -1089,7 +1240,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint) == null)
 				throw new InvalidOperationException("'Endpoint' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -1116,19 +1267,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// Initializes a new instance of the <see cref="ConnectionInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
 		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="ConnectionInfoSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public ConnectionInfoSection(Section section) : base(SlcConnectivityManagementIds.Sections.ConnectionInfo.Id)
+		public ConnectionInfoSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.ConnectionInfo.Id)
 		{
-			if (section == null)
-			{
-				return;
-			}
-
-			if (!section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.ConnectionInfo.Id))
-			{
-				throw new ArgumentException($"The given section, is not of type '{nameof(SlcConnectivityManagementIds.Sections.ConnectionInfo.Id)}'", nameof(section));
-			}
-
-			this.section = section;
 		}
 
 		/// <summary>
@@ -1304,7 +1444,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination) == null)
 				throw new InvalidOperationException("'Destination' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -1332,20 +1472,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// Initializes a new instance of the <see cref="VirtualSignalGroupInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
 		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="VirtualSignalGroupInfoSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public VirtualSignalGroupInfoSection(Section section) : base(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Id)
+		public VirtualSignalGroupInfoSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Id)
 		{
-			if (section == null)
-			{
-				Categories = new List<Guid>();
-				return;
-			}
-
-			if (!section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Id))
-			{
-				throw new ArgumentException($"The given section, is not of type '{nameof(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Id)}'", nameof(section));
-			}
-
-			this.section = section;
 			var categories = section.GetListValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Categories);
 			Categories = categories != null ? categories.Values : new List<Guid>();
 		}
@@ -1497,7 +1625,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public IList<Guid> Categories { get; private set; }
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Name) == null)
 				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -1529,20 +1657,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// Initializes a new instance of the <see cref="EndpointInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
 		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="EndpointInfoSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public EndpointInfoSection(Section section) : base(SlcConnectivityManagementIds.Sections.EndpointInfo.Id)
+		public EndpointInfoSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.EndpointInfo.Id)
 		{
-			if (section == null)
-			{
-				TransportMetadata = new List<Guid>();
-				return;
-			}
-
-			if (!section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.EndpointInfo.Id))
-			{
-				throw new ArgumentException($"The given section, is not of type '{nameof(SlcConnectivityManagementIds.Sections.EndpointInfo.Id)}'", nameof(section));
-			}
-
-			this.section = section;
 			var transportMetadata = section.GetListValue<Guid>(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportMetadata);
 			TransportMetadata = transportMetadata != null ? transportMetadata.Values : new List<Guid>();
 		}
@@ -1866,7 +1982,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.EndpointInfo.Name) == null)
 				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -1876,6 +1992,165 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				section.AddOrUpdateListValue<Guid>(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportMetadata, TransportMetadata.ToList());
 			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType) == null)
 				throw new InvalidOperationException("'TransportType' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			return section;
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a TransportTypeTsoipSection section.
+	/// The <see cref="TransportTypeTsoipSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	public partial class TransportTypeTsoipSection : DomSectionBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TransportTypeTsoipSection"/> class. Creates an empty <see cref="TransportTypeTsoipSection"/> object with default settings.
+		/// </summary>
+		public TransportTypeTsoipSection() : base(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TransportTypeTsoipSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// </summary>
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="TransportTypeTsoipSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public TransportTypeTsoipSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id)
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the SourceIP field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String SourceIP
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the MulticastIP field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String MulticastIP
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the Port field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public Int64? Port
+		{
+			get
+			{
+				var wrapper = section.GetValue<Int64>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port);
+				if (wrapper != null)
+				{
+					return (Int64?)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port, (Int64)value);
+				}
+			}
+		}
+
+		/// <inheritdoc />
+		protected override Section InternalToSection()
+		{
+			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP) == null)
+				throw new InvalidOperationException("'MulticastIP' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
 		}
 	}
@@ -1897,19 +2172,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// Initializes a new instance of the <see cref="TransportTypeInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
 		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="TransportTypeInfoSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public TransportTypeInfoSection(Section section) : base(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Id)
+		public TransportTypeInfoSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.TransportTypeInfo.Id)
 		{
-			if (section == null)
-			{
-				return;
-			}
-
-			if (!section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Id))
-			{
-				throw new ArgumentException($"The given section, is not of type '{nameof(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Id)}'", nameof(section));
-			}
-
-			this.section = section;
 		}
 
 		/// <summary>
@@ -1956,7 +2220,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name) == null)
 				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
@@ -1981,19 +2245,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// Initializes a new instance of the <see cref="LevelInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
 		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="LevelInfoSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public LevelInfoSection(Section section) : base(SlcConnectivityManagementIds.Sections.LevelInfo.Id)
+		public LevelInfoSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.LevelInfo.Id)
 		{
-			if (section == null)
-			{
-				return;
-			}
-
-			if (!section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.LevelInfo.Id))
-			{
-				throw new ArgumentException($"The given section, is not of type '{nameof(SlcConnectivityManagementIds.Sections.LevelInfo.Id)}'", nameof(section));
-			}
-
-			this.section = section;
 		}
 
 		/// <summary>
@@ -2126,7 +2379,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override Section ToSection()
+		protected override Section InternalToSection()
 		{
 			if (section.GetValue<Int64>(SlcConnectivityManagementIds.Sections.LevelInfo.Number) == null)
 				throw new InvalidOperationException("'Number' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
