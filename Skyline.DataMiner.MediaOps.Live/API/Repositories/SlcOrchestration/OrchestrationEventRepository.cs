@@ -235,7 +235,11 @@
 		/// <param name="events">The events to be deleted.</param>
 		public void DeleteEvents(IEnumerable<OrchestrationEvent> events)
 		{
-			Delete(events);
+			IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
+			var configurationsToDelete = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID);
+			_configurationHelper.Delete(GetConfigurationInstances(configurationsToDelete).Values);
+
+			Delete(orchestrationEvents);
 		}
 
 		protected override OrchestrationEvent CreateInstance(DomInstance domInstance)
