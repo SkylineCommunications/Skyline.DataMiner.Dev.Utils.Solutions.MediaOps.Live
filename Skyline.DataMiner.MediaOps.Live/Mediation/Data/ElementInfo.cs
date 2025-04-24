@@ -2,10 +2,6 @@
 {
 	public class ElementInfo
 	{
-		private ElementInfo()
-		{
-		}
-
 		public int AgentId { get; set; }
 
 		public int HostingAgentId { get; set; }
