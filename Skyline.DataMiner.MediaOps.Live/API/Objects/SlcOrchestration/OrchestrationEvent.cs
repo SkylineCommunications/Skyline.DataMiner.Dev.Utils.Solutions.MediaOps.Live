@@ -22,7 +22,6 @@
 		public OrchestrationEvent() : this(new OrchestrationEventInstance())
 		{
 			_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
-			ReservationInstance = Guid.Empty;
 		}
 
 		/// <summary>
@@ -31,8 +30,13 @@
 		internal OrchestrationEvent(OrchestrationEventInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
+
+			if (_domInstance.OrchestrationEventInfo.ReservationInstance == null)
+			{
+				_domInstance.OrchestrationEventInfo.ReservationInstance = Guid.Empty;
+			}
 		}
-		
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class, inheriting the data from the given <see cref="DomInstance"/> object.
 		/// </summary>
