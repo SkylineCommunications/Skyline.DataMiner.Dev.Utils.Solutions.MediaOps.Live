@@ -22,6 +22,7 @@
 		public OrchestrationEvent() : this(new OrchestrationEventInstance())
 		{
 			_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
+			ReservationInstance = Guid.Empty;
 		}
 
 		/// <summary>
