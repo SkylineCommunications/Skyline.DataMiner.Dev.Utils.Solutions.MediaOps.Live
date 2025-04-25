@@ -29,8 +29,7 @@
 			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
 			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
 
-			OrchestrationEvents = new OrchestrationEventRepository(SlcOrchestrationHelper);
-			Configurations = new ConfigurationRepository(SlcOrchestrationHelper);
+			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper);
 		}
 
 		public MediaOpsLiveApi(IEngine engine) : this(engine.SendSLNetMessages)
@@ -47,8 +46,6 @@
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
 
-		internal ConfigurationRepository Configurations { get; }
-
 		public EndpointRepository Endpoints { get; }
 
 		public VirtualSignalGroupRepository VirtualSignalGroups { get; }
@@ -61,7 +58,7 @@
 
 		public ConnectionRepository Connections { get; }
 
-		public OrchestrationEventRepository OrchestrationEvents { get; }
+		public OrchestrationEventRepository Orchestration { get; }
 
 		public bool IsInstalled()
 		{

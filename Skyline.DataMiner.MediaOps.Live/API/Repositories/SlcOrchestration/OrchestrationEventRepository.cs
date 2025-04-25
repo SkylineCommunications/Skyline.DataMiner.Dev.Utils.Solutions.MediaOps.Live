@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcOrchestration
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
 
@@ -26,17 +27,57 @@
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
 
+		public OrchestrationJob GetOrchestrationJob(Guid jobReference)
+		{
+			IEnumerable<OrchestrationEvent> events = GetEventsByJobReference(jobReference);
+
+			return new OrchestrationJob(jobReference) { OrchestrationEvents = events };
+		}
+
+		public OrchestrationJobConfiguration GetOrchestrationJobConfiguration(Guid jobReference)
+		{
+			IEnumerable<OrchestrationEventConfiguration> events = GetEventConfigurationsByJobReference(jobReference);
+
+			return new OrchestrationJobConfiguration(jobReference) { OrchestrationEvents = events };
+		}
+
+		public OrchestrationJobConfiguration CreateOrUpdateOrchestrationJobConfiguration(OrchestrationJobConfiguration job)
+		{
+			DeleteEvents(job.RemovedIds);
+
+			job.ValidateEventsBeforeSaving();
+			var successes = CreateOrUpdateEventConfigurations(job.OrchestrationEvents);
+			job.OrchestrationEvents = successes;
+			return job;
+		}
+
+		public OrchestrationJob CreateOrUpdateOrchestrationJob(OrchestrationJob job)
+		{
+			DeleteEvents(job.RemovedIds);
+
+			job.ValidateEventsBeforeSaving();
+			var successes = CreateOrUpdateEvents(job.OrchestrationEvents);
+			job.OrchestrationEvents = successes;
+			return job;
+		}
+
+		internal OrchestrationJobConfiguration GetEventsAsEventConfigurations(OrchestrationJob job)
+		{
+			var convertedEvents = GetEventsAsEventConfigurations(job.OrchestrationEvents);
+			return new OrchestrationJobConfiguration(job.JobId, convertedEvents.Values);
+		}
+
 		/// <summary>
 		/// Get all <see cref="OrchestrationEvent"/> objects that contains the given job reference value.
 		/// </summary>
 		/// <param name="jobReference">Job reference value to filter.</param>
 		/// <returns>A collection of <see cref="OrchestrationEvent"/> objects that contains the given job reference value.</returns>
 		/// <exception cref="ArgumentException"><param name="jobReference"> can not be null or whitespace.</param></exception>
-		public IEnumerable<OrchestrationEvent> GetEventsByJobReference(string jobReference)
+		internal IEnumerable<OrchestrationEvent> GetEventsByJobReference(Guid jobReference)
 		{
-			if (String.IsNullOrWhiteSpace(jobReference))
+			if (jobReference == Guid.Empty)
 			{
-				throw new ArgumentException($"'{nameof(jobReference)}' cannot be null or whitespace.", nameof(jobReference));
+				throw new ArgumentException($"'{nameof(jobReference)}' cannot be an empty Guid.", nameof(jobReference));
 			}
 
 			var filter = DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference).Equal(jobReference);
@@ -50,11 +91,11 @@
 		/// <param name="jobReference">Job reference value to filter.</param>
 		/// <returns>A collection of <see cref="OrchestrationEventConfiguration"/> objects that contains the given job reference value.</returns>
 		/// <exception cref="ArgumentException"><param name="jobReference"> can not be null or whitespace.</param></exception>
-		public IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(string jobReference)
+		internal IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(Guid jobReference)
 		{
-			if (String.IsNullOrWhiteSpace(jobReference))
+			if (jobReference == Guid.Empty)
 			{
-				throw new ArgumentException($"'{nameof(jobReference)}' cannot be null or whitespace.", nameof(jobReference));
+				throw new ArgumentException($"'{nameof(jobReference)}' cannot be an empty Guid.", nameof(jobReference));
 			}
 
 			var events = GetEventsByJobReference(jobReference);
@@ -67,7 +108,7 @@
 		/// <param name="eventId">The ID of the instance to lookup.</param>
 		/// <returns>A <see cref="OrchestrationEvent"/> object that matches the given event ID value, or null if no match is found.</returns>
 		/// <exception cref="ArgumentException"><param name="eventId"> can not be an empty <see cref="Guid"/>>.</param></exception>
-		public OrchestrationEvent GetEventById(Guid eventId)
+		internal OrchestrationEvent GetEventById(Guid eventId)
 		{
 			if (eventId == Guid.Empty)
 			{
@@ -89,7 +130,7 @@
 		/// <param name="eventId">The ID of the instance to lookup.</param>
 		/// <returns>A <see cref="OrchestrationEventConfiguration"/> object that matches the given event ID value, or null if no match is found.</returns>
 		/// <exception cref="ArgumentException"><param name="eventId"> can not be an empty <see cref="Guid"/>>.</param></exception>
-		public OrchestrationEventConfiguration GetEventConfigurationById(Guid eventId)
+		internal OrchestrationEventConfiguration GetEventConfigurationById(Guid eventId)
 		{
 			if (eventId == Guid.Empty)
 			{
@@ -112,7 +153,7 @@
 		/// <param name="event">The <see cref="OrchestrationEvent"/> object to convert.</param>
 		/// <returns>The <see cref="OrchestrationEventConfiguration"/> object that corresponds to the given input, or null if the operation failed.</returns>
 		/// <exception cref="ArgumentNullException"><param name="event">can not be null</param></exception>
-		public OrchestrationEventConfiguration GetEventsAsEventConfigurations(OrchestrationEvent @event)
+		internal OrchestrationEventConfiguration GetEventsAsEventConfigurations(OrchestrationEvent @event)
 		{
 			if (@event == null)
 			{
@@ -128,7 +169,7 @@
 		/// <param name="events">The <see cref="OrchestrationEvent"/> objects to convert.</param>
 		/// <returns>A mapping of each event ID to the converted <see cref="OrchestrationEventConfiguration"/> object.</returns>
 		/// <exception cref="ArgumentNullException"><param name="events">can not be null</param></exception>
-		public Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
+		internal Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
 		{
 			if (events == null)
 			{
@@ -153,7 +194,7 @@
 		/// </summary>
 		/// <param name="events">A list of configured or updated event configurations.</param>
 		/// <returns>Returns a list of all successfully saved event configurations.</returns>
-		public IEnumerable<OrchestrationEvent> CreateOrUpdateEvents(IEnumerable<OrchestrationEvent> events)
+		internal IEnumerable<OrchestrationEvent> CreateOrUpdateEvents(IEnumerable<OrchestrationEvent> events)
 		{
 			var results = CreateOrUpdateWithResult(events);
 
@@ -165,7 +206,7 @@
 		/// </summary>
 		/// <param name="events">A list of configured or updated event configurations.</param>
 		/// <returns>Returns a list of all successfully saved <see cref="OrchestrationEventConfiguration"/> objects.</returns>
-		public IEnumerable<OrchestrationEventConfiguration> CreateOrUpdateEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
+		internal IEnumerable<OrchestrationEventConfiguration> CreateOrUpdateEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
 		{
 			List<Configuration> configsToDelete = new List<Configuration>();
 			List<Configuration> configsToWrite = new List<Configuration>();
@@ -196,7 +237,7 @@
 		/// </summary>
 		/// <param name="event">The configured or updated event.</param>
 		/// <returns>Returns the <see cref="OrchestrationEvent"/> object as saved on DataMiner, or null if the event was not correctly saved.</returns>
-		public OrchestrationEvent CreateOrUpdateEvent(OrchestrationEvent @event)
+		internal OrchestrationEvent CreateOrUpdateEvent(OrchestrationEvent @event)
 		{
 			var result = CreateOrUpdateEvents(new List<OrchestrationEvent> { @event });
 
@@ -207,18 +248,18 @@
 		/// Delete an event with the given event ID from the DataMiner system.
 		/// </summary>
 		/// <param name="eventId">ID of the event that will be deleted.</param>
-		public void DeleteEvent(Guid eventId)
+		internal void DeleteEvent(Guid eventId)
 		{
 			OrchestrationEvent orchestrationEvent = GetEventById(eventId);
 
-			Delete(orchestrationEvent);
+			DeleteEvent(orchestrationEvent);
 		}
 
 		/// <summary>
 		/// Delete a <see cref="OrchestrationEvent"/> object from the DataMiner system.
 		/// </summary>
 		/// <param name="event">The event to be deleted.</param>
-		public void DeleteEvent(OrchestrationEvent @event)
+		internal void DeleteEvent(OrchestrationEvent @event)
 		{
 			if (@event.ConfigurationReference.HasValue)
 			{
@@ -232,8 +273,20 @@
 		/// <summary>
 		/// Delete a collection of <see cref="OrchestrationEvent"/> objects from the DataMiner system.
 		/// </summary>
+		/// <param name="eventIds">The events to be deleted.</param>
+		internal void DeleteEvents(IEnumerable<Guid> eventIds)
+		{
+			var orchestrationEvents = Read(eventIds).Values;
+
+			DeleteEvents(orchestrationEvents);
+		}
+
+
+		/// <summary>
+		/// Delete a collection of <see cref="OrchestrationEvent"/> objects from the DataMiner system.
+		/// </summary>
 		/// <param name="events">The events to be deleted.</param>
-		public void DeleteEvents(IEnumerable<OrchestrationEvent> events)
+		internal void DeleteEvents(IEnumerable<OrchestrationEvent> events)
 		{
 			IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
 			var configurationsToDelete = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID);

@@ -65,11 +65,11 @@
 		/// <summary>
 		/// Gets or sets the type of the event.
 		/// </summary>
-		public SlcOrchestrationIds.Enums.EventType? EventType
+		public SlcOrchestrationIds.Enums.EventType EventType
 		{
 			get
 			{
-				return _domInstance.OrchestrationEventInfo.EventType;
+				return _domInstance.OrchestrationEventInfo.EventType ?? SlcOrchestrationIds.Enums.EventType.Other;
 			}
 
 			set
@@ -111,18 +111,18 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the string reference to the job that corresponds to this event.
+		/// Gets the string reference to the job that corresponds to this event.
 		/// </summary>
-		public string JobReference
+		public Guid JobReference
 		{
 			get
 			{
-				return _domInstance.OrchestrationEventInfo.JobReference;
+				return new Guid(_domInstance.OrchestrationEventInfo.JobReference);
 			}
 
-			set
+			internal set
 			{
-				_domInstance.OrchestrationEventInfo.JobReference = value;
+				_domInstance.OrchestrationEventInfo.JobReference = value.ToString();
 			}
 		}
 
