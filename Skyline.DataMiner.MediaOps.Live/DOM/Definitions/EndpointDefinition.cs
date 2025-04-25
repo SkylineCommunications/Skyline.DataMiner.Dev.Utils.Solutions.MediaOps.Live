@@ -20,6 +20,7 @@
 			SectionDefinitionLinks =
 			{
 				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.EndpointInfo.Id),
+				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id) { IsOptional = true },
 			},
 			ModuleSettingsOverrides = new ModuleSettingsOverrides
 			{
