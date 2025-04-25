@@ -6,7 +6,7 @@ erDiagram
         string Name
         Category ParentCategory
     }
-    "Connection" {
+	"Connection" {
         Endpoint Destination
         bool IsConnected
         Endpoint ConnectedSource
@@ -41,13 +41,20 @@ erDiagram
         Endpoint Endpoint
         Level Level
     }
+    "Transport Type.TSoIP" {
+        string SourceIP
+        string MulticastIP
+        int Port
+    }
 
-    "Category" ||--o| "Category" : ""
     "Virtual Signal Group" ||--|{ "Levels" : "multi section"
     "Virtual Signal Group" }|--|o "Category" : "multi section"
-    "Endpoint" }|--|| "Connection" : ""
     "Endpoint" ||--|| "Transport Type" : ""
+    "Endpoint" |o--o| "Transport Type.TSoIP" : "section"
+    "Connection" ||--|{ "Endpoint" : ""
     "Levels" ||--|| "Endpoint" : ""
     "Levels" ||--|| "Level" : ""
     "Level" ||--|| "Transport Type" : ""
+    "Category" ||--o| "Category" : ""
+
 ```
