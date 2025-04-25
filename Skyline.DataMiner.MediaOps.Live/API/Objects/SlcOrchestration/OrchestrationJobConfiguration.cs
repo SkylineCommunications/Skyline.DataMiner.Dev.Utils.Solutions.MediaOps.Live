@@ -10,11 +10,11 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 	{
 		private IEnumerable<OrchestrationEventConfiguration> _orchestrationEventConfigurations;
 		
-		internal OrchestrationJobConfiguration(Guid jobId) : this (jobId, new List<OrchestrationEventConfiguration>())
+		public OrchestrationJobConfiguration(Guid jobId) : this (jobId, new List<OrchestrationEventConfiguration>())
 		{
 		}
 
-		internal OrchestrationJobConfiguration(Guid jobId, IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations) : base (jobId, orchestrationEventConfigurations)
+		public OrchestrationJobConfiguration(Guid jobId, IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations) : base (jobId, orchestrationEventConfigurations)
 		{
 			_orchestrationEventConfigurations = orchestrationEventConfigurations;
 		}

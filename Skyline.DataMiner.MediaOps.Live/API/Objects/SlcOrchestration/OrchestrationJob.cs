@@ -34,13 +34,13 @@
 		};
 
 		private IEnumerable<OrchestrationEvent> _orchestrationEvents;
-		private IEnumerable<Guid> _initialEventIds;
+		private readonly IEnumerable<Guid> _initialEventIds;
 
-		internal OrchestrationJob(Guid jobId) : this (jobId, new List<OrchestrationEvent>())
+		public OrchestrationJob(Guid jobId) : this (jobId, new List<OrchestrationEvent>())
 		{
 		}
 
-		internal OrchestrationJob(Guid jobId, IEnumerable<OrchestrationEvent> orchestrationEvents)
+		public OrchestrationJob(Guid jobId, IEnumerable<OrchestrationEvent> orchestrationEvents)
 		{
 			JobId = jobId;
 
