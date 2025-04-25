@@ -61,6 +61,11 @@
 			return job;
 		}
 
+		public void DeleteJob(OrchestrationJob job)
+		{
+			DeleteEvents(job.OrchestrationEvents);
+		}
+
 		internal OrchestrationJobConfiguration GetEventsAsEventConfigurations(OrchestrationJob job)
 		{
 			var convertedEvents = GetEventsAsEventConfigurations(job.OrchestrationEvents);
