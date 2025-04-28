@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Data
 {
 	using System;
 
@@ -6,7 +6,7 @@
 	{
 		public Multicast(string ip, int port, string source)
 		{
-			if (String.IsNullOrWhiteSpace(ip))
+			if (string.IsNullOrWhiteSpace(ip))
 			{
 				throw new ArgumentException($"'{nameof(ip)}' cannot be null or whitespace.", nameof(ip));
 			}
