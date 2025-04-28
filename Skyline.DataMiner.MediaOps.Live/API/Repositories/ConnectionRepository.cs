@@ -30,9 +30,14 @@
 				throw new ArgumentNullException(nameof(destinationEndpointIds));
 			}
 
+			FilterElement<DomInstance> CreateFilter(Guid destinationId) =>
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Connection.Id),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination).Equal(destinationId));
+
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					destinationEndpointIds,
-					x => ConnectionExposers.Destination.UncheckedEqual(x),
+					x => CreateFilter(x),
 					x => Read(x))
 				.SafeToDictionary(x => (Guid)x.Destination);
 		}
