@@ -78,6 +78,12 @@
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.ControlIdentifier), comparer, (string)value);
 				case nameof(Endpoint.TransportType):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType), comparer, ApiObjectReference<TransportType>.Convert(value));
+				case nameof(Endpoint.TransportTypeTSoIP.MulticastIP):
+					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP), comparer, (string)value);
+				case nameof(Endpoint.TransportTypeTSoIP.Port):
+					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port), comparer, (int)value);
+				case nameof(Endpoint.TransportTypeTSoIP.SourceIP):
+					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP), comparer, (string)value);
 			}
 
 			return base.CreateFilter(fieldName, comparer, value);
@@ -101,6 +107,12 @@
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.ControlIdentifier), sortOrder, naturalSort);
 				case nameof(Endpoint.TransportType):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType), sortOrder, naturalSort);
+				case nameof(Endpoint.TransportTypeTSoIP.MulticastIP):
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP), sortOrder, naturalSort);
+				case nameof(Endpoint.TransportTypeTSoIP.Port):
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port), sortOrder, naturalSort);
+				case nameof(Endpoint.TransportTypeTSoIP.SourceIP):
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP), sortOrder, naturalSort);
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
