@@ -117,7 +117,7 @@
 		{
 			get
 			{
-				return new Guid(_domInstance.OrchestrationEventInfo.JobReference);
+				return _domInstance.OrchestrationEventInfo.JobReference == null ? Guid.Empty : new Guid(_domInstance.OrchestrationEventInfo.JobReference);
 			}
 
 			internal set
