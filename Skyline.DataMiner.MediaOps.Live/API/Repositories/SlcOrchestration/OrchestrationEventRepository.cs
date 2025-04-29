@@ -90,6 +90,15 @@
 			DeleteEvents(job.OrchestrationEvents);
 		}
 
+		/// <summary>
+		/// Deletes all events and configurations for the given job from the DataMiner system.
+		/// </summary>
+		/// <param name="job">Job to remove.</param>
+		public void DeleteJob(OrchestrationJobConfiguration job)
+		{
+			DeleteEvents(job.OrchestrationEvents);
+		}
+
 		internal OrchestrationJobConfiguration GetEventsAsEventConfigurations(OrchestrationJob job)
 		{
 			var convertedEvents = GetEventsAsEventConfigurations(job.OrchestrationEvents);
