@@ -8,13 +8,13 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 {
 	public class OrchestrationJobConfiguration : OrchestrationJob
 	{
-		private IEnumerable<OrchestrationEventConfiguration> _orchestrationEventConfigurations;
+		private IList<OrchestrationEventConfiguration> _orchestrationEventConfigurations;
 		
 		public OrchestrationJobConfiguration(Guid jobId) : this (jobId, new List<OrchestrationEventConfiguration>())
 		{
 		}
 
-		public OrchestrationJobConfiguration(Guid jobId, IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations) : base (jobId, orchestrationEventConfigurations)
+		public OrchestrationJobConfiguration(Guid jobId, IList<OrchestrationEventConfiguration> orchestrationEventConfigurations) : base (jobId, orchestrationEventConfigurations)
 		{
 			_orchestrationEventConfigurations = orchestrationEventConfigurations;
 		}
@@ -32,7 +32,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 			ValidateConfigurationsBeforeSaving(eventConfigurations);
 		}
 
-		public new IEnumerable<OrchestrationEventConfiguration> OrchestrationEvents
+		public new IList<OrchestrationEventConfiguration> OrchestrationEvents
 		{
 			get
 			{

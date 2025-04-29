@@ -27,6 +27,11 @@
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
 
+		/// <summary>
+		/// Creates a <see cref="OrchestrationJob"/> object with all events for the given job reference.
+		/// </summary>
+		/// <param name="jobReference">The ID of the job to retrieve.</param>
+		/// <returns>A <see cref="OrchestrationJob"/> object with all events found for the given job reference.</returns>
 		public OrchestrationJob GetOrchestrationJob(Guid jobReference)
 		{
 			IEnumerable<OrchestrationEvent> events = GetEventsByJobReference(jobReference);
@@ -34,23 +39,39 @@
 			return new OrchestrationJob(jobReference) { OrchestrationEvents = events.ToList() };
 		}
 
+
+		/// <summary>
+		/// Creates a <see cref="OrchestrationJobConfiguration"/> object with all event configurations for the given job reference.
+		/// </summary>
+		/// <param name="jobReference">The ID of the job to retrieve.</param>
+		/// <returns>A <see cref="OrchestrationJobConfiguration"/> object with all event configurations found for the given job reference.</returns>
 		public OrchestrationJobConfiguration GetOrchestrationJobConfiguration(Guid jobReference)
 		{
 			IEnumerable<OrchestrationEventConfiguration> events = GetEventConfigurationsByJobReference(jobReference);
 
-			return new OrchestrationJobConfiguration(jobReference) { OrchestrationEvents = events };
+			return new OrchestrationJobConfiguration(jobReference) { OrchestrationEvents = events.ToList() };
 		}
 
+		/// <summary>
+		/// Saves the job configuration to the DataMiner system.
+		/// </summary>
+		/// <param name="job">The <see cref="OrchestrationJobConfiguration"/> object to save.</param>
+		/// <returns>The saved <see cref="OrchestrationJobConfiguration"/>.</returns>
 		public OrchestrationJobConfiguration CreateOrUpdateOrchestrationJobConfiguration(OrchestrationJobConfiguration job)
 		{
 			DeleteEvents(job.RemovedIds);
 
 			job.ValidateEventsBeforeSaving();
 			var successes = CreateOrUpdateEventConfigurations(job.OrchestrationEvents);
-			job.OrchestrationEvents = successes;
+			job.OrchestrationEvents = successes.ToList();
 			return job;
 		}
 
+		/// <summary>
+		/// Saves the job to the DataMiner system.
+		/// </summary>
+		/// <param name="job">The <see cref="OrchestrationJob"/> object to save.</param>
+		/// <returns>The saved <see cref="OrchestrationJob"/>.</returns>
 		public OrchestrationJob CreateOrUpdateOrchestrationJob(OrchestrationJob job)
 		{
 			DeleteEvents(job.RemovedIds);
@@ -61,6 +82,10 @@
 			return job;
 		}
 
+		/// <summary>
+		/// Deletes all events and configurations for the given job from the DataMiner system.
+		/// </summary>
+		/// <param name="job">Job to remove.</param>
 		public void DeleteJob(OrchestrationJob job)
 		{
 			DeleteEvents(job.OrchestrationEvents);
@@ -69,7 +94,7 @@
 		internal OrchestrationJobConfiguration GetEventsAsEventConfigurations(OrchestrationJob job)
 		{
 			var convertedEvents = GetEventsAsEventConfigurations(job.OrchestrationEvents);
-			return new OrchestrationJobConfiguration(job.JobId, convertedEvents.Values);
+			return new OrchestrationJobConfiguration(job.JobId, convertedEvents.Values.ToList());
 		}
 
 		/// <summary>
