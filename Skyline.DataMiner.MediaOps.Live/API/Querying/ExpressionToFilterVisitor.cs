@@ -67,8 +67,8 @@
 				case ExpressionType.GreaterThan:
 				case ExpressionType.GreaterThanOrEqual:
 					{
-						if (ExpressionTools.TryGetMember(left, out var memberInfo) && ExpressionTools.TryGetValue(right, out var value) ||
-							ExpressionTools.TryGetMember(right, out memberInfo) && ExpressionTools.TryGetValue(left, out value))
+						if ((ExpressionTools.TryGetMember(left, out var memberInfo) && ExpressionTools.TryGetValue(right, out var value)) ||
+							(ExpressionTools.TryGetMember(right, out memberInfo) && ExpressionTools.TryGetValue(left, out value)))
 						{
 							var comparer = ExpressionTypeToComparer(node.NodeType);
 							var filter = _repository.CreateFilter(memberInfo.Name, comparer, value);

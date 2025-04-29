@@ -88,7 +88,7 @@
 
 				if (count + subfilterCount > limit && batch.Count > 0)
 				{
-					yield return new ORFilterElement<TFilter>(batch.ToArray());
+					yield return CombineOrFilters(batch);
 
 					batch.Clear();
 					count = 0;
@@ -101,8 +101,18 @@
 			// don't forget the last items
 			if (batch.Count > 0)
 			{
-				yield return new ORFilterElement<TFilter>(batch.ToArray());
+				yield return CombineOrFilters(batch);
 			}
+		}
+
+		private static FilterElement<TFilter> CombineOrFilters<TFilter>(IList<FilterElement<TFilter>> filters)
+		{
+			if (filters.Count == 1)
+			{
+				return filters[0];
+			}
+
+			return new ORFilterElement<TFilter>(filters.ToArray());
 		}
 	}
 }

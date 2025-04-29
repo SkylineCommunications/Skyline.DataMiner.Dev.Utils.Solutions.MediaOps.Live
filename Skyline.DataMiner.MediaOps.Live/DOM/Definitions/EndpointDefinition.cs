@@ -20,6 +20,7 @@
 			SectionDefinitionLinks =
 			{
 				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.EndpointInfo.Id),
+				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id) { IsOptional = true },
 			},
 			ModuleSettingsOverrides = new ModuleSettingsOverrides
 			{
@@ -36,6 +37,7 @@
 		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetEndpointInfoSectionDefinition(),
+			GetTransportTypeTsoipSectionDefinition(),
 		};
 
 		private static SectionDefinition GetEndpointInfoSectionDefinition()
@@ -112,6 +114,44 @@
 					Name = "Transport Type",
 					IsOptional = false,
 					DomDefinitionIds = { SlcConnectivityManagementIds.Definitions.TransportType },
+				});
+
+			return sectionDefinition;
+		}
+
+		private static SectionDefinition GetTransportTypeTsoipSectionDefinition()
+		{
+			var sectionDefinition = new CustomSectionDefinition
+			{
+				ID = SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id,
+				Name = "Transport Type.TSoIP",
+			};
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
+					ID = SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP,
+					Name = "Source IP",
+					IsOptional = true,
+				});
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
+					ID = SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP,
+					Name = "Multicast IP",
+					IsOptional = false,
+				});
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(long),
+					ID = SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port,
+					Name = "Port",
+					IsOptional = true,
 				});
 
 			return sectionDefinition;

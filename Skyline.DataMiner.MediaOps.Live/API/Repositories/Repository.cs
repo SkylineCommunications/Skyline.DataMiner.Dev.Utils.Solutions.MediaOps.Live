@@ -189,7 +189,13 @@
 				throw new ArgumentNullException(nameof(domFilter));
 			}
 
-			domFilter = domFilter.AND(DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id));
+			if (!(domFilter is ANDFilterElement<DomInstance> andFilter) ||
+				!andFilter.subFilters.Contains(DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)))
+			{
+				domFilter = new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id),
+					domFilter);
+			}
 
 			var domInstances = Helper.DomInstances.Read(domFilter);
 
