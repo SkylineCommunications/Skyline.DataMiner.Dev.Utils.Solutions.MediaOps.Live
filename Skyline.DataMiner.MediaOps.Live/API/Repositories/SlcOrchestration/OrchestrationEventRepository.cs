@@ -31,7 +31,7 @@
 		{
 			IEnumerable<OrchestrationEvent> events = GetEventsByJobReference(jobReference);
 
-			return new OrchestrationJob(jobReference) { OrchestrationEvents = events };
+			return new OrchestrationJob(jobReference) { OrchestrationEvents = events.ToList() };
 		}
 
 		public OrchestrationJobConfiguration GetOrchestrationJobConfiguration(Guid jobReference)
@@ -57,7 +57,7 @@
 
 			job.ValidateEventsBeforeSaving();
 			var successes = CreateOrUpdateEvents(job.OrchestrationEvents);
-			job.OrchestrationEvents = successes;
+			job.OrchestrationEvents = successes.ToList();
 			return job;
 		}
 
