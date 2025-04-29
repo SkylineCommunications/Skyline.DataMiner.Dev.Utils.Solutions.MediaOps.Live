@@ -197,11 +197,6 @@
 			return new OrchestrationEventConfiguration(_domInstance, new ConfigurationInstance(configurationDomInstance));
 		}
 
-		internal OrchestrationEventConfiguration ToOrchestrationEventConfiguration(Configuration configuration)
-		{
-			return new OrchestrationEventConfiguration(_domInstance, new ConfigurationInstance(configuration.DomInstance));
-		}
-
 		/// <summary>
 		/// Apply the <see cref="SlcOrchestrationIds.Enums.EventState.Cancelled"/> state to the booking. This is only allowed if the current state is Confirmed.
 		/// </summary>

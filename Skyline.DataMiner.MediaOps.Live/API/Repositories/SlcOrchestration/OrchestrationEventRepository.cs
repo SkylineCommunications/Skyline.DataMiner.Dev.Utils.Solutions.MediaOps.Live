@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
+	using System.IO;
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
@@ -10,6 +11,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Jobs;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	using SLDataGateway.API.Types.Querying;
@@ -18,6 +20,7 @@
 
 	public class OrchestrationEventRepository : Repository<OrchestrationEvent>
 	{
+		private const string filePath = "C:\\Skyline_Data\\RSP Logging\\TestFile.txt";
 		private readonly ConfigurationRepository _configurationHelper;
 
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper) : base(helper)
@@ -94,8 +97,9 @@
 		/// Deletes all events and configurations for the given job from the DataMiner system.
 		/// </summary>
 		/// <param name="job">Job to remove.</param>
-		public void DeleteJob(OrchestrationJobConfiguration job)
+		public void DeleteJobConfiguration(OrchestrationJobConfiguration job)
 		{
+			File.AppendAllText(filePath, $"\nDeleteJobConfiguration: Delete {job.OrchestrationEvents.Count.ToString()} events");
 			DeleteEvents(job.OrchestrationEvents);
 		}
 
@@ -324,10 +328,14 @@
 		/// <param name="events">The events to be deleted.</param>
 		internal void DeleteEvents(IEnumerable<OrchestrationEvent> events)
 		{
+			File.AppendAllText(filePath, $"\nDeleteEvents: Delete {events.Count().ToString()} events");
 			IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
 			var configurationsToDelete = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID);
+
+			File.AppendAllText(filePath, $"\nDeleteEvents: Delete {GetConfigurationInstances(configurationsToDelete).Values.Count().ToString()} configs");
 			_configurationHelper.Delete(GetConfigurationInstances(configurationsToDelete).Values);
 
+			File.AppendAllText(filePath, $"\nDeleteEvents: Delete {orchestrationEvents.Count().ToString()} events");
 			Delete(orchestrationEvents);
 		}
 

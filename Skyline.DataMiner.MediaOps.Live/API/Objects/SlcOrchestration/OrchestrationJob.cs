@@ -36,7 +36,7 @@
 		/// <summary>
 		/// Holds the list of event IDs at the start of this objects creation.
 		/// </summary>
-		protected readonly IEnumerable<Guid> InitialEventIds;
+		private readonly IEnumerable<Guid> _initialEventIds;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationJob"/> class, with an empty list of events.
@@ -57,7 +57,7 @@
 
 			IEnumerable<OrchestrationEvent> events = orchestrationEvents.ToList();
 			OrchestrationEvents = events.ToList();
-			InitialEventIds = events.Select(e => e.ID);
+			_initialEventIds = events.Select(e => e.ID);
 		}
 
 		/// <summary>
@@ -65,7 +65,7 @@
 		/// </summary>
 		public Guid JobId { get; }
 
-		internal IEnumerable<Guid> RemovedIds => InitialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
+		public IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
 		/// <summary>
 		/// Gets the list of currently assigned events to the job. To save edits on DataMiner, use the CreateOrUpdateOrchestrationJob method from the main API.
@@ -117,27 +117,27 @@
 
 		internal void ValidateEventsBeforeSaving()
 		{
+			AssignJobReferencesBeforeSaving(JobId, OrchestrationEvents);
 			ValidateEventInfo(OrchestrationEvents);
 		}
 
-		internal void ValidateEventInfo(IList<OrchestrationEvent> orchestrationEvents)
+		internal static void ValidateEventInfo(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			AssignJobReferencesBeforeSaving(orchestrationEvents);
 			ValidateEventTypesBeforeSaving(orchestrationEvents);
 			ValidateEventOrderBeforeSaving(orchestrationEvents);
 		}
 
-		private void AssignJobReferencesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
+		internal static void AssignJobReferencesBeforeSaving(Guid jobId, IList<OrchestrationEvent> orchestrationEvents)
 		{
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
 				if (orchestrationEvent.JobReference == Guid.Empty)
 				{
-					orchestrationEvent.JobReference = JobId;
+					orchestrationEvent.JobReference = jobId;
 					continue;
 				}
 
-				if (orchestrationEvent.JobReference != JobId)
+				if (orchestrationEvent.JobReference != jobId)
 				{
 					throw new InvalidOperationException("One of the job events is already part of another job");
 				}

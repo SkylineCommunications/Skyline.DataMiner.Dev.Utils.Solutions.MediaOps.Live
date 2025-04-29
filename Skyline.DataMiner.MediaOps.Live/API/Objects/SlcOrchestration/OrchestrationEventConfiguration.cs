@@ -62,20 +62,5 @@
 				base.GlobalOrchestrationScriptArguments = value;
 			}
 		}
-
-		internal void ApplyConfiguration(Configuration configurationToApply)
-		{
-			configuration = configurationToApply;
-		}
-
-		internal void ApplyConfiguration(DomInstance configurationDomInstance)
-		{
-			if (configurationDomInstance == null)
-			{
-				configuration = null;
-			}
-
-			configuration = new Configuration(configurationDomInstance);
-		}
 	}
 }

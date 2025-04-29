@@ -7,8 +7,13 @@
 	/// <summary>
 	/// This object groups the orchestration event configurations belonging to the same job.
 	/// </summary>
-	public class OrchestrationJobConfiguration : OrchestrationJob
+	public class OrchestrationJobConfiguration
 	{
+		/// <summary>
+		/// Holds the list of event IDs at the start of this objects creation.
+		/// </summary>
+		private readonly IEnumerable<Guid> _initialEventIds;
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationJobConfiguration"/> class, with an empty list of events.
 		/// </summary>
@@ -22,27 +27,50 @@
 		/// </summary>
 		/// <param name="jobId">The reference ID of the job.</param>
 		/// <param name="orchestrationEventConfigurations">The list of events to assign to the job.</param>
-		public OrchestrationJobConfiguration(Guid jobId, IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations) : base (jobId, orchestrationEventConfigurations)
+		public OrchestrationJobConfiguration(Guid jobId, IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations)
 		{
 			var events = orchestrationEventConfigurations.ToList();
 			OrchestrationEvents = events;
 		}
 
-		internal new IEnumerable<Guid> RemovedIds => InitialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
+		/// <summary>
+		/// Gets the job reference ID.
+		/// </summary>
+		public Guid JobId { get; }
 
-		public new IList<OrchestrationEventConfiguration> OrchestrationEvents { get; internal set; }
+		public IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
-		private void ValidateConfigurationsBeforeSaving(IEnumerable<OrchestrationEvent> orchestrationEventConfigurations)
+		public IList<OrchestrationEventConfiguration> OrchestrationEvents { get; internal set; }
+
+		private static void ValidateConfigurationsBeforeSaving(IEnumerable<OrchestrationEvent> orchestrationEventConfigurations)
 		{
 			// IEnumerable<OrchestrationEvent> configurations = orchestrationEventConfigurations.ToList();
 			// To be implemented
 		}
 
-		internal new void ValidateEventsBeforeSaving()
+		internal void ValidateEventsBeforeSaving()
 		{
+			AssignJobReferencesBeforeSaving(JobId, OrchestrationEvents.ToList());
 			IEnumerable<OrchestrationEvent> events = OrchestrationEvents.ToList();
-			ValidateEventInfo(events.ToList());
+			OrchestrationJob.ValidateEventInfo(events.ToList());
 			ValidateConfigurationsBeforeSaving(OrchestrationEvents);
+		}
+
+		internal static void AssignJobReferencesBeforeSaving(Guid jobId, IList<OrchestrationEventConfiguration> orchestrationEvents)
+		{
+			foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
+			{
+				if (orchestrationEvent.JobReference == Guid.Empty)
+				{
+					orchestrationEvent.JobReference = jobId;
+					continue;
+				}
+
+				if (orchestrationEvent.JobReference != jobId)
+				{
+					throw new InvalidOperationException("One of the job events is already part of another job");
+				}
+			}
 		}
 	}
 }
