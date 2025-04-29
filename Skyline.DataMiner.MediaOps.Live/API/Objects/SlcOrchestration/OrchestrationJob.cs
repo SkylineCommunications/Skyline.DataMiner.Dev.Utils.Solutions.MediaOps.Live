@@ -33,8 +33,8 @@
 			SlcOrchestrationIds.Enums.EventType.Stop,
 		};
 
-		private IList<OrchestrationEvent> _orchestrationEvents;
 		private readonly IEnumerable<Guid> _initialEventIds;
+		private IList<OrchestrationEvent> _orchestrationEvents;
 
 		public OrchestrationJob(Guid jobId) : this (jobId, new List<OrchestrationEvent>())
 		{
@@ -51,7 +51,7 @@
 
 		public Guid JobId { get; }
 
-		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(_orchestrationEvents.Select(e => e.ID));
+		public IEnumerable<Guid> RemovedIds => _initialEventIds.Except(_orchestrationEvents.Select(e => e.ID));
 
 		public IList<OrchestrationEvent> OrchestrationEvents
 		{
