@@ -1,14 +1,14 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 {
 	using System;
-	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 
-	using Repositories.SlcOrchestration;
-
+	/// <summary>
+	/// This object groups the orchestration events belonging to the same job.
+	/// </summary>
 	public class OrchestrationJob
 	{
 		private static readonly List<SlcOrchestrationIds.Enums.EventType> StartTypes = new List<SlcOrchestrationIds.Enums.EventType>
@@ -33,66 +33,48 @@
 			SlcOrchestrationIds.Enums.EventType.Stop,
 		};
 
-		private readonly IEnumerable<Guid> _initialEventIds;
-		private IList<OrchestrationEvent> _orchestrationEvents;
+		/// <summary>
+		/// Holds the list of event IDs at the start of this objects creation.
+		/// </summary>
+		protected readonly IEnumerable<Guid> InitialEventIds;
 
-		public OrchestrationJob(Guid jobId) : this (jobId, new List<OrchestrationEvent>())
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationJob"/> class, with an empty list of events.
+		/// </summary>
+		/// <param name="jobId">The reference ID of the job.</param>
+		public OrchestrationJob(Guid jobId) : this(jobId, new List<OrchestrationEvent>())
 		{
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationJob"/> class, with a given list of events.
+		/// </summary>
+		/// <param name="jobId">The reference ID of the job.</param>
+		/// <param name="orchestrationEvents">The list of events to assign to the job.</param>
 		public OrchestrationJob(Guid jobId, IEnumerable<OrchestrationEvent> orchestrationEvents)
 		{
 			JobId = jobId;
 
 			IEnumerable<OrchestrationEvent> events = orchestrationEvents.ToList();
-			_orchestrationEvents = events.ToList();
-			_initialEventIds = events.Select(e => e.ID);
+			OrchestrationEvents = events.ToList();
+			InitialEventIds = events.Select(e => e.ID);
 		}
 
+		/// <summary>
+		/// Gets the job reference ID.
+		/// </summary>
 		public Guid JobId { get; }
 
-		public IEnumerable<Guid> RemovedIds => _initialEventIds.Except(_orchestrationEvents.Select(e => e.ID));
+		internal IEnumerable<Guid> RemovedIds => InitialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
-		public IList<OrchestrationEvent> OrchestrationEvents
+		/// <summary>
+		/// Gets the list of currently assigned events to the job. To save edits on DataMiner, use the CreateOrUpdateOrchestrationJob method from the main API.
+		/// </summary>
+		public IList<OrchestrationEvent> OrchestrationEvents { get; internal set; }
+
+		private static void ValidateEventTypesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			get
-			{
-				return _orchestrationEvents;
-			}
-
-			internal set
-			{
-				_orchestrationEvents = value;
-			}
-		}
-
-		internal void ValidateEventsBeforeSaving()
-		{
-			AssignJobReferencesBeforeSaving();
-			ValidateEventTypesBeforeSaving();
-			ValidateEventOrderBeforeSaving();
-		}
-
-		private void AssignJobReferencesBeforeSaving()
-		{
-			foreach (OrchestrationEvent orchestrationEvent in _orchestrationEvents)
-			{
-				if (orchestrationEvent.JobReference == Guid.Empty)
-				{
-					orchestrationEvent.JobReference = JobId;
-					continue;
-				}
-
-				if (orchestrationEvent.JobReference != JobId)
-				{
-					throw new InvalidOperationException("One of the job events is already part of another job");
-				}
-			}
-		}
-
-		private void ValidateEventTypesBeforeSaving()
-		{
-			if (_orchestrationEvents.All(e => e.EventType == SlcOrchestrationIds.Enums.EventType.Other))
+			if (orchestrationEvents.All(e => e.EventType == SlcOrchestrationIds.Enums.EventType.Other))
 			{
 				return;
 			}
@@ -101,10 +83,10 @@
 			OrchestrationEvent stopEvent;
 			try
 			{
-				startEvent = _orchestrationEvents.SingleOrDefault(e => StartTypes.Contains(e.EventType));
-				stopEvent = _orchestrationEvents.SingleOrDefault(e => StopTypes.Contains(e.EventType));
+				startEvent = orchestrationEvents.SingleOrDefault(e => StartTypes.Contains(e.EventType));
+				stopEvent = orchestrationEvents.SingleOrDefault(e => StopTypes.Contains(e.EventType));
 			}
-			catch (InvalidOperationException e)
+			catch (InvalidOperationException)
 			{
 				throw new InvalidOperationException("Job can have only a single starting event (Start, PrerollStart) and a single ending event (Stop, PostrollStop).");
 			}
@@ -115,9 +97,9 @@
 			}
 		}
 
-		private void ValidateEventOrderBeforeSaving()
+		private static void ValidateEventOrderBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			var eventWithoutOtherType = _orchestrationEvents.Where(e => e.EventType != SlcOrchestrationIds.Enums.EventType.Other);
+			var eventWithoutOtherType = orchestrationEvents.Where(e => e.EventType != SlcOrchestrationIds.Enums.EventType.Other);
 
 			var orderedByExpectedTypeOrder = eventWithoutOtherType.OrderBy(e => ExpectedOrderOfTypes.IndexOf(e.EventType)).ToList();
 
@@ -129,6 +111,35 @@
 				if (earlierEvent.EventTime > laterEvent.EventTime)
 				{
 					throw new InvalidOperationException($"Event of type {laterEvent.EventType.ToString()} can not be scheduled before an event of type {earlierEvent.EventType.ToString()} ");
+				}
+			}
+		}
+
+		internal void ValidateEventsBeforeSaving()
+		{
+			ValidateEventInfo(OrchestrationEvents);
+		}
+
+		internal void ValidateEventInfo(IList<OrchestrationEvent> orchestrationEvents)
+		{
+			AssignJobReferencesBeforeSaving(orchestrationEvents);
+			ValidateEventTypesBeforeSaving(orchestrationEvents);
+			ValidateEventOrderBeforeSaving(orchestrationEvents);
+		}
+
+		private void AssignJobReferencesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
+		{
+			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
+			{
+				if (orchestrationEvent.JobReference == Guid.Empty)
+				{
+					orchestrationEvent.JobReference = JobId;
+					continue;
+				}
+
+				if (orchestrationEvent.JobReference != JobId)
+				{
+					throw new InvalidOperationException("One of the job events is already part of another job");
 				}
 			}
 		}

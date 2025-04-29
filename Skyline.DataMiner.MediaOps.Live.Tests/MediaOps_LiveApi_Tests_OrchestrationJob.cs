@@ -1,0 +1,152 @@
+﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
+{
+	using System.Runtime.InteropServices;
+
+	using DOM.Model.SlcOrchestration;
+
+	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
+
+	[TestClass]
+	public sealed class MediaOps_LiveApi_Tests_OrchestrationJob
+	{
+		private static readonly MediaOpsLiveApi _api = new MediaOpsLiveApiMock();
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationJob_CheckDeleteBeforeUpdateWithoutNodes()
+		{
+			var events = NoNodes_CreateEventInstance(2);
+
+			var job = new OrchestrationJob(Guid.NewGuid(), events);
+
+			var guids = job.OrchestrationEvents.Select(ev => ev.ID).ToList();
+			var toRemove = guids[0];
+			var eventToRemove = job.OrchestrationEvents.FirstOrDefault(ev => ev.ID == toRemove);
+
+			// Check events created is 2
+			Assert.AreEqual(job.OrchestrationEvents.Count, 2);
+
+			// Check events is 1 after removal
+			job.OrchestrationEvents.Remove(eventToRemove);
+			Assert.AreEqual(job.OrchestrationEvents.Count, 1);
+
+			// Check 1 event identified as deleted
+			// Assert.AreEqual(job.RemovedIds.Count(), 1);
+			// Assert.AreEqual(job.RemovedIds.FirstOrDefault(), toRemove);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationJob_CheckDeleteBeforeUpdateWithNodes()
+		{
+			var events = WithNodes_CreateEventConfigurationInstances(2, 5);
+			var job = new OrchestrationJobConfiguration(Guid.NewGuid(), events);
+
+			var guids = job.OrchestrationEvents.Select(ev => ev.ID).ToList();
+			var toRemove = guids[0];
+			var eventToRemove = job.OrchestrationEvents.FirstOrDefault(ev => ev.ID == toRemove);
+
+			// Check events created is 2
+			Assert.AreEqual(job.OrchestrationEvents.Count, 2);
+
+			// Check events is 1 after removal
+			job.OrchestrationEvents.Remove(eventToRemove);
+			Assert.AreEqual(job.OrchestrationEvents.Count, 1);
+
+			// Check 1 event identified as deleted
+			// Assert.AreEqual(job.RemovedIds.Count(), 1);
+			// Assert.AreEqual(job.RemovedIds.FirstOrDefault(), toRemove);
+		}
+
+		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)
+		{
+			List<Configuration> configurations = new List<Configuration>();
+
+			List<Connection> connections = new List<Connection>();
+			List<NodeConfiguration> nodeConfigs = new List<NodeConfiguration>();
+			List<LevelMapping> levelMapping = new List<LevelMapping>
+			{
+				new LevelMapping
+				{
+					Destination = new Level
+					{
+						Name = "Destination",
+						Number = 1,
+					},
+					Source = new Level
+					{
+						Name = "Source",
+						Number = 1,
+					},
+				},
+			};
+
+			List<OrchestrationScriptArgument> scriptArguments = new List<OrchestrationScriptArgument>
+			{
+				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Element, "Name", "Value"),
+				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "Name", "Value"),
+				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "Name", "Value"),
+			};
+
+			for (int i = 1; i <= nodes; i++)
+			{
+				connections.Add(new Connection
+				{
+					DestinationNodeId = "1",
+					DestinationVsg = Guid.NewGuid(),
+					SourceVsg = Guid.NewGuid(),
+					SourceNodeId = "1",
+					LevelMappings = levelMapping,
+				});
+
+				nodeConfigs.Add(new NodeConfiguration
+				{
+					NodeId = "1",
+					NodeLabel = "Node Label",
+					OrchestrationScriptName = "OrchestrationScript",
+					OrchestrationScriptArguments = scriptArguments,
+				});
+			}
+
+			List<OrchestrationEventConfiguration> orchestrationEventConfigurations = new List<OrchestrationEventConfiguration>();
+
+			for (int i = 1; i <= count; i++)
+			{
+				orchestrationEventConfigurations.Add(new OrchestrationEventConfiguration
+				{
+					Name = $"Test Event {i}",
+					EventTime = DateTime.Now,
+					EventType = SlcOrchestrationIds.Enums.EventType.Other,
+					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
+					GlobalOrchestrationScript = "Test Script",
+					GlobalOrchestrationScriptArguments = scriptArguments,
+					Configuration =
+					{
+						Connections = connections,
+						NodeConfigurations = nodeConfigs,
+					},
+				});
+			}
+
+			return orchestrationEventConfigurations;
+		}
+
+		private IEnumerable<OrchestrationEvent> NoNodes_CreateEventInstance(int count)
+		{
+			List<OrchestrationEvent> events = new List<OrchestrationEvent>();
+			for (int i = 1; i <= count; i++)
+			{
+				events.Add(new OrchestrationEvent
+				{
+					Name = $"Test Event {i}",
+					EventTime = DateTime.Now,
+					EventType = SlcOrchestrationIds.Enums.EventType.Other,
+					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
+				});
+			}
+
+			return events;
+		}
+	}
+}

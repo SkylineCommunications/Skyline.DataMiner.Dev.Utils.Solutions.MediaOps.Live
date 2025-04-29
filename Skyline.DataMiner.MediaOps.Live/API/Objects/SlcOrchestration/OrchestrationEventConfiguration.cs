@@ -16,19 +16,13 @@
 		public OrchestrationEventConfiguration() : this(new OrchestrationEventInstance(), new ConfigurationInstance())
 		{
 		}
-		
-		/// <summary>
-		/// Initializes a new instance of the <see cref="OrchestrationEventConfiguration"/> class, inheriting the data from the given <see cref="OrchestrationEventInstance"/> and <see cref="ConfigurationInstance"/> object.
-		/// </summary>
-		internal OrchestrationEventConfiguration(OrchestrationEventInstance domInstance, ConfigurationInstance configurationInstance) : base(domInstance)
+
+		internal OrchestrationEventConfiguration(OrchestrationEventInstance domInstance, ConfigurationInstance configurationInstance) : base(domInstance: domInstance)
 		{
 			configuration = new Configuration(configurationInstance);
 			ConfigurationReference = configurationInstance.ID.Id;
 		}
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="OrchestrationEventConfiguration"/> class, inheriting the data from the given <see cref="DomInstance"/> objects.
-		/// </summary>
 		internal OrchestrationEventConfiguration(DomInstance eventInstance, DomInstance configurationInstance) : this(new OrchestrationEventInstance(eventInstance), new ConfigurationInstance(configurationInstance))
 		{
 		}

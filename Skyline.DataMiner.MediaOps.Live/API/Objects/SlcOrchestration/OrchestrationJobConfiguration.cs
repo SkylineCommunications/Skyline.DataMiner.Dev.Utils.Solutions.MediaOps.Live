@@ -1,23 +1,36 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 {
+	using System;
+	using System.Collections.Generic;
+	using System.Linq;
+
+	/// <summary>
+	/// This object groups the orchestration event configurations belonging to the same job.
+	/// </summary>
 	public class OrchestrationJobConfiguration : OrchestrationJob
 	{
-		private IList<OrchestrationEventConfiguration> _orchestrationEventConfigurations;
-		
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationJobConfiguration"/> class, with an empty list of events.
+		/// </summary>
+		/// <param name="jobId">The reference ID of the job.</param>
 		public OrchestrationJobConfiguration(Guid jobId) : this (jobId, new List<OrchestrationEventConfiguration>())
 		{
 		}
 
-		public OrchestrationJobConfiguration(Guid jobId, IList<OrchestrationEventConfiguration> orchestrationEventConfigurations) : base (jobId, orchestrationEventConfigurations)
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationJobConfiguration"/> class, with a given list of events.
+		/// </summary>
+		/// <param name="jobId">The reference ID of the job.</param>
+		/// <param name="orchestrationEventConfigurations">The list of events to assign to the job.</param>
+		public OrchestrationJobConfiguration(Guid jobId, IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations) : base (jobId, orchestrationEventConfigurations)
 		{
-			_orchestrationEventConfigurations = orchestrationEventConfigurations;
+			var events = orchestrationEventConfigurations.ToList();
+			OrchestrationEvents = events;
 		}
+
+		internal new IEnumerable<Guid> RemovedIds => InitialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
+
+		public new IList<OrchestrationEventConfiguration> OrchestrationEvents { get; internal set; }
 
 		private void ValidateConfigurationsBeforeSaving(IEnumerable<OrchestrationEvent> orchestrationEventConfigurations)
 		{
@@ -25,25 +38,11 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
 			// To be implemented
 		}
 
-		internal void ValidateEventsBeforeSaving(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations)
+		internal new void ValidateEventsBeforeSaving()
 		{
-			IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
-			ValidateEventsBeforeSaving();
-			ValidateConfigurationsBeforeSaving(eventConfigurations);
+			IEnumerable<OrchestrationEvent> events = OrchestrationEvents.ToList();
+			ValidateEventInfo(events.ToList());
+			ValidateConfigurationsBeforeSaving(OrchestrationEvents);
 		}
-
-		public new IList<OrchestrationEventConfiguration> OrchestrationEvents
-		{
-			get
-			{
-				return _orchestrationEventConfigurations;
-			}
-
-			internal set
-			{
-				_orchestrationEventConfigurations = value;
-			}
-		}
-
 	}
 }

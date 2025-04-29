@@ -39,7 +39,6 @@
 			return new OrchestrationJob(jobReference) { OrchestrationEvents = events.ToList() };
 		}
 
-
 		/// <summary>
 		/// Creates a <see cref="OrchestrationJobConfiguration"/> object with all event configurations for the given job reference.
 		/// </summary>
@@ -102,7 +101,7 @@
 		/// </summary>
 		/// <param name="jobReference">Job reference value to filter.</param>
 		/// <returns>A collection of <see cref="OrchestrationEvent"/> objects that contains the given job reference value.</returns>
-		/// <exception cref="ArgumentException"><param name="jobReference"> can not be null or whitespace.</param></exception>
+		/// <exception cref="ArgumentException">Job reference can not be null or whitespace.</exception>
 		internal IEnumerable<OrchestrationEvent> GetEventsByJobReference(Guid jobReference)
 		{
 			if (jobReference == Guid.Empty)
@@ -120,7 +119,7 @@
 		/// </summary>
 		/// <param name="jobReference">Job reference value to filter.</param>
 		/// <returns>A collection of <see cref="OrchestrationEventConfiguration"/> objects that contains the given job reference value.</returns>
-		/// <exception cref="ArgumentException"><param name="jobReference"> can not be null or whitespace.</param></exception>
+		/// <exception cref="ArgumentException">Job reference can not be null or whitespace.</param></exception>
 		internal IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(Guid jobReference)
 		{
 			if (jobReference == Guid.Empty)
@@ -137,7 +136,7 @@
 		/// </summary>
 		/// <param name="eventId">The ID of the instance to lookup.</param>
 		/// <returns>A <see cref="OrchestrationEvent"/> object that matches the given event ID value, or null if no match is found.</returns>
-		/// <exception cref="ArgumentException"><param name="eventId"> can not be an empty <see cref="Guid"/>>.</param></exception>
+		/// <exception cref="ArgumentException">Event ID can not be an empty Guid.</exception>
 		internal OrchestrationEvent GetEventById(Guid eventId)
 		{
 			if (eventId == Guid.Empty)
@@ -159,7 +158,7 @@
 		/// </summary>
 		/// <param name="eventId">The ID of the instance to lookup.</param>
 		/// <returns>A <see cref="OrchestrationEventConfiguration"/> object that matches the given event ID value, or null if no match is found.</returns>
-		/// <exception cref="ArgumentException"><param name="eventId"> can not be an empty <see cref="Guid"/>>.</param></exception>
+		/// <exception cref="ArgumentException">Event ID can not be an empty Guid.</exception>
 		internal OrchestrationEventConfiguration GetEventConfigurationById(Guid eventId)
 		{
 			if (eventId == Guid.Empty)
@@ -182,7 +181,7 @@
 		/// </summary>
 		/// <param name="event">The <see cref="OrchestrationEvent"/> object to convert.</param>
 		/// <returns>The <see cref="OrchestrationEventConfiguration"/> object that corresponds to the given input, or null if the operation failed.</returns>
-		/// <exception cref="ArgumentNullException"><param name="event">can not be null</param></exception>
+		/// <exception cref="ArgumentNullException">Event can not be null.</exception>
 		internal OrchestrationEventConfiguration GetEventsAsEventConfigurations(OrchestrationEvent @event)
 		{
 			if (@event == null)
@@ -198,7 +197,7 @@
 		/// </summary>
 		/// <param name="events">The <see cref="OrchestrationEvent"/> objects to convert.</param>
 		/// <returns>A mapping of each event ID to the converted <see cref="OrchestrationEventConfiguration"/> object.</returns>
-		/// <exception cref="ArgumentNullException"><param name="events">can not be null</param></exception>
+		/// <exception cref="ArgumentNullException">Events can not be null.</exception>
 		internal Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
 		{
 			if (events == null)
@@ -228,7 +227,7 @@
 		{
 			var results = CreateOrUpdateWithResult(events);
 
-			return results.SuccessfulItems.Select(item => new OrchestrationEvent(item));
+			return results.SuccessfulItems.Select(item => new OrchestrationEvent(domInstance: item));
 		}
 
 		/// <summary>
@@ -299,7 +298,6 @@
 			Delete(@event);
 		}
 
-
 		/// <summary>
 		/// Delete a collection of <see cref="OrchestrationEvent"/> objects from the DataMiner system.
 		/// </summary>
@@ -310,7 +308,6 @@
 
 			DeleteEvents(orchestrationEvents);
 		}
-
 
 		/// <summary>
 		/// Delete a collection of <see cref="OrchestrationEvent"/> objects from the DataMiner system.
@@ -327,7 +324,7 @@
 
 		protected override OrchestrationEvent CreateInstance(DomInstance domInstance)
 		{
-			return new OrchestrationEvent(domInstance);
+			return new OrchestrationEvent(domInstance: domInstance);
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)

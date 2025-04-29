@@ -19,14 +19,11 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class.
 		/// </summary>
-		public OrchestrationEvent() : this(new OrchestrationEventInstance())
+		public OrchestrationEvent() : this(domInstance: new OrchestrationEventInstance())
 		{
 			_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
 		}
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class, inheriting the data from the given <see cref="OrchestrationEventInstance"/> object.
-		/// </summary>
 		internal OrchestrationEvent(OrchestrationEventInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
@@ -37,10 +34,7 @@
 			}
 		}
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class, inheriting the data from the given <see cref="DomInstance"/> object.
-		/// </summary>
-		internal OrchestrationEvent(DomInstance domInstance) : this(new OrchestrationEventInstance(domInstance))
+		internal OrchestrationEvent(DomInstance domInstance) : this(domInstance: new OrchestrationEventInstance(domInstance))
 		{
 		}
 
