@@ -1,15 +1,15 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Definitions
+﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration
 {
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.DOM.Interfaces;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel.Settings;
 	using Skyline.DataMiner.Net.Apps.Modules;
 
-	public class SlcConnectivityManagementDomModule : IDomModuleInfo
+	public class SlcOrchestrationDomModule : IDomModuleInfo
 	{
-		public ModuleSettings ModuleSettings { get; } = new ModuleSettings(SlcConnectivityManagementIds.ModuleId)
+		public ModuleSettings ModuleSettings { get; } = new ModuleSettings(SlcOrchestrationIds.ModuleId)
 		{
 			DomManagerSettings = new DomManagerSettings
 			{
@@ -28,12 +28,8 @@
 
 		public IEnumerable<IDomDefinitionInfo> Definitions { get; } = new IDomDefinitionInfo[]
 		{
-			new CategoryDefinition(),
-			new TransportTypeDefinition(),
-			new EndpointDefinition(),
-			new LevelDefinition(),
-			new VirtualSignalGroupDefinition(),
-			new ConnectionDefinition(),
+			new OrchestrationEventDefinition(),
+			new ConfigurationDefinition(),
 		};
 	}
 }

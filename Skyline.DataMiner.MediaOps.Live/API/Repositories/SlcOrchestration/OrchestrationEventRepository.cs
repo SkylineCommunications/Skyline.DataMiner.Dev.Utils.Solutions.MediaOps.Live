@@ -20,7 +20,6 @@
 
 	public class OrchestrationEventRepository : Repository<OrchestrationEvent>
 	{
-		private const string filePath = "C:\\Skyline_Data\\RSP Logging\\TestFile.txt";
 		private readonly ConfigurationRepository _configurationHelper;
 
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper) : base(helper)
@@ -35,11 +34,11 @@
 		/// </summary>
 		/// <param name="jobReference">The ID of the job to retrieve.</param>
 		/// <returns>A <see cref="OrchestrationJob"/> object with all events found for the given job reference.</returns>
-		public OrchestrationJob GetOrchestrationJob(Guid jobReference)
+		public OrchestrationJob GetOrchestrationJob(string jobReference)
 		{
 			IEnumerable<OrchestrationEvent> events = GetEventsByJobReference(jobReference);
 
-			return new OrchestrationJob(jobReference) { OrchestrationEvents = events.ToList() };
+			return new OrchestrationJob(jobReference, events);
 		}
 
 		/// <summary>
@@ -47,11 +46,11 @@
 		/// </summary>
 		/// <param name="jobReference">The ID of the job to retrieve.</param>
 		/// <returns>A <see cref="OrchestrationJobConfiguration"/> object with all event configurations found for the given job reference.</returns>
-		public OrchestrationJobConfiguration GetOrchestrationJobConfiguration(Guid jobReference)
+		public OrchestrationJobConfiguration GetOrchestrationJobConfiguration(string jobReference)
 		{
 			IEnumerable<OrchestrationEventConfiguration> events = GetEventConfigurationsByJobReference(jobReference);
 
-			return new OrchestrationJobConfiguration(jobReference) { OrchestrationEvents = events.ToList() };
+			return new OrchestrationJobConfiguration(jobReference, events);
 		}
 
 		/// <summary>
@@ -99,7 +98,6 @@
 		/// <param name="job">Job to remove.</param>
 		public void DeleteJobConfiguration(OrchestrationJobConfiguration job)
 		{
-			File.AppendAllText(filePath, $"\nDeleteJobConfiguration: Delete {job.OrchestrationEvents.Count.ToString()} events");
 			DeleteEvents(job.OrchestrationEvents);
 		}
 
@@ -115,11 +113,11 @@
 		/// <param name="jobReference">Job reference value to filter.</param>
 		/// <returns>A collection of <see cref="OrchestrationEvent"/> objects that contains the given job reference value.</returns>
 		/// <exception cref="ArgumentException">Job reference can not be null or whitespace.</exception>
-		internal IEnumerable<OrchestrationEvent> GetEventsByJobReference(Guid jobReference)
+		private IEnumerable<OrchestrationEvent> GetEventsByJobReference(string jobReference)
 		{
-			if (jobReference == Guid.Empty)
+			if (String.IsNullOrEmpty(jobReference))
 			{
-				throw new ArgumentException($"'{nameof(jobReference)}' cannot be an empty Guid.", nameof(jobReference));
+				throw new ArgumentException($"'{nameof(jobReference)}' cannot be null or empty", nameof(jobReference));
 			}
 
 			var filter = DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference).Equal(jobReference);
@@ -133,11 +131,11 @@
 		/// <param name="jobReference">Job reference value to filter.</param>
 		/// <returns>A collection of <see cref="OrchestrationEventConfiguration"/> objects that contains the given job reference value.</returns>
 		/// <exception cref="ArgumentException">Job reference can not be null or whitespace.</param></exception>
-		internal IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(Guid jobReference)
+		internal IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(string jobReference)
 		{
-			if (jobReference == Guid.Empty)
+			if (String.IsNullOrEmpty(jobReference))
 			{
-				throw new ArgumentException($"'{nameof(jobReference)}' cannot be an empty Guid.", nameof(jobReference));
+				throw new ArgumentException($"'{nameof(jobReference)}' cannot be null or empty.", nameof(jobReference));
 			}
 
 			var events = GetEventsByJobReference(jobReference);
@@ -328,14 +326,11 @@
 		/// <param name="events">The events to be deleted.</param>
 		internal void DeleteEvents(IEnumerable<OrchestrationEvent> events)
 		{
-			File.AppendAllText(filePath, $"\nDeleteEvents: Delete {events.Count().ToString()} events");
 			IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
 			var configurationsToDelete = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID);
 
-			File.AppendAllText(filePath, $"\nDeleteEvents: Delete {GetConfigurationInstances(configurationsToDelete).Values.Count().ToString()} configs");
 			_configurationHelper.Delete(GetConfigurationInstances(configurationsToDelete).Values);
 
-			File.AppendAllText(filePath, $"\nDeleteEvents: Delete {orchestrationEvents.Count().ToString()} events");
 			Delete(orchestrationEvents);
 		}
 
@@ -363,7 +358,7 @@
 				case nameof(OrchestrationEvent.GlobalOrchestrationScript):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptName), comparer, (string)value);
 				case nameof(OrchestrationEvent.JobReference):
-					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference), comparer, (string)value);
+					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference), comparer, Convert.ToString(value));
 			}
 
 			return base.CreateFilter(fieldName, comparer, value);

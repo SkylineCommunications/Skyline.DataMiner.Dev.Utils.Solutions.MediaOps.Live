@@ -25,7 +25,7 @@
 
 		public IEnumerable<Endpoint> GetByElement(string dmaElementId)
 		{
-			if (string.IsNullOrWhiteSpace(dmaElementId))
+			if (String.IsNullOrWhiteSpace(dmaElementId))
 			{
 				throw new ArgumentException($"'{nameof(dmaElementId)}' cannot be null or whitespace.", nameof(dmaElementId));
 			}
@@ -39,7 +39,7 @@
 
 		public IEnumerable<Endpoint> GetByElementAndIdentifiers(string dmaElementId, IEnumerable<string> identifiers)
 		{
-			if (string.IsNullOrWhiteSpace(dmaElementId))
+			if (String.IsNullOrWhiteSpace(dmaElementId))
 			{
 				throw new ArgumentException($"'{nameof(dmaElementId)}' cannot be null or whitespace.", nameof(dmaElementId));
 			}

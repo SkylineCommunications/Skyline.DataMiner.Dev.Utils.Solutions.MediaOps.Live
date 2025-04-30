@@ -36,13 +36,13 @@
 		/// <summary>
 		/// Holds the list of event IDs at the start of this objects creation.
 		/// </summary>
-		private readonly IEnumerable<Guid> _initialEventIds;
+		private readonly List<Guid> _initialEventIds;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationJob"/> class, with an empty list of events.
 		/// </summary>
 		/// <param name="jobId">The reference ID of the job.</param>
-		public OrchestrationJob(Guid jobId) : this(jobId, new List<OrchestrationEvent>())
+		public OrchestrationJob(string jobId) : this(jobId, new List<OrchestrationEvent>())
 		{
 		}
 
@@ -51,19 +51,19 @@
 		/// </summary>
 		/// <param name="jobId">The reference ID of the job.</param>
 		/// <param name="orchestrationEvents">The list of events to assign to the job.</param>
-		public OrchestrationJob(Guid jobId, IEnumerable<OrchestrationEvent> orchestrationEvents)
+		public OrchestrationJob(string jobId, IEnumerable<OrchestrationEvent> orchestrationEvents)
 		{
 			JobId = jobId;
 
 			IEnumerable<OrchestrationEvent> events = orchestrationEvents.ToList();
 			OrchestrationEvents = events.ToList();
-			_initialEventIds = events.Select(e => e.ID);
+			_initialEventIds = events.Select(e => e.ID).ToList();
 		}
 
 		/// <summary>
 		/// Gets the job reference ID.
 		/// </summary>
-		public Guid JobId { get; }
+		public string JobId { get; }
 
 		public IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
@@ -127,11 +127,11 @@
 			ValidateEventOrderBeforeSaving(orchestrationEvents);
 		}
 
-		internal static void AssignJobReferencesBeforeSaving(Guid jobId, IList<OrchestrationEvent> orchestrationEvents)
+		internal static void AssignJobReferencesBeforeSaving(string jobId, IList<OrchestrationEvent> orchestrationEvents)
 		{
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
-				if (orchestrationEvent.JobReference == Guid.Empty)
+				if (String.IsNullOrEmpty(orchestrationEvent.JobReference))
 				{
 					orchestrationEvent.JobReference = jobId;
 					continue;

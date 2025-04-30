@@ -107,16 +107,16 @@
 		/// <summary>
 		/// Gets the string reference to the job that corresponds to this event.
 		/// </summary>
-		public Guid JobReference
+		public string JobReference
 		{
 			get
 			{
-				return _domInstance.OrchestrationEventInfo.JobReference == null ? Guid.Empty : new Guid(_domInstance.OrchestrationEventInfo.JobReference);
+				return _domInstance.OrchestrationEventInfo.JobReference;
 			}
 
 			internal set
 			{
-				_domInstance.OrchestrationEventInfo.JobReference = value.ToString();
+				_domInstance.OrchestrationEventInfo.JobReference = value;
 			}
 		}
 

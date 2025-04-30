@@ -18,7 +18,7 @@
 		/// Initializes a new instance of the <see cref="OrchestrationJobConfiguration"/> class, with an empty list of events.
 		/// </summary>
 		/// <param name="jobId">The reference ID of the job.</param>
-		public OrchestrationJobConfiguration(Guid jobId) : this (jobId, new List<OrchestrationEventConfiguration>())
+		public OrchestrationJobConfiguration(string jobId) : this (jobId, new List<OrchestrationEventConfiguration>())
 		{
 		}
 
@@ -27,16 +27,18 @@
 		/// </summary>
 		/// <param name="jobId">The reference ID of the job.</param>
 		/// <param name="orchestrationEventConfigurations">The list of events to assign to the job.</param>
-		public OrchestrationJobConfiguration(Guid jobId, IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations)
+		public OrchestrationJobConfiguration(string jobId, IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations)
 		{
+			JobId = jobId;
 			var events = orchestrationEventConfigurations.ToList();
 			OrchestrationEvents = events;
+			_initialEventIds = events.Select(e => e.ID);
 		}
 
 		/// <summary>
 		/// Gets the job reference ID.
 		/// </summary>
-		public Guid JobId { get; }
+		public string JobId { get; }
 
 		public IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
@@ -56,11 +58,11 @@
 			ValidateConfigurationsBeforeSaving(OrchestrationEvents);
 		}
 
-		internal static void AssignJobReferencesBeforeSaving(Guid jobId, IList<OrchestrationEventConfiguration> orchestrationEvents)
+		internal static void AssignJobReferencesBeforeSaving(string jobId, IList<OrchestrationEventConfiguration> orchestrationEvents)
 		{
 			foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
 			{
-				if (orchestrationEvent.JobReference == Guid.Empty)
+				if (String.IsNullOrEmpty(orchestrationEvent.JobReference))
 				{
 					orchestrationEvent.JobReference = jobId;
 					continue;

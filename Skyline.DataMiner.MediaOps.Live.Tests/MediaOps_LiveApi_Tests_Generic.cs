@@ -1,5 +1,8 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
+	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
+
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 
@@ -15,6 +18,9 @@
 
 			var slcConnectivityManagementDomModule = new SlcConnectivityManagementDomModule();
 			DomModuleInstaller.Install(api.MessageHandler.HandleMessages, slcConnectivityManagementDomModule, x => { });
+
+			var slcOrchestrationDomModule = new SlcOrchestrationDomModule();
+			DomModuleInstaller.Install(api.MessageHandler.HandleMessages, slcOrchestrationDomModule, x => { });
 
 			Assert.IsTrue(api.IsInstalled());
 		}

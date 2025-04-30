@@ -19,7 +19,7 @@
 		{
 			var events = NoNodes_CreateEventInstance(2);
 
-			var job = new OrchestrationJob(Guid.NewGuid(), events);
+			var job = new OrchestrationJob(Guid.NewGuid().ToString(), events);
 
 			var guids = job.OrchestrationEvents.Select(ev => ev.ID).ToList();
 			var toRemove = guids[0];
@@ -41,7 +41,7 @@
 		public void MediaOps_LiveApi_Tests_OrchestrationJob_CheckDeleteBeforeUpdateWithNodes()
 		{
 			var events = WithNodes_CreateEventConfigurationInstances(2, 5);
-			var job = new OrchestrationJobConfiguration(Guid.NewGuid(), events);
+			var job = new OrchestrationJobConfiguration(Guid.NewGuid().ToString(), events);
 
 			var guids = job.OrchestrationEvents.Select(ev => ev.ID).ToList();
 			var toRemove = guids[0];
@@ -58,6 +58,30 @@
 			// Assert.AreEqual(job.RemovedIds.Count(), 1);
 			// Assert.AreEqual(job.RemovedIds.FirstOrDefault(), toRemove);
 		}
+
+
+		/*[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationJob_CheckApi()
+		{
+			string testGuid = "dd2cd5f2-ee7d-42b8-9b96-1e562d472b63";
+
+			var domEvents = _api.Orchestration.GetEventsByJobReference(testGuid);
+			var job = _api.Orchestration.GetOrchestrationJob(testGuid);
+
+			Assert.AreEqual(10, job.OrchestrationEvents.Count());
+			Assert.AreEqual(10, domEvents.Count());
+
+			job.OrchestrationEvents.RemoveAt(0);
+			_api.Orchestration.CreateOrUpdateOrchestrationJob(job);
+
+			domEvents = _api.Orchestration.GetEventsByJobReference(testGuid);
+			Assert.AreEqual(9, domEvents.Count());
+
+			//var nameEvents = _api.Orchestration.Query().Where(x => x.Name == "Test Event 1");
+			//Console.WriteLine(nameEvents.First().JobReference);
+
+			//Assert.AreEqual(10, nameEvents.Count());
+		}*/
 
 		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)
 		{

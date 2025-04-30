@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Definitions
+﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement
 {
 	using System.Collections.Generic;
 

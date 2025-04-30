@@ -64,7 +64,7 @@
 		{
 			var moduleSettingsHelper = new ModuleSettingsHelper(MessageHandler);
 
-			var filter = ModuleSettingsExposers.ModuleId.Equal(SlcConnectivityManagementIds.ModuleId);
+			var filter = ModuleSettingsExposers.ModuleId.Equal(SlcConnectivityManagementIds.ModuleId).OR(ModuleSettingsExposers.ModuleId.Equal(SlcOrchestrationIds.ModuleId));
 			var count = moduleSettingsHelper.ModuleSettings.Count(filter);
 
 			if (count == 0)

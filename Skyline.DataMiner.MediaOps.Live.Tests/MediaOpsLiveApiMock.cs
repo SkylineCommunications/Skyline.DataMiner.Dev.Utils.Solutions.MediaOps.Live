@@ -4,7 +4,12 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
+
+	using Connection = API.Objects.SlcConnectivityManagement.Connection;
+	using Level = API.Objects.SlcConnectivityManagement.Level;
 
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{
@@ -95,6 +100,9 @@
 				};
 				Connections.CreateOrUpdate([connection1, connection2]);
 			}
+
+			var job = new OrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63", WithNodes_CreateEventConfigurationInstances(10, 10));
+			Orchestration.CreateOrUpdateOrchestrationJobConfiguration(job);
 		}
 
 		public DomSLNetMessageHandler MessageHandler { get; }
@@ -103,6 +111,77 @@
 		{
 			handler = new DomSLNetMessageHandler();
 			return handler;
+		}
+
+		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)
+		{
+			List<Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Connection> connections = new List<Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Connection>();
+			List<NodeConfiguration> nodeConfigs = new List<NodeConfiguration>();
+			List<LevelMapping> levelMapping = new List<LevelMapping>
+			{
+				new LevelMapping
+				{
+					Destination = new Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Level
+					{
+						Name = "Destination",
+						Number = 1,
+					},
+					Source = new Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Level
+					{
+						Name = "Source",
+						Number = 1,
+					},
+				},
+			};
+
+			List<OrchestrationScriptArgument> scriptArguments = new List<OrchestrationScriptArgument>
+			{
+				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Element, "Name", "Value"),
+				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "Name", "Value"),
+				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "Name", "Value"),
+			};
+
+			for (int i = 1; i <= nodes; i++)
+			{
+				connections.Add(new Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Connection
+				{
+					DestinationNodeId = "1",
+					DestinationVsg = Guid.NewGuid(),
+					SourceVsg = Guid.NewGuid(),
+					SourceNodeId = "1",
+					LevelMappings = levelMapping,
+				});
+
+				nodeConfigs.Add(new NodeConfiguration
+				{
+					NodeId = "1",
+					NodeLabel = "Node Label",
+					OrchestrationScriptName = "OrchestrationScript",
+					OrchestrationScriptArguments = scriptArguments,
+				});
+			}
+
+			List<OrchestrationEventConfiguration> orchestrationEventConfigurations = new List<OrchestrationEventConfiguration>();
+
+			for (int i = 1; i <= count; i++)
+			{
+				orchestrationEventConfigurations.Add(new OrchestrationEventConfiguration
+				{
+					Name = $"Test Event {i}",
+					EventTime = DateTime.Now,
+					EventType = SlcOrchestrationIds.Enums.EventType.Other,
+					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
+					GlobalOrchestrationScript = "Test Script",
+					GlobalOrchestrationScriptArguments = scriptArguments,
+					Configuration =
+					{
+						Connections = connections,
+						NodeConfigurations = nodeConfigs,
+					},
+				});
+			}
+
+			return orchestrationEventConfigurations;
 		}
 	}
 }
