@@ -64,8 +64,7 @@
 
 			job.ValidateEventsBeforeSaving();
 			var successes = CreateOrUpdateEventConfigurations(job.OrchestrationEvents);
-			job.OrchestrationEvents = successes.ToList();
-			return job;
+			return new OrchestrationJobConfiguration(job.JobId, successes.ToList());
 		}
 
 		/// <summary>
@@ -79,8 +78,7 @@
 
 			job.ValidateEventsBeforeSaving();
 			var successes = CreateOrUpdateEvents(job.OrchestrationEvents);
-			job.OrchestrationEvents = successes.ToList();
-			return job;
+			return new OrchestrationJob(job.JobId, successes.ToList());
 		}
 
 		/// <summary>

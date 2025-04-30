@@ -66,13 +66,13 @@
 			string testGuid = "dd2cd5f2-ee7d-42b8-9b96-1e562d472b63";
 
 			var domEvents = _api.Orchestration.GetEventsByJobReference(testGuid);
-			var job = _api.Orchestration.GetOrchestrationJob(testGuid);
+			OrchestrationJobConfiguration job = _api.Orchestration.GetOrchestrationJobConfiguration(testGuid);
 
 			Assert.AreEqual(10, job.OrchestrationEvents.Count());
 			Assert.AreEqual(10, domEvents.Count());
 
 			job.OrchestrationEvents.RemoveAt(0);
-			_api.Orchestration.CreateOrUpdateOrchestrationJob(job);
+			_api.Orchestration.CreateOrUpdateOrchestrationJobConfiguration(job);
 
 			domEvents = _api.Orchestration.GetEventsByJobReference(testGuid);
 			Assert.AreEqual(9, domEvents.Count());

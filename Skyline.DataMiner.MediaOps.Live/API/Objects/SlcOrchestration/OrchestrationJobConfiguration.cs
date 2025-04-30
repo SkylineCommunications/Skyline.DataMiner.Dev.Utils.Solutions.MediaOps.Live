@@ -12,7 +12,7 @@
 		/// <summary>
 		/// Holds the list of event IDs at the start of this objects creation.
 		/// </summary>
-		private readonly IEnumerable<Guid> _initialEventIds;
+		private readonly List<Guid> _initialEventIds;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationJobConfiguration"/> class, with an empty list of events.
@@ -32,7 +32,7 @@
 			JobId = jobId;
 			var events = orchestrationEventConfigurations.ToList();
 			OrchestrationEvents = events;
-			_initialEventIds = events.Select(e => e.ID);
+			_initialEventIds = events.Select(e => e.ID).ToList();
 		}
 
 		/// <summary>
@@ -42,7 +42,7 @@
 
 		public IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
-		public IList<OrchestrationEventConfiguration> OrchestrationEvents { get; internal set; }
+		public IList<OrchestrationEventConfiguration> OrchestrationEvents { get; }
 
 		private static void ValidateConfigurationsBeforeSaving(IEnumerable<OrchestrationEvent> orchestrationEventConfigurations)
 		{
