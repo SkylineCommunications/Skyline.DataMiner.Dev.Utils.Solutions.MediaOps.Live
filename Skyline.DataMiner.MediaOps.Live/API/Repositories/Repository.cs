@@ -18,6 +18,8 @@
 
 	public abstract class Repository<T> where T : ApiObject<T>
 	{
+		private const int _defaultPageSize = 500;
+
 		private readonly ApiRepositoryQueryProvider<T> _queryProvider;
 
 		protected Repository(DomHelper helper)
@@ -99,7 +101,7 @@
 			}
 
 			var domFilter = TranslateFullFilter(filter);
-			domFilter = domFilter.AND(DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id));
+			domFilter = AddDomDefinitionFilter(domFilter);
 
 			return Helper.DomInstances.Count(domFilter);
 		}
@@ -111,7 +113,7 @@
 				throw new ArgumentNullException(nameof(domFilter));
 			}
 
-			domFilter = domFilter.AND(DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id));
+			domFilter = AddDomDefinitionFilter(domFilter);
 
 			return Helper.DomInstances.Count(domFilter);
 		}
@@ -122,13 +124,7 @@
 			return Helper.DomInstances.Read(filter).Select(CreateInstance);
 		}
 
-		public virtual IEnumerable<IEnumerable<T>> ReadAllPaged()
-		{
-			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id);
-			return Helper.DomInstances.ReadPaged(filter).Select(x => x.Select(CreateInstance));
-		}
-
-		public virtual IEnumerable<IEnumerable<T>> ReadAllPaged(long pageSize)
+		public virtual IEnumerable<IEnumerable<T>> ReadAllPaged(long pageSize = _defaultPageSize)
 		{
 			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id);
 			return Helper.DomInstances.ReadPaged(filter, pageSize).Select(x => x.Select(CreateInstance));
@@ -219,13 +215,72 @@
 				throw new ArgumentNullException(nameof(domQuery));
 			}
 
-			var domFilter = domQuery.Filter.AND(DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id));
+			var domFilter = AddDomDefinitionFilter(domQuery.Filter);
 
 			domQuery = domQuery.WithFilter(domFilter);
 
 			var domInstances = Helper.DomInstances.Read(domQuery);
 
 			return domInstances.Select(CreateInstance);
+		}
+
+		public virtual IEnumerable<IEnumerable<T>> ReadPaged(FilterElement<T> filter, long pageSize = _defaultPageSize)
+		{
+			if (filter == null)
+			{
+				throw new ArgumentNullException(nameof(filter));
+			}
+
+			var domFilter = TranslateFullFilter(filter);
+
+			return ReadPaged(domFilter, pageSize);
+		}
+
+		internal IEnumerable<IEnumerable<T>> ReadPaged(FilterElement<DomInstance> domFilter, long pageSize = _defaultPageSize)
+		{
+			if (domFilter == null)
+			{
+				throw new ArgumentNullException(nameof(domFilter));
+			}
+
+			domFilter = AddDomDefinitionFilter(domFilter);
+
+			var domInstances = Helper.DomInstances.ReadPaged(domFilter, pageSize);
+
+			return domInstances.Select(x => x.Select(CreateInstance));
+		}
+
+		public virtual IEnumerable<IEnumerable<T>> ReadPaged(IQuery<T> query, long pageSize = _defaultPageSize)
+		{
+			if (query == null)
+			{
+				throw new ArgumentNullException(nameof(query));
+			}
+
+			var domFilter = TranslateFullFilter(query.Filter);
+			var domOrder = TranslateFullOrderBy(query.Order);
+
+			var domQuery = query
+				.WithFilter(domFilter)
+				.WithOrder(domOrder);
+
+			return ReadPaged(domQuery, pageSize);
+		}
+
+		internal IEnumerable<IEnumerable<T>> ReadPaged(IQuery<DomInstance> domQuery, long pageSize = _defaultPageSize)
+		{
+			if (domQuery == null)
+			{
+				throw new ArgumentNullException(nameof(domQuery));
+			}
+
+			var domFilter = AddDomDefinitionFilter(domQuery.Filter);
+
+			domQuery = domQuery.WithFilter(domFilter);
+
+			var domInstances = Helper.DomInstances.ReadPaged(domQuery, pageSize);
+
+			return domInstances.Select(x => x.Select(CreateInstance));
 		}
 
 		public virtual IQueryable<T> Query()
@@ -344,6 +399,21 @@
 			var translated = CreateOrderBy(fieldName, sortOrder, naturalSort);
 
 			return translated;
+		}
+
+		private FilterElement<DomInstance> AddDomDefinitionFilter(FilterElement<DomInstance> domFilter)
+		{
+			var domDefFilter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id);
+
+			if (!(domFilter is ANDFilterElement<DomInstance> andFilter) ||
+				!andFilter.subFilters.Contains(domDefFilter))
+			{
+				domFilter = new ANDFilterElement<DomInstance>(
+					domDefFilter,
+					domFilter);
+			}
+
+			return domFilter;
 		}
 	}
 }
