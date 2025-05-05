@@ -128,6 +128,12 @@
 			return Helper.DomInstances.ReadPaged(filter).Select(x => x.Select(CreateInstance));
 		}
 
+		public virtual IEnumerable<IEnumerable<T>> ReadAllPaged(long pageSize)
+		{
+			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id);
+			return Helper.DomInstances.ReadPaged(filter, pageSize).Select(x => x.Select(CreateInstance));
+		}
+
 		public virtual T Read(Guid id)
 		{
 			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
