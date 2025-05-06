@@ -26,11 +26,11 @@
 			var eventToRemove = job.OrchestrationEvents.FirstOrDefault(ev => ev.ID == toRemove);
 
 			// Check events created is 2
-			Assert.AreEqual(job.OrchestrationEvents.Count, 2);
+			Assert.AreEqual(2, job.OrchestrationEvents.Count);
 
 			// Check events is 1 after removal
 			job.OrchestrationEvents.Remove(eventToRemove);
-			Assert.AreEqual(job.OrchestrationEvents.Count, 1);
+			Assert.AreEqual(1, job.OrchestrationEvents.Count);
 
 			// Check 1 event identified as deleted
 			// Assert.AreEqual(job.RemovedIds.Count(), 1);
@@ -48,11 +48,11 @@
 			var eventToRemove = job.OrchestrationEvents.FirstOrDefault(ev => ev.ID == toRemove);
 
 			// Check events created is 2
-			Assert.AreEqual(job.OrchestrationEvents.Count, 2);
+			Assert.AreEqual(2, job.OrchestrationEvents.Count);
 
 			// Check events is 1 after removal
 			job.OrchestrationEvents.Remove(eventToRemove);
-			Assert.AreEqual(job.OrchestrationEvents.Count, 1);
+			Assert.AreEqual(1, job.OrchestrationEvents.Count);
 
 			// Check 1 event identified as deleted
 			// Assert.AreEqual(job.RemovedIds.Count(), 1);

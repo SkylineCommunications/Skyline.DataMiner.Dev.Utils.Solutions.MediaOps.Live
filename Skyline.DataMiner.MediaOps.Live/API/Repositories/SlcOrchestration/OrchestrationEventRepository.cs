@@ -20,7 +20,6 @@
 	public class OrchestrationEventRepository : Repository<OrchestrationEvent>
 	{
 		private readonly ConfigurationRepository _configurationHelper;
-		private readonly ICommunication _communication;
 
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper, IDms dms) : base(helper)
 		{
@@ -122,7 +121,7 @@
 		/// </summary>
 		/// <param name="jobReference">Job reference value to filter.</param>
 		/// <returns>A collection of <see cref="OrchestrationEventConfiguration"/> objects that contains the given job reference value.</returns>
-		/// <exception cref="ArgumentException">Job reference can not be null or whitespace.</param></exception>
+		/// <exception cref="ArgumentException">Job reference can not be null or whitespace.</exception>
 		internal IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(string jobReference)
 		{
 			if (String.IsNullOrEmpty(jobReference))

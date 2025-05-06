@@ -8,7 +8,7 @@
 
 	public class OrchestrationEventConfiguration : OrchestrationEvent
 	{
-		private Configuration configuration;
+		private readonly Configuration configuration;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEventConfiguration"/> class.
@@ -27,8 +27,9 @@
 		{
 		}
 
-		internal static DomDefinitionId DomDefinition => SlcOrchestrationIds.Definitions.OrchestrationEvent;
-
+		/// <summary>
+		/// Gets the configuration for this event.
+		/// </summary>
 		public Configuration Configuration => configuration;
 
 		/// <summary>

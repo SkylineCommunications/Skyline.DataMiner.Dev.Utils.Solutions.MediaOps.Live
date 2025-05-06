@@ -139,26 +139,5 @@
 
 			return sectionDefinition;
 		}
-
-		private static SectionDefinition GetConfigurationInfoSectionDefinition()
-		{
-			var sectionDefinition = new CustomSectionDefinition
-			{
-				ID = SlcOrchestrationIds.Sections.Configuration.Id,
-				Name = "Configuration Info",
-			};
-
-			sectionDefinition.AddOrReplaceFieldDescriptor(
-				new DomInstanceFieldDescriptor(SlcOrchestrationIds.ModuleId)
-				{
-					FieldType = typeof(Guid),
-					ID = SlcOrchestrationIds.Sections.Configuration.ConfigurationInfo,
-					Name = "Configuration",
-					IsOptional = false,
-					DomDefinitionIds = { SlcOrchestrationIds.Definitions.Configuration },
-				});
-
-			return sectionDefinition;
-		}
 	}
 }
