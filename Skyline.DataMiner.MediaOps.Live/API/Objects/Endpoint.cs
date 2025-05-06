@@ -3,6 +3,7 @@
 	using System;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -139,10 +140,7 @@
 
 		public void Validate()
 		{
-			if (String.IsNullOrWhiteSpace(Name))
-			{
-				throw new InvalidOperationException($"{nameof(Name)} cannot be null, empty, or whitespace.");
-			}
+			NameUtil.Validate(Name);
 
 			if (TransportType == null)
 			{

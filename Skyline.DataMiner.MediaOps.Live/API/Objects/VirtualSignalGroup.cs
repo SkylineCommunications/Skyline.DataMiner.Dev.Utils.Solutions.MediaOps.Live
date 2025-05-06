@@ -171,9 +171,11 @@
 
 		public void Validate()
 		{
-			if (String.IsNullOrWhiteSpace(Name))
+			NameUtil.Validate(Name);
+
+			if (Description != null && Description.Length > 200)
 			{
-				throw new InvalidOperationException($"{nameof(Name)} cannot be null, empty, or whitespace.");
+				throw new InvalidOperationException("Description cannot be longer than 200 characters.");
 			}
 		}
 	}
