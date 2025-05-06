@@ -20,23 +20,6 @@
 			_resourceManager = new ResourceManagerHelper(communication.SendSingleResponseMessage);
 		}
 
-		public void Testing()
-		{
-			// EACH EVENT SEPARATE RESERVATION?????
-			ReservationInstance reservation = new ReservationInstance(Guid.Empty)
-			{
-				Name = "TEST",
-				
-				
-			};
-
-			ReservationEvent ttttt = new ReservationEvent
-			{
-				Name = "Preroll",
-				
-			};
-		}
-
 		public IEnumerable<OrchestrationSchedulerTask> GetAllScheduledOrchestrationTasks()
 		{
 			List<OrchestrationSchedulerTask> tasks = new List<OrchestrationSchedulerTask>();
