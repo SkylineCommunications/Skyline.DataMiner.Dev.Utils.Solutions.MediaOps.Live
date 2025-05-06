@@ -2,6 +2,7 @@
 {
 	using API.Objects.SlcConnectivityManagement;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
@@ -13,9 +14,9 @@
 
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{
-		public MediaOpsLiveApiMock()
-			: base(CreateMessageHandler(out var messageHandler).HandleMessages)
+		public MediaOpsLiveApiMock() : base(Engine.SLNetRaw)
 		{
+			CreateMessageHandler(out var messageHandler);
 			MessageHandler = messageHandler;
 
 			var transportType = new TransportType { Name = "IP" };
