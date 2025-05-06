@@ -1,17 +1,16 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcOrchestration
 {
 	using System;
-	using System.Collections;
 	using System.Collections.Generic;
-	using System.IO;
 	using System.Linq;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Jobs;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	using SLDataGateway.API.Types.Querying;
@@ -21,8 +20,9 @@
 	public class OrchestrationEventRepository : Repository<OrchestrationEvent>
 	{
 		private readonly ConfigurationRepository _configurationHelper;
+		private readonly ICommunication _communication;
 
-		public OrchestrationEventRepository(SlcOrchestrationHelper helper) : base(helper)
+		public OrchestrationEventRepository(SlcOrchestrationHelper helper, ICommunication communication) : base(helper)
 		{
 			_configurationHelper = new ConfigurationRepository(helper);
 		}
@@ -88,6 +88,7 @@
 		public void DeleteJob(OrchestrationJob job)
 		{
 			DeleteEvents(job.OrchestrationEvents);
+			OrchestrationScheduler.DeleteTas
 		}
 
 		/// <summary>
@@ -97,12 +98,6 @@
 		public void DeleteJobConfiguration(OrchestrationJobConfiguration job)
 		{
 			DeleteEvents(job.OrchestrationEvents);
-		}
-
-		internal OrchestrationJobConfiguration GetEventsAsEventConfigurations(OrchestrationJob job)
-		{
-			var convertedEvents = GetEventsAsEventConfigurations(job.OrchestrationEvents);
-			return new OrchestrationJobConfiguration(job.JobId, convertedEvents.Values.ToList());
 		}
 
 		/// <summary>
@@ -268,43 +263,6 @@
 			var results = CreateOrUpdateWithResult(orchestrationEventConfigurations);
 
 			return orchestrationEventConfigurations.Where(config => results.SuccessfulIds.Contains(config.DomInstance.ID));
-		}
-
-		/// <summary>
-		/// Saves a new or updated event to the DataMiner System.
-		/// </summary>
-		/// <param name="event">The configured or updated event.</param>
-		/// <returns>Returns the <see cref="OrchestrationEvent"/> object as saved on DataMiner, or null if the event was not correctly saved.</returns>
-		internal OrchestrationEvent CreateOrUpdateEvent(OrchestrationEvent @event)
-		{
-			var result = CreateOrUpdateEvents(new List<OrchestrationEvent> { @event });
-
-			return result.FirstOrDefault();
-		}
-
-		/// <summary>
-		/// Delete an event with the given event ID from the DataMiner system.
-		/// </summary>
-		/// <param name="eventId">ID of the event that will be deleted.</param>
-		internal void DeleteEvent(Guid eventId)
-		{
-			OrchestrationEvent orchestrationEvent = GetEventById(eventId);
-
-			DeleteEvent(orchestrationEvent);
-		}
-
-		/// <summary>
-		/// Delete a <see cref="OrchestrationEvent"/> object from the DataMiner system.
-		/// </summary>
-		/// <param name="event">The event to be deleted.</param>
-		internal void DeleteEvent(OrchestrationEvent @event)
-		{
-			if (@event.ConfigurationReference.HasValue)
-			{
-				_configurationHelper.Delete(GetConfigurationInstances(new List<Guid> { @event.ConfigurationReference.Value.ID }).Values);
-			}
-
-			Delete(@event);
 		}
 
 		/// <summary>

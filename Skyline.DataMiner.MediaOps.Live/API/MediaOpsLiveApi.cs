@@ -3,6 +3,10 @@
 	using System;
 	using System.Linq;
 
+	using Core.DataMinerSystem.Common;
+
+	using Net;
+
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcOrchestration;
@@ -16,11 +20,16 @@
 
 	public class MediaOpsLiveApi
 	{
-		public MediaOpsLiveApi(Func<DMSMessage[], DMSMessage[]> messageHandler)
+		public MediaOpsLiveApi(ICommunication communication)
 		{
-			MessageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
-			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(messageHandler);
-			SlcOrchestrationHelper = new SlcOrchestrationHelper(messageHandler);
+			if (communication is null)
+			{
+				throw new ArgumentNullException(nameof(communication));
+			}
+
+			MessageHandler = communication.SendMessages;
+			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(communication);
+			SlcOrchestrationHelper = new SlcOrchestrationHelper(communication);
 
 			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper);
 			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper);
@@ -29,10 +38,31 @@
 			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
 			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
 
-			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper);
+			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, DmsFactory.CreateDms(communication));
 		}
 
-		public MediaOpsLiveApi(IEngine engine) : this(engine.SendSLNetMessages)
+		public MediaOpsLiveApi(IConnection connection)
+		{
+			if (connection is null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			MessageHandler = connection.HandleMessages;
+			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
+			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
+
+			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper);
+			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper);
+			Levels = new LevelRepository(SlcConnectivityManagementHelper);
+			Categories = new CategoryRepository(SlcConnectivityManagementHelper);
+			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
+			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
+
+			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, connection.GetDms());
+		}
+
+		public MediaOpsLiveApi(IEngine engine) : this(engine.GetUserConnection())
 		{
 			if (engine == null)
 			{

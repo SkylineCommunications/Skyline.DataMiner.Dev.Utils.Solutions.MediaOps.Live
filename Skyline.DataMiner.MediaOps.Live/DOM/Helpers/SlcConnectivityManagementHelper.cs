@@ -4,6 +4,10 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Core.DataMinerSystem.Common;
+
+	using Net;
+
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
@@ -14,11 +18,11 @@
 
 	public class SlcConnectivityManagementHelper : DomModuleHelperBase
 	{
-		public SlcConnectivityManagementHelper(Func<DMSMessage[], DMSMessage[]> messageHandler) : base(SlcConnectivityManagementIds.ModuleId, messageHandler)
+		public SlcConnectivityManagementHelper(ICommunication communication) : base(SlcConnectivityManagementIds.ModuleId, communication.SendMessages)
 		{
 		}
 
-		public SlcConnectivityManagementHelper(IEngine engine) : base(SlcConnectivityManagementIds.ModuleId, engine)
+		public SlcConnectivityManagementHelper(IConnection connection) : base(SlcConnectivityManagementIds.ModuleId, connection.HandleMessages)
 		{
 		}
 

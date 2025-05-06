@@ -4,14 +4,13 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Net.Messages;
-
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Querying;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Utils.DOM.Extensions;
 
