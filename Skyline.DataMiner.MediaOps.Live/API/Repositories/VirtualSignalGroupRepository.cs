@@ -52,6 +52,14 @@
 			return new VirtualSignalGroup(domInstance);
 		}
 
+		protected override void Validate(IEnumerable<VirtualSignalGroup> instances)
+		{
+			foreach (var instance in instances)
+			{
+				instance.Validate();
+			}
+		}
+
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
 		{
 			switch (fieldName)

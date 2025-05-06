@@ -1,5 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
 {
+	using System.Collections.Generic;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -20,6 +22,14 @@
 		protected override TransportType CreateInstance(DomInstance domInstance)
 		{
 			return new TransportType(domInstance);
+		}
+
+		protected override void Validate(IEnumerable<TransportType> instances)
+		{
+			foreach (var instance in instances)
+			{
+				instance.Validate();
+			}
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)

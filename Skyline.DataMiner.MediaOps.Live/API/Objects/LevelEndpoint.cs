@@ -55,5 +55,18 @@
 				DomSection.Endpoint = value;
 			}
 		}
+
+		public void Validate()
+		{
+			if (Level == null)
+			{
+				throw new InvalidOperationException($"{nameof(Level)} cannot be null.");
+			}
+
+			if (Endpoint == null)
+			{
+				throw new InvalidOperationException($"{nameof(Endpoint)} cannot be null.");
+			}
+		}
 	}
 }

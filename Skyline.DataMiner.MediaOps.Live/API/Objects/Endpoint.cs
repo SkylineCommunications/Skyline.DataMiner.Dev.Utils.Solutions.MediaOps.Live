@@ -136,6 +136,19 @@
 		public bool IsSource => Role == Role.Source;
 
 		public bool IsDestination => Role == Role.Destination;
+
+		public void Validate()
+		{
+			if (String.IsNullOrWhiteSpace(Name))
+			{
+				throw new InvalidOperationException($"{nameof(Name)} cannot be null, empty, or whitespace.");
+			}
+
+			if (TransportType == null)
+			{
+				throw new InvalidOperationException($"{nameof(TransportType)} cannot be null.");
+			}
+		}
 	}
 
 	public static class EndpointExposers

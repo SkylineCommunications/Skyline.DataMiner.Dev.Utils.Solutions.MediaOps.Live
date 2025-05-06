@@ -63,6 +63,24 @@
 				_domInstance.LevelInfo.TransportType = value;
 			}
 		}
+
+		public void Validate()
+		{
+			if (String.IsNullOrWhiteSpace(Name))
+			{
+				throw new InvalidOperationException($"{nameof(Name)} cannot be null, empty, or whitespace.");
+			}
+
+			if (Number < 0)
+			{
+				throw new InvalidOperationException($"{nameof(Number)} cannot be negative.");
+			}
+
+			if (TransportType == null)
+			{
+				throw new InvalidOperationException($"{nameof(TransportType)} cannot be null.");
+			}
+		}
 	}
 
 	public static class LevelExposers

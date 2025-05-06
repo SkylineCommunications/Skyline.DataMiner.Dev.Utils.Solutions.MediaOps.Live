@@ -76,6 +76,14 @@
 				_domInstance.ConnectionInfo.PendingConnectedSource = value;
 			}
 		}
+
+		public void Validate()
+		{
+			if (Destination == null)
+			{
+				throw new InvalidOperationException($"{nameof(Destination)} cannot be null.");
+			}
+		}
 	}
 
 	public static class ConnectionExposers

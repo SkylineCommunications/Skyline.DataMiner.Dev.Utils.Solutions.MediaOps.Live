@@ -50,6 +50,14 @@
 				_domInstance.CategoryInfo.ParentCategory = value;
 			}
 		}
+
+		public void Validate()
+		{
+			if (String.IsNullOrWhiteSpace(Name))
+			{
+				throw new InvalidOperationException($"{nameof(Name)} cannot be null, empty, or whitespace.");
+			}
+		}
 	}
 
 	public static class CategoryExposers

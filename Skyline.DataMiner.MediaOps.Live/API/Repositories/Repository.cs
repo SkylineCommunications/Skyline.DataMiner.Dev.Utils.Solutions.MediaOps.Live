@@ -35,12 +35,16 @@
 
 		protected abstract T CreateInstance(DomInstance domInstance);
 
+		protected abstract void Validate(IEnumerable<T> instances);
+
 		public virtual void Create(T instance)
 		{
 			if (instance == null)
 			{
 				throw new ArgumentNullException(nameof(instance));
 			}
+
+			Validate(new[] { instance });
 
 			Helper.DomInstances.Create(instance.DomInstance);
 		}
@@ -52,6 +56,8 @@
 				throw new ArgumentNullException(nameof(instance));
 			}
 
+			Validate(new[] { instance });
+
 			Helper.DomInstances.Update(instance.DomInstance);
 		}
 
@@ -62,7 +68,11 @@
 				throw new ArgumentNullException(nameof(instances));
 			}
 
-			var domInstances = instances.Select(x => x.DomInstance.ToInstance()).ToList();
+			var instanceCollection = instances as ICollection<T> ?? instances.ToList();
+
+			Validate(instanceCollection);
+
+			var domInstances = instanceCollection.Select(x => x.DomInstance.ToInstance());
 			Helper.DomInstances.CreateOrUpdateInBatches(domInstances).ThrowOnFailure();
 		}
 

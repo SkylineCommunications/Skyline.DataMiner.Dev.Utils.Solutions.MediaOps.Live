@@ -72,6 +72,14 @@
 			return new Connection(domInstance);
 		}
 
+		protected override void Validate(IEnumerable<Connection> instances)
+		{
+			foreach (var instance in instances)
+			{
+				instance.Validate();
+			}
+		}
+
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
 		{
 			switch (fieldName)
