@@ -22,7 +22,7 @@
 		private readonly ConfigurationRepository _configurationHelper;
 		private readonly ICommunication _communication;
 
-		public OrchestrationEventRepository(SlcOrchestrationHelper helper, ICommunication communication) : base(helper)
+		public OrchestrationEventRepository(SlcOrchestrationHelper helper, IDms dms) : base(helper)
 		{
 			_configurationHelper = new ConfigurationRepository(helper);
 		}
@@ -88,7 +88,6 @@
 		public void DeleteJob(OrchestrationJob job)
 		{
 			DeleteEvents(job.OrchestrationEvents);
-			OrchestrationScheduler.DeleteTas
 		}
 
 		/// <summary>

@@ -57,7 +57,7 @@
 			return tasks;
 		}
 
-		public static void CreateOrUpdateTask(OrchestrationSchedulerTask task)
+		public void CreateOrUpdateTask(OrchestrationSchedulerTask task)
 		{
 			if (task.Scheduler == null)
 			{
@@ -73,7 +73,7 @@
 			task.Scheduler.DeleteTask(task.TaskId);
 		}
 
-		private static IDmsScheduler SelectRandomScheduler()
+		private IDmsScheduler SelectRandomScheduler()
 		{
 			var agents = _dms.GetAgents().ToList();
 			return agents[new Random().Next(agents.Count)].Scheduler;
