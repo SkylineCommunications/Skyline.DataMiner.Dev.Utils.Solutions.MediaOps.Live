@@ -27,11 +27,6 @@
 		internal OrchestrationEvent(OrchestrationEventInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
-
-			if (_domInstance.OrchestrationEventInfo.ReservationInstance == null)
-			{
-				_domInstance.OrchestrationEventInfo.ReservationInstance = Guid.Empty;
-			}
 		}
 
 		internal OrchestrationEvent(DomInstance domInstance) : this(domInstance: new OrchestrationEventInstance(domInstance))
@@ -91,7 +86,7 @@
 		/// <summary>
 		/// Gets the reference to the DataMiner reservation corresponding to this event.
 		/// </summary>
-		public Guid? ReservationInstance
+		public string ReservationInstance
 		{
 			get
 			{

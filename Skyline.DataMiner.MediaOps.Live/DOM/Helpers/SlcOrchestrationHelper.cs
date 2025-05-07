@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
@@ -66,6 +67,11 @@
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).LessThanOrEqual(localEnd));
 
 			return GetOrchestrationEventIterator(filter);
+		}
+
+		public void SaveOrchestrationEventInstances(IEnumerable<OrchestrationEventInstance> eventInstances)
+		{
+			DomHelper.DomInstances.CreateOrUpdate(eventInstances.Select(inst => inst.ToInstance()).ToList());
 		}
 
 		#endregion

@@ -146,7 +146,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <summary>
-		/// Gets or sets the ConfigurationReference section of the DOM Instance.
+		/// Gets or sets the Configuration section of the DOM Instance.
 		/// </summary>
 		public ConfigurationSection Configuration { get; set; }
 
@@ -1255,14 +1255,14 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
 		/// </list>
 		/// </remarks>
-		public Guid? ReservationInstance
+		public String ReservationInstance
 		{
 			get
 			{
-				var wrapper = section.GetValue<Guid>(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance);
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance);
 				if (wrapper != null)
 				{
-					return (Guid?)wrapper.Value;
+					return (String)wrapper.Value;
 				}
 				else
 				{
@@ -1278,7 +1278,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 				}
 				else
 				{
-					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance, (Guid)value);
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance, (String)value);
 				}
 			}
 		}
@@ -1296,7 +1296,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 				throw new InvalidOperationException("'EventTime' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			if (section.GetValue<String>(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference) == null)
 				throw new InvalidOperationException("'JobReference' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			if (section.GetValue<Guid>(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance) == null)
+			if (section.GetValue<String>(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance) == null)
 				throw new InvalidOperationException("'ReservationInstance' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
 		}

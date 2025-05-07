@@ -8,24 +8,42 @@
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
+	using Skyline.DataMiner.Net;
 
 	public class OrchestrationSchedulerTask
 	{
-		private const string ScriptName = "MediaOps_Orchestration_Script";
+		private const string ScriptName = "ORC-AS-EventOrchestration";
+		private readonly OrchestrationEvent _orchestrationEvent;
 
-		public OrchestrationSchedulerTask()
+		public OrchestrationSchedulerTask(OrchestrationEvent orchestrationEvent)
 		{
+			if (!orchestrationEvent.EventTime.HasValue)
+			{
+				throw new InvalidOperationException($"Invalid event time for event {orchestrationEvent.Name}");
+			}
+
+			if (!String.IsNullOrEmpty(orchestrationEvent.ReservationInstance))
+			{
+				string[] splitTaskReference = orchestrationEvent.ReservationInstance.Split('/');
+
+				if (splitTaskReference.Length != 2)
+				{
+					throw new InvalidOperationException($"Invalid task reference for event {orchestrationEvent.Name}");
+				}
+
+				int dmaId = Convert.ToInt32(splitTaskReference[0]);
+				int taskId = Convert.ToInt32(splitTaskReference[1]);
+
+				ScheduledTaskId = new ScheduledTaskId(dmaId, taskId);
+			}
+
+			_orchestrationEvent = orchestrationEvent;
 		}
 
-		internal IDmsScheduler Scheduler { get; set; }
+		public ScheduledTaskId ScheduledTaskId { get; set; }
 
-		public string Name { get; set; }
-
-		public int TaskId { get; set; }
-
-		public DateTime DateTime { get; set; }
-
-		private object[] GenerateSchedulerTaskData()
+		public object[] GenerateSchedulerTaskData()
 		{
 			return new object[]
 			{
@@ -37,20 +55,24 @@
 
 		private string[] GenerateGeneralInfoTaskData()
 		{
-			return new[]
+			List<string> generalInfoTaskData = ScheduledTaskId == null ? new List<string>() : new List<string> { ScheduledTaskId.TaskId.ToString() };
+
+			generalInfoTaskData.AddRange(new[]
 			{
-				Name,
-				DateTime.ToString("yyyy-MM-dd"),
-				DateTime.AddDays(1).ToString("yyyy-MM-dd"),
-				DateTime.ToString("HH:mm:ss"),
+				_orchestrationEvent.Name,
+				_orchestrationEvent.EventTime.Value.ToString("yyyy-MM-dd"),
+				_orchestrationEvent.EventTime.Value.AddDays(1).ToString("yyyy-MM-dd"),
+				_orchestrationEvent.EventTime.Value.ToString("HH:mm:ss"),
 				"once",
 				"1",
 				String.Empty,
-				$"MediaOps Live Orchestration Event {Name}",
+				$"MediaOps Live Orchestration Event {_orchestrationEvent.Name}",
 				"TRUE",
 				String.Empty,
 				String.Empty,
-			};
+			});
+
+			return generalInfoTaskData.ToArray();
 		}
 
 		private string[] GenerateActionsTaskData()
@@ -65,15 +87,18 @@
 				"DEFER:False",
 			};
 		}
+	}
 
-		internal void Create()
+	public class ScheduledTaskId
+	{
+		public ScheduledTaskId(int dmaId, int taskId)
 		{
-			TaskId = Scheduler.CreateTask(GenerateSchedulerTaskData());
+			DmaId = dmaId;
+			TaskId = taskId;
 		}
 
-		internal void Update()
-		{
-			Scheduler.UpdateTask(GenerateSchedulerTaskData());
-		}
+		public int DmaId { get; set; }
+
+		public int TaskId { get; set; }
 	}
 }

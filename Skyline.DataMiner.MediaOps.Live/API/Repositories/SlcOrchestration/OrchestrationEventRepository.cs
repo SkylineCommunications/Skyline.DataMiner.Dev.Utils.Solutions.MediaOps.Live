@@ -20,10 +20,12 @@
 	public class OrchestrationEventRepository : Repository<OrchestrationEvent>
 	{
 		private readonly ConfigurationRepository _configurationHelper;
+		private readonly OrchestrationScheduler _scheduler;
 
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper, IDms dms) : base(helper)
 		{
 			_configurationHelper = new ConfigurationRepository(helper);
+			_scheduler = new OrchestrationScheduler(dms);
 		}
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
@@ -62,6 +64,7 @@
 			DeleteEvents(job.RemovedIds);
 
 			job.ValidateEventsBeforeSaving();
+			_scheduler.CreateOrUpdateEventTasks(job.OrchestrationEvents);
 			var successes = CreateOrUpdateEventConfigurations(job.OrchestrationEvents);
 			return new OrchestrationJobConfiguration(job.JobId, successes.ToList());
 		}
@@ -76,6 +79,7 @@
 			DeleteEvents(job.RemovedIds);
 
 			job.ValidateEventsBeforeSaving();
+			_scheduler.CreateOrUpdateEventTasks(job.OrchestrationEvents);
 			var successes = CreateOrUpdateEvents(job.OrchestrationEvents);
 			return new OrchestrationJob(job.JobId, successes.ToList());
 		}
@@ -86,6 +90,7 @@
 		/// <param name="job">Job to remove.</param>
 		public void DeleteJob(OrchestrationJob job)
 		{
+			_scheduler.DeleteEventTasks(job.OrchestrationEvents);
 			DeleteEvents(job.OrchestrationEvents);
 		}
 
@@ -95,6 +100,7 @@
 		/// <param name="job">Job to remove.</param>
 		public void DeleteJobConfiguration(OrchestrationJobConfiguration job)
 		{
+			_scheduler.DeleteEventTasks(job.OrchestrationEvents);
 			DeleteEvents(job.OrchestrationEvents);
 		}
 

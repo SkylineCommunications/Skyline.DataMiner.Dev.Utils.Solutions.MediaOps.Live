@@ -6,60 +6,85 @@
 
 	using Core.DataMinerSystem.Common;
 
+	using Skyline.DataMiner.Core.Scheduler.Automation;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.ResourceManager.Objects;
 
 	public class OrchestrationScheduler
 	{
 		private readonly IDms _dms;
-		private readonly ResourceManagerHelper _resourceManager;
 
-		public OrchestrationScheduler(ICommunication communication)
+		public OrchestrationScheduler(IDms dms)
 		{
-			_dms = DmsFactory.CreateDms(communication);
-			_resourceManager = new ResourceManagerHelper(communication.SendSingleResponseMessage);
+			_dms = dms ?? throw new ArgumentNullException(nameof(dms));
 		}
 
-		public IEnumerable<OrchestrationSchedulerTask> GetAllScheduledOrchestrationTasks()
+		/// <summary>
+		/// Triggers the creation or update of the scheduled task that is linked to the events.
+		/// </summary>
+		/// <param name="events">The list of events for which the scheduled task needs to be updated.</param>
+		/// <returns>The list of events that was inputted, with an updated reference to the scheduled task.</returns>
+		public IEnumerable<OrchestrationEvent> CreateOrUpdateEventTasks(IEnumerable<OrchestrationEvent> events)
 		{
-			List<OrchestrationSchedulerTask> tasks = new List<OrchestrationSchedulerTask>();
-
-			foreach (IDma dma in _dms.GetAgents())
+			IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
+			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
-				IDmsScheduler dmaScheduler = dma.Scheduler;
-
-				tasks.AddRange(dmaScheduler.GetTasks().Select(task => new OrchestrationSchedulerTask
+				switch (orchestrationEvent.EventState)
 				{
-					Name = task.TaskName,
-					TaskId = task.Id,
-					DateTime = task.StartTime,
-					Scheduler = dmaScheduler,
-				}));
+					case SlcOrchestrationIds.Enums.EventState.Cancelled:
+					case SlcOrchestrationIds.Enums.EventState.Draft:
+						DeleteEventTask(orchestrationEvent);
+						continue;
+
+					case SlcOrchestrationIds.Enums.EventState.Confirmed:
+						CreateOrUpdateEventTask(orchestrationEvent);
+						continue;
+				}
 			}
 
-			return tasks;
+			return orchestrationEvents;
 		}
 
-		public void CreateOrUpdateTask(OrchestrationSchedulerTask task)
+		public void DeleteEventTasks(IEnumerable<OrchestrationEvent> events)
 		{
-			if (task.Scheduler == null)
+			foreach (OrchestrationEvent orchestrationEvent in events)
 			{
-				task.Scheduler = SelectRandomScheduler();
-				task.Create();
+				DeleteEventTask(orchestrationEvent);
+			}
+		}
+
+		private void CreateOrUpdateEventTask(OrchestrationEvent orchestrationEvent)
+		{
+			OrchestrationSchedulerTask task = new OrchestrationSchedulerTask(orchestrationEvent);
+			if (task.ScheduledTaskId != null)
+			{
+				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.UpdateTask(task.GenerateSchedulerTaskData());
+				return;
 			}
 
-			task.Update();
+			IDma dma = SelectRandomDma();
+			int taskId = dma.Scheduler.CreateTask(task.GenerateSchedulerTaskData());
+			orchestrationEvent.ReservationInstance = String.Join("/", dma.Id, taskId);
 		}
 
-		public static void DeleteTask(OrchestrationSchedulerTask task)
+		private void DeleteEventTask(OrchestrationEvent orchestrationEvent)
 		{
-			task.Scheduler.DeleteTask(task.TaskId);
+			OrchestrationSchedulerTask task = new OrchestrationSchedulerTask(orchestrationEvent);
+
+			if (task.ScheduledTaskId != null)
+			{
+				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.DeleteTask(task.ScheduledTaskId.TaskId);
+			}
+
+			orchestrationEvent.ReservationInstance = null;
 		}
 
-		private IDmsScheduler SelectRandomScheduler()
+		private IDma SelectRandomDma()
 		{
 			var agents = _dms.GetAgents().ToList();
-			return agents[new Random().Next(agents.Count)].Scheduler;
+			return agents[new Random().Next(agents.Count)];
 		}
 	}
 }
