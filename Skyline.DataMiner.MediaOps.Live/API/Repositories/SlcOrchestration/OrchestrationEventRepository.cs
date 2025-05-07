@@ -15,8 +15,6 @@
 
 	using SLDataGateway.API.Types.Querying;
 
-	using Comparer = Net.Messages.SLDataGateway.Comparer;
-
 	public class OrchestrationEventRepository : Repository<OrchestrationEvent>
 	{
 		private readonly ConfigurationRepository _configurationHelper;

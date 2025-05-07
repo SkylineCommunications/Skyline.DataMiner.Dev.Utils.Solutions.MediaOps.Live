@@ -66,7 +66,7 @@
 				"once",
 				"1",
 				String.Empty,
-				$"MediaOps Live Orchestration Event {_orchestrationEvent.Name}",
+				$"MediaOps Live Orchestration Event \"{_orchestrationEvent.Name}\"",
 				"TRUE",
 				String.Empty,
 				String.Empty,
@@ -81,10 +81,9 @@
 			{
 				"automation",
 				ScriptName,
-				String.Empty,
-				String.Empty,
+				$"PARAMETER:2:{_orchestrationEvent.ID}",
 				"CHECKSETS:FALSE",
-				"DEFER:False",
+				"DEFER:FALSE",
 			};
 		}
 	}

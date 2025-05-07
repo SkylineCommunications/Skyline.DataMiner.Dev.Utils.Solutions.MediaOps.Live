@@ -284,7 +284,7 @@
 
 			if (!result)
 			{
-				throw new ArgumentException($"Event state {state.ToString()} can not be applied.");
+				throw new ArgumentException($"Event state {state} can not be applied.");
 			}
 		}
 	}
