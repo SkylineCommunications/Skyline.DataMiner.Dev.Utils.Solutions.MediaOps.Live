@@ -1296,8 +1296,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 				throw new InvalidOperationException("'EventTime' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			if (section.GetValue<String>(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference) == null)
 				throw new InvalidOperationException("'JobReference' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			if (section.GetValue<String>(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance) == null)
-				throw new InvalidOperationException("'ReservationInstance' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
 		}
 	}
