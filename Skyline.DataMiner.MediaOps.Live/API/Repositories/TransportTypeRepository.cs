@@ -1,11 +1,13 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
 {
+	using System;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -24,12 +26,14 @@
 			return new TransportType(domInstance);
 		}
 
-		protected override void Validate(IEnumerable<TransportType> instances)
+		protected override void ValidateBeforeSave(ICollection<TransportType> instances)
 		{
 			foreach (var instance in instances)
 			{
 				instance.Validate();
 			}
+
+			CheckDuplicatesBeforeSave(instances);
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
@@ -52,6 +56,23 @@
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
+		}
+
+		private void CheckDuplicatesBeforeSave(ICollection<TransportType> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(TransportType tt) =>
+				DomInstanceExposers.Id.NotEqual(tt.ID)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name).Equal(tt.Name));
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				throw new InvalidOperationException($"Transport type with same name already exists.");
+			}
 		}
 	}
 }

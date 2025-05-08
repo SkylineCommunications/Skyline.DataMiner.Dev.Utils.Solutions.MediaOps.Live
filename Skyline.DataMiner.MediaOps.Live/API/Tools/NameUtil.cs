@@ -2,7 +2,7 @@
 {
 	using System;
 
-	internal static class NameUtil
+	public static class NameUtil
 	{
 		public static bool Validate(string name, out string error)
 		{
@@ -12,27 +12,21 @@
 				return false;
 			}
 
-			if (name.Length == 0)
+			if (String.IsNullOrWhiteSpace(name))
 			{
-				error = "Name cannot be empty.";
+				error = "Name cannot be whitespace or empty.";
 				return false;
 			}
 
-			if (String.IsNullOrWhiteSpace(name))
+			if (name.Length < 1 || name.Length > 100)
 			{
-				error = "Name cannot be whitespace.";
+				error = "Name must be between 1 and 100 characters long.";
 				return false;
 			}
 
 			if (Char.IsWhiteSpace(name[0]) || Char.IsWhiteSpace(name[name.Length - 1]))
 			{
 				error = "Name cannot start or end with whitespace.";
-				return false;
-			}
-
-			if (name.Length > 100)
-			{
-				error = "Name cannot be longer than 100 characters.";
 				return false;
 			}
 

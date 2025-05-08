@@ -1,11 +1,13 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
 {
+	using System;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -24,12 +26,14 @@
 			return new Level(domInstance);
 		}
 
-		protected override void Validate(IEnumerable<Level> instances)
+		protected override void ValidateBeforeSave(ICollection<Level> instances)
 		{
 			foreach (var instance in instances)
 			{
 				instance.Validate();
 			}
+
+			CheckDuplicatesBeforeSave(instances);
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
@@ -60,6 +64,25 @@
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
+		}
+
+		private void CheckDuplicatesBeforeSave(ICollection<Level> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(Level l) =>
+				DomInstanceExposers.Id.NotEqual(l.ID)
+				.AND(
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Name).Equal(l.Name)
+					.OR(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number).Equal(l.Number)));
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				throw new InvalidOperationException($"Level with same name or number already exists.");
+			}
 		}
 	}
 }

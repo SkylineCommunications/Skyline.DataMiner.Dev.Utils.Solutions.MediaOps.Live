@@ -107,7 +107,7 @@
 			return new Endpoint(domInstance);
 		}
 
-		protected override void Validate(IEnumerable<Endpoint> instances)
+		protected override void ValidateBeforeSave(ICollection<Endpoint> instances)
 		{
 			foreach (var instance in instances)
 			{

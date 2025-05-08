@@ -24,7 +24,7 @@
 			return new Category(domInstance);
 		}
 
-		protected override void Validate(IEnumerable<Category> instances)
+		protected override void ValidateBeforeSave(ICollection<Category> instances)
 		{
 			foreach (var instance in instances)
 			{

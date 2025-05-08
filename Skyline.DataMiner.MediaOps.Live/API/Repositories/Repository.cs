@@ -35,7 +35,7 @@
 
 		protected abstract T CreateInstance(DomInstance domInstance);
 
-		protected abstract void Validate(IEnumerable<T> instances);
+		protected abstract void ValidateBeforeSave(ICollection<T> instances);
 
 		public virtual void Create(T instance)
 		{
@@ -44,7 +44,7 @@
 				throw new ArgumentNullException(nameof(instance));
 			}
 
-			Validate(new[] { instance });
+			ValidateBeforeSave(new[] { instance });
 
 			Helper.DomInstances.Create(instance.DomInstance);
 		}
@@ -56,7 +56,7 @@
 				throw new ArgumentNullException(nameof(instance));
 			}
 
-			Validate(new[] { instance });
+			ValidateBeforeSave(new[] { instance });
 
 			Helper.DomInstances.Update(instance.DomInstance);
 		}
@@ -70,10 +70,20 @@
 
 			var instanceCollection = instances as ICollection<T> ?? instances.ToList();
 
-			Validate(instanceCollection);
+			ValidateBeforeSave(instanceCollection);
 
 			var domInstances = instanceCollection.Select(x => x.DomInstance.ToInstance());
 			Helper.DomInstances.CreateOrUpdateInBatches(domInstances).ThrowOnFailure();
+		}
+
+		public virtual void CreateOrUpdate(T instance)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			CreateOrUpdate(new[] { instance });
 		}
 
 		public virtual void Delete(T instance)
@@ -167,6 +177,39 @@
 					x => Helper.DomInstances.Read(x))
 				.Select(CreateInstance)
 				.SafeToDictionary(x => x.ID);
+		}
+
+		public virtual T Read(string name)
+		{
+			if (name == null)
+			{
+				throw new ArgumentNullException(nameof(name));
+			}
+
+			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
+				.AND(DomInstanceExposers.Name.Equal(name));
+
+			var domInstance = Helper.DomInstances.Read(filter).SingleOrDefault();
+
+			return domInstance != null ? CreateInstance(domInstance) : null;
+		}
+
+		public virtual IDictionary<string, T> Read(IEnumerable<string> names)
+		{
+			if (names == null)
+			{
+				throw new ArgumentNullException(nameof(names));
+			}
+
+			FilterElement<DomInstance> CreateFilter(string name) =>
+				DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
+				.AND(DomInstanceExposers.Name.Equal(name));
+
+			return FilterQueryExecutor.RetrieveFilteredItems(
+					names,
+					x => CreateFilter(x),
+					x => Helper.DomInstances.Read(x))
+				.SafeToDictionary(x => x.Name, CreateInstance);
 		}
 
 		public virtual IEnumerable<T> Read(FilterElement<T> filter)

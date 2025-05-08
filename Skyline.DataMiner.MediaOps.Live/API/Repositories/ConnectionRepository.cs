@@ -72,7 +72,7 @@
 			return new Connection(domInstance);
 		}
 
-		protected override void Validate(IEnumerable<Connection> instances)
+		protected override void ValidateBeforeSave(ICollection<Connection> instances)
 		{
 			foreach (var instance in instances)
 			{

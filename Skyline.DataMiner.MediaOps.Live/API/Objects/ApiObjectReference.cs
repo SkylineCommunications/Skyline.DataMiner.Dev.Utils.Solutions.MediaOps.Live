@@ -34,7 +34,22 @@
 
 		public static implicit operator ApiObjectReference<T>(ApiObject<T> apiObject)
 		{
-			return apiObject?.Reference ?? default;
+			if (apiObject == null)
+			{
+				return null;
+			}
+
+			return apiObject.Reference;
+		}
+
+		public static implicit operator ApiObjectReference<T>?(ApiObject<T> apiObject)
+		{
+			if (apiObject == null)
+			{
+				return null;
+			}
+
+			return apiObject.Reference;
 		}
 
 		public static implicit operator Guid?(ApiObjectReference<T>? reference)

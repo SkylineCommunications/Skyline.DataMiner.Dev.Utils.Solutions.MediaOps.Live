@@ -52,7 +52,7 @@
 			return new VirtualSignalGroup(domInstance);
 		}
 
-		protected override void Validate(IEnumerable<VirtualSignalGroup> instances)
+		protected override void ValidateBeforeSave(ICollection<VirtualSignalGroup> instances)
 		{
 			foreach (var instance in instances)
 			{
