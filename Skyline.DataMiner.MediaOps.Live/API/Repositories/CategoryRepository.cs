@@ -1,11 +1,13 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
 {
+	using System;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -30,6 +32,8 @@
 			{
 				instance.Validate();
 			}
+
+			CheckDuplicatesBeforeSave(instances);
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
@@ -56,6 +60,23 @@
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
+		}
+
+		private void CheckDuplicatesBeforeSave(ICollection<Category> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(Category c) =>
+				DomInstanceExposers.Id.NotEqual(c.ID)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.CategoryInfo.Name).Equal(c.Name));
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				throw new InvalidOperationException($"Category with same name already exists.");
+			}
 		}
 	}
 }

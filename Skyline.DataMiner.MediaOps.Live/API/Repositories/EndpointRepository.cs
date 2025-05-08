@@ -113,6 +113,8 @@
 			{
 				instance.Validate();
 			}
+
+			CheckDuplicatesBeforeSave(instances);
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
@@ -193,6 +195,23 @@
 			return filters.Count == 1
 				? filters[0]
 				: new ANDFilterElement<DomInstance>(filters.ToArray());
+		}
+
+		private void CheckDuplicatesBeforeSave(ICollection<Endpoint> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(Endpoint e) =>
+				DomInstanceExposers.Id.NotEqual(e.ID)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Name).Equal(e.Name));
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				throw new InvalidOperationException($"Endpoint with same name already exists.");
+			}
 		}
 	}
 }

@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 
 	[TestClass]
@@ -41,6 +42,54 @@
 			var ex = Assert.Throws<Exception>(
 				() => { _api.Levels.Create(new Level { Name = "L2", Number = 102, TransportType = transportType }); });
 			Assert.AreEqual("Level with same name or number already exists.", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_Endpoints_CheckDuplicates()
+		{
+			// doesn't throw exception
+			var c = new Endpoint { Name = "E1", Role = Role.Source };
+			_api.Endpoints.Create(c);
+
+			c.Name = "E2";
+			_api.Endpoints.Update(c);
+
+			// create item with same name
+			var ex = Assert.Throws<Exception>(
+				() => { _api.Endpoints.Create(new Endpoint { Name = "E2", Role = Role.Destination }); });
+			Assert.AreEqual("Endpoint with same name already exists.", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_VirtualSignalGroups_CheckDuplicates()
+		{
+			// doesn't throw exception
+			var c = new VirtualSignalGroup { Name = "VSG1", Role = Role.Source };
+			_api.VirtualSignalGroups.Create(c);
+
+			c.Name = "VSG2";
+			_api.VirtualSignalGroups.Update(c);
+
+			// create item with same name
+			var ex = Assert.Throws<Exception>(
+				() => { _api.VirtualSignalGroups.Create(new VirtualSignalGroup { Name = "VSG2", Role = Role.Destination }); });
+			Assert.AreEqual("Virtual signal group with same name already exists.", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_Categories_CheckDuplicates()
+		{
+			// doesn't throw exception
+			var c = new Category { Name = "C1" };
+			_api.Categories.Create(c);
+
+			c.Name = "C2";
+			_api.Categories.Update(c);
+
+			// create item with same name
+			var ex = Assert.Throws<Exception>(
+				() => { _api.Categories.Create(new Category { Name = "C2" }); });
+			Assert.AreEqual("Category with same name already exists.", ex.Message);
 		}
 	}
 }
