@@ -16,7 +16,7 @@
 
 	public class VirtualSignalGroupRepository : Repository<VirtualSignalGroup>
 	{
-		public VirtualSignalGroupRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal VirtualSignalGroupRepository(SlcConnectivityManagementHelper helper) : base(helper)
 		{
 		}
 

@@ -16,7 +16,7 @@
 
 	public class EndpointRepository : Repository<Endpoint>
 	{
-		public EndpointRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal EndpointRepository(SlcConnectivityManagementHelper helper) : base(helper)
 		{
 		}
 
