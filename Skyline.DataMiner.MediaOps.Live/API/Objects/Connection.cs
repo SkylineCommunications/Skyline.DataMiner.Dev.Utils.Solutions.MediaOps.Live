@@ -2,6 +2,7 @@
 {
 	using System;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -77,12 +78,16 @@
 			}
 		}
 
-		public void Validate()
+		public ValidationResult Validate()
 		{
+			var result = new ValidationResult();
+
 			if (Destination == null)
 			{
-				throw new InvalidOperationException($"{nameof(Destination)} cannot be null.");
+				result.AddError<Connection>($"{nameof(Destination)} cannot be null.", c => c.Destination);
 			}
+
+			return result;
 		}
 	}
 

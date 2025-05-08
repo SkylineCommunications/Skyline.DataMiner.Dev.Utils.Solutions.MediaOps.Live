@@ -56,7 +56,7 @@
 		{
 			foreach (var instance in instances)
 			{
-				instance.Validate();
+				instance.Validate().ThrowIfInvalid();
 			}
 
 			CheckDuplicatesBeforeSave(instances);

@@ -33,13 +33,5 @@
 			error = null;
 			return true;
 		}
-
-		public static void Validate(string name)
-		{
-			if (!Validate(name, out var error))
-			{
-				throw new ArgumentException(error, nameof(name));
-			}
-		}
 	}
 }

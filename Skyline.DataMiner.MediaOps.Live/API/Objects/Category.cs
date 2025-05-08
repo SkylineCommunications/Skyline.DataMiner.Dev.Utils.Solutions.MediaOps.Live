@@ -3,6 +3,7 @@
 	using System;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -52,9 +53,16 @@
 			}
 		}
 
-		public void Validate()
+		public ValidationResult Validate()
 		{
-			NameUtil.Validate(Name);
+			var result = new ValidationResult();
+
+			if (!NameUtil.Validate(Name, out var error))
+			{
+				result.AddError(error, nameof(Name));
+			}
+
+			return result;
 		}
 	}
 

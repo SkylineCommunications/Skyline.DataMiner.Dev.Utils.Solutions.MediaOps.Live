@@ -4,6 +4,7 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -138,14 +139,21 @@
 
 		public bool IsDestination => Role == Role.Destination;
 
-		public void Validate()
+		public ValidationResult Validate()
 		{
-			NameUtil.Validate(Name);
+			var result = new ValidationResult();
+
+			if (!NameUtil.Validate(Name, out var error))
+			{
+				result.AddError(error, nameof(Name));
+			}
 
 			if (TransportType == null)
 			{
-				throw new InvalidOperationException($"{nameof(TransportType)} cannot be null.");
+				result.AddError($"{nameof(TransportType)} cannot be null.", nameof(TransportType));
 			}
+
+			return result;
 		}
 	}
 
