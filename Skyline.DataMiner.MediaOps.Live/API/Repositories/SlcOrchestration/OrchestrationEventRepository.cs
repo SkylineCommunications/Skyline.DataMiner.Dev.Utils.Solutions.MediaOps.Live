@@ -194,14 +194,19 @@
 			ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
 			List<Task> nodeOrchestrationTasks = new List<Task>();
 
-			foreach (NodeConfiguration configurationNodeConfiguration in orchestrationEventConfiguration.Configuration.NodeConfigurations)
+			foreach (NodeConfiguration nodeConfiguration in orchestrationEventConfiguration.Configuration.NodeConfigurations)
 			{
+				if (String.IsNullOrEmpty(nodeConfiguration.OrchestrationScriptName))
+				{
+					continue;
+				}
+
 				Task nodeOrchestrationTask = Task.Factory.StartNew(
 					() =>
 					{
-						if (!TryExecuteOrchestrationScript(configurationNodeConfiguration.OrchestrationScriptName, configurationNodeConfiguration.OrchestrationScriptArguments, out string[] errorMessages))
+						if (!TryExecuteOrchestrationScript(nodeConfiguration.OrchestrationScriptName, nodeConfiguration.OrchestrationScriptArguments, out string[] errorMessages))
 						{
-							errors.TryAdd($"\nError during orchestration for node {configurationNodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}" );
+							errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}" );
 							orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						}
 					},
