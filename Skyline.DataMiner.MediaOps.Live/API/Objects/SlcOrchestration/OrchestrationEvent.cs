@@ -260,6 +260,11 @@
 			}
 		}
 
+		internal void InternalSetState(SlcOrchestrationIds.Enums.EventState? state)
+		{
+			_domInstance.OrchestrationEventInfo.EventState = state;
+		}
+
 		private void ApplyEventState(SlcOrchestrationIds.Enums.EventState? state)
 		{
 			bool result;

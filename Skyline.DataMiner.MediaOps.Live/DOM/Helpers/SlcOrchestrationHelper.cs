@@ -50,7 +50,10 @@
 
 		public IEnumerable<OrchestrationEventInstance> GetOrchestrationEvents(FilterElement<DomInstance> filter)
 		{
-			if (filter == null) throw new ArgumentNullException(nameof(filter));
+			if (filter == null)
+			{
+				throw new ArgumentNullException(nameof(filter));
+			}
 
 			return GetOrchestrationEventIterator(filter);
 		}
@@ -60,7 +63,10 @@
 			DateTime localStart = start.ToLocalTime();
 			DateTime localEnd = end.ToLocalTime();
 
-			if (localStart > localEnd) throw new ArgumentException("End time of range filter can not be lower than start time");
+			if (localStart > localEnd)
+			{
+				throw new ArgumentException("End time of range filter can not be lower than start time");
+			}
 
 			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).GreaterThanOrEqual(localStart))

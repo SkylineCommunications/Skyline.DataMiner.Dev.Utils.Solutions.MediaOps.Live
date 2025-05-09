@@ -3,17 +3,12 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
-	using Core.DataMinerSystem.Common;
-
-	using Net;
-
-	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	public class SlcConnectivityManagementHelper : DomModuleHelperBase

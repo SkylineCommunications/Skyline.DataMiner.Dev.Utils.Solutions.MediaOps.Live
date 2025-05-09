@@ -2,9 +2,8 @@
 {
 	using System;
 	using System.Collections.Generic;
-
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-	using SlcConnectivityManagement;
 
 	public class Connection
 	{

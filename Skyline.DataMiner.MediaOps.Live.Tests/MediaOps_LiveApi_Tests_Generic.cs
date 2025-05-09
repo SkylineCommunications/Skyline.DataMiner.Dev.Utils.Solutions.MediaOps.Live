@@ -2,8 +2,6 @@
 {
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
-
-	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 
 	[TestClass]

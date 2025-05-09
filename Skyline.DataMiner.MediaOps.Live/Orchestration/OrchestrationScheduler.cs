@@ -4,13 +4,10 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 
-	using Skyline.DataMiner.Core.Scheduler.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-	using Skyline.DataMiner.Net.Messages;
-	using Skyline.DataMiner.Net.ResourceManager.Objects;
 
 	public class OrchestrationScheduler
 	{

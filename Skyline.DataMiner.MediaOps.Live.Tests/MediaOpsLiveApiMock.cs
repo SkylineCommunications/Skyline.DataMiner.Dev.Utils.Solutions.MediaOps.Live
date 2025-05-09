@@ -1,15 +1,13 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using API.Objects.SlcConnectivityManagement;
-
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
-
-	using Connection = API.Objects.SlcConnectivityManagement.Connection;
-	using Level = API.Objects.SlcConnectivityManagement.Level;
+	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement.Connection;
+	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement.Level;
 
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{

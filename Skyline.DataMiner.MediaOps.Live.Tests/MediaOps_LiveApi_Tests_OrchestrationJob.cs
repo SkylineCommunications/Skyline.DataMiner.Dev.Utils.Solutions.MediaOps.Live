@@ -1,13 +1,9 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using System.Runtime.InteropServices;
-
-	using DOM.Model.SlcOrchestration;
-
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_OrchestrationJob
@@ -15,7 +11,7 @@
 		private static readonly MediaOpsLiveApi _api = new MediaOpsLiveApiMock();
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_OrchestrationJob_CheckDeleteBeforeUpdateWithoutNodes()
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_CheckDeleteBeforeUpdateWithoutNodes()
 		{
 			var events = NoNodes_CreateEventInstance(2);
 
@@ -38,7 +34,7 @@
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_OrchestrationJob_CheckDeleteBeforeUpdateWithNodes()
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_CheckDeleteBeforeUpdateWithNodes()
 		{
 			var events = WithNodes_CreateEventConfigurationInstances(2, 5);
 			var job = new OrchestrationJobConfiguration(Guid.NewGuid().ToString(), events);
@@ -58,7 +54,6 @@
 			// Assert.AreEqual(job.RemovedIds.Count(), 1);
 			// Assert.AreEqual(job.RemovedIds.FirstOrDefault(), toRemove);
 		}
-
 
 		/*[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationJob_CheckApi()
@@ -85,13 +80,11 @@
 
 		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)
 		{
-			List<Configuration> configurations = new List<Configuration>();
-
-			List<Connection> connections = new List<Connection>();
-			List<NodeConfiguration> nodeConfigs = new List<NodeConfiguration>();
-			List<LevelMapping> levelMapping = new List<LevelMapping>
-			{
-				new LevelMapping
+			List<Connection> connections = [];
+			List<NodeConfiguration> nodeConfigs = [];
+			List<LevelMapping> levelMapping =
+			[
+				new()
 				{
 					Destination = new Level
 					{
@@ -104,14 +97,14 @@
 						Number = 1,
 					},
 				},
-			};
+			];
 
-			List<OrchestrationScriptArgument> scriptArguments = new List<OrchestrationScriptArgument>
-			{
-				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Element, "Name", "Value"),
-				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "Name", "Value"),
-				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "Name", "Value"),
-			};
+			List<OrchestrationScriptArgument> scriptArguments =
+			[
+				new(OrchestrationScriptArgumentType.Element, "Name", "Value"),
+				new(OrchestrationScriptArgumentType.Parameter, "Name", "Value"),
+				new(OrchestrationScriptArgumentType.Parameter, "Name", "Value"),
+			];
 
 			for (int i = 1; i <= nodes; i++)
 			{
@@ -133,7 +126,7 @@
 				});
 			}
 
-			List<OrchestrationEventConfiguration> orchestrationEventConfigurations = new List<OrchestrationEventConfiguration>();
+			List<OrchestrationEventConfiguration> orchestrationEventConfigurations = [];
 
 			for (int i = 1; i <= count; i++)
 			{
@@ -158,7 +151,7 @@
 
 		private IEnumerable<OrchestrationEvent> NoNodes_CreateEventInstance(int count)
 		{
-			List<OrchestrationEvent> events = new List<OrchestrationEvent>();
+			List<OrchestrationEvent> events = [];
 			for (int i = 1; i <= count; i++)
 			{
 				events.Add(new OrchestrationEvent

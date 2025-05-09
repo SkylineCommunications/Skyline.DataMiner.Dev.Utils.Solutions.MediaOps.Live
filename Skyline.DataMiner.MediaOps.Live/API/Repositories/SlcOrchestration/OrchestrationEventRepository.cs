@@ -19,6 +19,7 @@
 	{
 		private readonly ConfigurationRepository _configurationHelper;
 		private readonly OrchestrationScheduler _scheduler;
+		private readonly IDms _dms;
 
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper, IDms dms) : base(helper)
 		{
@@ -100,6 +101,61 @@
 		{
 			_scheduler.DeleteEventTasks(job.OrchestrationEvents);
 			DeleteEvents(job.OrchestrationEvents);
+		}
+
+		/// <summary>
+		/// Start execution for an event, based on ID.
+		/// </summary>
+		/// <param name="orchestrationEventGuid">The ID of the event to execute.</param>
+		public void ExecuteEventNow(Guid orchestrationEventGuid)
+		{
+			OrchestrationEventConfiguration orchestrationEvent = GetEventConfigurationById(orchestrationEventGuid);
+
+			if (orchestrationEvent == null)
+			{
+				return;
+			}
+
+			ExecuteEvent(orchestrationEvent);
+		}
+
+		private void ExecuteEvent(OrchestrationEventConfiguration orchestrationEvent)
+		{
+			orchestrationEvent.InternalSetState(SlcOrchestrationIds.Enums.EventState.Configuring);
+
+			CreateOrUpdateEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEvent });
+
+			ExecuteEventConfiguration(orchestrationEvent);
+
+			CreateOrUpdateEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEvent });
+		}
+
+		private void ExecuteEventConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration)
+		{
+			if (String.IsNullOrEmpty(orchestrationEventConfiguration.GlobalOrchestrationScript))
+			{
+				return;
+			}
+
+			IDmsAutomationScript script = _dms.GetScript(orchestrationEventConfiguration.GlobalOrchestrationScript);
+			List<DmsAutomationScriptParamValue> scriptParams = orchestrationEventConfiguration.GlobalOrchestrationScriptArguments
+				.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
+				.ToList();
+			DmsAutomationScriptRunOptions scriptOptions = new DmsAutomationScriptRunOptions
+			{
+				ExtendedErrorInfo = true,
+			};
+
+			DmsAutomationScriptResult scriptResult = script.Execute(scriptParams, null, scriptOptions);
+
+			if (scriptResult.HadError)
+			{
+				orchestrationEventConfiguration.EventState = SlcOrchestrationIds.Enums.EventState.Failed;
+				orchestrationEventConfiguration.FailureInfo = String.Join("\n", scriptResult.ErrorMessages);
+				return;
+			}
+
+			orchestrationEventConfiguration.EventState = SlcOrchestrationIds.Enums.EventState.Completed;
 		}
 
 		/// <summary>
