@@ -14,6 +14,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Net.ToolsSpace.Collections;
 
 	using SLDataGateway.API.Types.Querying;
 
@@ -146,7 +147,7 @@
 
 		private void ExecuteNodesEventConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration)
 		{
-			StringBuilder errors = new StringBuilder();
+			ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
 			List<Task> nodeOrchestrationTasks = new List<Task>();
 
 			foreach (NodeConfiguration configurationNodeConfiguration in orchestrationEventConfiguration.Configuration.NodeConfigurations)
@@ -156,7 +157,7 @@
 					{
 						if (!TryExecuteOrchestrationScript(configurationNodeConfiguration.OrchestrationScriptName, configurationNodeConfiguration.OrchestrationScriptArguments, out string[] errorMessages))
 						{
-							errors.AppendLine($"Error during orchestration for Node {configurationNodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}" );
+							errors.TryAdd($"Error during orchestration for Node {configurationNodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}" );
 							orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						}
 					},
@@ -167,10 +168,13 @@
 
 			Task.WaitAll(nodeOrchestrationTasks.ToArray());
 
-			if (orchestrationEventConfiguration.EventState != SlcOrchestrationIds.Enums.EventState.Failed)
+			if (orchestrationEventConfiguration.EventState == SlcOrchestrationIds.Enums.EventState.Failed)
 			{
-				orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
+				orchestrationEventConfiguration.FailureInfo = String.Join("\n", errors);
+				return;
 			}
+
+			orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 		}
 
 		private void ExecuteGlobalEventConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration)
