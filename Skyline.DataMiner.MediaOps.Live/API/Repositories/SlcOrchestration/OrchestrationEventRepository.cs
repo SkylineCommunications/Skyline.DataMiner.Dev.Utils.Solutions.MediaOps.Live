@@ -7,6 +7,7 @@
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -23,6 +24,10 @@
 		private readonly ConfigurationRepository _configurationHelper;
 		private readonly OrchestrationScheduler _scheduler;
 		private readonly IDms _dms;
+
+		private const string TakeVsgScriptName = "VSG-AS-TakeVsg";
+		private const string TakeVsgSourceIdParam = "Source VSG ID";
+		private const string TakeVsgDestinationIdParam = "Destination VSG ID";
 
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper, IDms dms) : base(helper)
 		{
@@ -138,14 +143,53 @@
 		{
 			if (!String.IsNullOrEmpty(orchestrationEventConfiguration.GlobalOrchestrationScript))
 			{
-				ExecuteGlobalEventConfiguration(orchestrationEventConfiguration);
+				ExecuteGlobalConfiguration(orchestrationEventConfiguration);
 				return;
 			}
 
-			ExecuteNodesEventConfiguration(orchestrationEventConfiguration);
+			ExecuteNodesConfiguration(orchestrationEventConfiguration);
+			ExecuteConnections(orchestrationEventConfiguration);
 		}
 
-		private void ExecuteNodesEventConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration)
+		private void ExecuteConnections(OrchestrationEventConfiguration orchestrationEventConfiguration)
+		{
+			ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
+			List<Task> connectionTasks = new List<Task>();
+
+			foreach (Connection connection in orchestrationEventConfiguration.Configuration.Connections)
+			{
+				List<OrchestrationScriptArgument> connectionArguments = new List<OrchestrationScriptArgument>
+				{
+					new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, TakeVsgSourceIdParam, connection.SourceVsg.ToString()),
+					new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, TakeVsgDestinationIdParam, connection.DestinationVsg.ToString()),
+				};
+
+				Task nodeOrchestrationTask = Task.Factory.StartNew(
+					() =>
+					{
+						if (!TryExecuteOrchestrationScript(TakeVsgScriptName, connectionArguments, out string[] errorMessages))
+						{
+							errors.TryAdd($"\nError during connecting node {connection.SourceNodeId} to {connection.DestinationNodeId}: {String.Join("\n", errorMessages)}" );
+							orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						}
+					},
+					TaskCreationOptions.LongRunning);
+
+				connectionTasks.Add(nodeOrchestrationTask);
+			}
+
+			Task.WaitAll(connectionTasks.ToArray());
+
+			if (orchestrationEventConfiguration.EventState == SlcOrchestrationIds.Enums.EventState.Failed)
+			{
+				orchestrationEventConfiguration.FailureInfo += String.Join("\n", errors);
+				return;
+			}
+
+			orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
+		}
+
+		private void ExecuteNodesConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration)
 		{
 			ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
 			List<Task> nodeOrchestrationTasks = new List<Task>();
@@ -157,7 +201,7 @@
 					{
 						if (!TryExecuteOrchestrationScript(configurationNodeConfiguration.OrchestrationScriptName, configurationNodeConfiguration.OrchestrationScriptArguments, out string[] errorMessages))
 						{
-							errors.TryAdd($"Error during orchestration for Node {configurationNodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}" );
+							errors.TryAdd($"\nError during orchestration for node {configurationNodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}" );
 							orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						}
 					},
@@ -170,18 +214,18 @@
 
 			if (orchestrationEventConfiguration.EventState == SlcOrchestrationIds.Enums.EventState.Failed)
 			{
-				orchestrationEventConfiguration.FailureInfo = String.Join("\n", errors);
+				orchestrationEventConfiguration.FailureInfo += String.Join("\n", errors);
 				return;
 			}
 
 			orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 		}
 
-		private void ExecuteGlobalEventConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration)
+		private void ExecuteGlobalConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration)
 		{
 			if (!TryExecuteOrchestrationScript(orchestrationEventConfiguration.GlobalOrchestrationScript, orchestrationEventConfiguration.GlobalOrchestrationScriptArguments, out string[] errorMessages))
 			{
-				orchestrationEventConfiguration.FailureInfo = String.Join("\n", errorMessages);
+				orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", errorMessages)}";
 				orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 				return;
 			}
