@@ -132,6 +132,11 @@
 
 		public virtual T Read(Guid id)
 		{
+			if (id == Guid.Empty)
+			{
+				return null;
+			}
+
 			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
 				.AND(DomInstanceExposers.Id.Equal(id));
 
@@ -147,12 +152,22 @@
 				throw new ArgumentNullException(nameof(ids));
 			}
 
+			var idsList = ids
+				.Where(x => x != Guid.Empty)
+				.Distinct()
+				.ToList();
+
+			if (idsList.Count == 0)
+			{
+				return new Dictionary<Guid, T>();
+			}
+
 			FilterElement<DomInstance> CreateFilter(Guid id) =>
 				DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
 				.AND(DomInstanceExposers.Id.Equal(id));
 
 			return FilterQueryExecutor.RetrieveFilteredItems(
-					ids,
+					idsList,
 					x => CreateFilter(x),
 					x => Helper.DomInstances.Read(x))
 				.Select(CreateInstance)
