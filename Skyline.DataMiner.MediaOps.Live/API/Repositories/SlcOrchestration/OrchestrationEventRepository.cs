@@ -148,13 +148,13 @@
 
 				if (scriptResult.HadError)
 				{
-					orchestrationEventConfiguration.EventState = SlcOrchestrationIds.Enums.EventState.Failed;
+					orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 					orchestrationEventConfiguration.FailureInfo = String.Join("\n", scriptResult.ErrorMessages);
 					return;
 				}
 			}
 
-			orchestrationEventConfiguration.EventState = SlcOrchestrationIds.Enums.EventState.Completed;
+			orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 		}
 
 		/// <summary>
