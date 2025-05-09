@@ -25,6 +25,7 @@
 		{
 			_configurationHelper = new ConfigurationRepository(helper);
 			_scheduler = new OrchestrationScheduler(dms);
+			_dms = dms;
 		}
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
