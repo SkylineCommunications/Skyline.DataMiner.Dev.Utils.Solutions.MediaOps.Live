@@ -133,27 +133,25 @@
 
 		private void ExecuteEventConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration)
 		{
-			if (String.IsNullOrEmpty(orchestrationEventConfiguration.GlobalOrchestrationScript))
+			if (!String.IsNullOrEmpty(orchestrationEventConfiguration.GlobalOrchestrationScript))
 			{
-				return;
-			}
+				IDmsAutomationScript script = _dms.GetScript(orchestrationEventConfiguration.GlobalOrchestrationScript);
+				List<DmsAutomationScriptParamValue> scriptParams = orchestrationEventConfiguration.GlobalOrchestrationScriptArguments
+					.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
+					.ToList();
+				DmsAutomationScriptRunOptions scriptOptions = new DmsAutomationScriptRunOptions
+				{
+					ExtendedErrorInfo = true,
+				};
 
-			IDmsAutomationScript script = _dms.GetScript(orchestrationEventConfiguration.GlobalOrchestrationScript);
-			List<DmsAutomationScriptParamValue> scriptParams = orchestrationEventConfiguration.GlobalOrchestrationScriptArguments
-				.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
-				.ToList();
-			DmsAutomationScriptRunOptions scriptOptions = new DmsAutomationScriptRunOptions
-			{
-				ExtendedErrorInfo = true,
-			};
+				DmsAutomationScriptResult scriptResult = script.Execute(scriptParams, new List<DmsAutomationScriptDummyValue>(), scriptOptions);
 
-			DmsAutomationScriptResult scriptResult = script.Execute(scriptParams, null, scriptOptions);
-
-			if (scriptResult.HadError)
-			{
-				orchestrationEventConfiguration.EventState = SlcOrchestrationIds.Enums.EventState.Failed;
-				orchestrationEventConfiguration.FailureInfo = String.Join("\n", scriptResult.ErrorMessages);
-				return;
+				if (scriptResult.HadError)
+				{
+					orchestrationEventConfiguration.EventState = SlcOrchestrationIds.Enums.EventState.Failed;
+					orchestrationEventConfiguration.FailureInfo = String.Join("\n", scriptResult.ErrorMessages);
+					return;
+				}
 			}
 
 			orchestrationEventConfiguration.EventState = SlcOrchestrationIds.Enums.EventState.Completed;
