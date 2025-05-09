@@ -3,6 +3,8 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Text;
+	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
@@ -135,26 +137,75 @@
 		{
 			if (!String.IsNullOrEmpty(orchestrationEventConfiguration.GlobalOrchestrationScript))
 			{
-				IDmsAutomationScript script = _dms.GetScript(orchestrationEventConfiguration.GlobalOrchestrationScript);
-				List<DmsAutomationScriptParamValue> scriptParams = orchestrationEventConfiguration.GlobalOrchestrationScriptArguments
-					.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
-					.ToList();
-				DmsAutomationScriptRunOptions scriptOptions = new DmsAutomationScriptRunOptions
-				{
-					ExtendedErrorInfo = true,
-				};
+				ExecuteGlobalEventConfiguration(orchestrationEventConfiguration);
+				return;
+			}
 
-				DmsAutomationScriptResult scriptResult = script.Execute(scriptParams, new List<DmsAutomationScriptDummyValue>(), scriptOptions);
+			ExecuteNodesEventConfiguration(orchestrationEventConfiguration);
+		}
 
-				if (scriptResult.HadError)
-				{
-					orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-					orchestrationEventConfiguration.FailureInfo = String.Join("\n", scriptResult.ErrorMessages);
-					return;
-				}
+		private void ExecuteNodesEventConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration)
+		{
+			StringBuilder errors = new StringBuilder();
+			List<Task> nodeOrchestrationTasks = new List<Task>();
+
+			foreach (NodeConfiguration configurationNodeConfiguration in orchestrationEventConfiguration.Configuration.NodeConfigurations)
+			{
+				Task nodeOrchestrationTask = Task.Factory.StartNew(
+					() =>
+					{
+						if (!TryExecuteOrchestrationScript(configurationNodeConfiguration.OrchestrationScriptName, configurationNodeConfiguration.OrchestrationScriptArguments, out string[] errorMessages))
+						{
+							errors.AppendLine($"Error during orchestration for Node {configurationNodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}" );
+							orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						}
+					},
+					TaskCreationOptions.LongRunning);
+
+				nodeOrchestrationTasks.Add(nodeOrchestrationTask);
+			}
+
+			Task.WaitAll(nodeOrchestrationTasks.ToArray());
+
+			if (orchestrationEventConfiguration.EventState != SlcOrchestrationIds.Enums.EventState.Failed)
+			{
+				orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
+			}
+		}
+
+		private void ExecuteGlobalEventConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration)
+		{
+			if (!TryExecuteOrchestrationScript(orchestrationEventConfiguration.GlobalOrchestrationScript, orchestrationEventConfiguration.GlobalOrchestrationScriptArguments, out string[] errorMessages))
+			{
+				orchestrationEventConfiguration.FailureInfo = String.Join("\n", errorMessages);
+				orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+				return;
 			}
 
 			orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
+		}
+
+		private bool TryExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, out string[] errorMessages)
+		{
+			IDmsAutomationScript script = _dms.GetScript(scriptName);
+			List<DmsAutomationScriptParamValue> scriptParams = arguments
+				.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
+				.ToList();
+			DmsAutomationScriptRunOptions scriptOptions = new DmsAutomationScriptRunOptions
+			{
+				ExtendedErrorInfo = true,
+			};
+
+			DmsAutomationScriptResult scriptResult = script.Execute(scriptParams, new List<DmsAutomationScriptDummyValue>(), scriptOptions);
+
+			if (scriptResult.HadError)
+			{
+				errorMessages = scriptResult.ErrorMessages;
+				return false;
+			}
+
+			errorMessages = Array.Empty<string>();
+			return true;
 		}
 
 		/// <summary>
@@ -198,7 +249,7 @@
 		/// <param name="eventId">The ID of the instance to lookup.</param>
 		/// <returns>A <see cref="OrchestrationEvent"/> object that matches the given event ID value, or null if no match is found.</returns>
 		/// <exception cref="ArgumentException">Event ID can not be an empty Guid.</exception>
-		internal OrchestrationEvent GetEventById(Guid eventId)
+		private OrchestrationEvent GetEventById(Guid eventId)
 		{
 			if (eventId == Guid.Empty)
 			{
@@ -220,7 +271,7 @@
 		/// <param name="eventId">The ID of the instance to lookup.</param>
 		/// <returns>A <see cref="OrchestrationEventConfiguration"/> object that matches the given event ID value, or null if no match is found.</returns>
 		/// <exception cref="ArgumentException">Event ID can not be an empty Guid.</exception>
-		internal OrchestrationEventConfiguration GetEventConfigurationById(Guid eventId)
+		private OrchestrationEventConfiguration GetEventConfigurationById(Guid eventId)
 		{
 			if (eventId == Guid.Empty)
 			{
@@ -243,7 +294,7 @@
 		/// <param name="event">The <see cref="OrchestrationEvent"/> object to convert.</param>
 		/// <returns>The <see cref="OrchestrationEventConfiguration"/> object that corresponds to the given input, or null if the operation failed.</returns>
 		/// <exception cref="ArgumentNullException">Event can not be null.</exception>
-		internal OrchestrationEventConfiguration GetEventsAsEventConfigurations(OrchestrationEvent @event)
+		private OrchestrationEventConfiguration GetEventsAsEventConfigurations(OrchestrationEvent @event)
 		{
 			if (@event == null)
 			{
@@ -259,7 +310,7 @@
 		/// <param name="events">The <see cref="OrchestrationEvent"/> objects to convert.</param>
 		/// <returns>A mapping of each event ID to the converted <see cref="OrchestrationEventConfiguration"/> object.</returns>
 		/// <exception cref="ArgumentNullException">Events can not be null.</exception>
-		internal Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
+		private Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
 		{
 			if (events == null)
 			{
@@ -284,7 +335,7 @@
 		/// </summary>
 		/// <param name="events">A list of configured or updated event configurations.</param>
 		/// <returns>Returns a list of all successfully saved event configurations.</returns>
-		internal IEnumerable<OrchestrationEvent> CreateOrUpdateEvents(IEnumerable<OrchestrationEvent> events)
+		private IEnumerable<OrchestrationEvent> CreateOrUpdateEvents(IEnumerable<OrchestrationEvent> events)
 		{
 			var results = CreateOrUpdateWithResult(events);
 
@@ -296,7 +347,7 @@
 		/// </summary>
 		/// <param name="events">A list of configured or updated event configurations.</param>
 		/// <returns>Returns a list of all successfully saved <see cref="OrchestrationEventConfiguration"/> objects.</returns>
-		internal IEnumerable<OrchestrationEventConfiguration> CreateOrUpdateEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
+		private IEnumerable<OrchestrationEventConfiguration> CreateOrUpdateEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
 		{
 			List<Configuration> configsToDelete = new List<Configuration>();
 			List<Configuration> configsToWrite = new List<Configuration>();
@@ -326,7 +377,7 @@
 		/// Delete a collection of <see cref="OrchestrationEvent"/> objects from the DataMiner system.
 		/// </summary>
 		/// <param name="eventIds">The events to be deleted.</param>
-		internal void DeleteEvents(IEnumerable<Guid> eventIds)
+		private void DeleteEvents(IEnumerable<Guid> eventIds)
 		{
 			var orchestrationEvents = Read(eventIds).Values;
 
@@ -337,7 +388,7 @@
 		/// Delete a collection of <see cref="OrchestrationEvent"/> objects from the DataMiner system.
 		/// </summary>
 		/// <param name="events">The events to be deleted.</param>
-		internal void DeleteEvents(IEnumerable<OrchestrationEvent> events)
+		private void DeleteEvents(IEnumerable<OrchestrationEvent> events)
 		{
 			IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
 			var configurationsToDelete = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID);
