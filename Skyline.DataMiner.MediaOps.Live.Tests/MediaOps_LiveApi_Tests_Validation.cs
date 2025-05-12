@@ -26,6 +26,21 @@
 		}
 
 		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_TransportTypes_CheckStillInUse()
+		{
+			var transportType = new TransportType { Name = "TT1" };
+			_api.TransportTypes.Create(transportType);
+
+			var level = new Level { Name = "L1", Number = 101, TransportType = transportType };
+			_api.Levels.Create(level);
+
+			// deleting transporttype that is still in use throws exception
+			var ex = Assert.Throws<Exception>(
+				() => { _api.TransportTypes.Delete(transportType); });
+			Assert.AreEqual("Delete failed because one or more transport types are still in use.", ex.Message);
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Validation_Levels_CheckDuplicates()
 		{
 			var transportType = _api.TransportTypes.Query().First(x => x.Name == "IP");

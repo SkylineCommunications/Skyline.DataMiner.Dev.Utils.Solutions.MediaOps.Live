@@ -36,6 +36,24 @@
 			CheckDuplicatesBeforeSave(instances);
 		}
 
+		protected override void ValidateBeforeDelete(ICollection<TransportType> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(TransportType tt) =>
+				new ORFilterElement<DomInstance>(
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.TransportType).Equal(tt.ID),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType).Equal(tt.ID));
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				throw new InvalidOperationException("Delete failed because one or more transport types are still in use.");
+			}
+		}
+
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
 		{
 			switch (fieldName)

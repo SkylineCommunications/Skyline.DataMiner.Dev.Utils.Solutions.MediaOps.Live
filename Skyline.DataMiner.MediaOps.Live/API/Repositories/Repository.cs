@@ -35,7 +35,13 @@
 
 		protected abstract T CreateInstance(DomInstance domInstance);
 
-		protected abstract void ValidateBeforeSave(ICollection<T> instances);
+		protected virtual void ValidateBeforeSave(ICollection<T> instances)
+		{
+		}
+
+		protected virtual void ValidateBeforeDelete(ICollection<T> instances)
+		{
+		}
 
 		public virtual void Create(T instance)
 		{
@@ -93,6 +99,8 @@
 				throw new ArgumentNullException(nameof(instance));
 			}
 
+			ValidateBeforeDelete(new[] { instance });
+
 			Helper.DomInstances.Delete(instance.DomInstance);
 		}
 
@@ -103,7 +111,11 @@
 				throw new ArgumentNullException(nameof(instances));
 			}
 
-			var domInstances = instances.Select(x => x.DomInstance.ToInstance()).ToList();
+			var instanceCollection = instances as ICollection<T> ?? instances.ToList();
+
+			ValidateBeforeDelete(instanceCollection);
+
+			var domInstances = instanceCollection.Select(x => x.DomInstance.ToInstance());
 			Helper.DomInstances.DeleteInBatches(domInstances).ThrowOnFailure();
 		}
 
