@@ -12,6 +12,9 @@
 		{
 			MessageHandler = messageHandler;
 
+			var category = new Category { Name = "Category 1" };
+			Categories.Create(category);
+
 			var transportType = new TransportType { Name = "IP" };
 			TransportTypes.Create(transportType);
 
@@ -61,6 +64,10 @@
 					Role = Role.Source,
 					Name = $"Source {i}",
 					Description = $"Source {i}",
+					Categories =
+					[
+						category,
+					],
 					Levels =
 					[
 						new LevelEndpoint(videoLevel, videoSource1),
@@ -72,6 +79,10 @@
 					Role = Role.Destination,
 					Name = $"Destination {i}",
 					Description = $"Destination {i}",
+					Categories =
+					[
+						category,
+					],
 					Levels =
 					[
 						new LevelEndpoint(videoLevel, videoDestination1),

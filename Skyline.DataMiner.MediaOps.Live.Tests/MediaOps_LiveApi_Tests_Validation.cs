@@ -28,16 +28,12 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Validation_TransportTypes_CheckStillInUse()
 		{
-			var transportType = new TransportType { Name = "TT1" };
-			_api.TransportTypes.Create(transportType);
+			var transportType = _api.TransportTypes.Query().First(x => x.Name == "IP");
 
-			var level = new Level { Name = "L1", Number = 101, TransportType = transportType };
-			_api.Levels.Create(level);
-
-			// deleting transporttype that is still in use throws exception
+			// deleting transport type that is still in use throws exception
 			var ex = Assert.Throws<Exception>(
 				() => { _api.TransportTypes.Delete(transportType); });
-			Assert.AreEqual("Delete failed because one or more transport types are still in use.", ex.Message);
+			Assert.AreEqual("Cannot delete transport type 'IP' because it is still in use.", ex.Message);
 		}
 
 		[TestMethod]
@@ -60,6 +56,17 @@
 		}
 
 		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_Levels_CheckStillInUse()
+		{
+			var level = _api.Levels.Query().First(x => x.Name == "Video");
+
+			// deleting level that is still in use throws exception
+			var ex = Assert.Throws<Exception>(
+				() => { _api.Levels.Delete(level); });
+			Assert.AreEqual("Cannot delete level 'Video' because it is still in use.", ex.Message);
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Validation_Endpoints_CheckDuplicates()
 		{
 			// doesn't throw exception
@@ -73,6 +80,17 @@
 			var ex = Assert.Throws<Exception>(
 				() => { _api.Endpoints.Create(new Endpoint { Name = "E2", Role = Role.Destination }); });
 			Assert.AreEqual("Endpoint with same name already exists.", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_Endpoints_CheckStillInUse()
+		{
+			var endpoint = _api.Endpoints.Query().First(x => x.Name == "Video Source 1");
+
+			// deleting endpoint that is still in use throws exception
+			var ex = Assert.Throws<Exception>(
+				() => { _api.Endpoints.Delete(endpoint); });
+			Assert.AreEqual("Cannot delete endpoint 'Video Source 1' because it is still in use.", ex.Message);
 		}
 
 		[TestMethod]
@@ -105,6 +123,17 @@
 			var ex = Assert.Throws<Exception>(
 				() => { _api.Categories.Create(new Category { Name = "C2" }); });
 			Assert.AreEqual("Category with same name already exists.", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_Categories_CheckStillInUse()
+		{
+			var category = _api.Categories.Query().First(x => x.Name == "Category 1");
+
+			// deleting category that is still in use throws exception
+			var ex = Assert.Throws<Exception>(
+				() => { _api.Categories.Delete(category); });
+			Assert.AreEqual("Cannot delete category 'Category 1' because it is still in use.", ex.Message);
 		}
 	}
 }

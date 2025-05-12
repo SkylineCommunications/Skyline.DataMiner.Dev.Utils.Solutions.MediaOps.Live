@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -34,6 +35,26 @@
 			}
 
 			CheckDuplicatesBeforeSave(instances);
+		}
+
+		protected override void ValidateBeforeDelete(ICollection<Level> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(Level l) =>
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level).Equal(l.ID);
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				var message = instances.Count == 1
+					? $"Cannot delete level '{instances.First().Name}' because it is still in use."
+					: "Cannot delete one or more levels because they are still in use.";
+
+				throw new InvalidOperationException(message);
+			}
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)

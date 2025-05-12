@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -50,7 +51,11 @@
 
 			if (count > 0)
 			{
-				throw new InvalidOperationException("Delete failed because one or more transport types are still in use.");
+				var message = instances.Count == 1
+					? $"Cannot delete transport type '{instances.First().Name}' because it is still in use."
+					: "Cannot delete one or more transport types because they are still in use.";
+
+				throw new InvalidOperationException(message);
 			}
 		}
 

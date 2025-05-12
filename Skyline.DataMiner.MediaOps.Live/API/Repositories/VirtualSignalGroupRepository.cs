@@ -62,6 +62,11 @@
 			CheckDuplicatesBeforeSave(instances);
 		}
 
+		protected override void ValidateBeforeDelete(ICollection<VirtualSignalGroup> instances)
+		{
+			// no checks needed
+		}
+
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
 		{
 			switch (fieldName)

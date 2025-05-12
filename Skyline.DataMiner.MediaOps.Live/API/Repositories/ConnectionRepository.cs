@@ -80,6 +80,11 @@
 			}
 		}
 
+		protected override void ValidateBeforeDelete(ICollection<Connection> instances)
+		{
+			// no checks needed
+		}
+
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
 		{
 			switch (fieldName)

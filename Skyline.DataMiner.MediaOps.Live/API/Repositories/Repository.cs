@@ -35,13 +35,9 @@
 
 		protected abstract T CreateInstance(DomInstance domInstance);
 
-		protected virtual void ValidateBeforeSave(ICollection<T> instances)
-		{
-		}
+		protected abstract void ValidateBeforeSave(ICollection<T> instances);
 
-		protected virtual void ValidateBeforeDelete(ICollection<T> instances)
-		{
-		}
+		protected abstract void ValidateBeforeDelete(ICollection<T> instances);
 
 		public virtual void Create(T instance)
 		{
