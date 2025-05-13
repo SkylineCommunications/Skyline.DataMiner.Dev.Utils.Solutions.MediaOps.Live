@@ -87,7 +87,7 @@
 						// connect same levels between source and destination
 						levelMappings = source.Levels.Select(x => x.Level)
 							.Intersect(destination.Levels.Select(x => x.Level))
-							.Select(x => new LevelMapping(x.Value))
+							.Select(x => new LevelMapping(x))
 							.ToList();
 					}
 

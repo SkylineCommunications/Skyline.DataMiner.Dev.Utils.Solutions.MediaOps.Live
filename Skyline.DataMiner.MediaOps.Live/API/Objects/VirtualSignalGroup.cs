@@ -129,7 +129,7 @@
 					continue;
 				}
 
-				yield return level.Endpoint.Value;
+				yield return level.Endpoint;
 			}
 		}
 
@@ -161,7 +161,7 @@
 
 				if (levelEndpoint != null && levelEndpoint.Endpoint != null)
 				{
-					endpoint = levelEndpoint.Endpoint.Value;
+					endpoint = levelEndpoint.Endpoint;
 					return true;
 				}
 			}

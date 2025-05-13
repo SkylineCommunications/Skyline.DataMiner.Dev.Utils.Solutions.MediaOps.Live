@@ -30,11 +30,11 @@
 
 		internal VirtualSignalGroupLevelsSection DomSection { get; }
 
-		public ApiObjectReference<Level>? Level
+		public ApiObjectReference<Level> Level
 		{
 			get
 			{
-				return DomSection.Level;
+				return DomSection.Level ?? default;
 			}
 
 			set
@@ -43,11 +43,11 @@
 			}
 		}
 
-		public ApiObjectReference<Endpoint>? Endpoint
+		public ApiObjectReference<Endpoint> Endpoint
 		{
 			get
 			{
-				return DomSection.Endpoint;
+				return DomSection.Endpoint ?? default;
 			}
 
 			set

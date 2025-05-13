@@ -92,7 +92,7 @@
 
 			{
 				var virtualSignalGroups = _api.VirtualSignalGroups.Query()
-					.Where(x => x.Levels.Any(l => l.Endpoint == videoSource1.ID))
+					.Where(x => x.Levels.Any(l => (Guid)l.Endpoint == videoSource1.ID))
 					.ToList();
 
 				Assert.AreEqual(1, virtualSignalGroups.Count);
