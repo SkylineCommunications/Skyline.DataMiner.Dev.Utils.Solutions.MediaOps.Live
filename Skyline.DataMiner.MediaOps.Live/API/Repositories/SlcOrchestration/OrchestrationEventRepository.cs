@@ -179,13 +179,13 @@
 					var srcVirtualSignalGroup = _api.VirtualSignalGroups.Read(connection.SourceVsg.Value.ID);
 					var dstVirtualSignalGroup = _api.VirtualSignalGroups.Read(connection.DestinationVsg.Value.ID);
 
-					var mapping = connection.LevelMappings
+					/*var mapping = connection.LevelMappings
 						.Select(map => new TakeLevelMapping(
 							new TakeLevel { Name = map.Source.Name, Number = map.Source.Number },
 							new TakeLevel { Name = map.Destination.Name, Number = map.Destination.Number }))
-						.ToHashSet();
+						.ToHashSet();*/
 
-					requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup, mapping));
+					requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup));
 				}
 				catch (Exception e)
 				{
