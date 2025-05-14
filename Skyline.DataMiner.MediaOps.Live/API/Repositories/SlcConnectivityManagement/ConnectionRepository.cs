@@ -18,7 +18,7 @@
 
 	public class ConnectionRepository : Repository<Connection>
 	{
-		public ConnectionRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal ConnectionRepository(SlcConnectivityManagementHelper helper) : base(helper)
 		{
 		}
 

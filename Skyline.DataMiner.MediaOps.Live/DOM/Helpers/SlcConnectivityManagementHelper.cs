@@ -11,7 +11,7 @@
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
-	public class SlcConnectivityManagementHelper : DomModuleHelperBase
+	internal class SlcConnectivityManagementHelper : DomModuleHelperBase
 	{
 		public SlcConnectivityManagementHelper(ICommunication communication) : base(SlcConnectivityManagementIds.ModuleId, communication.SendMessages)
 		{

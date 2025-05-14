@@ -12,7 +12,7 @@
 
 	public class LevelRepository : Repository<Level>
 	{
-		public LevelRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal LevelRepository(SlcConnectivityManagementHelper helper) : base(helper)
 		{
 		}
 
