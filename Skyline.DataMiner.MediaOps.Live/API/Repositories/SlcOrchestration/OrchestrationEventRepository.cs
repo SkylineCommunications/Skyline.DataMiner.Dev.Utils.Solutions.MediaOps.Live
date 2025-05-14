@@ -13,27 +13,33 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
 
 	using SLDataGateway.API.Types.Querying;
 
+	using TakeLevelMapping = Skyline.DataMiner.MediaOps.Live.Take.LevelMapping;
+	using TakeLevel = Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement.Level;
+	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
+	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
+
 	public class OrchestrationEventRepository : Repository<OrchestrationEvent>
 	{
 		private readonly ConfigurationRepository _configurationHelper;
 		private readonly OrchestrationScheduler _scheduler;
-		private readonly IDms _dms;
+		private readonly MediaOpsLiveApi _api;
 
 		private const string TakeVsgScriptName = "VSG-AS-TakeVsg";
 		private const string TakeVsgSourceIdParam = "Source VSG ID";
 		private const string TakeVsgDestinationIdParam = "Destination VSG ID";
 
-		public OrchestrationEventRepository(SlcOrchestrationHelper helper, IDms dms) : base(helper)
+		public OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper)
 		{
 			_configurationHelper = new ConfigurationRepository(helper);
-			_scheduler = new OrchestrationScheduler(dms);
-			_dms = dms;
+			_scheduler = new OrchestrationScheduler(api.Dms);
+			_api = api;
 		}
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
@@ -153,18 +159,41 @@
 
 		private void ExecuteConnections(OrchestrationEventConfiguration orchestrationEventConfiguration)
 		{
+			TakeHelper takeHelper = new TakeHelper(_api);
+
 			ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
-			List<Task> connectionTasks = new List<Task>();
+			/*List<Task> connectionTasks = new List<Task>();*/
+
+			List<VsgConnectionRequest> requests = new List<VsgConnectionRequest>();
 
 			foreach (Connection connection in orchestrationEventConfiguration.Configuration.Connections)
 			{
-				List<OrchestrationScriptArgument> connectionArguments = new List<OrchestrationScriptArgument>
+				/*List<OrchestrationScriptArgument> connectionArguments = new List<OrchestrationScriptArgument>
 				{
-					new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, TakeVsgSourceIdParam, connection.SourceVsg.ToString()),
-					new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, TakeVsgDestinationIdParam, connection.DestinationVsg.ToString()),
-				};
+					new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, TakeVsgSourceIdParam, $"[{connection.SourceVsg.ToString()}]"),
+					new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, TakeVsgDestinationIdParam, $"[{connection.DestinationVsg.ToString()}]"),
+				};*/
 
-				Task nodeOrchestrationTask = Task.Factory.StartNew(
+				try
+				{
+					var srcVirtualSignalGroup = _api.VirtualSignalGroups.Read(connection.SourceVsg.Value.ID);
+					var dstVirtualSignalGroup = _api.VirtualSignalGroups.Read(connection.DestinationVsg.Value.ID);
+
+					var mapping = connection.LevelMappings
+						.Select(map => new TakeLevelMapping(
+							new TakeLevel { Name = map.Source.Name, Number = map.Source.Number },
+							new TakeLevel { Name = map.Destination.Name, Number = map.Destination.Number }))
+						.ToHashSet();
+
+					requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup, mapping));
+				}
+				catch (Exception e)
+				{
+					errors.TryAdd($"\n{e}");
+					orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+				}
+
+				/*Task nodeOrchestrationTask = Task.Factory.StartNew(
 					() =>
 					{
 						if (!TryExecuteOrchestrationScript(TakeVsgScriptName, connectionArguments, out string[] errorMessages))
@@ -175,10 +204,18 @@
 					},
 					TaskCreationOptions.LongRunning);
 
-				connectionTasks.Add(nodeOrchestrationTask);
+				connectionTasks.Add(nodeOrchestrationTask);*/
 			}
 
-			Task.WaitAll(connectionTasks.ToArray());
+			var performanceLogFilename = $"ORC-TAKE - {DateTime.UtcNow:yyyy-MM-dd}";
+			var performanceFileLogger = new PerformanceFileLogger("ORC-TAKE", performanceLogFilename);
+
+			using (var performanceCollector = new PerformanceCollector(performanceFileLogger))
+			{
+				takeHelper.Take(requests, performanceCollector);
+			}
+
+			/*Task.WaitAll(connectionTasks.ToArray());*/
 
 			if (orchestrationEventConfiguration.EventState == SlcOrchestrationIds.Enums.EventState.Failed)
 			{
@@ -240,7 +277,7 @@
 
 		private bool TryExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, out string[] errorMessages)
 		{
-			IDmsAutomationScript script = _dms.GetScript(scriptName);
+			IDmsAutomationScript script = _api.Dms.GetScript(scriptName);
 			List<DmsAutomationScriptParamValue> scriptParams = arguments
 				.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
 				.ToList();

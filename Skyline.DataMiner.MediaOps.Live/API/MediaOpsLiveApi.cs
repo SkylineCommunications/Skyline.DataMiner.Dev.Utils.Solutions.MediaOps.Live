@@ -9,6 +9,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
@@ -24,6 +25,7 @@
 				throw new ArgumentNullException(nameof(communication));
 			}
 
+			Dms = DmsFactory.CreateDms(communication);
 			MessageHandler = communication.SendMessages;
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(communication);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(communication);
@@ -35,7 +37,7 @@
 			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
 			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
 
-			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, DmsFactory.CreateDms(communication));
+			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
 		}
 
 		public MediaOpsLiveApi(IConnection connection)
@@ -45,6 +47,7 @@
 				throw new ArgumentNullException(nameof(connection));
 			}
 
+			Dms = connection.GetDms();
 			MessageHandler = connection.HandleMessages;
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
@@ -56,7 +59,7 @@
 			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
 			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
 
-			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, connection.GetDms());
+			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
 		}
 
 		public MediaOpsLiveApi(IEngine engine) : this(engine.GetUserConnection())
@@ -72,6 +75,8 @@
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+
+		internal IDms Dms { get; }
 
 		public EndpointRepository Endpoints { get; }
 

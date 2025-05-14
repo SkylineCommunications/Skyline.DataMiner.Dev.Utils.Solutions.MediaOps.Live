@@ -7,7 +7,6 @@
 
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
@@ -27,13 +26,8 @@
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
 
-		public void Take(IEngine engine, ICollection<ConnectionRequest> connectionRequests, PerformanceCollector performanceCollector)
+		public void Take(ICollection<ConnectionRequest> connectionRequests, PerformanceCollector performanceCollector)
 		{
-			if (engine == null)
-			{
-				throw new ArgumentNullException(nameof(engine));
-			}
-
 			if (connectionRequests == null)
 			{
 				throw new ArgumentNullException(nameof(connectionRequests));
@@ -46,17 +40,12 @@
 
 			using (var performanceTracker = new PerformanceTracker(performanceCollector))
 			{
-				TakeInternal(engine, connectionRequests, performanceTracker);
+				TakeInternal(connectionRequests, performanceTracker);
 			}
 		}
 
-		public void Take(IEngine engine, ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceCollector performanceCollector)
+		public void Take(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceCollector performanceCollector)
 		{
-			if (engine == null)
-			{
-				throw new ArgumentNullException(nameof(engine));
-			}
-
 			if (vsgConnectionRequests == null)
 			{
 				throw new ArgumentNullException(nameof(vsgConnectionRequests));
@@ -112,11 +101,11 @@
 					}
 				}
 
-				TakeInternal(engine, connectionRequests, performanceTracker);
+				TakeInternal(connectionRequests, performanceTracker);
 			}
 		}
 
-		private void TakeInternal(IEngine engine, ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker)
+		private void TakeInternal(ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -134,12 +123,12 @@
 						// this prevents the connection handler script to already update the connections before we have set the pending source
 						lockAcquired.Task.Wait();
 
-						FindConnectionHandlerScripts(engine, connectionContexts, performanceTracker);
-						ExecuteConnectionHandlerScripts(engine, connectionContexts, performanceTracker);
+						FindConnectionHandlerScripts(connectionContexts, performanceTracker);
+						ExecuteConnectionHandlerScripts(connectionContexts, performanceTracker);
 
 						// Notify pending connections task runs in parallel with setting up the connections
 						notifyPendingConnectionsTask.Wait();
-						WaitUntilAllConnected(engine, connectionWatcher, connectionContexts, performanceTracker);
+						WaitUntilAllConnected(connectionWatcher, connectionContexts, performanceTracker);
 					}
 					finally
 					{
@@ -234,7 +223,7 @@
 			}
 		}
 
-		private void WaitUntilAllConnected(IEngine engine, ConnectionWatcher connectionWatcher, ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
+		private void WaitUntilAllConnected(ConnectionWatcher connectionWatcher, ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -245,7 +234,7 @@
 					var task = Task.Factory.StartNew(
 						() =>
 						{
-							connectionToCreate.HasSucceeded = IsConnectionEstablished(engine, connectionWatcher, connectionToCreate, performanceTracker);
+							connectionToCreate.HasSucceeded = IsConnectionEstablished(connectionWatcher, connectionToCreate, performanceTracker);
 						},
 						TaskCreationOptions.LongRunning);
 
@@ -256,7 +245,7 @@
 			}
 		}
 
-		private bool IsConnectionEstablished(IEngine engine, ConnectionWatcher connectionWatcher, CreateConnectionContext connectionContexts, PerformanceTracker performanceTracker)
+		private bool IsConnectionEstablished(ConnectionWatcher connectionWatcher, CreateConnectionContext connectionContexts, PerformanceTracker performanceTracker)
 		{
 			if (connectionContexts.DomConnection?.ConnectionInfo?.ConnectedSource == connectionContexts.Source?.ID)
 			{
@@ -269,16 +258,15 @@
 				performanceTracker.AddMetadata("Source", connectionContexts.Source?.Name);
 				performanceTracker.AddMetadata("Destination", connectionContexts.Destination?.Name);
 
-				return ConnectionAwaiter.Wait(engine, connectionWatcher, connectionContexts.Source, connectionContexts.Destination, TimeSpan.FromSeconds(5));
+				return ConnectionAwaiter.Wait(connectionWatcher, connectionContexts.Source, connectionContexts.Destination, TimeSpan.FromSeconds(5));
 			}
 		}
 
-		private string FindConnectionHandlerScript(IEngine engine, IDmsElement element)
+		private string FindConnectionHandlerScript(IDmsElement element)
 		{
 			var hostingAgentId = element.Host.Id;
 
-			var mediationElement = engine.FindElementsByProtocol(Constants.MediationProtocolName)
-				.FirstOrDefault(e => e.RawInfo.HostingAgentID == hostingAgentId);
+			var mediationElement = _api.Dms.GetElements().Where(e => e.Protocol.Name == Constants.MediationProtocolName).FirstOrDefault(e => e.Host.Id == hostingAgentId);
 
 			if (mediationElement == null)
 			{
@@ -286,7 +274,8 @@
 			}
 
 			var elementKey = element.DmsElementId.Value;
-			var script = Convert.ToString(mediationElement.GetParameterByPrimaryKey(1003, elementKey));
+
+			var script = Convert.ToString(mediationElement.GetTable(1000).GetRow(elementKey)[2]);
 
 			if (String.IsNullOrEmpty(script))
 			{
@@ -296,18 +285,16 @@
 			return script;
 		}
 
-		private void FindConnectionHandlerScripts(IEngine engine, ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
+		private void FindConnectionHandlerScripts(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var dms = engine.GetDms();
-
 				foreach (var group in connectionContexts.GroupBy(x => x.Destination.Element))
 				{
 					var elementKey = group.Key;
-					var element = dms.GetElement(new DmsElementId(elementKey));
+					var element = _api.Dms.GetElement(new DmsElementId(elementKey));
 
-					var script = FindConnectionHandlerScript(engine, element);
+					var script = FindConnectionHandlerScript(element);
 
 					if (String.IsNullOrWhiteSpace(script))
 					{
@@ -322,7 +309,7 @@
 			}
 		}
 
-		private void ExecuteConnectionHandlerScripts(IEngine engine, ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
+		private void ExecuteConnectionHandlerScripts(ICollection<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -330,12 +317,12 @@
 				{
 					var script = group.Key;
 
-					ExecuteConnectionHandlerScript(engine, script, group, performanceTracker);
+					ExecuteConnectionHandlerScript(script, group, performanceTracker);
 				}
 			}
 		}
 
-		private void ExecuteConnectionHandlerScript(IEngine engine, string scriptName, IEnumerable<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
+		private void ExecuteConnectionHandlerScript(string scriptName, IEnumerable<CreateConnectionContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -346,18 +333,23 @@
 
 				performanceTracker.AddMetadata("Script", scriptName);
 
-				var subScript = engine.PrepareSubScript(scriptName);
-				subScript.Synchronous = true;
-				subScript.ExtendedErrorInfo = true;
-
-				subScript.SelectScriptParam("Action", "Connect");
-				subScript.SelectScriptParam("Input Data", JsonConvert.SerializeObject(createConnectionsRequest));
-
-				subScript.StartScript();
-
-				if (subScript.HadError)
+				IDmsAutomationScript script = _api.Dms.GetScript(scriptName);
+				List<DmsAutomationScriptParamValue> scriptParams = new List<DmsAutomationScriptParamValue>
 				{
-					throw new InvalidOperationException(String.Join(@"\r\n", subScript.GetErrorMessages()));
+					new DmsAutomationScriptParamValue("Action", "Connect"),
+					new DmsAutomationScriptParamValue("Input Data", JsonConvert.SerializeObject(createConnectionsRequest)),
+				};
+
+				DmsAutomationScriptRunOptions scriptOptions = new DmsAutomationScriptRunOptions
+				{
+					ExtendedErrorInfo = true,
+				};
+
+				DmsAutomationScriptResult scriptResult = script.Execute(scriptParams, new List<DmsAutomationScriptDummyValue>(), scriptOptions);
+
+				if (scriptResult.HadError)
+				{
+					throw new InvalidOperationException(String.Join(@"\r\n", scriptResult.ErrorMessages));
 				}
 			}
 		}
