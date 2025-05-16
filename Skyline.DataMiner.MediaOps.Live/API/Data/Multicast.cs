@@ -6,7 +6,7 @@
 	{
 		public Multicast(string ip, int port, string source)
 		{
-			if (string.IsNullOrWhiteSpace(ip))
+			if (String.IsNullOrWhiteSpace(ip))
 			{
 				throw new ArgumentException($"'{nameof(ip)}' cannot be null or whitespace.", nameof(ip));
 			}

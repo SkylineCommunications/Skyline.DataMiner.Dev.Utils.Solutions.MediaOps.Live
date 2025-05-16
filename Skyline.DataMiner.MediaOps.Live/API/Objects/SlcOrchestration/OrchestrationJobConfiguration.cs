@@ -18,7 +18,7 @@
 		/// Initializes a new instance of the <see cref="OrchestrationJobConfiguration"/> class, with an empty list of events.
 		/// </summary>
 		/// <param name="jobId">The reference ID of the job.</param>
-		public OrchestrationJobConfiguration(string jobId) : this (jobId, new List<OrchestrationEventConfiguration>())
+		internal OrchestrationJobConfiguration(string jobId) : this (jobId, new List<OrchestrationEventConfiguration>())
 		{
 		}
 
@@ -27,7 +27,7 @@
 		/// </summary>
 		/// <param name="jobId">The reference ID of the job.</param>
 		/// <param name="orchestrationEventConfigurations">The list of events to assign to the job.</param>
-		public OrchestrationJobConfiguration(string jobId, IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations)
+		internal OrchestrationJobConfiguration(string jobId, IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations)
 		{
 			JobId = jobId;
 			var events = orchestrationEventConfigurations.ToList();
@@ -40,7 +40,7 @@
 		/// </summary>
 		public string JobId { get; }
 
-		public IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
+		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
 		public IList<OrchestrationEventConfiguration> OrchestrationEvents { get; }
 

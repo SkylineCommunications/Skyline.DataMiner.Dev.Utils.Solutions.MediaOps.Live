@@ -83,7 +83,7 @@
 				ScriptName,
 				$"PARAMETER:2:{_orchestrationEvent.ID}",
 				"CHECKSETS:FALSE",
-				"DEFER:FALSE",
+				"DEFER:TRUE",
 			};
 		}
 	}

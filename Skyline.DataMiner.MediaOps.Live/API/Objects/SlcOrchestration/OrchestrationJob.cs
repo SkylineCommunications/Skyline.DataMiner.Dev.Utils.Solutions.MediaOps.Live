@@ -42,7 +42,7 @@
 		/// Initializes a new instance of the <see cref="OrchestrationJob"/> class, with an empty list of events.
 		/// </summary>
 		/// <param name="jobId">The reference ID of the job.</param>
-		public OrchestrationJob(string jobId) : this(jobId, new List<OrchestrationEvent>())
+		internal OrchestrationJob(string jobId) : this(jobId, new List<OrchestrationEvent>())
 		{
 		}
 
@@ -51,7 +51,7 @@
 		/// </summary>
 		/// <param name="jobId">The reference ID of the job.</param>
 		/// <param name="orchestrationEvents">The list of events to assign to the job.</param>
-		public OrchestrationJob(string jobId, IEnumerable<OrchestrationEvent> orchestrationEvents)
+		internal OrchestrationJob(string jobId, IEnumerable<OrchestrationEvent> orchestrationEvents)
 		{
 			JobId = jobId;
 
@@ -65,7 +65,7 @@
 		/// </summary>
 		public string JobId { get; }
 
-		public IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
+		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
 		/// <summary>
 		/// Gets the list of currently assigned events to the job. To save edits on DataMiner, use the CreateOrUpdateOrchestrationJob method from the main API.

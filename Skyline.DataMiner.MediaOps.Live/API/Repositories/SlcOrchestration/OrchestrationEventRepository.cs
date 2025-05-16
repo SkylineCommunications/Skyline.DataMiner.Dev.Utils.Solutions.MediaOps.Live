@@ -49,7 +49,7 @@
 		/// </summary>
 		/// <param name="jobReference">The ID of the job to retrieve.</param>
 		/// <returns>A <see cref="OrchestrationJob"/> object with all events found for the given job reference.</returns>
-		public OrchestrationJob GetOrchestrationJob(string jobReference)
+		public OrchestrationJob GetOrCreateNewOrchestrationJob(string jobReference)
 		{
 			IEnumerable<OrchestrationEvent> events = GetEventsByJobReference(jobReference);
 
@@ -61,7 +61,7 @@
 		/// </summary>
 		/// <param name="jobReference">The ID of the job to retrieve.</param>
 		/// <returns>A <see cref="OrchestrationJobConfiguration"/> object with all event configurations found for the given job reference.</returns>
-		public OrchestrationJobConfiguration GetOrchestrationJobConfiguration(string jobReference)
+		public OrchestrationJobConfiguration GetOrCreateNewOrchestrationJobConfiguration(string jobReference)
 		{
 			IEnumerable<OrchestrationEventConfiguration> events = GetEventConfigurationsByJobReference(jobReference);
 
@@ -73,13 +73,13 @@
 		/// </summary>
 		/// <param name="job">The <see cref="OrchestrationJobConfiguration"/> object to save.</param>
 		/// <returns>The saved <see cref="OrchestrationJobConfiguration"/>.</returns>
-		public OrchestrationJobConfiguration CreateOrUpdateOrchestrationJobConfiguration(OrchestrationJobConfiguration job)
+		public OrchestrationJobConfiguration SaveOrchestrationJobConfiguration(OrchestrationJobConfiguration job)
 		{
 			DeleteEvents(job.RemovedIds);
 
 			job.ValidateEventsBeforeSaving();
 			_scheduler.CreateOrUpdateEventTasks(job.OrchestrationEvents);
-			var successes = CreateOrUpdateEventConfigurations(job.OrchestrationEvents);
+			var successes = SaveEventConfigurations(job.OrchestrationEvents);
 			return new OrchestrationJobConfiguration(job.JobId, successes.ToList());
 		}
 
@@ -88,7 +88,7 @@
 		/// </summary>
 		/// <param name="job">The <see cref="OrchestrationJob"/> object to save.</param>
 		/// <returns>The saved <see cref="OrchestrationJob"/>.</returns>
-		public OrchestrationJob CreateOrUpdateOrchestrationJob(OrchestrationJob job)
+		public OrchestrationJob SaveOrchestrationJob(OrchestrationJob job)
 		{
 			DeleteEvents(job.RemovedIds);
 
@@ -138,11 +138,11 @@
 		{
 			orchestrationEvent.InternalSetState(SlcOrchestrationIds.Enums.EventState.Configuring);
 
-			CreateOrUpdateEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEvent });
+			SaveEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEvent });
 
 			ExecuteEventConfiguration(orchestrationEvent);
 
-			CreateOrUpdateEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEvent });
+			SaveEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEvent });
 		}
 
 		private void ExecuteEventConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration)
@@ -162,28 +162,15 @@
 			TakeHelper takeHelper = new TakeHelper(_api);
 
 			ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
-			/*List<Task> connectionTasks = new List<Task>();*/
 
 			List<VsgConnectionRequest> requests = new List<VsgConnectionRequest>();
 
 			foreach (Connection connection in orchestrationEventConfiguration.Configuration.Connections)
 			{
-				/*List<OrchestrationScriptArgument> connectionArguments = new List<OrchestrationScriptArgument>
-				{
-					new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, TakeVsgSourceIdParam, $"[{connection.SourceVsg.ToString()}]"),
-					new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, TakeVsgDestinationIdParam, $"[{connection.DestinationVsg.ToString()}]"),
-				};*/
-
 				try
 				{
 					var srcVirtualSignalGroup = _api.VirtualSignalGroups.Read(connection.SourceVsg.Value.ID);
 					var dstVirtualSignalGroup = _api.VirtualSignalGroups.Read(connection.DestinationVsg.Value.ID);
-
-					/*var mapping = connection.LevelMappings
-						.Select(map => new TakeLevelMapping(
-							new TakeLevel { Name = map.Source.Name, Number = map.Source.Number },
-							new TakeLevel { Name = map.Destination.Name, Number = map.Destination.Number }))
-						.ToHashSet();*/
 
 					requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup));
 				}
@@ -192,19 +179,6 @@
 					errors.TryAdd($"\n{e}");
 					orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 				}
-
-				/*Task nodeOrchestrationTask = Task.Factory.StartNew(
-					() =>
-					{
-						if (!TryExecuteOrchestrationScript(TakeVsgScriptName, connectionArguments, out string[] errorMessages))
-						{
-							errors.TryAdd($"\nError during connecting node {connection.SourceNodeId} to {connection.DestinationNodeId}: {String.Join("\n", errorMessages)}" );
-							orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-						}
-					},
-					TaskCreationOptions.LongRunning);
-
-				connectionTasks.Add(nodeOrchestrationTask);*/
 			}
 
 			var performanceLogFilename = $"ORC-TAKE - {DateTime.UtcNow:yyyy-MM-dd}";
@@ -214,8 +188,6 @@
 			{
 				takeHelper.Take(requests, performanceCollector);
 			}
-
-			/*Task.WaitAll(connectionTasks.ToArray());*/
 
 			if (orchestrationEventConfiguration.EventState == SlcOrchestrationIds.Enums.EventState.Failed)
 			{
@@ -281,6 +253,7 @@
 			List<DmsAutomationScriptParamValue> scriptParams = arguments
 				.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
 				.ToList();
+
 			DmsAutomationScriptRunOptions scriptOptions = new DmsAutomationScriptRunOptions
 			{
 				ExtendedErrorInfo = true,
@@ -437,7 +410,7 @@
 		/// </summary>
 		/// <param name="events">A list of configured or updated event configurations.</param>
 		/// <returns>Returns a list of all successfully saved <see cref="OrchestrationEventConfiguration"/> objects.</returns>
-		private IEnumerable<OrchestrationEventConfiguration> CreateOrUpdateEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
+		private IEnumerable<OrchestrationEventConfiguration> SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
 		{
 			List<Configuration> configsToDelete = new List<Configuration>();
 			List<Configuration> configsToWrite = new List<Configuration>();
