@@ -42,7 +42,7 @@
 
 		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
-		public IList<OrchestrationEventConfiguration> OrchestrationEvents { get; }
+		public List<OrchestrationEventConfiguration> OrchestrationEvents { get; }
 
 		private static void ValidateConfigurationsBeforeSaving(IEnumerable<OrchestrationEvent> orchestrationEventConfigurations)
 		{

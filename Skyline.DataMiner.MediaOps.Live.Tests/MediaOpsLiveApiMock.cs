@@ -99,8 +99,10 @@
 				Connections.CreateOrUpdate([connection1, connection2]);
 			}
 
-			var job = new OrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63", WithNodes_CreateEventConfigurationInstances(10, 10));
-			Orchestration.CreateOrUpdateOrchestrationJobConfiguration(job);
+			OrchestrationJobConfiguration? job = Orchestration.GetOrCreateNewOrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");
+			job.OrchestrationEvents.AddRange(WithNodes_CreateEventConfigurationInstances(10, 10));
+
+			Orchestration.SaveOrchestrationJobConfiguration(job);
 		}
 
 		public DomSLNetMessageHandler MessageHandler { get; }

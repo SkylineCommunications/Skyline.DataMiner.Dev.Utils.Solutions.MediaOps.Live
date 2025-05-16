@@ -70,7 +70,7 @@
 		/// <summary>
 		/// Gets the list of currently assigned events to the job. To save edits on DataMiner, use the CreateOrUpdateOrchestrationJob method from the main API.
 		/// </summary>
-		public IList<OrchestrationEvent> OrchestrationEvents { get; }
+		public List<OrchestrationEvent> OrchestrationEvents { get; }
 
 		private static void ValidateEventTypesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{

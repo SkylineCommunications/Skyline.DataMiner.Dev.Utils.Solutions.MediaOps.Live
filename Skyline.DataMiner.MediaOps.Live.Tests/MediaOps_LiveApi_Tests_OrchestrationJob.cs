@@ -15,7 +15,8 @@
 		{
 			var events = NoNodes_CreateEventInstance(2);
 
-			var job = new OrchestrationJob(Guid.NewGuid().ToString(), events);
+			var job = _api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+			job.OrchestrationEvents.AddRange(events);
 
 			var guids = job.OrchestrationEvents.Select(ev => ev.ID).ToList();
 			var toRemove = guids[0];
@@ -37,7 +38,9 @@
 		public void MediaOps_Live_Api_Tests_OrchestrationJob_CheckDeleteBeforeUpdateWithNodes()
 		{
 			var events = WithNodes_CreateEventConfigurationInstances(2, 5);
-			var job = new OrchestrationJobConfiguration(Guid.NewGuid().ToString(), events);
+
+			var job = _api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			job.OrchestrationEvents.AddRange(events);
 
 			var guids = job.OrchestrationEvents.Select(ev => ev.ID).ToList();
 			var toRemove = guids[0];
