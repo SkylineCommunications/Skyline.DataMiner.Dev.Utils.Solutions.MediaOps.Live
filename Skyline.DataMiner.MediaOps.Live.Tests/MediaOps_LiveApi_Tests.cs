@@ -3,6 +3,7 @@
 	using Skyline.DataMiner.Analytics.GenericInterface.JoinFilter;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -152,6 +153,28 @@
 			CollectionAssert.AreEquivalent(
 				new[] { ip },
 				api.TransportTypes.ReadAll().ToList());
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Join()
+		{
+			var ip = _api.TransportTypes.Query().First(x => x.Name == "IP");
+			var levels = _api.Levels.ReadAll().ToList();
+
+			var levelsWithTransportType = levels.Join(
+				_api.TransportTypes,
+				l => l.TransportType,
+				(l, t) => new { Level = l, TransportType = t })
+				.ToList();
+
+			CollectionAssert.AreEquivalent(
+				new[]
+				{
+					new { Level = levels[0], TransportType = ip },
+					new { Level = levels[1], TransportType = ip },
+					new { Level = levels[2], TransportType = ip },
+				},
+				levelsWithTransportType);
 		}
 	}
 }
