@@ -345,6 +345,7 @@
 		///     Get all <see cref="OrchestrationEvent" /> objects that contains the given job reference value.
 		/// </summary>
 		/// <param name="jobReference">Job reference value to filter.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>A collection of <see cref="OrchestrationEvent" /> objects that contains the given job reference value.</returns>
 		/// <exception cref="ArgumentException">Job reference can not be null or whitespace.</exception>
 		private IEnumerable<OrchestrationEvent> GetEventsByJobReference(string jobReference, PerformanceTracker performanceTracker)
@@ -366,6 +367,7 @@
 		///     Get all <see cref="OrchestrationEventConfiguration" /> objects that contains the given job reference value.
 		/// </summary>
 		/// <param name="jobReference">Job reference value to filter.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>
 		///     A collection of <see cref="OrchestrationEventConfiguration" /> objects that contains the given job reference
 		///     value.
@@ -389,6 +391,7 @@
 		///     Get the <see cref="OrchestrationEvent" /> object that matches the given event ID value.
 		/// </summary>
 		/// <param name="eventId">The ID of the instance to lookup.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>
 		///     A <see cref="OrchestrationEvent" /> object that matches the given event ID value, or null if no match is
 		///     found.
@@ -417,6 +420,7 @@
 		///     Get the <see cref="OrchestrationEventConfiguration" /> object that matches the given event ID value.
 		/// </summary>
 		/// <param name="eventId">The ID of the instance to lookup.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>
 		///     A <see cref="OrchestrationEventConfiguration" /> object that matches the given event ID value, or null if no
 		///     match is found.
@@ -447,6 +451,7 @@
 		///     retrieving configuration data from DataMiner.
 		/// </summary>
 		/// <param name="event">The <see cref="OrchestrationEvent" /> object to convert.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>
 		///     The <see cref="OrchestrationEventConfiguration" /> object that corresponds to the given input, or null if the
 		///     operation failed.
@@ -470,6 +475,7 @@
 		///     objects by retrieving configuration data from DataMiner.
 		/// </summary>
 		/// <param name="events">The <see cref="OrchestrationEvent" /> objects to convert.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>A mapping of each event ID to the converted <see cref="OrchestrationEventConfiguration" /> object.</returns>
 		/// <exception cref="ArgumentNullException">Events can not be null.</exception>
 		private Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events, PerformanceTracker performanceTracker)
@@ -499,6 +505,7 @@
 		///     Saves a list of new or updated <see cref="OrchestrationEvent" /> objects to the DataMiner System.
 		/// </summary>
 		/// <param name="events">A list of configured or updated event configurations.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>Returns a list of all successfully saved event configurations.</returns>
 		private IEnumerable<OrchestrationEvent> CreateOrUpdateEvents(IEnumerable<OrchestrationEvent> events, PerformanceTracker performanceTracker)
 		{
@@ -514,6 +521,7 @@
 		///     Saves a list of new or updated <see cref="OrchestrationEventConfiguration" /> objects to the DataMiner System.
 		/// </summary>
 		/// <param name="events">A list of configured or updated event configurations.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>Returns a list of all successfully saved <see cref="OrchestrationEventConfiguration" /> objects.</returns>
 		private IEnumerable<OrchestrationEventConfiguration> SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events, PerformanceTracker performanceTracker)
 		{
@@ -548,6 +556,7 @@
 		///     Delete a collection of <see cref="OrchestrationEvent" /> objects from the DataMiner system.
 		/// </summary>
 		/// <param name="eventIds">The events to be deleted.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
 		private void DeleteEvents(IEnumerable<Guid> eventIds, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
@@ -562,6 +571,7 @@
 		///     Delete a collection of <see cref="OrchestrationEvent" /> objects from the DataMiner system.
 		/// </summary>
 		/// <param name="events">The events to be deleted.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
 		private void DeleteEvents(IEnumerable<OrchestrationEvent> events, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
