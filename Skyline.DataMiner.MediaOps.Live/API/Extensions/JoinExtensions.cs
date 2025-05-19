@@ -205,7 +205,9 @@
 
 			foreach (var page in leftSource)
 			{
-				var idsToRetrieve = page
+				var pageCollection = page is ICollection<TLeft> collection ? collection : page.ToList();
+
+				var idsToRetrieve = pageCollection
 					.SelectMany(rightIdsSelector)
 					.Select(x => x.ID)
 					.Where(id => id != Guid.Empty && !cache.ContainsKey(id))
@@ -224,7 +226,7 @@
 
 				var result = new List<TResult>();
 
-				foreach (var left in page)
+				foreach (var left in pageCollection)
 				{
 					var rightIds = rightIdsSelector(left)
 						.Where(x => x != null && x.ID != Guid.Empty)
@@ -253,7 +255,9 @@
 
 			foreach (var page in leftSource)
 			{
-				var idsToRetrieve = page
+				var pageCollection = page is ICollection<TLeft> collection ? collection : page.ToList();
+
+				var idsToRetrieve = pageCollection
 					.Select(rightIdSelector)
 					.Where(x => x != null && x.Value.ID != Guid.Empty)
 					.Select(x => x.Value.ID)
@@ -273,7 +277,7 @@
 
 				var result = new List<TResult>();
 
-				foreach (var left in page)
+				foreach (var left in pageCollection)
 				{
 					var refObj = rightIdSelector(left);
 					var rightId = refObj?.ID ?? Guid.Empty;

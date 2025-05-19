@@ -183,5 +183,33 @@
 				},
 				levelsWithTransportType);
 		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_JoinInBatches()
+		{
+			// act
+			var levelsWithTransportType = _api.Levels.ReadAll()
+				.JoinInBatches(
+					_api.TransportTypes,
+					level => level.TransportType,
+					(l, t) => new { Level = l, TransportType = t },
+					batchSize: 2)
+				.ToList();
+
+			// assert
+			var ip = _api.TransportTypes.Query().First(x => x.Name == "IP");
+			var video = _api.Levels.Query().First(x => x.Name == "Video");
+			var audio = _api.Levels.Query().First(x => x.Name == "Audio");
+			var data = _api.Levels.Query().First(x => x.Name == "Data");
+
+			CollectionAssert.AreEquivalent(
+				new[]
+				{
+					new { Level = video, TransportType = ip },
+					new { Level = audio, TransportType = ip },
+					new { Level = data, TransportType = ip },
+				},
+				levelsWithTransportType);
+		}
 	}
 }
