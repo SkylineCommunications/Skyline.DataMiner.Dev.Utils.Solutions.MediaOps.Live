@@ -5,7 +5,7 @@
 
 	using Skyline.DataMiner.Analytics.GenericInterface;
 
-	public abstract class GQIUpdateableDataSource : IGQIDataSource, IGQIUpdateable
+	public abstract class GQIUpdateableDataSource : GQIDataSourceBase, IGQIDataSource, IGQIUpdateable
 	{
 		private readonly object _lock = new object();
 
@@ -57,10 +57,6 @@
 			OnStopUpdates();
 			_updater = null;
 		}
-
-		public abstract GQIColumn[] GetColumns();
-
-		public abstract GQIPage GetNextPage(GetNextPageInputArgs args);
 
 		public abstract void OnStartUpdates(IGQIUpdater updater);
 
