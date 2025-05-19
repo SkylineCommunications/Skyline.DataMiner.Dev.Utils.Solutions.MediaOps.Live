@@ -192,8 +192,7 @@
 				.JoinInBatches(
 					_api.TransportTypes,
 					level => level.TransportType,
-					(l, t) => new { Level = l, TransportType = t },
-					batchSize: 2)
+					(l, t) => new { Level = l, TransportType = t })
 				.ToList();
 
 			// assert
