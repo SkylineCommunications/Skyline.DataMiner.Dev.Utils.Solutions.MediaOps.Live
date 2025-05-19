@@ -211,5 +211,39 @@
 				},
 				levelsWithTransportType);
 		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_JoinMultiple()
+		{
+			// act
+			var result = _api.VirtualSignalGroups.ReadAllPaged()
+				.Join(
+					_api.Endpoints,
+					vsg => vsg.GetEndpoints(),
+					(vsg, endpoints) => new { VirtualSignalGroup = vsg, Endpoints = endpoints })
+				.Flatten()
+				.ToList();
+
+			// assert
+			Assert.IsNotNull(result);
+			Assert.IsTrue(result.Count > 0, "Expected at least one joined result.");
+
+			foreach (var item in result)
+			{
+				var vsgName = item.VirtualSignalGroup.Name;
+
+				Assert.IsNotNull(item.VirtualSignalGroup, "VirtualSignalGroup should not be null.");
+				Assert.IsNotNull(item.Endpoints, "Endpoints list should not be null.");
+
+				Assert.IsTrue(item.Endpoints.Any(), "Each VSG should have at least one endpoint.");
+
+				foreach (var endpoint in item.Endpoints)
+				{
+					Assert.IsTrue(
+						endpoint.Name.EndsWith(vsgName),
+						$"Endpoint '{endpoint.Name}' should end with VSG name '{vsgName}'.");
+				}
+			}
+		}
 	}
 }
