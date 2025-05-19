@@ -5,6 +5,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	using SLDataGateway.API.Querying;
@@ -158,21 +159,27 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Join()
 		{
-			var ip = _api.TransportTypes.Query().First(x => x.Name == "IP");
-			var levels = _api.Levels.ReadAll().ToList();
-
-			var levelsWithTransportType = levels.Join(
-				_api.TransportTypes,
-				l => l.TransportType,
-				(l, t) => new { Level = l, TransportType = t })
+			// act
+			var levelsWithTransportType = _api.Levels.ReadAllPaged()
+				.Join(
+					_api.TransportTypes,
+					level => level.TransportType,
+					(l, t) => new { Level = l, TransportType = t })
+				.Flatten()
 				.ToList();
+
+			// assert
+			var ip = _api.TransportTypes.Query().First(x => x.Name == "IP");
+			var video = _api.Levels.Query().First(x => x.Name == "Video");
+			var audio = _api.Levels.Query().First(x => x.Name == "Audio");
+			var data = _api.Levels.Query().First(x => x.Name == "Data");
 
 			CollectionAssert.AreEquivalent(
 				new[]
 				{
-					new { Level = levels[0], TransportType = ip },
-					new { Level = levels[1], TransportType = ip },
-					new { Level = levels[2], TransportType = ip },
+					new { Level = video, TransportType = ip },
+					new { Level = audio, TransportType = ip },
+					new { Level = data, TransportType = ip },
 				},
 				levelsWithTransportType);
 		}
