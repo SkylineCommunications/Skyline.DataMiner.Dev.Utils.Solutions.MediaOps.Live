@@ -198,7 +198,7 @@
 			{
 				var endpointIds = vsgConnectionRequests.SelectMany(x => x.Source.GetEndpoints())
 						.Concat(vsgConnectionRequests.SelectMany(x => x.Destination.GetEndpoints()))
-						.Select(x => x.ID)
+						.Select(x => x.Endpoint.ID)
 						.Distinct();
 
 				var result = _api.Endpoints.Read(endpointIds);

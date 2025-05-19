@@ -28,7 +28,6 @@
 			Repository<TRight> rightRepository,
 			Func<TLeft, IEnumerable<ApiObjectReference<TRight>>> rightIdsSelector,
 			Func<TLeft, IEnumerable<TRight>, TResult> resultSelector)
-			where TLeft : ApiObject<TLeft>
 			where TRight : ApiObject<TRight>
 		{
 			if (leftSource == null)
@@ -71,7 +70,6 @@
 			Repository<TRight> rightRepository,
 			Func<TLeft, ApiObjectReference<TRight>?> rightIdSelector,
 			Func<TLeft, TRight, TResult> resultSelector)
-			where TLeft : ApiObject<TLeft>
 			where TRight : ApiObject<TRight>
 		{
 			if (leftSource == null)
@@ -116,7 +114,6 @@
 			Func<TLeft, IEnumerable<ApiObjectReference<TRight>>> rightIdsSelector,
 			Func<TLeft, IEnumerable<TRight>, TResult> resultSelector,
 			int batchSize = 250)
-			where TLeft : ApiObject<TLeft>
 			where TRight : ApiObject<TRight>
 		{
 			if (leftSource == null)
@@ -164,7 +161,6 @@
 			Func<TLeft, ApiObjectReference<TRight>?> rightIdSelector,
 			Func<TLeft, TRight, TResult> resultSelector,
 			int batchSize = 250)
-			where TLeft : ApiObject<TLeft>
 			where TRight : ApiObject<TRight>
 		{
 			if (leftSource == null)
@@ -198,7 +194,6 @@
 			Repository<TRight> rightRepository,
 			Func<TLeft, IEnumerable<ApiObjectReference<TRight>>> rightIdsSelector,
 			Func<TLeft, IEnumerable<TRight>, TResult> resultSelector)
-			where TLeft : ApiObject<TLeft>
 			where TRight : ApiObject<TRight>
 		{
 			var cache = new Dictionary<Guid, TRight>();
@@ -248,7 +243,6 @@
 			Repository<TRight> rightRepository,
 			Func<TLeft, ApiObjectReference<TRight>?> rightIdSelector,
 			Func<TLeft, TRight, TResult> resultSelector)
-			where TLeft : ApiObject<TLeft>
 			where TRight : ApiObject<TRight>
 		{
 			var cache = new Dictionary<Guid, TRight>();

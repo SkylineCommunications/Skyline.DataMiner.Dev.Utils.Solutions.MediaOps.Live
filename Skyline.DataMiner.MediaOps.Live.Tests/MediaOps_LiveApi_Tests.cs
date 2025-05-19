@@ -219,8 +219,12 @@
 			var result = _api.VirtualSignalGroups.ReadAllPaged()
 				.Join(
 					_api.Endpoints,
-					vsg => vsg.GetEndpoints(),
+					vsg => vsg.GetEndpoints().Select(x => x.Endpoint),
 					(vsg, endpoints) => new { VirtualSignalGroup = vsg, Endpoints = endpoints })
+				.Join(
+					_api.Levels,
+					vsg => vsg.VirtualSignalGroup.GetEndpoints().Select(x => x.Level),
+					(vsg, levels) => new { vsg.VirtualSignalGroup, vsg.Endpoints, Levels = levels })
 				.Flatten()
 				.ToList();
 
@@ -230,18 +234,23 @@
 
 			foreach (var item in result)
 			{
-				var vsgName = item.VirtualSignalGroup.Name;
+				var vsg = item.VirtualSignalGroup;
+				var endpoints = item.Endpoints;
+				var levels = item.Levels;
 
-				Assert.IsNotNull(item.VirtualSignalGroup, "VirtualSignalGroup should not be null.");
-				Assert.IsNotNull(item.Endpoints, "Endpoints list should not be null.");
+				Assert.IsNotNull(vsg, "VirtualSignalGroup should not be null.");
 
-				Assert.IsTrue(item.Endpoints.Any(), "Each VSG should have at least one endpoint.");
+				Assert.IsNotNull(endpoints, "Endpoints list should not be null.");
+				Assert.IsTrue(endpoints.Any(), "Each VSG should have at least one endpoint.");
 
-				foreach (var endpoint in item.Endpoints)
+				Assert.IsNotNull(levels, "Levels list should not be null.");
+				Assert.IsTrue(levels.Any(), "Each VSG should have at least one level.");
+
+				foreach (var endpoint in endpoints)
 				{
 					Assert.IsTrue(
-						endpoint.Name.EndsWith(vsgName),
-						$"Endpoint '{endpoint.Name}' should end with VSG name '{vsgName}'.");
+						endpoint.Name.EndsWith(vsg.Name),
+						$"Endpoint '{endpoint.Name}' should end with VSG name '{vsg.Name}'.");
 				}
 			}
 		}
