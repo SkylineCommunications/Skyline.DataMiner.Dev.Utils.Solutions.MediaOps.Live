@@ -349,6 +349,58 @@
 			return new ApiRepositoryQuery<T>(_queryProvider);
 		}
 
+		protected internal virtual void CreateWithoutValidation(T instance)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			Helper.DomInstances.Create(instance.DomInstance);
+		}
+
+		protected internal virtual void UpdateWithoutValidation(T instance)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			Helper.DomInstances.Update(instance.DomInstance);
+		}
+
+		protected internal virtual void CreateOrUpdateWithoutValidation(IEnumerable<T> instances)
+		{
+			if (instances == null)
+			{
+				throw new ArgumentNullException(nameof(instances));
+			}
+
+			var domInstances = instances.Select(x => x.DomInstance.ToInstance());
+			Helper.DomInstances.CreateOrUpdateInBatches(domInstances).ThrowOnFailure();
+		}
+
+		protected internal virtual void DeleteWithoutValidation(T instance)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			Helper.DomInstances.Delete(instance.DomInstance);
+		}
+
+		protected internal virtual void DeleteWithoutValidation(IEnumerable<T> instances)
+		{
+			if (instances == null)
+			{
+				throw new ArgumentNullException(nameof(instances));
+			}
+
+			var domInstances = instances.Select(x => x.DomInstance.ToInstance());
+			Helper.DomInstances.DeleteInBatches(domInstances).ThrowOnFailure();
+		}
+
 		protected internal virtual FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
 		{
 			switch (fieldName)
