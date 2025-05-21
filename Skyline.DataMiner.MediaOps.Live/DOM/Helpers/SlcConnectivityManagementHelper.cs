@@ -12,7 +12,7 @@
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
-	internal class SlcConnectivityManagementHelper : DomModuleHelperBase
+	public class SlcConnectivityManagementHelper : DomModuleHelperBase
 	{
 		public SlcConnectivityManagementHelper(Func<DMSMessage[], DMSMessage[]> messageHandler) : base(SlcConnectivityManagementIds.ModuleId, messageHandler)
 		{
