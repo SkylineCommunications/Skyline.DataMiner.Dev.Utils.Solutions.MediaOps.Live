@@ -134,16 +134,22 @@
 		/// <summary>
 		/// Gets or sets the time at which the event will execute.
 		/// </summary>
-		public DateTime? EventTime
+		public DateTimeOffset? EventTime
 		{
 			get
 			{
-				return _domInstance.OrchestrationEventInfo.EventTime;
+				if (_domInstance.OrchestrationEventInfo.EventTime == null)
+				{
+					return null;
+				}
+
+				DateTimeOffset time = DateTime.SpecifyKind(_domInstance.OrchestrationEventInfo.EventTime.Value, DateTimeKind.Utc);
+				return time;
 			}
 
 			set
 			{
-				_domInstance.OrchestrationEventInfo.EventTime = value;
+				_domInstance.OrchestrationEventInfo.EventTime = value?.UtcDateTime;
 			}
 		}
 

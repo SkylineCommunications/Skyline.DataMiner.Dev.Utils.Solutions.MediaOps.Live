@@ -168,7 +168,7 @@
 				orchestrationEventConfigurations.Add(new OrchestrationEventConfiguration
 				{
 					Name = $"Test Event {i}",
-					EventTime = DateTime.Now,
+					EventTime = DateTime.UtcNow,
 					EventType = SlcOrchestrationIds.Enums.EventType.Other,
 					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
 					GlobalOrchestrationScript = "Test Script",
