@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects
 {
 	using System;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.API.Validation;
@@ -10,6 +11,14 @@
 
 	public class TransportType : ApiObject<TransportType>
 	{
+		private static readonly string[] _predefinedTransportTypeNames = new[]
+		{
+			"IP",
+			"SDI",
+			"TSoIP",
+			"SRT",
+		};
+
 		private readonly TransportTypeInstance _domInstance;
 
 		public TransportType() : this(new TransportTypeInstance())
@@ -27,6 +36,8 @@
 
 		internal static DomDefinitionId DomDefinition => SlcConnectivityManagementIds.Definitions.TransportType;
 
+		public bool IsPredefined => _predefinedTransportTypeNames.Contains(Name);
+
 		public string Name
 		{
 			get
@@ -36,6 +47,11 @@
 
 			set
 			{
+				if (IsPredefined)
+				{
+					throw new InvalidOperationException("Name of predefined transport types cannot be modified.");
+				}
+
 				_domInstance.TransportTypeInfo.Name = value;
 			}
 		}
