@@ -62,12 +62,9 @@
 			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
 		}
 
-		public MediaOpsLiveApi(IEngine engine) : this(engine.GetUserConnection())
+		public MediaOpsLiveApi(IEngine engine) : this(engine?.GetUserConnection())
 		{
-			if (engine == null)
-			{
-				throw new ArgumentNullException(nameof(engine));
-			}
+			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 		}
 
 		internal Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
@@ -75,6 +72,8 @@
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+
+		internal IEngine Engine { get; }
 
 		internal IDms Dms { get; }
 

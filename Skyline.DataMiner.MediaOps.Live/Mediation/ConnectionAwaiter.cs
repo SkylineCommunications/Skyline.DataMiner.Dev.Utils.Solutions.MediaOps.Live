@@ -3,12 +3,18 @@
 	using System;
 	using System.Threading.Tasks;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 
 	public static class ConnectionAwaiter
 	{
-		public static bool Wait(Endpoint source, Endpoint destination, TimeSpan timeout)
+		public static bool Wait(IEngine engine, Endpoint source, Endpoint destination, TimeSpan timeout)
 		{
+			if (engine == null)
+			{
+				throw new ArgumentNullException(nameof(engine));
+			}
+
 			if (source == null)
 			{
 				throw new ArgumentNullException(nameof(source));
@@ -21,12 +27,17 @@
 
 			using (var watcher = new ConnectionWatcher())
 			{
-				return Wait(watcher, source, destination, timeout);
+				return Wait(engine, watcher, source, destination, timeout);
 			}
 		}
 
-		public static bool Wait(ConnectionWatcher connectionWatcher, Endpoint source, Endpoint destination, TimeSpan timeout)
+		public static bool Wait(IEngine engine, ConnectionWatcher connectionWatcher, Endpoint source, Endpoint destination, TimeSpan timeout)
 		{
+			if (engine == null)
+			{
+				throw new ArgumentNullException(nameof(engine));
+			}
+
 			if (connectionWatcher == null)
 			{
 				throw new ArgumentNullException(nameof(connectionWatcher));
@@ -47,7 +58,7 @@
 			EventHandler<Connection> connectionEventHandler = (s, e) =>
 			{
 				if (e.ConnectedSource == source &&
-					e.Destination == destination)
+				    e.Destination == destination)
 				{
 					tsc.TrySetResult(true);
 				}

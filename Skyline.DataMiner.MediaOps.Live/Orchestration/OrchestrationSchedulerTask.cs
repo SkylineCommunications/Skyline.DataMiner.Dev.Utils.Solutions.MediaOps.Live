@@ -2,14 +2,8 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
-	using System.Runtime.InteropServices.ComTypes;
-	using System.Text;
-	using System.Threading.Tasks;
 
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
-	using Skyline.DataMiner.Net;
 
 	public class OrchestrationSchedulerTask
 	{

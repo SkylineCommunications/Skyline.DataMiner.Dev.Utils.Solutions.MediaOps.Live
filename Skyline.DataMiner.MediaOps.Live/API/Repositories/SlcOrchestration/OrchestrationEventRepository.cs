@@ -244,7 +244,7 @@
 
 				using (PerformanceCollector performanceCollector = new PerformanceCollector(performanceFileLogger))
 				{
-					takeHelper.Take(requests, performanceCollector);
+					takeHelper.Take(_api.Engine, requests, performanceCollector);
 				}
 
 				if (orchestrationEventConfiguration.EventState == SlcOrchestrationIds.Enums.EventState.Failed)
