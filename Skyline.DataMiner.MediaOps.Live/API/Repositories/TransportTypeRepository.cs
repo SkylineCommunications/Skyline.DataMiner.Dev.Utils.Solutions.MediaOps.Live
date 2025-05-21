@@ -16,16 +16,6 @@
 
 	public class TransportTypeRepository : Repository<TransportType>
 	{
-		public static IReadOnlyDictionary<Guid, TransportType> PredefinedTransportTypes { get; } =
-			new[]
-			{
-				new TransportType(Guid.Parse("7d8e541b-4e74-4973-a700-9ca352aa8c0b"), "IP"),
-				new TransportType(Guid.Parse("858b9804-269c-43be-bac2-79b20ef4bc61"), "SDI"),
-				new TransportType(Guid.Parse("37f7faf4-6786-429d-9d66-6e46662c1986"), "TSoIP"),
-				new TransportType(Guid.Parse("18c3f4ed-6693-4652-b792-795773833f9c"), "SRT"),
-			}
-			.ToDictionary(x => x.ID);
-
 		public TransportTypeRepository(SlcConnectivityManagementHelper helper) : base(helper)
 		{
 		}
@@ -34,8 +24,8 @@
 
 		public void CreatePredefinedTransportTypes()
 		{
-			var existing = Read(PredefinedTransportTypes.Keys);
-			var missing = PredefinedTransportTypes.Values.Except(existing.Values).ToList();
+			var existing = Read(PredefinedTransportTypes.ById.Keys);
+			var missing = PredefinedTransportTypes.All.Except(existing.Values).ToList();
 
 			if (missing.Count > 0)
 			{

@@ -1,7 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects
 {
 	using System;
-	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -13,9 +12,6 @@
 	public class TransportType : ApiObject<TransportType>
 	{
 		private readonly TransportTypeInstance _domInstance;
-
-		public static IReadOnlyDictionary<Guid, TransportType> PredefinedTransportTypes
-			=> TransportTypeRepository.PredefinedTransportTypes;
 
 		public TransportType() : this(new TransportTypeInstance())
 		{
@@ -42,7 +38,7 @@
 
 		internal static DomDefinitionId DomDefinition => SlcConnectivityManagementIds.Definitions.TransportType;
 
-		public bool IsPredefined => PredefinedTransportTypes.ContainsKey(ID);
+		public bool IsPredefined => PredefinedTransportTypes.ById.ContainsKey(ID);
 
 		public string Name
 		{

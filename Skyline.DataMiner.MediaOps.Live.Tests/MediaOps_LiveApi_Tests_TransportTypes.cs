@@ -13,7 +13,7 @@
 			api.TransportTypes.CreatePredefinedTransportTypes();
 
 			CollectionAssert.IsSubsetOf(
-				TransportTypeRepository.PredefinedTransportTypes.Values.ToList(),
+				PredefinedTransportTypes.All,
 				api.TransportTypes.ReadAll().ToList());
 		}
 
