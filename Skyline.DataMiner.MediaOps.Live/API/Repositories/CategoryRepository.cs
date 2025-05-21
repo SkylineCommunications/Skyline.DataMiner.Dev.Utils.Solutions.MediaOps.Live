@@ -16,7 +16,7 @@
 
 	public class CategoryRepository : Repository<Category>
 	{
-		public CategoryRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal CategoryRepository(SlcConnectivityManagementHelper helper) : base(helper)
 		{
 		}
 

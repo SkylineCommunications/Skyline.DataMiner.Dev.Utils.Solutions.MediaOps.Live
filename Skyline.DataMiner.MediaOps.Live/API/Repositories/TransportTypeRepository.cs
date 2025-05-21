@@ -16,7 +16,7 @@
 
 	public class TransportTypeRepository : Repository<TransportType>
 	{
-		public TransportTypeRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal TransportTypeRepository(SlcConnectivityManagementHelper helper) : base(helper)
 		{
 		}
 
