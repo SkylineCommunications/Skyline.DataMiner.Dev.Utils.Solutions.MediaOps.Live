@@ -1,8 +1,9 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects
 {
 	using System;
-	using System.Linq;
+	using System.Collections.Generic;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
@@ -11,15 +12,10 @@
 
 	public class TransportType : ApiObject<TransportType>
 	{
-		private static readonly string[] _predefinedTransportTypeNames = new[]
-		{
-			"IP",
-			"SDI",
-			"TSoIP",
-			"SRT",
-		};
-
 		private readonly TransportTypeInstance _domInstance;
+
+		public static IReadOnlyDictionary<Guid, TransportType> PredefinedTransportTypes
+			=> TransportTypeRepository.PredefinedTransportTypes;
 
 		public TransportType() : this(new TransportTypeInstance())
 		{
@@ -34,9 +30,19 @@
 		{
 		}
 
+		internal TransportType(Guid id, string name) : this(new DomInstance { ID = new DomInstanceId(id), DomDefinitionId = DomDefinition })
+		{
+			if (String.IsNullOrWhiteSpace(name))
+			{
+				throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
+			}
+
+			Name = name;
+		}
+
 		internal static DomDefinitionId DomDefinition => SlcConnectivityManagementIds.Definitions.TransportType;
 
-		public bool IsPredefined => _predefinedTransportTypeNames.Contains(Name);
+		public bool IsPredefined => PredefinedTransportTypes.ContainsKey(ID);
 
 		public string Name
 		{
@@ -47,11 +53,6 @@
 
 			set
 			{
-				if (IsPredefined)
-				{
-					throw new InvalidOperationException("Name of predefined transport types cannot be modified.");
-				}
-
 				_domInstance.TransportTypeInfo.Name = value;
 			}
 		}

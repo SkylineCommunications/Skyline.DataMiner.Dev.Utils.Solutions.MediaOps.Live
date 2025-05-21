@@ -16,11 +16,32 @@
 
 	public class TransportTypeRepository : Repository<TransportType>
 	{
+		public static IReadOnlyDictionary<Guid, TransportType> PredefinedTransportTypes { get; } =
+			new[]
+			{
+				new TransportType(Guid.Parse("7d8e541b-4e74-4973-a700-9ca352aa8c0b"), "IP"),
+				new TransportType(Guid.Parse("858b9804-269c-43be-bac2-79b20ef4bc61"), "SDI"),
+				new TransportType(Guid.Parse("37f7faf4-6786-429d-9d66-6e46662c1986"), "TSoIP"),
+				new TransportType(Guid.Parse("18c3f4ed-6693-4652-b792-795773833f9c"), "SRT"),
+			}
+			.ToDictionary(x => x.ID);
+
 		public TransportTypeRepository(SlcConnectivityManagementHelper helper) : base(helper)
 		{
 		}
 
 		protected internal override DomDefinitionId DomDefinition => TransportType.DomDefinition;
+
+		public void CreatePredefinedTransportTypes()
+		{
+			var existing = Read(PredefinedTransportTypes.Keys);
+			var missing = PredefinedTransportTypes.Values.Except(existing.Values).ToList();
+
+			if (missing.Count > 0)
+			{
+				CreateOrUpdateWithoutValidation(missing);
+			}
+		}
 
 		protected override TransportType CreateInstance(DomInstance domInstance)
 		{
@@ -29,6 +50,11 @@
 
 		protected override void ValidateBeforeSave(ICollection<TransportType> instances)
 		{
+			if (instances.Any(x => x.IsPredefined))
+			{
+				throw new InvalidOperationException("Modifying a predefined transport type is not allowed.");
+			}
+
 			foreach (var instance in instances)
 			{
 				instance.Validate().ThrowIfInvalid();
@@ -39,24 +65,12 @@
 
 		protected override void ValidateBeforeDelete(ICollection<TransportType> instances)
 		{
-			FilterElement<DomInstance> CreateFilter(TransportType tt) =>
-				new ORFilterElement<DomInstance>(
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.TransportType).Equal(tt.ID),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType).Equal(tt.ID));
-
-			var count = FilterQueryExecutor.CountFilteredItems(
-				instances,
-				x => CreateFilter(x),
-				x => Helper.DomInstances.Count(x));
-
-			if (count > 0)
+			if (instances.Any(x => x.IsPredefined))
 			{
-				var message = instances.Count == 1
-					? $"Cannot delete transport type '{instances.First().Name}' because it is still in use."
-					: "Cannot delete one or more transport types because they are still in use.";
-
-				throw new InvalidOperationException(message);
+				throw new InvalidOperationException("Modifying a predefined transport type is not allowed.");
 			}
+
+			CheckIfStillInUse(instances);
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
@@ -95,6 +109,28 @@
 			if (count > 0)
 			{
 				throw new InvalidOperationException($"Transport type with same name already exists.");
+			}
+		}
+
+		private void CheckIfStillInUse(ICollection<TransportType> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(TransportType tt) =>
+				new ORFilterElement<DomInstance>(
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.TransportType).Equal(tt.ID),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType).Equal(tt.ID));
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				var message = instances.Count == 1
+					? $"Cannot delete transport type '{instances.First().Name}' because it is still in use."
+					: "Cannot delete one or more transport types because they are still in use.";
+
+				throw new InvalidOperationException(message);
 			}
 		}
 	}
