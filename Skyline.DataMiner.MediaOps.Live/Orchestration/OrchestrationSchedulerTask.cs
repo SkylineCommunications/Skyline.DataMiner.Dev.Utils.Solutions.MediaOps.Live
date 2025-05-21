@@ -60,9 +60,9 @@
 			generalInfoTaskData.AddRange(new[]
 			{
 				_orchestrationEvent.Name,
-				_orchestrationEvent.EventTime.Value.ToString("yyyy-MM-dd"),
-				_orchestrationEvent.EventTime.Value.AddDays(1).ToString("yyyy-MM-dd"),
-				_orchestrationEvent.EventTime.Value.ToString("HH:mm:ss"),
+				_orchestrationEvent.EventTime.Value.LocalDateTime.ToString("yyyy-MM-dd"),
+				_orchestrationEvent.EventTime.Value.LocalDateTime.AddDays(1).ToString("yyyy-MM-dd"),
+				_orchestrationEvent.EventTime.Value.LocalDateTime.ToString("HH:mm:ss"),
 				"once",
 				"1",
 				String.Empty,
