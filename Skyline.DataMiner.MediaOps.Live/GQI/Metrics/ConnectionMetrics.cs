@@ -6,7 +6,7 @@
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 
-	internal class ConnectionMetrics
+	public class ConnectionMetrics
 	{
 		private readonly object _lock = new object();
 		private readonly ConnectionInterceptor _connection;

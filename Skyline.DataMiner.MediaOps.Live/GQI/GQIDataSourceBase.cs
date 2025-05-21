@@ -17,6 +17,8 @@
 
 		public IConnection Connection => _interceptedConnection;
 
+		public ConnectionMetrics ConnectionMetrics => _connectionMetrics;
+
 		public virtual OnInitOutputArgs OnInit(OnInitInputArgs args)
 		{
 			_dms = args.DMS;
