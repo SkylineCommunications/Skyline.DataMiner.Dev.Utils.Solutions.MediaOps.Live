@@ -410,9 +410,7 @@
 
 				IEnumerable<OrchestrationEvent> result = Read(filter);
 
-				IEnumerable<OrchestrationEvent> orchestrationEvents = result.ToList();
-
-				return !orchestrationEvents.Any() ? null : orchestrationEvents.First();
+				return result.FirstOrDefault();
 			}
 		}
 
