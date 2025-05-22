@@ -2,6 +2,6 @@
 {
 	internal static class Constants
 	{
-		public static string MediationProtocolName => "Skyline MediaOps Mediation PoC";
+		public static string MediationProtocolName => "Skyline MediaOps Mediation";
 	}
 }
