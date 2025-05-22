@@ -6,7 +6,7 @@
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 
-	internal class ConnectionMetrics
+	public class ConnectionMetrics : IDisposable
 	{
 		private readonly object _lock = new object();
 		private readonly ConnectionInterceptor _connection;
@@ -32,6 +32,11 @@
 			NumberOfRequests > 0
 				? TimeSpan.FromTicks(TotalRequestDuration.Ticks / (long)NumberOfRequests)
 				: TimeSpan.Zero;
+
+		public void Dispose()
+		{
+			_connection.MessagesProcessed -= OnMessagesProcessed;
+		}
 
 		private void OnMessagesProcessed(object sender, ProcessedMessages e)
 		{
