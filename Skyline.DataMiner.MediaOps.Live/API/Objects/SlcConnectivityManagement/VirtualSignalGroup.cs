@@ -115,21 +115,21 @@
 
 		public bool IsDestination => Role == Role.Destination;
 
-		public IEnumerable<ApiObjectReference<Endpoint>> GetEndpoints()
+		public IEnumerable<(ApiObjectReference<Level> Level, ApiObjectReference<Endpoint> Endpoint)> GetEndpoints()
 		{
 			if (Levels == null)
 			{
 				yield break;
 			}
 
-			foreach (var level in Levels)
+			foreach (var item in Levels)
 			{
-				if (level.Endpoint == null)
+				if (item.Level == null || item.Endpoint == null)
 				{
 					continue;
 				}
 
-				yield return level.Endpoint.Value;
+				yield return (item.Level.Value, item.Endpoint.Value);
 			}
 		}
 

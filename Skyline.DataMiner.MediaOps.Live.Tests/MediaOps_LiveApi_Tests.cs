@@ -2,6 +2,9 @@
 {
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -151,6 +154,104 @@
 			CollectionAssert.AreEquivalent(
 				new[] { ip },
 				api.TransportTypes.ReadAll().ToList());
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Join()
+		{
+			// act
+			var levelsWithTransportType = _api.Levels.ReadAllPaged()
+				.Join(
+					_api.TransportTypes,
+					level => level.TransportType,
+					(l, t) => new { Level = l, TransportType = t })
+				.Flatten()
+				.ToList();
+
+			// assert
+			var ip = _api.TransportTypes.Query().First(x => x.Name == "IP");
+			var video = _api.Levels.Query().First(x => x.Name == "Video");
+			var audio = _api.Levels.Query().First(x => x.Name == "Audio");
+			var data = _api.Levels.Query().First(x => x.Name == "Data");
+
+			CollectionAssert.AreEquivalent(
+				new[]
+				{
+					new { Level = video, TransportType = ip },
+					new { Level = audio, TransportType = ip },
+					new { Level = data, TransportType = ip },
+				},
+				levelsWithTransportType);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_JoinInBatches()
+		{
+			// act
+			var levelsWithTransportType = _api.Levels.ReadAll()
+				.JoinInBatches(
+					_api.TransportTypes,
+					level => level.TransportType,
+					(l, t) => new { Level = l, TransportType = t })
+				.ToList();
+
+			// assert
+			var ip = _api.TransportTypes.Query().First(x => x.Name == "IP");
+			var video = _api.Levels.Query().First(x => x.Name == "Video");
+			var audio = _api.Levels.Query().First(x => x.Name == "Audio");
+			var data = _api.Levels.Query().First(x => x.Name == "Data");
+
+			CollectionAssert.AreEquivalent(
+				new[]
+				{
+					new { Level = video, TransportType = ip },
+					new { Level = audio, TransportType = ip },
+					new { Level = data, TransportType = ip },
+				},
+				levelsWithTransportType);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_JoinMultiple()
+		{
+			// act
+			var result = _api.VirtualSignalGroups.ReadAllPaged()
+				.Join(
+					_api.Endpoints,
+					vsg => vsg.GetEndpoints().Select(x => x.Endpoint),
+					(vsg, endpoints) => new { VirtualSignalGroup = vsg, Endpoints = endpoints })
+				.Join(
+					_api.Levels,
+					vsg => vsg.VirtualSignalGroup.GetEndpoints().Select(x => x.Level),
+					(vsg, levels) => new { vsg.VirtualSignalGroup, vsg.Endpoints, Levels = levels })
+				.Flatten()
+				.ToList();
+
+			// assert
+			Assert.IsNotNull(result);
+			Assert.IsTrue(result.Count > 0, "Expected at least one joined result.");
+
+			foreach (var item in result)
+			{
+				var vsg = item.VirtualSignalGroup;
+				var endpoints = item.Endpoints;
+				var levels = item.Levels;
+
+				Assert.IsNotNull(vsg, "VirtualSignalGroup should not be null.");
+
+				Assert.IsNotNull(endpoints, "Endpoints list should not be null.");
+				Assert.IsTrue(endpoints.Any(), "Each VSG should have at least one endpoint.");
+
+				Assert.IsNotNull(levels, "Levels list should not be null.");
+				Assert.IsTrue(levels.Any(), "Each VSG should have at least one level.");
+
+				foreach (var endpoint in endpoints)
+				{
+					Assert.IsTrue(
+						endpoint.Name.EndsWith(vsg.Name),
+						$"Endpoint '{endpoint.Name}' should end with VSG name '{vsg.Name}'.");
+				}
+			}
 		}
 	}
 }
