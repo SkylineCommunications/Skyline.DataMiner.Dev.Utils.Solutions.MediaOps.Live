@@ -792,7 +792,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(EndpointInfo.ToSection());
-			if (!TransportTypeTsoip.IsEmpty)
+			if (TransportTypeTsoip != null && !TransportTypeTsoip.IsEmpty)
 			{
 				domInstance.Sections.Add(TransportTypeTsoip.ToSection());
 			}
