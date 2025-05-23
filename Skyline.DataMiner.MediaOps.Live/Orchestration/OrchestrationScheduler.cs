@@ -3,11 +3,11 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using System.Threading.Tasks;
+	using System.Text;
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net;
@@ -18,16 +18,16 @@
 	{
 		private readonly IDms _dms;
 		private readonly IConnection _connection;
-		private readonly MediaOpsLiveApi _api;
 
 		private readonly Dictionary<ScheduledTaskId, OrchestrationSchedulerTask> _internalTaskList;
+		private StringBuilder sb;
 
-		public OrchestrationScheduler(IDms dms, MediaOpsLiveApi api)
+		public OrchestrationScheduler(IDms dms, IConnection connection)
 		{
 			_dms = dms ?? throw new ArgumentNullException(nameof(dms));
-			_api = api;
-			_connection = api.Connection;
+			_connection = connection;
 			_internalTaskList = new Dictionary<ScheduledTaskId, OrchestrationSchedulerTask>();
+			sb = new StringBuilder();
 
 			LoadInternalTaskList();
 		}
@@ -52,14 +52,14 @@
 
 			GetSchedulerTasksResponseMessage getSchedulerTasksResponse = (GetSchedulerTasksResponseMessage)result.Messages.FirstOrDefault();
 
-			_api.Engine.GenerateInformation($"RESPONSE: {JsonConvert.SerializeObject(getSchedulerTasksResponse)}");
 			foreach (object taskObject in getSchedulerTasksResponse.Tasks)
 			{
 				SchedulerTask task = (SchedulerTask)taskObject;
+				sb.AppendLine("TASK" + task.TaskName);
 
 				if (task.Description != OrchestrationSchedulerTask.OrchestrationTaskNaming)
 				{
-					_api.Engine.GenerateInformation($"CONTINUE 1");
+					sb.AppendLine("Continue 1");
 					continue;
 				}
 
@@ -68,7 +68,7 @@
 
 				if (eventOrchestrationTask == null)
 				{
-					_api.Engine.GenerateInformation($"CONTINUE 2");
+					sb.AppendLine("Continue 2");
 					continue;
 				}
 
@@ -78,8 +78,9 @@
 				var existingTask = new OrchestrationSchedulerTask(DateTime.SpecifyKind(task.StartTime, DateTimeKind.Local), eventGuidsInput, new ScheduledTaskId(task.HandlingDMA, task.Id));
 
 				_internalTaskList.Add(existingTask.ScheduledTaskId, existingTask);
-				_api.Engine.GenerateInformation($"ADD: {JsonConvert.SerializeObject(_internalTaskList)}");
 			}
+
+			sb.AppendLine("TASK" + JsonConvert.SerializeObject(_internalTaskList));
 		}
 
 		/// <summary>
@@ -109,7 +110,6 @@
 
 		public void DeleteEventTasks(IEnumerable<OrchestrationEvent> events)
 		{
-			_api.Engine.GenerateInformation($"BEFORE DELETE: {JsonConvert.SerializeObject(_internalTaskList)}");
 			foreach (OrchestrationEvent orchestrationEvent in events)
 			{
 				DeleteEventTask(orchestrationEvent);
@@ -168,6 +168,8 @@
 				return;
 			}
 
+			sb.AppendLine("FIND" + JsonConvert.SerializeObject(orchestrationEvent.ReservationInstance));
+			throw new InvalidOperationException(sb.ToString());
 			OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.ReservationInstance);
 
 			task.OrchestrationEventIds.Remove(orchestrationEvent.ID);
@@ -175,7 +177,6 @@
 			if (!task.OrchestrationEventIds.Any())
 			{
 				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.DeleteTask(task.ScheduledTaskId.TaskId);
-
 				_internalTaskList.Remove(task.ScheduledTaskId);
 			}
 			else
@@ -199,7 +200,6 @@
 
 		private OrchestrationSchedulerTask FindExistingTaskByTaskId(ScheduledTaskId taskId)
 		{
-			_api.Engine.GenerateInformation($"FIND {JsonConvert.SerializeObject(taskId)}: {JsonConvert.SerializeObject(_internalTaskList)}");
 			return _internalTaskList[taskId];
 		}
 	}
