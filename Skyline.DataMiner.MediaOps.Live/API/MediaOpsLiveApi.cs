@@ -38,6 +38,7 @@
 			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
 
 			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
+			Orchestration.LoadScheduler();
 		}
 
 		public MediaOpsLiveApi(IConnection connection)
@@ -61,6 +62,7 @@
 			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
 
 			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
+			Orchestration.LoadScheduler();
 		}
 
 		public MediaOpsLiveApi(IEngine engine) : this(engine?.GetUserConnection())

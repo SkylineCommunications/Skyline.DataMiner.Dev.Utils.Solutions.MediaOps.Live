@@ -31,13 +31,17 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 		private readonly ConfigurationRepository _configurationHelper;
-		private readonly OrchestrationScheduler _scheduler;
+		private OrchestrationScheduler _scheduler;
 
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper)
 		{
 			_configurationHelper = new ConfigurationRepository(helper);
-			_scheduler = new OrchestrationScheduler(api.Dms, api);
 			_api = api;
+		}
+
+		public void LoadScheduler()
+		{
+			_scheduler = new OrchestrationScheduler(_api.Dms, _api);
 		}
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
