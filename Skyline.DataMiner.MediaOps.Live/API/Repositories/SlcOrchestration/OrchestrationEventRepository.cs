@@ -36,7 +36,7 @@
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper)
 		{
 			_configurationHelper = new ConfigurationRepository(helper);
-			_scheduler = new OrchestrationScheduler(api.Dms, api.Connection);
+			_scheduler = new OrchestrationScheduler(api.Dms, api);
 			_api = api;
 		}
 
