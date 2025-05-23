@@ -2,40 +2,44 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
+	using Newtonsoft.Json;
+
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
 
 	public class OrchestrationSchedulerTask
 	{
-		private const string ScriptName = "ORC-AS-EventOrchestration";
-		private readonly OrchestrationEvent _orchestrationEvent;
+		public static readonly string OrchestrationScriptName = "ORC-AS-EventOrchestration";
+		public static readonly string OrchestrationTaskNaming = "MediaOps Live Orchestration Event";
 
-		public OrchestrationSchedulerTask(OrchestrationEvent orchestrationEvent)
+		public OrchestrationSchedulerTask(DateTimeOffset dateTimeOffset, IEnumerable<Guid> orchestrationEventIds)
 		{
-			if (!orchestrationEvent.EventTime.HasValue)
+			if (orchestrationEventIds == null)
 			{
-				throw new InvalidOperationException($"Invalid event time for event {orchestrationEvent.Name}");
+				throw new ArgumentNullException(nameof(orchestrationEventIds));
 			}
 
-			if (!String.IsNullOrEmpty(orchestrationEvent.ReservationInstance))
+			OrchestrationEventIds = orchestrationEventIds.ToList();
+			DateTime = dateTimeOffset;
+
+			if (!OrchestrationEventIds.Any())
 			{
-				string[] splitTaskReference = orchestrationEvent.ReservationInstance.Split('/');
-
-				if (splitTaskReference.Length != 2)
-				{
-					throw new InvalidOperationException($"Invalid task reference for event {orchestrationEvent.Name}");
-				}
-
-				int dmaId = Convert.ToInt32(splitTaskReference[0]);
-				int taskId = Convert.ToInt32(splitTaskReference[1]);
-
-				ScheduledTaskId = new ScheduledTaskId(dmaId, taskId);
+				throw new ArgumentException("List of events for scheduler task should not be empty");
 			}
+		}
 
-			_orchestrationEvent = orchestrationEvent;
+		public OrchestrationSchedulerTask(DateTimeOffset dateTimeOffset, IEnumerable<Guid> orchestrationEventIds, ScheduledTaskId taskId) : this(dateTimeOffset, orchestrationEventIds)
+		{
+			ScheduledTaskId = taskId;
 		}
 
 		public ScheduledTaskId ScheduledTaskId { get; set; }
+
+		public List<Guid> OrchestrationEventIds { get; private set; }
+
+		public DateTimeOffset DateTime { get;}
 
 		public object[] GenerateSchedulerTaskData()
 		{
@@ -53,14 +57,14 @@
 
 			generalInfoTaskData.AddRange(new[]
 			{
-				_orchestrationEvent.Name,
-				_orchestrationEvent.EventTime.Value.LocalDateTime.ToString("yyyy-MM-dd"),
-				_orchestrationEvent.EventTime.Value.LocalDateTime.AddDays(1).ToString("yyyy-MM-dd"),
-				_orchestrationEvent.EventTime.Value.LocalDateTime.ToString("HH:mm:ss"),
+				$"{OrchestrationTaskNaming} {DateTime.LocalDateTime:yyyy-MM-dd_HH:mm:ss}",
+				DateTime.LocalDateTime.ToString("yyyy-MM-dd"),
+				DateTime.LocalDateTime.AddDays(1).ToString("yyyy-MM-dd"),
+				DateTime.LocalDateTime.ToString("HH:mm:ss"),
 				"once",
 				"1",
 				String.Empty,
-				$"MediaOps Live Orchestration Event \"{_orchestrationEvent.Name}\"",
+				OrchestrationTaskNaming,
 				"TRUE",
 				String.Empty,
 				String.Empty,
@@ -74,8 +78,8 @@
 			return new[]
 			{
 				"automation",
-				ScriptName,
-				$"PARAMETER:2:{_orchestrationEvent.ID}",
+				OrchestrationScriptName,
+				$"PARAMETER:2:{JsonConvert.SerializeObject(OrchestrationEventIds)}",
 				"CHECKSETS:FALSE",
 				"DEFER:TRUE",
 			};

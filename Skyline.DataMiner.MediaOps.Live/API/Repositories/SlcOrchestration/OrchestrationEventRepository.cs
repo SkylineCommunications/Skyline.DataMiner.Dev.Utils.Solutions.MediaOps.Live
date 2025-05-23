@@ -7,6 +7,7 @@
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -15,6 +16,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Authentication.ObfuscationItemIdUtil.ComputerId;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
@@ -35,7 +37,7 @@
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper)
 		{
 			_configurationHelper = new ConfigurationRepository(helper);
-			_scheduler = new OrchestrationScheduler(api.Dms);
+			_scheduler = new OrchestrationScheduler(api.Dms, api.Engine.GetUserConnection());
 			_api = api;
 		}
 
@@ -99,7 +101,7 @@
 				DeleteEvents(job.RemovedIds, performanceTracker);
 
 				job.ValidateEventsBeforeSaving();
-				_scheduler.CreateOrUpdateEventTasks(job.OrchestrationEvents);
+				_scheduler.CreateOrUpdateEventScheduling(job.OrchestrationEvents);
 				IEnumerable<OrchestrationEventConfiguration> successes = SaveEventConfigurations(job.OrchestrationEvents, performanceTracker);
 				return new OrchestrationJobConfiguration(job.JobId, successes.ToList());
 			}
@@ -121,7 +123,7 @@
 				DeleteEvents(job.RemovedIds, performanceTracker);
 
 				job.ValidateEventsBeforeSaving();
-				_scheduler.CreateOrUpdateEventTasks(job.OrchestrationEvents);
+				_scheduler.CreateOrUpdateEventScheduling(job.OrchestrationEvents);
 				IEnumerable<OrchestrationEvent> successes = CreateOrUpdateEvents(job.OrchestrationEvents, performanceTracker);
 				return new OrchestrationJob(job.JobId, successes.ToList());
 			}
@@ -164,8 +166,8 @@
 		/// <summary>
 		///     Start execution for an event, based on ID.
 		/// </summary>
-		/// <param name="orchestrationEventGuid">The ID of the event to execute.</param>
-		public void ExecuteEventNow(Guid orchestrationEventGuid)
+		/// <param name="orchestrationIds">The IDs of the events to execute.</param>
+		public void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds)
 		{
 			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
 			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-ExecuteEventNow", performanceLogFilename);
@@ -173,28 +175,34 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				OrchestrationEventConfiguration orchestrationEvent = GetEventConfigurationById(orchestrationEventGuid, performanceTracker);
+				List<OrchestrationEventConfiguration> orchestrationEvents = GetEventConfigurationsById(orchestrationIds, performanceTracker).ToList();
 
-				if (orchestrationEvent == null)
+				if (!orchestrationEvents.Any())
 				{
 					return;
 				}
 
-				ExecuteEvent(orchestrationEvent, performanceTracker);
+				ExecuteEvents(orchestrationEvents, performanceTracker);
 			}
 		}
 
-		private void ExecuteEvent(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
+		private void ExecuteEvents(List<OrchestrationEventConfiguration> orchestrationEvents, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				orchestrationEvent.InternalSetState(SlcOrchestrationIds.Enums.EventState.Configuring);
+				foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
+				{
+					orchestrationEvent.InternalSetState(SlcOrchestrationIds.Enums.EventState.Configuring);
+				}
 
-				SaveEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEvent }, performanceTracker);
+				SaveEventConfigurations(orchestrationEvents, performanceTracker);
 
-				ExecuteEventConfiguration(orchestrationEvent, performanceTracker);
+				foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
+				{
+					ExecuteEventConfiguration(orchestrationEvent, performanceTracker);
+				}
 
-				SaveEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEvent }, performanceTracker);
+				SaveEventConfigurations(orchestrationEvents, performanceTracker);
 			}
 		}
 
@@ -415,6 +423,34 @@
 		}
 
 		/// <summary>
+		///     Get the <see cref="OrchestrationEvent" /> object that matches the given event ID value.
+		/// </summary>
+		/// <param name="eventIds">The ID of the instance to lookup.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
+		/// <returns>
+		///     A <see cref="OrchestrationEvent" /> object that matches the given event ID value, or null if no match is
+		///     found.
+		/// </returns>
+		/// <exception cref="ArgumentException">Event ID can not be an empty Guid.</exception>
+		private IEnumerable<OrchestrationEvent> GetEventsById(IEnumerable<Guid> eventIds, PerformanceTracker performanceTracker)
+		{
+			using (new PerformanceTracker(performanceTracker))
+			{
+				List<Guid> instanceIds = eventIds.ToList();
+				if (instanceIds == null || instanceIds.Any(guid => guid == Guid.Empty))
+				{
+					throw new ArgumentException($"'{nameof(eventIds)}' cannot contain empty Guids.", nameof(eventIds));
+				}
+
+				ORFilterElement<DomInstance> combinedFilter = new ORFilterElement<DomInstance>(instanceIds.Select(id => FilterElementFactory.Create(DomInstanceExposers.Id, Comparer.Equals, id)).ToArray());
+
+				IEnumerable<OrchestrationEvent> result = Read(combinedFilter);
+
+				return result;
+			}
+		}
+
+		/// <summary>
 		///     Get the <see cref="OrchestrationEventConfiguration" /> object that matches the given event ID value.
 		/// </summary>
 		/// <param name="eventId">The ID of the instance to lookup.</param>
@@ -441,6 +477,32 @@
 				}
 
 				return GetEventsAsEventConfigurations(orchestrationEvent, performanceTracker);
+			}
+		}
+
+		/// <summary>
+		///     Get the <see cref="OrchestrationEventConfiguration" /> object that matches the given event ID value.
+		/// </summary>
+		/// <param name="eventIds">The IDs of the instances to lookup.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
+		/// <returns>
+		///     A <see cref="OrchestrationEventConfiguration" /> object that matches the given event ID value, or null if no
+		///     match is found.
+		/// </returns>
+		/// <exception cref="ArgumentException">Event ID can not be an empty Guid.</exception>
+		private IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsById(IEnumerable<Guid> eventIds, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				List<Guid> instanceIds = eventIds.ToList();
+				if (instanceIds == null || instanceIds.Any(guid => guid == Guid.Empty))
+				{
+					throw new ArgumentException($"'{nameof(eventIds)}' cannot contain empty Guids.", nameof(eventIds));
+				}
+
+				IEnumerable<OrchestrationEvent> orchestrationEvents = GetEventsById(instanceIds, performanceTracker);
+
+				return GetEventsAsEventConfigurations(orchestrationEvents, performanceTracker).Values;
 			}
 		}
 

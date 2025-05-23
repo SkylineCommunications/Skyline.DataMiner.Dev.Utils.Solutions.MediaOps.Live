@@ -5,6 +5,7 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 
 	/// <summary>
@@ -86,16 +87,24 @@
 		/// <summary>
 		/// Gets the reference to the DataMiner reservation corresponding to this event.
 		/// </summary>
-		public string ReservationInstance
+		public ScheduledTaskId ReservationInstance
 		{
 			get
 			{
-				return _domInstance.OrchestrationEventInfo.ReservationInstance;
+				string taskId = _domInstance.OrchestrationEventInfo.ReservationInstance;
+				if (String.IsNullOrEmpty(taskId) || !taskId.Contains("/"))
+				{
+					return null;
+				}
+
+				string[] splitTaskId = taskId.Split('/');
+
+				return new ScheduledTaskId(Convert.ToInt32(splitTaskId[0]), Convert.ToInt32(splitTaskId[1]));
 			}
 
 			internal set
 			{
-				_domInstance.OrchestrationEventInfo.ReservationInstance = value;
+				_domInstance.OrchestrationEventInfo.ReservationInstance = value == null ? null : String.Join("/", value.DmaId, value.TaskId);
 			}
 		}
 
