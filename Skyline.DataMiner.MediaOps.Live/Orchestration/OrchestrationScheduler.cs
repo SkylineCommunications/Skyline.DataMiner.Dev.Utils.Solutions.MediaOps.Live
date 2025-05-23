@@ -14,8 +14,6 @@
 	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
 
-	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Connection;
-
 	public class OrchestrationScheduler
 	{
 		private readonly IDms _dms;

@@ -97,5 +97,21 @@
 		public int DmaId { get; set; }
 
 		public int TaskId { get; set; }
+
+		public override bool Equals(object obj)
+		{
+			if (obj.GetType() != typeof(ScheduledTaskId))
+			{
+				return false;
+			}
+
+			var toCompare = obj as ScheduledTaskId;
+			if (toCompare == null)
+			{
+				return false;
+			}
+
+			return DmaId == toCompare.DmaId && TaskId == toCompare.TaskId;
+		}
 	}
 }
