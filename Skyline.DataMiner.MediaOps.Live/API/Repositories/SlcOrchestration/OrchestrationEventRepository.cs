@@ -196,10 +196,20 @@
 
 				SaveEventConfigurations(orchestrationEvents, performanceTracker);
 
+				List<Task> tasks = new List<Task>();
 				foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
 				{
-					ExecuteEventConfiguration(orchestrationEvent, performanceTracker);
+					Task nodeOrchestrationTask = Task.Factory.StartNew(
+						() =>
+						{
+							ExecuteEventConfiguration(orchestrationEvent, performanceTracker);
+						},
+						TaskCreationOptions.LongRunning);
+
+					tasks.Add(nodeOrchestrationTask);
 				}
+
+				Task.WaitAll(tasks.ToArray());
 
 				SaveEventConfigurations(orchestrationEvents, performanceTracker);
 			}
