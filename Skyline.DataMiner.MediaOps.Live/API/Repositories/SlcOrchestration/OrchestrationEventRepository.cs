@@ -6,8 +6,8 @@
 	using System.Linq;
 	using System.Threading.Tasks;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -16,7 +16,6 @@
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Authentication.ObfuscationItemIdUtil.ComputerId;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
@@ -37,7 +36,7 @@
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper)
 		{
 			_configurationHelper = new ConfigurationRepository(helper);
-			_scheduler = new OrchestrationScheduler(api.Dms, api.Engine.GetUserConnection());
+			_scheduler = new OrchestrationScheduler(api.Dms, api.Connection);
 			_api = api;
 		}
 

@@ -47,6 +47,7 @@
 				throw new ArgumentNullException(nameof(connection));
 			}
 
+			Connection = connection;
 			Dms = connection.GetDms();
 			MessageHandler = connection.HandleMessages;
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
@@ -64,7 +65,12 @@
 
 		public MediaOpsLiveApi(IEngine engine) : this(engine?.GetUserConnection())
 		{
-			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
+			if (engine == null)
+			{
+				throw new ArgumentNullException(nameof(engine));
+			}
+
+			Engine = engine;
 		}
 
 		internal Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
@@ -72,6 +78,8 @@
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+
+		internal IConnection Connection { get; }
 
 		internal IEngine Engine { get; }
 

@@ -81,7 +81,6 @@
 		/// Triggers the creation or update of the scheduled task that is linked to the events.
 		/// </summary>
 		/// <param name="events">The list of events for which the scheduled task needs to be updated.</param>
-		/// <returns>The list of events that was inputted, with an updated reference to the scheduled task.</returns>
 		public void CreateOrUpdateEventScheduling(IEnumerable<OrchestrationEvent> events)
 		{
 			List<OrchestrationEvent> orchestrationEvents = events.ToList();
