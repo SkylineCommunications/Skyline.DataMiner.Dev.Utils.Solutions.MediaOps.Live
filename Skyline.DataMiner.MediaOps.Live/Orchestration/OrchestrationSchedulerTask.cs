@@ -98,20 +98,9 @@
 
 		public int TaskId { get; set; }
 
-		public override bool Equals(object obj)
+		public bool Equals(ScheduledTaskId obj)
 		{
-			if (obj.GetType() != typeof(ScheduledTaskId))
-			{
-				return false;
-			}
-
-			var toCompare = obj as ScheduledTaskId;
-			if (toCompare == null)
-			{
-				return false;
-			}
-
-			return DmaId == toCompare.DmaId && TaskId == toCompare.TaskId;
+			return DmaId == obj.DmaId && TaskId == obj.TaskId;
 		}
 	}
 }
