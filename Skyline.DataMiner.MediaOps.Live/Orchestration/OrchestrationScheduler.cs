@@ -156,26 +156,44 @@
 
 		private void DeleteEventTask(OrchestrationEvent orchestrationEvent)
 		{
-			if (orchestrationEvent.ReservationInstance == null)
+			int step = 0;
+
+			try
 			{
-				return;
+				if (orchestrationEvent.ReservationInstance == null)
+				{
+					return;
+				}
+
+				step = 1;
+
+				OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.ReservationInstance);
+				step = 2;
+
+				task.OrchestrationEventIds.Remove(orchestrationEvent.ID);
+				step = 3;
+
+				if (!task.OrchestrationEventIds.Any())
+				{
+					step = 4;
+					_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.DeleteTask(task.ScheduledTaskId.TaskId);
+
+					step = 5;
+					_internalTaskList.Remove(task.ScheduledTaskId);
+				}
+				else
+				{
+					step = 6;
+					_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.UpdateTask(task.GenerateSchedulerTaskData());
+				}
+
+				step = 7;
+				orchestrationEvent.ReservationInstance = null;
 			}
-
-			OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.ReservationInstance);
-
-			task.OrchestrationEventIds.Remove(orchestrationEvent.ID);
-
-			if (!task.OrchestrationEventIds.Any())
+			catch (Exception)
 			{
-				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.DeleteTask(task.ScheduledTaskId.TaskId);
-				_internalTaskList.Remove(task.ScheduledTaskId);
+				throw new InvalidOperationException("Step " + step);
 			}
-			else
-			{
-				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.UpdateTask(task.GenerateSchedulerTaskData());
-			}
-
-			orchestrationEvent.ReservationInstance = null;
 		}
 
 		private IDma SelectRandomDma()
