@@ -27,6 +27,7 @@
 		{
 			_dms = dms ?? throw new ArgumentNullException(nameof(dms));
 			_connection = connection;
+			_internalTaskList = new Dictionary<ScheduledTaskId, OrchestrationSchedulerTask>();
 
 			LoadInternalTaskList();
 		}
