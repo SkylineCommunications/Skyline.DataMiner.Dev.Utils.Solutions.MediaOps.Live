@@ -202,12 +202,14 @@
 					Task nodeOrchestrationTask = Task.Factory.StartNew(
 						() =>
 						{
-							ExecuteEventConfiguration(orchestrationEvent, performanceTracker);
+							ExecuteEventConfigurationScripts(orchestrationEvent, performanceTracker);
 						},
 						TaskCreationOptions.LongRunning);
 
 					tasks.Add(nodeOrchestrationTask);
 				}
+
+				ExecuteConnections(orchestrationEvents, performanceTracker);
 
 				Task.WaitAll(tasks.ToArray());
 
@@ -215,7 +217,7 @@
 			}
 		}
 
-		private void ExecuteEventConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
+		private void ExecuteEventConfigurationScripts(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -226,51 +228,84 @@
 				}
 
 				ExecuteNodesConfiguration(orchestrationEventConfiguration, performanceTracker);
-				ExecuteConnections(orchestrationEventConfiguration, performanceTracker);
 			}
 		}
 
-		private void ExecuteConnections(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
+		private void ExecuteConnections(List<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
+				List<Connection> allConnections = new List<Connection>();
+				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = orchestrationEventConfigurations
+					.Where(orchestrationEventConfiguration => orchestrationEventConfiguration?.Configuration?.Connections != null && orchestrationEventConfiguration.Configuration.Connections.Any()).ToList();
+
+				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurationsWithConnections)
+				{
+					allConnections.AddRange(orchestrationEventConfiguration.Configuration.Connections);
+				}
+
+				IEnumerable<IGrouping<Guid, Connection>> groupedByDestination = allConnections.GroupBy(conn => conn.DestinationVsg.Value.ID);
+				IEnumerable<Guid> destinationsWithConflicts = groupedByDestination
+					.Where(group => group
+						.Select(conn => conn.SourceVsg.Value.ID).Distinct().Count() > 1)
+					.Select(group => group.Key);
+
+				List<Connection> connectionsToConfigure = new List<Connection>();
+				foreach (OrchestrationEventConfiguration eventConfigurationsWithConnection in eventConfigurationsWithConnections)
+				{
+					List<Guid> conflictedConnectionIdsInEvent = eventConfigurationsWithConnection.Configuration.Connections
+						.Where(conn => destinationsWithConflicts.Contains(conn.DestinationVsg.Value.ID))
+						.Select(conn => conn.DestinationVsg.Value.ID).ToList();
+
+					if (conflictedConnectionIdsInEvent.Any())
+					{
+						eventConfigurationsWithConnection.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						eventConfigurationsWithConnection.FailureInfo +=
+							$"\nFollowing Destination VSG(s) have a conflicting configuration for another event at the same time: {String.Join("/", conflictedConnectionIdsInEvent)}";
+						continue;
+					}
+
+					connectionsToConfigure.AddRange(eventConfigurationsWithConnection.Configuration.Connections);
+					eventConfigurationsWithConnection.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
+				}
+
+				ExecuteTakeForConnections(connectionsToConfigure, performanceTracker);
+			}
+		}
+
+		private void ExecuteTakeForConnections(List<Connection> connections, PerformanceTracker performanceTracker)
+		{
+			using (new PerformanceTracker(performanceTracker))
+			{
+				if (!connections.Any())
+				{
+					return;
+				}
+
 				TakeHelper takeHelper = new TakeHelper(_api);
 
 				ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
 
 				List<VsgConnectionRequest> requests = new List<VsgConnectionRequest>();
 
-				foreach (Connection connection in orchestrationEventConfiguration.Configuration.Connections)
+				HashSet<Guid> allInvolvedVsgIds = new HashSet<Guid>();
+				foreach (Connection connection in connections)
 				{
-					try
-					{
-						VirtualSignalGroup srcVirtualSignalGroup = _api.VirtualSignalGroups.Read(connection.SourceVsg.Value.ID);
-						VirtualSignalGroup dstVirtualSignalGroup = _api.VirtualSignalGroups.Read(connection.DestinationVsg.Value.ID);
-
-						requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup));
-					}
-					catch (Exception e)
-					{
-						errors.TryAdd($"\n{e}");
-						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-					}
+					allInvolvedVsgIds.Add(connection.SourceVsg.Value.ID);
+					allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
 				}
 
-				string performanceLogFilename = $"ORC-TAKE - {DateTime.UtcNow:yyyy-MM-dd}";
-				PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-TAKE", performanceLogFilename);
+				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
 
-				using (PerformanceCollector performanceCollector = new PerformanceCollector(performanceFileLogger))
+				foreach (Connection connection in connections)
 				{
-					takeHelper.Take(_api.Engine, requests, performanceCollector);
+					VirtualSignalGroup srcVirtualSignalGroup = allInvolvedVsgs[connection.SourceVsg.Value.ID];
+					VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
+
+					requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup));
 				}
 
-				if (orchestrationEventConfiguration.EventState == SlcOrchestrationIds.Enums.EventState.Failed)
-				{
-					orchestrationEventConfiguration.FailureInfo += String.Join("\n", errors);
-					return;
-				}
-
-				orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
+				takeHelper.Take(_api.Engine, requests, performanceTracker.Collector);
 			}
 		}
 
