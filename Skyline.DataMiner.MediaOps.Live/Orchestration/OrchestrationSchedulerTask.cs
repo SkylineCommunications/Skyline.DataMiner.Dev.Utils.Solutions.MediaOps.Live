@@ -37,7 +37,7 @@
 
 		public ScheduledTaskId ScheduledTaskId { get; set; }
 
-		public List<Guid> OrchestrationEventIds { get; private set; }
+		public List<Guid> OrchestrationEventIds { get; }
 
 		public DateTimeOffset DateTime { get;}
 
@@ -86,8 +86,16 @@
 		}
 	}
 
+	/// <summary>
+	/// Simplified class to hold the scheduled task ID.
+	/// </summary>
 	public class ScheduledTaskId
 	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ScheduledTaskId"/> class.
+		/// </summary>
+		/// <param name="dmaId">DataMiner agent ID.</param>
+		/// <param name="taskId">Agent specific task ID.</param>
 		public ScheduledTaskId(int dmaId, int taskId)
 		{
 			DmaId = dmaId;
@@ -98,6 +106,11 @@
 
 		public int TaskId { get; set; }
 
+		/// <summary>
+		/// Compares two <see cref="ScheduledTaskId"/> objects.
+		/// </summary>
+		/// <param name="obj">The object to compare with.</param>
+		/// <returns>true if equal, otherwise false.</returns>
 		public bool Equals(ScheduledTaskId obj)
 		{
 			return DmaId == obj.DmaId && TaskId == obj.TaskId;
