@@ -275,7 +275,7 @@
 
 		private void ExecuteTakeForConnections(List<Connection> connections, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				if (!connections.Any())
 				{
