@@ -34,7 +34,7 @@
 		{
 			get
 			{
-				return DomSection.Level ?? default;
+				return DomSection.Level ?? Guid.Empty;
 			}
 
 			set
@@ -47,7 +47,7 @@
 		{
 			get
 			{
-				return DomSection.Endpoint ?? default;
+				return DomSection.Endpoint ?? Guid.Empty;
 			}
 
 			set

@@ -61,35 +61,14 @@
 			{
 				switch (message)
 				{
-					case ManagerStoreReadRequest<DomInstance> m:
-						NumberOfDomRequests++;
-						break;
-
-					case ManagerStoreCreateRequest<DomInstance> m:
-						NumberOfDomRequests++;
-						break;
-
-					case ManagerStoreUpdateRequest<DomInstance> m:
-						NumberOfDomRequests++;
-						break;
-
-					case ManagerStoreCountRequest<DomInstance> m:
-						NumberOfDomRequests++;
-						break;
-
-					case ManagerStoreBulkCreateOrUpdateRequest<DomInstance> m:
-						NumberOfDomRequests++;
-						break;
-
-					case ManagerStoreBulkDeleteRequest<DomInstance> m:
-						NumberOfDomRequests++;
-						break;
-
-					case ManagerStoreStartPagingRequest<DomInstance> m:
-						NumberOfDomRequests++;
-						break;
-
-					case ManagerStoreNextPagingRequest<DomInstance> m:
+					case ManagerStoreReadRequest<DomInstance> _:
+					case ManagerStoreCreateRequest<DomInstance> _:
+					case ManagerStoreUpdateRequest<DomInstance> _:
+					case ManagerStoreCountRequest<DomInstance> _:
+					case ManagerStoreBulkCreateOrUpdateRequest<DomInstance> _:
+					case ManagerStoreBulkDeleteRequest<DomInstance> _:
+					case ManagerStoreStartPagingRequest<DomInstance> _:
+					case ManagerStoreNextPagingRequest<DomInstance> _:
 						NumberOfDomRequests++;
 						break;
 
