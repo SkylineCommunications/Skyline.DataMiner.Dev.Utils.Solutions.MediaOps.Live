@@ -72,6 +72,19 @@
 			return new Connection(domInstance);
 		}
 
+		protected override void ValidateBeforeSave(ICollection<Connection> instances)
+		{
+			foreach (var instance in instances)
+			{
+				instance.Validate().ThrowIfInvalid();
+			}
+		}
+
+		protected override void ValidateBeforeDelete(ICollection<Connection> instances)
+		{
+			// no checks needed
+		}
+
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
 		{
 			switch (fieldName)

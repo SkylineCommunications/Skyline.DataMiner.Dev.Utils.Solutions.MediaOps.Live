@@ -2,6 +2,9 @@
 {
 	using System;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -23,7 +26,19 @@
 		{
 		}
 
+		internal TransportType(Guid id, string name) : this(new DomInstance { ID = new DomInstanceId(id), DomDefinitionId = DomDefinition })
+		{
+			if (String.IsNullOrWhiteSpace(name))
+			{
+				throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
+			}
+
+			Name = name;
+		}
+
 		internal static DomDefinitionId DomDefinition => SlcConnectivityManagementIds.Definitions.TransportType;
+
+		public bool IsPredefined => PredefinedTransportTypes.ById.ContainsKey(ID);
 
 		public string Name
 		{
@@ -36,6 +51,18 @@
 			{
 				_domInstance.TransportTypeInfo.Name = value;
 			}
+		}
+
+		public ValidationResult Validate()
+		{
+			var result = new ValidationResult();
+
+			if (!NameUtil.Validate(Name, out var error))
+			{
+				result.AddError(error, nameof(Name));
+			}
+
+			return result;
 		}
 	}
 

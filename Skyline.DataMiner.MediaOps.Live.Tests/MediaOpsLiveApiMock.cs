@@ -3,21 +3,32 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
 
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{
-		public MediaOpsLiveApiMock()
+		public MediaOpsLiveApiMock(bool installDomModules = true)
 			: base(CreateMessageHandler(out var messageHandler).HandleMessages)
 		{
 			MessageHandler = messageHandler;
 
-			var transportType = new TransportType { Name = "IP" };
-			TransportTypes.Create(transportType);
+			if (installDomModules)
+			{
+				var slcConnectivityManagementDomModule = new SlcConnectivityManagementDomModule();
+				DomModuleInstaller.Install(MessageHandler.HandleMessages, slcConnectivityManagementDomModule, x => { });
+			}
 
-			var videoLevel = new Level { Number = 1, Name = "Video", TransportType = transportType };
-			var audioLevel = new Level { Number = 2, Name = "Audio", TransportType = transportType };
-			var dataLevel = new Level { Number = 3, Name = "Data", TransportType = transportType };
+			var category = new Category { Name = "Category 1" };
+			Categories.Create(category);
+
+			var transportTypeIP = new TransportType { Name = "IP" };
+			TransportTypes.Create(transportTypeIP);
+
+			var videoLevel = new Level { Number = 1, Name = "Video", TransportType = transportTypeIP };
+			var audioLevel = new Level { Number = 2, Name = "Audio", TransportType = transportTypeIP };
+			var dataLevel = new Level { Number = 3, Name = "Data", TransportType = transportTypeIP };
 			Levels.CreateOrUpdate([videoLevel, audioLevel, dataLevel]);
 
 			for (int i = 1; i <= 10; i++)
@@ -26,7 +37,7 @@
 				{
 					Role = Role.Source,
 					Name = $"Video Source {i}",
-					TransportType = transportType,
+					TransportType = transportTypeIP,
 					Element = $"123/{i}",
 					Identifier = $"Key-{i}",
 				};
@@ -34,7 +45,7 @@
 				{
 					Role = Role.Source,
 					Name = $"Audio Source {i}",
-					TransportType = transportType,
+					TransportType = transportTypeIP,
 					Element = $"123/{i}",
 					Identifier = $"Key-{i}",
 				};
@@ -42,7 +53,7 @@
 				{
 					Role = Role.Destination,
 					Name = $"Video Destination {i}",
-					TransportType = transportType,
+					TransportType = transportTypeIP,
 					Element = $"123/{i}",
 					Identifier = $"Key-{i}",
 				};
@@ -50,7 +61,7 @@
 				{
 					Role = Role.Destination,
 					Name = $"Audio Destination {i}",
-					TransportType = transportType,
+					TransportType = transportTypeIP,
 					Element = $"123/{i}",
 					Identifier = $"Key-{i}",
 				};
@@ -61,6 +72,10 @@
 					Role = Role.Source,
 					Name = $"Source {i}",
 					Description = $"Source {i}",
+					Categories =
+					[
+						category,
+					],
 					Levels =
 					[
 						new LevelEndpoint(videoLevel, videoSource1),
@@ -72,6 +87,10 @@
 					Role = Role.Destination,
 					Name = $"Destination {i}",
 					Description = $"Destination {i}",
+					Categories =
+					[
+						category,
+					],
 					Levels =
 					[
 						new LevelEndpoint(videoLevel, videoDestination1),

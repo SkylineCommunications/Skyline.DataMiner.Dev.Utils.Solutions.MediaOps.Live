@@ -7,6 +7,7 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -128,7 +129,7 @@
 					continue;
 				}
 
-				yield return (item.Level.Value, item.Endpoint.Value);
+				yield return (item.Level, item.Endpoint);
 			}
 		}
 
@@ -160,13 +161,30 @@
 
 				if (levelEndpoint != null && levelEndpoint.Endpoint != null)
 				{
-					endpoint = levelEndpoint.Endpoint.Value;
+					endpoint = levelEndpoint.Endpoint;
 					return true;
 				}
 			}
 
 			endpoint = null;
 			return false;
+		}
+
+		public ValidationResult Validate()
+		{
+			var result = new ValidationResult();
+
+			if (!NameUtil.Validate(Name, out var error))
+			{
+				result.AddError(error, nameof(Name));
+			}
+
+			if (Description != null && Description.Length > 200)
+			{
+				result.AddError("Description cannot be longer than 200 characters.", nameof(Description));
+			}
+
+			return result;
 		}
 	}
 

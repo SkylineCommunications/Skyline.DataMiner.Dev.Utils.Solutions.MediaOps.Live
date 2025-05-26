@@ -2,6 +2,8 @@
 {
 	using System;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -62,6 +64,28 @@
 			{
 				_domInstance.LevelInfo.TransportType = value;
 			}
+		}
+
+		public ValidationResult Validate()
+		{
+			var result = new ValidationResult();
+
+			if (!NameUtil.Validate(Name, out var error))
+			{
+				result.AddError(error, nameof(Name));
+			}
+
+			if (Number < 0)
+			{
+				result.AddError($"{nameof(Number)} cannot be negative.", nameof(Number));
+			}
+
+			if (TransportType == null)
+			{
+				result.AddError($"{nameof(TransportType)} cannot be null.", nameof(TransportType));
+			}
+
+			return result;
 		}
 	}
 

@@ -38,6 +38,25 @@
 		}
 
 		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroups_AssignEndpoint()
+		{
+			var vsg = _api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+
+			var videoLevel = _api.Levels.Query().First(x => x.Name == "Video");
+			var videoSource1 = _api.Endpoints.Query().First(x => x.Name == "Video Source 1");
+
+			vsg.Levels.Remove(vsg.Levels.FirstOrDefault(x => x.Level == videoLevel));
+			_api.VirtualSignalGroups.Update(vsg);
+			vsg = _api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			Assert.AreEqual(1, vsg.Levels.Count);
+
+			vsg.Levels.Add(new API.Objects.LevelEndpoint(videoLevel, videoSource1));
+			_api.VirtualSignalGroups.Update(vsg);
+			vsg = _api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			Assert.AreEqual(2, vsg.Levels.Count);
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_VirtualSignalGroups_JoinEndpoints()
 		{
 			// act

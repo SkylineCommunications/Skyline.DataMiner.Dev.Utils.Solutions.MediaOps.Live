@@ -120,15 +120,13 @@
 		{
 			var api = new MediaOpsLiveApiMock();
 
-			var endpoints = api.Endpoints.ReadAll().ToList();
+			var vsgName = "Source 10";
+			Assert.AreEqual(1, api.VirtualSignalGroups.Query().Count(x => x.Name == vsgName));
 
-			var endpoint0 = endpoints[0];
-			var id0 = endpoints[0].ID;
+			var vsg = api.VirtualSignalGroups.Query().First(x => x.Name == vsgName);
+			api.VirtualSignalGroups.Delete(vsg);
 
-			api.Endpoints.Delete(endpoint0);
-
-			var endpoint_read = api.Endpoints.Read(id0);
-			Assert.IsNull(endpoint_read);
+			Assert.AreEqual(0, api.VirtualSignalGroups.Query().Count(x => x.Name == vsgName));
 		}
 
 		[TestMethod]

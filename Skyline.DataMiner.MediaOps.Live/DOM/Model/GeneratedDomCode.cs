@@ -792,7 +792,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(EndpointInfo.ToSection());
-			if (!TransportTypeTsoip.IsEmpty)
+			if (TransportTypeTsoip != null && !TransportTypeTsoip.IsEmpty)
 			{
 				domInstance.Sections.Add(TransportTypeTsoip.ToSection());
 			}
@@ -1986,6 +1986,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		{
 			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.EndpointInfo.Name) == null)
 				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			if (section.GetValue<Int32>(SlcConnectivityManagementIds.Sections.EndpointInfo.Role) == null)
+				throw new InvalidOperationException("'Role' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			if (TransportMetadata.Count == 0)
 				section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportMetadata);
 			else

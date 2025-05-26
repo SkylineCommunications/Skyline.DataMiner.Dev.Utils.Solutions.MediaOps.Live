@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Data;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
@@ -107,6 +108,21 @@
 			return new Endpoint(domInstance);
 		}
 
+		protected override void ValidateBeforeSave(ICollection<Endpoint> instances)
+		{
+			foreach (var instance in instances)
+			{
+				instance.Validate().ThrowIfInvalid();
+			}
+
+			CheckDuplicatesBeforeSave(instances);
+		}
+
+		protected override void ValidateBeforeDelete(ICollection<Endpoint> instances)
+		{
+			CheckIfStillInUse(instances);
+		}
+
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
 		{
 			switch (fieldName)
@@ -185,6 +201,43 @@
 			return filters.Count == 1
 				? filters[0]
 				: new ANDFilterElement<DomInstance>(filters.ToArray());
+		}
+
+		private void CheckDuplicatesBeforeSave(ICollection<Endpoint> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(Endpoint e) =>
+				DomInstanceExposers.Id.NotEqual(e.ID)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Name).Equal(e.Name));
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				throw new InvalidOperationException($"Endpoint with same name already exists.");
+			}
+		}
+
+		private void CheckIfStillInUse(ICollection<Endpoint> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(Endpoint e) =>
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint).Equal(e.ID);
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				var message = instances.Count == 1
+					? $"Cannot delete endpoint '{instances.First().Name}' because it is still in use."
+					: "Cannot delete one or more endpoints because they are still in use.";
+
+				throw new InvalidOperationException(message);
+			}
 		}
 	}
 }

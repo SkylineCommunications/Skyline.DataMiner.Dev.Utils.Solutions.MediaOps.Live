@@ -2,6 +2,7 @@
 {
 	using System;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -75,6 +76,18 @@
 			{
 				_domInstance.ConnectionInfo.PendingConnectedSource = value;
 			}
+		}
+
+		public ValidationResult Validate()
+		{
+			var result = new ValidationResult();
+
+			if (Destination == null)
+			{
+				result.AddError<Connection>($"{nameof(Destination)} cannot be null.", c => c.Destination);
+			}
+
+			return result;
 		}
 	}
 

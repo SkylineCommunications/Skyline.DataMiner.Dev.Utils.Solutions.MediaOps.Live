@@ -52,6 +52,21 @@
 			return new VirtualSignalGroup(domInstance);
 		}
 
+		protected override void ValidateBeforeSave(ICollection<VirtualSignalGroup> instances)
+		{
+			foreach (var instance in instances)
+			{
+				instance.Validate().ThrowIfInvalid();
+			}
+
+			CheckDuplicatesBeforeSave(instances);
+		}
+
+		protected override void ValidateBeforeDelete(ICollection<VirtualSignalGroup> instances)
+		{
+			// no checks needed
+		}
+
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
 		{
 			switch (fieldName)
@@ -92,6 +107,23 @@
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
+		}
+
+		private void CheckDuplicatesBeforeSave(ICollection<VirtualSignalGroup> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(VirtualSignalGroup vsg) =>
+				DomInstanceExposers.Id.NotEqual(vsg.ID)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Name).Equal(vsg.Name));
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				throw new InvalidOperationException($"Virtual signal group with same name already exists.");
+			}
 		}
 	}
 }

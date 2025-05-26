@@ -1,9 +1,14 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
 {
+	using System;
+	using System.Collections.Generic;
+	using System.Linq;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -20,6 +25,21 @@
 		protected override Level CreateInstance(DomInstance domInstance)
 		{
 			return new Level(domInstance);
+		}
+
+		protected override void ValidateBeforeSave(ICollection<Level> instances)
+		{
+			foreach (var instance in instances)
+			{
+				instance.Validate().ThrowIfInvalid();
+			}
+
+			CheckDuplicatesBeforeSave(instances);
+		}
+
+		protected override void ValidateBeforeDelete(ICollection<Level> instances)
+		{
+			CheckIfStillInUse(instances);
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
@@ -50,6 +70,45 @@
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
+		}
+
+		private void CheckDuplicatesBeforeSave(ICollection<Level> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(Level l) =>
+				DomInstanceExposers.Id.NotEqual(l.ID)
+				.AND(
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Name).Equal(l.Name)
+					.OR(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number).Equal(l.Number)));
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				throw new InvalidOperationException($"Level with same name or number already exists.");
+			}
+		}
+
+		private void CheckIfStillInUse(ICollection<Level> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(Level l) =>
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level).Equal(l.ID);
+
+			var count = FilterQueryExecutor.CountFilteredItems(
+				instances,
+				x => CreateFilter(x),
+				x => Helper.DomInstances.Count(x));
+
+			if (count > 0)
+			{
+				var message = instances.Count == 1
+					? $"Cannot delete level '{instances.First().Name}' because it is still in use."
+					: "Cannot delete one or more levels because they are still in use.";
+
+				throw new InvalidOperationException(message);
+			}
 		}
 	}
 }

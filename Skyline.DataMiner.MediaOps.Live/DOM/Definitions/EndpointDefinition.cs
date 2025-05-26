@@ -63,6 +63,7 @@
 					FieldType = typeof(GenericEnum<int>),
 					ID = SlcConnectivityManagementIds.Sections.EndpointInfo.Role,
 					Name = "Role",
+					IsOptional = false,
 					GenericEnumInstance = GenericEnumFactory.Create<SlcConnectivityManagementIds.Enums.Role>(),
 				});
 

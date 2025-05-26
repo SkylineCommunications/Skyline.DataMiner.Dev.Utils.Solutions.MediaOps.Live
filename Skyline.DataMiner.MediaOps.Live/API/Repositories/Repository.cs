@@ -35,12 +35,18 @@
 
 		protected abstract T CreateInstance(DomInstance domInstance);
 
+		protected abstract void ValidateBeforeSave(ICollection<T> instances);
+
+		protected abstract void ValidateBeforeDelete(ICollection<T> instances);
+
 		public virtual void Create(T instance)
 		{
 			if (instance == null)
 			{
 				throw new ArgumentNullException(nameof(instance));
 			}
+
+			ValidateBeforeSave(new[] { instance });
 
 			Helper.DomInstances.Create(instance.DomInstance);
 		}
@@ -52,6 +58,8 @@
 				throw new ArgumentNullException(nameof(instance));
 			}
 
+			ValidateBeforeSave(new[] { instance });
+
 			Helper.DomInstances.Update(instance.DomInstance);
 		}
 
@@ -62,8 +70,22 @@
 				throw new ArgumentNullException(nameof(instances));
 			}
 
-			var domInstances = instances.Select(x => x.DomInstance.ToInstance()).ToList();
+			var instanceCollection = instances as ICollection<T> ?? instances.ToList();
+
+			ValidateBeforeSave(instanceCollection);
+
+			var domInstances = instanceCollection.Select(x => x.DomInstance.ToInstance());
 			Helper.DomInstances.CreateOrUpdateInBatches(domInstances).ThrowOnFailure();
+		}
+
+		public virtual void CreateOrUpdate(T instance)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			CreateOrUpdate(new[] { instance });
 		}
 
 		public virtual void Delete(T instance)
@@ -72,6 +94,8 @@
 			{
 				throw new ArgumentNullException(nameof(instance));
 			}
+
+			ValidateBeforeDelete(new[] { instance });
 
 			Helper.DomInstances.Delete(instance.DomInstance);
 		}
@@ -83,7 +107,11 @@
 				throw new ArgumentNullException(nameof(instances));
 			}
 
-			var domInstances = instances.Select(x => x.DomInstance.ToInstance()).ToList();
+			var instanceCollection = instances as ICollection<T> ?? instances.ToList();
+
+			ValidateBeforeDelete(instanceCollection);
+
+			var domInstances = instanceCollection.Select(x => x.DomInstance.ToInstance());
 			Helper.DomInstances.DeleteInBatches(domInstances).ThrowOnFailure();
 		}
 
@@ -172,6 +200,39 @@
 					x => Helper.DomInstances.Read(x))
 				.Select(CreateInstance)
 				.SafeToDictionary(x => x.ID);
+		}
+
+		public virtual T Read(string name)
+		{
+			if (name == null)
+			{
+				throw new ArgumentNullException(nameof(name));
+			}
+
+			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
+				.AND(DomInstanceExposers.Name.Equal(name));
+
+			var domInstance = Helper.DomInstances.Read(filter).SingleOrDefault();
+
+			return domInstance != null ? CreateInstance(domInstance) : null;
+		}
+
+		public virtual IDictionary<string, T> Read(IEnumerable<string> names)
+		{
+			if (names == null)
+			{
+				throw new ArgumentNullException(nameof(names));
+			}
+
+			FilterElement<DomInstance> CreateFilter(string name) =>
+				DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
+				.AND(DomInstanceExposers.Name.Equal(name));
+
+			return FilterQueryExecutor.RetrieveFilteredItems(
+					names,
+					x => CreateFilter(x),
+					x => Helper.DomInstances.Read(x))
+				.SafeToDictionary(x => x.Name, CreateInstance);
 		}
 
 		public virtual IEnumerable<T> Read(FilterElement<T> filter)
@@ -301,6 +362,58 @@
 		public virtual IQueryable<T> Query()
 		{
 			return new ApiRepositoryQuery<T>(_queryProvider);
+		}
+
+		protected internal virtual void CreateWithoutValidation(T instance)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			Helper.DomInstances.Create(instance.DomInstance);
+		}
+
+		protected internal virtual void UpdateWithoutValidation(T instance)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			Helper.DomInstances.Update(instance.DomInstance);
+		}
+
+		protected internal virtual void CreateOrUpdateWithoutValidation(IEnumerable<T> instances)
+		{
+			if (instances == null)
+			{
+				throw new ArgumentNullException(nameof(instances));
+			}
+
+			var domInstances = instances.Select(x => x.DomInstance.ToInstance());
+			Helper.DomInstances.CreateOrUpdateInBatches(domInstances).ThrowOnFailure();
+		}
+
+		protected internal virtual void DeleteWithoutValidation(T instance)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			Helper.DomInstances.Delete(instance.DomInstance);
+		}
+
+		protected internal virtual void DeleteWithoutValidation(IEnumerable<T> instances)
+		{
+			if (instances == null)
+			{
+				throw new ArgumentNullException(nameof(instances));
+			}
+
+			var domInstances = instances.Select(x => x.DomInstance.ToInstance());
+			Helper.DomInstances.DeleteInBatches(domInstances).ThrowOnFailure();
 		}
 
 		protected internal virtual FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)
