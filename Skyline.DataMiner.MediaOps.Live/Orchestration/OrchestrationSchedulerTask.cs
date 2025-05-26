@@ -102,9 +102,9 @@
 			TaskId = taskId;
 		}
 
-		public int DmaId { get; set; }
+		public int DmaId { get; }
 
-		public int TaskId { get; set; }
+		public int TaskId { get; }
 
 		/// <summary>
 		/// Compares two <see cref="ScheduledTaskId"/> objects.

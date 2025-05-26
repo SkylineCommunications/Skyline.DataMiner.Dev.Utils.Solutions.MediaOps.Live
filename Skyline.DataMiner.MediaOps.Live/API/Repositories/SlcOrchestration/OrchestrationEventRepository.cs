@@ -185,35 +185,36 @@
 			}
 		}
 
-		private void ExecuteEvents(List<OrchestrationEventConfiguration> orchestrationEvents, PerformanceTracker performanceTracker)
+		private void ExecuteEvents(List<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
+				foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEventConfigurations)
 				{
 					orchestrationEvent.InternalSetState(SlcOrchestrationIds.Enums.EventState.Configuring);
 				}
 
-				SaveEventConfigurations(orchestrationEvents, performanceTracker);
+				SaveEventConfigurations(orchestrationEventConfigurations, performanceTracker);
 
 				List<Task> tasks = new List<Task>();
-				foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
+				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(e => e.HasScripts()))
 				{
 					Task nodeOrchestrationTask = Task.Factory.StartNew(
 						() =>
 						{
-							ExecuteEventConfigurationScripts(orchestrationEvent, performanceTracker);
+							ExecuteEventConfigurationScripts(orchestrationEventConfiguration, performanceTracker);
+							ExecuteConnections(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
 						},
 						TaskCreationOptions.LongRunning);
 
 					tasks.Add(nodeOrchestrationTask);
 				}
 
-				ExecuteConnections(orchestrationEvents, performanceTracker);
+				ExecuteConnections(orchestrationEventConfigurations.Where(e => !e.HasScripts()), performanceTracker);
 
 				Task.WaitAll(tasks.ToArray());
 
-				SaveEventConfigurations(orchestrationEvents, performanceTracker);
+				SaveEventConfigurations(orchestrationEventConfigurations, performanceTracker);
 			}
 		}
 
@@ -231,7 +232,7 @@
 			}
 		}
 
-		private void ExecuteConnections(List<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
+		private void ExecuteConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{

@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
@@ -62,6 +63,15 @@
 			{
 				base.GlobalOrchestrationScriptArguments = value;
 			}
+		}
+
+		internal bool HasScripts()
+		{
+			bool global = !String.IsNullOrEmpty(GlobalOrchestrationScript);
+
+			bool node = Configuration.NodeConfigurations.Any(nodeConfig => !String.IsNullOrEmpty(nodeConfig.OrchestrationScriptName));
+
+			return global || node;
 		}
 	}
 }
