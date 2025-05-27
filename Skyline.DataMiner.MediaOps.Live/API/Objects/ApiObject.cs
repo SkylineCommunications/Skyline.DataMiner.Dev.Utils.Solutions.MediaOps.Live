@@ -30,7 +30,12 @@
 
 		public virtual bool Equals(ApiObject<T> other)
 		{
-			if (other == null)
+			if (ReferenceEquals(this, other))
+			{
+				return true;
+			}
+
+			if (other is null)
 			{
 				return false;
 			}

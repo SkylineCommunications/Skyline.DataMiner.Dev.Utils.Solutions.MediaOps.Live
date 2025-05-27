@@ -10,6 +10,8 @@
 			ID = id;
 		}
 
+		public static ApiObjectReference<T> Empty { get; } = new ApiObjectReference<T>(Guid.Empty);
+
 		public Guid ID { get; }
 
 		public static ApiObjectReference<T> Convert(object obj)
@@ -36,7 +38,7 @@
 		{
 			if (apiObject == null)
 			{
-				return null;
+				return Empty;
 			}
 
 			return apiObject.Reference;
