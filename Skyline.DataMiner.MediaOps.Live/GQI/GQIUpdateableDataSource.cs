@@ -9,8 +9,7 @@
 	{
 		private readonly object _lock = new object();
 
-		private readonly HashSet<string> _returnedRows = new HashSet<string>();
-		private readonly Dictionary<string, GQIRow> _rows = new Dictionary<string, GQIRow>();
+		private readonly Dictionary<string, RowInfo> _rows = new Dictionary<string, RowInfo>();
 
 		private IGQIUpdater _updater;
 
@@ -25,25 +24,34 @@
 
 			lock (_lock)
 			{
+				var newRows = new List<GQIRow>(page.Rows.Length);
+
 				// replace rows that were already updated in the meantime
-				for (int i = 0; i < page.Rows.Length; i++)
+				foreach (var row in page.Rows)
 				{
-					var row = page.Rows[i];
+					var rowInfo = GetOrCreateRowInfo(row.Key);
 
-					if (_rows.TryGetValue(row.Key, out var updatedRow))
+					if (rowInfo.LastUpdateType == UpdateType.None)
 					{
-						page.Rows[i] = updatedRow;
-					}
-					else
-					{
-						_rows.Add(row.Key, row);
+						rowInfo.Row = row;
 					}
 
-					_returnedRows.Add(row.Key);
+					if (rowInfo.IsSentToClient ||
+						rowInfo.LastUpdateType == UpdateType.Remove)
+					{
+						// If the row was already sent to the client or removed, skip it
+						continue;
+					}
+
+					rowInfo.IsSentToClient = true;
+					newRows.Add(rowInfo.Row);
 				}
-			}
 
-			return page;
+				return new GQIPage(newRows.ToArray())
+				{
+					HasNextPage = page.HasNextPage,
+				};
+			}
 		}
 
 		void IGQIUpdateable.OnStartUpdates(IGQIUpdater updater)
@@ -71,15 +79,14 @@
 
 			lock (_lock)
 			{
-				if (!_returnedRows.Contains(row.Key))
-				{
-					EnsureGqiUpdaterIsAvailable();
-					_updater.AddRow(row);
+				var rowInfo = GetOrCreateRowInfo(row.Key);
+				rowInfo.LastUpdateType = UpdateType.Add;
+				rowInfo.Row = row;
 
-					_returnedRows.Add(row.Key);
-				}
+				EnsureGqiUpdaterIsAvailable();
+				_updater.AddRow(row);
 
-				_rows[row.Key] = row;
+				rowInfo.IsSentToClient = true;
 			}
 		}
 
@@ -92,13 +99,15 @@
 
 			lock (_lock)
 			{
-				if (_returnedRows.Contains(row.Key))
+				var rowInfo = GetOrCreateRowInfo(row.Key);
+				rowInfo.LastUpdateType = UpdateType.Update;
+				rowInfo.Row = row;
+
+				if (rowInfo.IsSentToClient)
 				{
 					EnsureGqiUpdaterIsAvailable();
 					_updater.UpdateRow(row);
 				}
-
-				_rows[row.Key] = row;
 			}
 		}
 
@@ -111,19 +120,24 @@
 
 			lock (_lock)
 			{
+				var rowInfo = GetOrCreateRowInfo(row.Key);
+				rowInfo.Row = row;
+
 				EnsureGqiUpdaterIsAvailable();
 
-				if (_returnedRows.Contains(row.Key))
+				if (!rowInfo.IsSentToClient)
 				{
-					_updater.UpdateRow(row);
+					rowInfo.LastUpdateType = UpdateType.Add;
+
+					_updater.AddRow(row);
+					rowInfo.IsSentToClient = true;
 				}
 				else
 				{
-					_updater.AddRow(row);
-					_returnedRows.Add(row.Key);
-				}
+					rowInfo.LastUpdateType = UpdateType.Update;
 
-				_rows[row.Key] = row;
+					_updater.UpdateRow(row);
+				}
 			}
 		}
 
@@ -136,15 +150,15 @@
 
 			lock (_lock)
 			{
-				if (_returnedRows.Contains(rowKey))
+				var rowInfo = GetOrCreateRowInfo(rowKey);
+				rowInfo.LastUpdateType = UpdateType.Remove;
+				rowInfo.Row = null;
+
+				if (rowInfo.IsSentToClient)
 				{
 					EnsureGqiUpdaterIsAvailable();
 					_updater.RemoveRow(rowKey);
-
-					_returnedRows.Remove(rowKey);
 				}
-
-				_rows.Remove(rowKey);
 			}
 		}
 
@@ -153,6 +167,43 @@
 			if (_updater == null)
 			{
 				throw new InvalidOperationException($"{nameof(OnStartUpdates)} wasn't called yet (updater is not available)");
+			}
+		}
+
+		private RowInfo GetOrCreateRowInfo(string key)
+		{
+			if (!_rows.TryGetValue(key, out var rowInfo))
+			{
+				rowInfo = new RowInfo(key);
+				_rows.Add(key, rowInfo);
+			}
+
+			return rowInfo;
+		}
+
+		private enum UpdateType
+		{
+			None,
+			Add,
+			Update,
+			Remove,
+		}
+
+		private sealed class RowInfo
+		{
+			public string Key { get; }
+
+			public GQIRow Row { get; set; }
+
+			public bool IsSentToClient { get; set; }
+
+			public UpdateType LastUpdateType { get; set; }
+
+			public RowInfo(string key)
+			{
+				Key = key ?? throw new ArgumentNullException(nameof(key));
+
+				LastUpdateType = UpdateType.None;
 			}
 		}
 	}
