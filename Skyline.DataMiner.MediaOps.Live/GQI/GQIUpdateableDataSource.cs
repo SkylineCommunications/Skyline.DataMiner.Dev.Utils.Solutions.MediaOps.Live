@@ -31,14 +31,16 @@
 				{
 					var rowInfo = GetOrCreateRowInfo(row.Key);
 
-					if (rowInfo.IsSentToClient || rowInfo.IsDeleted)
-					{
-						continue;
-					}
-
-					if (rowInfo.Row == null)
+					if (rowInfo.LastUpdateType == UpdateType.None)
 					{
 						rowInfo.Row = row;
+					}
+
+					if (rowInfo.IsSentToClient ||
+						rowInfo.LastUpdateType == UpdateType.Add ||
+						rowInfo.LastUpdateType == UpdateType.Remove)
+					{
+						continue;
 					}
 
 					rowInfo.IsSentToClient = true;
@@ -78,12 +80,13 @@
 			lock (_lock)
 			{
 				var rowInfo = GetOrCreateRowInfo(row.Key);
+				rowInfo.LastUpdateType = UpdateType.Add;
 				rowInfo.Row = row;
-				rowInfo.IsDeleted = false;
-				rowInfo.IsSentToClient = true;
 
 				EnsureGqiUpdaterIsAvailable();
 				_updater.AddRow(row);
+
+				rowInfo.IsSentToClient = true;
 			}
 		}
 
@@ -97,8 +100,8 @@
 			lock (_lock)
 			{
 				var rowInfo = GetOrCreateRowInfo(row.Key);
+				rowInfo.LastUpdateType = UpdateType.Update;
 				rowInfo.Row = row;
-				rowInfo.IsDeleted = false;
 
 				if (rowInfo.IsSentToClient)
 				{
@@ -119,17 +122,20 @@
 			{
 				var rowInfo = GetOrCreateRowInfo(row.Key);
 				rowInfo.Row = row;
-				rowInfo.IsDeleted = false;
 
 				EnsureGqiUpdaterIsAvailable();
 
 				if (!rowInfo.IsSentToClient)
 				{
+					rowInfo.LastUpdateType = UpdateType.Add;
+
 					_updater.AddRow(row);
 					rowInfo.IsSentToClient = true;
 				}
 				else
 				{
+					rowInfo.LastUpdateType = UpdateType.Update;
+
 					_updater.UpdateRow(row);
 				}
 			}
@@ -145,8 +151,8 @@
 			lock (_lock)
 			{
 				var rowInfo = GetOrCreateRowInfo(rowKey);
+				rowInfo.LastUpdateType = UpdateType.Remove;
 				rowInfo.Row = null;
-				rowInfo.IsDeleted = true;
 
 				if (rowInfo.IsSentToClient)
 				{
@@ -175,6 +181,14 @@
 			return rowInfo;
 		}
 
+		private enum UpdateType
+		{
+			None,
+			Add,
+			Update,
+			Remove,
+		}
+
 		private class RowInfo
 		{
 			public string Key { get; }
@@ -183,7 +197,7 @@
 
 			public bool IsSentToClient { get; set; }
 
-			public bool IsDeleted { get; set; }
+			public UpdateType LastUpdateType { get; set; }
 
 			public RowInfo(string key)
 			{
