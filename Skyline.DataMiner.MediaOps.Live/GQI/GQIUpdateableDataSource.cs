@@ -9,8 +9,7 @@
 	{
 		private readonly object _lock = new object();
 
-		private readonly HashSet<string> _returnedRows = new HashSet<string>();
-		private readonly Dictionary<string, PendingRowUpdate> _pendingRowUpdates = new Dictionary<string, PendingRowUpdate>();
+		private readonly Dictionary<string, RowInfo> _rows = new Dictionary<string, RowInfo>();
 
 		private IGQIUpdater _updater;
 
@@ -30,28 +29,20 @@
 				// replace rows that were already updated in the meantime
 				foreach (var row in page.Rows)
 				{
-					if (_returnedRows.Contains(row.Key))
+					var rowInfo = GetOrCreateRowInfo(row.Key);
+
+					if (rowInfo.IsSentToClient || rowInfo.IsDeleted)
 					{
-						// Row already sent to the client, skip it
 						continue;
 					}
 
-					var rowToReturn = row;
-
-					if (_pendingRowUpdates.TryGetValue(row.Key, out var pending))
+					if (rowInfo.Row == null)
 					{
-						_pendingRowUpdates.Remove(row.Key);
-
-						if (pending.Type == PendingUpdateType.Remove)
-						{
-							continue; // Deleted
-						}
-
-						rowToReturn = pending.Row;
+						rowInfo.Row = row;
 					}
 
-					newRows.Add(rowToReturn);
-					_returnedRows.Add(row.Key);
+					rowInfo.IsSentToClient = true;
+					newRows.Add(rowInfo.Row);
 				}
 
 				return new GQIPage(newRows.ToArray())
@@ -86,15 +77,13 @@
 
 			lock (_lock)
 			{
-				if (!_returnedRows.Contains(row.Key))
-				{
-					EnsureGqiUpdaterIsAvailable();
-					_updater.AddRow(row);
+				var rowInfo = GetOrCreateRowInfo(row.Key);
+				rowInfo.Row = row;
+				rowInfo.IsDeleted = false;
+				rowInfo.IsSentToClient = true;
 
-					_returnedRows.Add(row.Key);
-				}
-
-				_pendingRowUpdates.Remove(row.Key);
+				EnsureGqiUpdaterIsAvailable();
+				_updater.AddRow(row);
 			}
 		}
 
@@ -107,14 +96,14 @@
 
 			lock (_lock)
 			{
-				if (_returnedRows.Contains(row.Key))
+				var rowInfo = GetOrCreateRowInfo(row.Key);
+				rowInfo.Row = row;
+				rowInfo.IsDeleted = false;
+
+				if (rowInfo.IsSentToClient)
 				{
 					EnsureGqiUpdaterIsAvailable();
 					_updater.UpdateRow(row);
-				}
-				else
-				{
-					_pendingRowUpdates[row.Key] = new PendingRowUpdate(PendingUpdateType.Update, row);
 				}
 			}
 		}
@@ -128,13 +117,20 @@
 
 			lock (_lock)
 			{
-				if (_returnedRows.Contains(row.Key))
+				var rowInfo = GetOrCreateRowInfo(row.Key);
+				rowInfo.Row = row;
+				rowInfo.IsDeleted = false;
+
+				EnsureGqiUpdaterIsAvailable();
+
+				if (!rowInfo.IsSentToClient)
 				{
-					UpdateRow(row);
+					_updater.AddRow(row);
+					rowInfo.IsSentToClient = true;
 				}
 				else
 				{
-					AddRow(row);
+					_updater.UpdateRow(row);
 				}
 			}
 		}
@@ -148,14 +144,14 @@
 
 			lock (_lock)
 			{
-				if (_returnedRows.Contains(rowKey))
+				var rowInfo = GetOrCreateRowInfo(rowKey);
+				rowInfo.Row = null;
+				rowInfo.IsDeleted = true;
+
+				if (rowInfo.IsSentToClient)
 				{
 					EnsureGqiUpdaterIsAvailable();
 					_updater.RemoveRow(rowKey);
-				}
-				else
-				{
-					_pendingRowUpdates[rowKey] = new PendingRowUpdate(PendingUpdateType.Remove);
 				}
 			}
 		}
@@ -168,22 +164,30 @@
 			}
 		}
 
-		private enum PendingUpdateType
+		private RowInfo GetOrCreateRowInfo(string key)
 		{
-			Update,
-			Remove,
+			if (!_rows.TryGetValue(key, out var rowInfo))
+			{
+				rowInfo = new RowInfo(key);
+				_rows.Add(key, rowInfo);
+			}
+
+			return rowInfo;
 		}
 
-		private readonly struct PendingRowUpdate
+		private class RowInfo
 		{
-			public PendingUpdateType Type { get; }
+			public string Key { get; }
 
-			public GQIRow Row { get; }
+			public GQIRow Row { get; set; }
 
-			public PendingRowUpdate(PendingUpdateType type, GQIRow row = null)
+			public bool IsSentToClient { get; set; }
+
+			public bool IsDeleted { get; set; }
+
+			public RowInfo(string key)
 			{
-				Type = type;
-				Row = row;
+				Key = key ?? throw new ArgumentNullException(nameof(key));
 			}
 		}
 	}
