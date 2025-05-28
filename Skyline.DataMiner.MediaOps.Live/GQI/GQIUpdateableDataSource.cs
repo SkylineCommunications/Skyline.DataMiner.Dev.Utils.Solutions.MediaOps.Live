@@ -10,7 +10,8 @@
 		private readonly object _lock = new object();
 
 		private readonly HashSet<string> _returnedRows = new HashSet<string>();
-		private readonly Dictionary<string, GQIRow> _rows = new Dictionary<string, GQIRow>();
+		private readonly HashSet<string> _deletedRows = new HashSet<string>();
+		private readonly Dictionary<string, GQIRow> _updatedRows = new Dictionary<string, GQIRow>();
 
 		private IGQIUpdater _updater;
 
@@ -25,25 +26,37 @@
 
 			lock (_lock)
 			{
-				// replace rows that were already updated in the meantime
-				for (int i = 0; i < page.Rows.Length; i++)
-				{
-					var row = page.Rows[i];
+				var newRows = new List<GQIRow>(page.Rows.Length);
 
-					if (_rows.TryGetValue(row.Key, out var updatedRow))
+				// replace rows that were already updated in the meantime
+				foreach (var row in page.Rows)
+				{
+					if (_deletedRows.Contains(row.Key))
 					{
-						page.Rows[i] = updatedRow;
+						continue;
+					}
+
+					GQIRow rowToReturn;
+
+					if (_updatedRows.TryGetValue(row.Key, out var updatedRow))
+					{
+						rowToReturn = updatedRow;
+						_updatedRows.Remove(row.Key);
 					}
 					else
 					{
-						_rows.Add(row.Key, row);
+						rowToReturn = row;
 					}
 
+					newRows.Add(rowToReturn);
 					_returnedRows.Add(row.Key);
 				}
-			}
 
-			return page;
+				return new GQIPage(newRows.ToArray())
+				{
+					HasNextPage = page.HasNextPage,
+				};
+			}
 		}
 
 		void IGQIUpdateable.OnStartUpdates(IGQIUpdater updater)
@@ -79,7 +92,8 @@
 					_returnedRows.Add(row.Key);
 				}
 
-				_rows[row.Key] = row;
+				_updatedRows.Remove(row.Key);
+				_deletedRows.Remove(row.Key);
 			}
 		}
 
@@ -97,8 +111,10 @@
 					EnsureGqiUpdaterIsAvailable();
 					_updater.UpdateRow(row);
 				}
-
-				_rows[row.Key] = row;
+				else
+				{
+					_updatedRows[row.Key] = row;
+				}
 			}
 		}
 
@@ -123,7 +139,8 @@
 					_returnedRows.Add(row.Key);
 				}
 
-				_rows[row.Key] = row;
+				_updatedRows.Remove(row.Key);
+				_deletedRows.Remove(row.Key);
 			}
 		}
 
@@ -143,8 +160,11 @@
 
 					_returnedRows.Remove(rowKey);
 				}
-
-				_rows.Remove(rowKey);
+				else
+				{
+					_updatedRows.Remove(rowKey);
+					_deletedRows.Add(rowKey);
+				}
 			}
 		}
 
