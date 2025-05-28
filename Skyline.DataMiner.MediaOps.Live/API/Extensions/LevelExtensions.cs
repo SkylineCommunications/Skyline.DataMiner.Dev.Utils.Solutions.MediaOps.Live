@@ -5,6 +5,8 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.MediaOps.Live.Extensions;
+	using Skyline.DataMiner.Net.Helper;
 
 	public static class LevelExtensions
 	{
@@ -22,10 +24,13 @@
 				throw new ArgumentNullException(nameof(transportTypesRepository));
 			}
 
-			return levels.JoinInBatches(
-				transportTypesRepository,
-				level => level.TransportType,
-				(l, t) => (l, t));
+			return levels
+				.Batch(100)
+				.JoinInBatches(
+					transportTypesRepository,
+					level => level.TransportType,
+					(l, t) => (l, t))
+				.Flatten();
 		}
 
 		public static IEnumerable<IEnumerable<(Level Level, TransportType TransportType)>> JoinTransportTypes(
@@ -42,7 +47,7 @@
 				throw new ArgumentNullException(nameof(transportTypesRepository));
 			}
 
-			return levels.Join(
+			return levels.JoinInBatches(
 				transportTypesRepository,
 				level => level.TransportType,
 				(l, t) => (l, t));

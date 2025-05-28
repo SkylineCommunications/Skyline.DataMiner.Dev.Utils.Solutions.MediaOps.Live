@@ -6,6 +6,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
+	using Skyline.DataMiner.Net.Helper;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	using SLDataGateway.API.Querying;
@@ -159,7 +160,7 @@
 		{
 			// act
 			var levelsWithTransportType = _api.Levels.ReadAllPaged()
-				.Join(
+				.JoinInBatches(
 					_api.TransportTypes,
 					level => level.TransportType,
 					(l, t) => new { Level = l, TransportType = t })
@@ -183,14 +184,16 @@
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_JoinInBatches()
+		public void MediaOps_LiveApi_Tests_JoinInBatches_ById()
 		{
 			// act
 			var levelsWithTransportType = _api.Levels.ReadAll()
+				.Batch(100)
 				.JoinInBatches(
 					_api.TransportTypes,
 					level => level.TransportType,
 					(l, t) => new { Level = l, TransportType = t })
+				.Flatten()
 				.ToList();
 
 			// assert
@@ -210,15 +213,45 @@
 		}
 
 		[TestMethod]
+		public void MediaOps_LiveApi_Tests_JoinInBatches_ByName()
+		{
+			var names = new[] { "Video", "Audio", "Data" };
+
+			// act
+			var levels = names
+				.Batch(100)
+				.JoinInBatches(
+					x => x,
+					_api.Levels.Read,
+					(n, l) => new { Name = n, Level = l })
+				.Flatten()
+				.ToList();
+
+			// assert
+			var video = _api.Levels.Query().First(x => x.Name == "Video");
+			var audio = _api.Levels.Query().First(x => x.Name == "Audio");
+			var data = _api.Levels.Query().First(x => x.Name == "Data");
+
+			CollectionAssert.AreEquivalent(
+				new[]
+				{
+					new { Name = "Video", Level = video },
+					new { Name = "Audio", Level = audio },
+					new { Name = "Data", Level = data },
+				},
+				levels);
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_JoinMultiple()
 		{
 			// act
 			var result = _api.VirtualSignalGroups.ReadAllPaged()
-				.Join(
+				.JoinInBatches(
 					_api.Endpoints,
 					vsg => vsg.GetEndpoints().Select(x => x.Endpoint),
 					(vsg, endpoints) => new { VirtualSignalGroup = vsg, Endpoints = endpoints })
-				.Join(
+				.JoinInBatches(
 					_api.Levels,
 					vsg => vsg.VirtualSignalGroup.GetEndpoints().Select(x => x.Level),
 					(vsg, levels) => new { vsg.VirtualSignalGroup, vsg.Endpoints, Levels = levels })

@@ -6,6 +6,8 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.MediaOps.Live.Extensions;
+	using Skyline.DataMiner.Net.Helper;
 
 	public static class VirtualSignalGroupExtensions
 	{
@@ -23,10 +25,13 @@
 				throw new ArgumentNullException(nameof(endpointsRepository));
 			}
 
-			return virtualSignalGroups.JoinInBatches(
-				endpointsRepository,
-				vsg => vsg.GetEndpoints().Select(x => x.Endpoint),
-				(vsg, endpoints) => (vsg, endpoints));
+			return virtualSignalGroups
+				.Batch(100)
+				.JoinInBatches(
+					endpointsRepository,
+					vsg => vsg.GetEndpoints().Select(x => x.Endpoint),
+					(vsg, endpoints) => (vsg, endpoints))
+				.Flatten();
 		}
 
 		public static IEnumerable<IEnumerable<(VirtualSignalGroup VirtualSignalGroup, IEnumerable<Endpoint> Endpoints)>> JoinEndpoints(
@@ -43,7 +48,7 @@
 				throw new ArgumentNullException(nameof(endpointsRepository));
 			}
 
-			return virtualSignalGroups.Join(
+			return virtualSignalGroups.JoinInBatches(
 				endpointsRepository,
 				vsg => vsg.GetEndpoints().Select(x => x.Endpoint),
 				(vsg, endpoints) => (vsg, endpoints));

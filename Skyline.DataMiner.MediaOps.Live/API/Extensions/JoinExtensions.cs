@@ -6,8 +6,6 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
-	using Skyline.DataMiner.MediaOps.Live.Extensions;
-	using Skyline.DataMiner.Net.Helper;
 
 	public static class JoinExtensions
 	{
@@ -23,7 +21,7 @@
 		/// <param name="resultSelector">Function to project the result from a left element and its matched right elements.</param>
 		/// <returns>A sequence of result pages.</returns>
 		/// <exception cref="ArgumentNullException">Thrown if any of the input parameters is null.</exception>
-		public static IEnumerable<IEnumerable<TResult>> Join<TLeft, TRight, TResult>(
+		public static IEnumerable<IEnumerable<TResult>> JoinInBatches<TLeft, TRight, TResult>(
 			this IEnumerable<IEnumerable<TLeft>> leftSource,
 			Repository<TRight> rightRepository,
 			Func<TLeft, IEnumerable<ApiObjectReference<TRight>>> rightIdsSelector,
@@ -50,7 +48,16 @@
 				throw new ArgumentNullException(nameof(resultSelector));
 			}
 
-			return JoinIterator(leftSource, rightRepository, rightIdsSelector, resultSelector);
+			IEnumerable<Guid> RightKeysSelector(TLeft left) =>
+				rightIdsSelector(left)
+				.Where(x => x != null)
+				.Select(x => x.ID);
+
+			return JoinIterator(
+				leftSource,
+				RightKeysSelector,
+				ids => rightRepository.Read(ids),
+				resultSelector);
 		}
 
 		/// <summary>
@@ -65,7 +72,7 @@
 		/// <param name="resultSelector">Function to project the result from a left element and its matched right element.</param>
 		/// <returns>A sequence of result pages.</returns>
 		/// <exception cref="ArgumentNullException">Thrown if any of the input parameters is null.</exception>
-		public static IEnumerable<IEnumerable<TResult>> Join<TLeft, TRight, TResult>(
+		public static IEnumerable<IEnumerable<TResult>> JoinInBatches<TLeft, TRight, TResult>(
 			this IEnumerable<IEnumerable<TLeft>> leftSource,
 			Repository<TRight> rightRepository,
 			Func<TLeft, ApiObjectReference<TRight>?> rightIdSelector,
@@ -92,128 +99,136 @@
 				throw new ArgumentNullException(nameof(resultSelector));
 			}
 
-			return JoinIterator(leftSource, rightRepository, rightIdSelector, resultSelector);
+			IEnumerable<Guid> RightKeysSelector(TLeft left) =>
+				new[] { rightIdSelector(left) }
+				.Where(x => x != null)
+				.Select(x => x.Value.ID);
+
+			return JoinIterator(
+				leftSource,
+				RightKeysSelector,
+				ids => rightRepository.Read(ids),
+				(left, rights) => resultSelector(left, rights.FirstOrDefault()));
 		}
 
 		/// <summary>
-		/// Joins a collection of items from the left source with their related items in the repository in batches using multiple references.
+		/// Joins each batch of items from the left source with related items retrieved by key using a custom selector and batched retrieval.
 		/// </summary>
 		/// <typeparam name="TLeft">The type of the elements in the left sequence.</typeparam>
-		/// <typeparam name="TRight">The type of the elements in the right repository.</typeparam>
+		/// <typeparam name="TRight">The type of the elements in the right sequence.</typeparam>
+		/// <typeparam name="TKey">The type of the key used to join left and right elements.</typeparam>
 		/// <typeparam name="TResult">The type of the result element.</typeparam>
-		/// <param name="leftSource">A sequence of left elements.</param>
-		/// <param name="rightRepository">The repository to retrieve right elements from.</param>
-		/// <param name="rightIdsSelector">Function to select one or more references from each left element.</param>
+		/// <param name="leftSource">A sequence of pages containing the left elements.</param>
+		/// <param name="rightKeysSelector">Function to select one or more keys from each left element.</param>
+		/// <param name="retrieveRightItems">Function that retrieves right elements by a batch of keys.</param>
 		/// <param name="resultSelector">Function to project the result from a left element and its matched right elements.</param>
-		/// <param name="batchSize">The batch size for pagination. Default is 250.</param>
-		/// <returns>A sequence of joined results.</returns>
+		/// <returns>A sequence of result pages, where each page contains joined elements.</returns>
 		/// <exception cref="ArgumentNullException">Thrown if any of the input parameters is null.</exception>
-		public static IEnumerable<TResult> JoinInBatches<TLeft, TRight, TResult>(
-			this IEnumerable<TLeft> leftSource,
-			Repository<TRight> rightRepository,
-			Func<TLeft, IEnumerable<ApiObjectReference<TRight>>> rightIdsSelector,
-			Func<TLeft, IEnumerable<TRight>, TResult> resultSelector,
-			int batchSize = 250)
-			where TRight : ApiObject<TRight>
-		{
-			if (leftSource == null)
-			{
-				throw new ArgumentNullException(nameof(leftSource));
-			}
-
-			if (rightRepository == null)
-			{
-				throw new ArgumentNullException(nameof(rightRepository));
-			}
-
-			if (rightIdsSelector == null)
-			{
-				throw new ArgumentNullException(nameof(rightIdsSelector));
-			}
-
-			if (resultSelector == null)
-			{
-				throw new ArgumentNullException(nameof(resultSelector));
-			}
-
-			return leftSource
-				.Batch(batchSize)
-				.Join(rightRepository, rightIdsSelector, resultSelector)
-				.Flatten();
-		}
-
-		/// <summary>
-		/// Joins a collection of items from the left source with their related items in the repository in batches using a single optional reference.
-		/// </summary>
-		/// <typeparam name="TLeft">The type of the elements in the left sequence.</typeparam>
-		/// <typeparam name="TRight">The type of the elements in the right repository.</typeparam>
-		/// <typeparam name="TResult">The type of the result element.</typeparam>
-		/// <param name="leftSource">A sequence of left elements.</param>
-		/// <param name="rightRepository">The repository to retrieve right elements from.</param>
-		/// <param name="rightIdSelector">Function to select a reference from each left element.</param>
-		/// <param name="resultSelector">Function to project the result from a left element and its matched right element.</param>
-		/// <param name="batchSize">The batch size for pagination. Default is 250.</param>
-		/// <returns>A sequence of joined results.</returns>
-		/// <exception cref="ArgumentNullException">Thrown if any of the input parameters is null.</exception>
-		public static IEnumerable<TResult> JoinInBatches<TLeft, TRight, TResult>(
-			this IEnumerable<TLeft> leftSource,
-			Repository<TRight> rightRepository,
-			Func<TLeft, ApiObjectReference<TRight>?> rightIdSelector,
-			Func<TLeft, TRight, TResult> resultSelector,
-			int batchSize = 250)
-			where TRight : ApiObject<TRight>
-		{
-			if (leftSource == null)
-			{
-				throw new ArgumentNullException(nameof(leftSource));
-			}
-
-			if (rightRepository == null)
-			{
-				throw new ArgumentNullException(nameof(rightRepository));
-			}
-
-			if (rightIdSelector == null)
-			{
-				throw new ArgumentNullException(nameof(rightIdSelector));
-			}
-
-			if (resultSelector == null)
-			{
-				throw new ArgumentNullException(nameof(resultSelector));
-			}
-
-			return leftSource
-				.Batch(batchSize)
-				.Join(rightRepository, rightIdSelector, resultSelector)
-				.Flatten();
-		}
-
-		private static IEnumerable<IEnumerable<TResult>> JoinIterator<TLeft, TRight, TResult>(
-			IEnumerable<IEnumerable<TLeft>> leftSource,
-			Repository<TRight> rightRepository,
-			Func<TLeft, IEnumerable<ApiObjectReference<TRight>>> rightIdsSelector,
+		public static IEnumerable<IEnumerable<TResult>> JoinInBatches<TLeft, TRight, TKey, TResult>(
+			this IEnumerable<IEnumerable<TLeft>> leftSource,
+			Func<TLeft, IEnumerable<TKey>> rightKeysSelector,
+			Func<IEnumerable<TKey>, IDictionary<TKey, TRight>> retrieveRightItems,
 			Func<TLeft, IEnumerable<TRight>, TResult> resultSelector)
 			where TRight : ApiObject<TRight>
 		{
-			var cache = new Dictionary<Guid, TRight>();
+			if (leftSource == null)
+			{
+				throw new ArgumentNullException(nameof(leftSource));
+			}
+
+			if (rightKeysSelector == null)
+			{
+				throw new ArgumentNullException(nameof(rightKeysSelector));
+			}
+
+			if (retrieveRightItems == null)
+			{
+				throw new ArgumentNullException(nameof(retrieveRightItems));
+			}
+
+			if (resultSelector == null)
+			{
+				throw new ArgumentNullException(nameof(resultSelector));
+			}
+
+			return JoinIterator(
+				leftSource,
+				rightKeysSelector,
+				retrieveRightItems,
+				resultSelector);
+		}
+
+		/// <summary>
+		/// Joins each batch of items from the left source with related items retrieved by key using a single key selector and batched retrieval.
+		/// </summary>
+		/// <typeparam name="TLeft">The type of the elements in the left sequence.</typeparam>
+		/// <typeparam name="TRight">The type of the elements in the right sequence.</typeparam>
+		/// <typeparam name="TKey">The type of the key used to join left and right elements.</typeparam>
+		/// <typeparam name="TResult">The type of the result element.</typeparam>
+		/// <param name="leftSource">A sequence of pages containing the left elements.</param>
+		/// <param name="rightKeySelector">Function to select a single key from each left element.</param>
+		/// <param name="retrieveRightItems">Function that retrieves right elements by a batch of keys.</param>
+		/// <param name="resultSelector">Function to project the result from a left element and its matched right element.</param>
+		/// <returns>A sequence of result pages, where each page contains joined elements.</returns>
+		/// <exception cref="ArgumentNullException">Thrown if any of the input parameters is null.</exception>
+		public static IEnumerable<IEnumerable<TResult>> JoinInBatches<TLeft, TRight, TKey, TResult>(
+			this IEnumerable<IEnumerable<TLeft>> leftSource,
+			Func<TLeft, TKey> rightKeySelector,
+			Func<IEnumerable<TKey>, IDictionary<TKey, TRight>> retrieveRightItems,
+			Func<TLeft, TRight, TResult> resultSelector)
+			where TRight : ApiObject<TRight>
+		{
+			if (leftSource == null)
+			{
+				throw new ArgumentNullException(nameof(leftSource));
+			}
+
+			if (rightKeySelector == null)
+			{
+				throw new ArgumentNullException(nameof(rightKeySelector));
+			}
+
+			if (retrieveRightItems == null)
+			{
+				throw new ArgumentNullException(nameof(retrieveRightItems));
+			}
+
+			if (resultSelector == null)
+			{
+				throw new ArgumentNullException(nameof(resultSelector));
+			}
+
+			return JoinIterator(
+				leftSource,
+				left => new[] { rightKeySelector(left) },
+				retrieveRightItems,
+				(left, rights) => resultSelector(left, rights.FirstOrDefault()));
+		}
+
+		private static IEnumerable<IEnumerable<TResult>> JoinIterator<TLeft, TRight, TKey, TResult>(
+			IEnumerable<IEnumerable<TLeft>> leftSource,
+			Func<TLeft, IEnumerable<TKey>> rightKeysSelector,
+			Func<IEnumerable<TKey>, IDictionary<TKey, TRight>> retrieveRightItems,
+			Func<TLeft, IEnumerable<TRight>, TResult> resultSelector)
+			where TRight : ApiObject<TRight>
+		{
+			var cache = new Dictionary<TKey, TRight>();
 
 			foreach (var page in leftSource)
 			{
 				var pageCollection = page is ICollection<TLeft> collection ? collection : page.ToList();
 
-				var idsToRetrieve = pageCollection
-					.SelectMany(rightIdsSelector)
-					.Select(x => x.ID)
-					.Where(id => id != Guid.Empty && !cache.ContainsKey(id))
+				var keysToRetrieve = pageCollection
+					.SelectMany(rightKeysSelector)
+					.Where(key => !Equals(key, default) && !cache.ContainsKey(key))
 					.Distinct()
 					.ToList();
 
-				if (idsToRetrieve.Count > 0)
+				if (keysToRetrieve.Count > 0)
 				{
-					var retrieved = rightRepository.Read(idsToRetrieve);
+					var retrieved = retrieveRightItems(keysToRetrieve);
 
-					foreach (var id in idsToRetrieve)
+					foreach (var id in keysToRetrieve)
 					{
 						cache[id] = retrieved.TryGetValue(id, out var b) ? b : null;
 					}
@@ -223,62 +238,15 @@
 
 				foreach (var left in pageCollection)
 				{
-					var rightIds = rightIdsSelector(left)
-						.Where(x => x != null && x.ID != Guid.Empty)
-						.Select(x => x.ID);
+					var rightKeys = rightKeysSelector(left)
+						.Where(key => !Equals(key, default));
 
-					var rights = rightIds.Select(id => cache.TryGetValue(id, out var r) ? r : null)
+					var rights = rightKeys
+						.Select(id => cache.TryGetValue(id, out var r) ? r : null)
 						.Where(x => x != null)
 						.ToList();
 
 					result.Add(resultSelector(left, rights));
-				}
-
-				yield return result;
-			}
-		}
-
-		private static IEnumerable<IEnumerable<TResult>> JoinIterator<TLeft, TRight, TResult>(
-			IEnumerable<IEnumerable<TLeft>> leftSource,
-			Repository<TRight> rightRepository,
-			Func<TLeft, ApiObjectReference<TRight>?> rightIdSelector,
-			Func<TLeft, TRight, TResult> resultSelector)
-			where TRight : ApiObject<TRight>
-		{
-			var cache = new Dictionary<Guid, TRight>();
-
-			foreach (var page in leftSource)
-			{
-				var pageCollection = page is ICollection<TLeft> collection ? collection : page.ToList();
-
-				var idsToRetrieve = pageCollection
-					.Select(rightIdSelector)
-					.Where(x => x != null && x.Value.ID != Guid.Empty)
-					.Select(x => x.Value.ID)
-					.Where(id => !cache.ContainsKey(id))
-					.Distinct()
-					.ToList();
-
-				if (idsToRetrieve.Count > 0)
-				{
-					var retrieved = rightRepository.Read(idsToRetrieve);
-
-					foreach (var id in idsToRetrieve)
-					{
-						cache[id] = retrieved.TryGetValue(id, out var b) ? b : null;
-					}
-				}
-
-				var result = new List<TResult>();
-
-				foreach (var left in pageCollection)
-				{
-					var refObj = rightIdSelector(left);
-					var rightId = refObj?.ID ?? Guid.Empty;
-
-					cache.TryGetValue(rightId, out var right);
-
-					result.Add(resultSelector(left, right));
 				}
 
 				yield return result;
