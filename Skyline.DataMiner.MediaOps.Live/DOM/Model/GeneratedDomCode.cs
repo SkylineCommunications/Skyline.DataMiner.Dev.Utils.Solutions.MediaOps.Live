@@ -27,6 +27,20 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 			domInstance = new DomInstance { DomDefinitionId = id };
 		}
 
+		protected DomInstanceBase(DomDefinitionId definitionId, DomInstanceId instanceId)
+		{
+			if (definitionId == null)
+				throw new ArgumentNullException("definitionId");
+			if (instanceId == null)
+				throw new ArgumentNullException("instanceId");
+
+			domInstance = new DomInstance()
+			{
+				ID = instanceId,
+				DomDefinitionId = definitionId
+			};
+		}
+
 		protected DomInstanceBase(DomInstance domInstance)
 		{
 			if (domInstance == null)
@@ -760,6 +774,12 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			AfterLoad();
 		}
 
+		public EndpointInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.Endpoint, new DomInstanceId(id))
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="EndpointInstance"/> class using the specified <paramref name="domInstance"/> for initializing the object.
 		/// </summary>
@@ -854,6 +874,12 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			AfterLoad();
 		}
 
+		public VirtualSignalGroupInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup, new DomInstanceId(id))
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VirtualSignalGroupInstance"/> class using the specified <paramref name="domInstance"/> for initializing the object.
 		/// </summary>
@@ -934,6 +960,12 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// Initializes a new instance of the <see cref="TransportTypeInstance"/> class. Creates an empty <see cref="TransportTypeInstance"/> instance with default settings.
 		/// </summary>
 		public TransportTypeInstance() : base(SlcConnectivityManagementIds.Definitions.TransportType)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		public TransportTypeInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.TransportType, new DomInstanceId(id))
 		{
 			InitializeProperties();
 			AfterLoad();

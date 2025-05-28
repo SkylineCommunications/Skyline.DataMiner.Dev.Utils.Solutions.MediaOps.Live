@@ -23,6 +23,10 @@
 		{
 		}
 
+		public VirtualSignalGroup(Guid id) : this(new VirtualSignalGroupInstance(id))
+		{
+		}
+
 		internal VirtualSignalGroup(VirtualSignalGroupInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));

@@ -18,6 +18,10 @@
 			TransportType = Guid.NewGuid();
 		}
 
+		public Endpoint(Guid id) : this(new EndpointInstance(id))
+		{
+		}
+
 		internal Endpoint(EndpointInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
