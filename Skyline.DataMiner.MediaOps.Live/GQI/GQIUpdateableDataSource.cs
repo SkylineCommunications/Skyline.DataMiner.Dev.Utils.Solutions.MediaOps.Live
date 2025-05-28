@@ -30,6 +30,12 @@
 				// replace rows that were already updated in the meantime
 				foreach (var row in page.Rows)
 				{
+					if (_returnedRows.Contains(row.Key))
+					{
+						// Row already sent to the client, skip it
+						continue;
+					}
+
 					var rowToReturn = row;
 
 					if (_pendingRowUpdates.TryGetValue(row.Key, out var pending))
@@ -122,19 +128,14 @@
 
 			lock (_lock)
 			{
-				EnsureGqiUpdaterIsAvailable();
-
 				if (_returnedRows.Contains(row.Key))
 				{
-					_updater.UpdateRow(row);
+					UpdateRow(row);
 				}
 				else
 				{
-					_updater.AddRow(row);
-					_returnedRows.Add(row.Key);
+					AddRow(row);
 				}
-
-				_pendingRowUpdates.Remove(row.Key);
 			}
 		}
 
