@@ -10,8 +10,7 @@
 		private readonly object _lock = new object();
 
 		private readonly HashSet<string> _returnedRows = new HashSet<string>();
-		private readonly HashSet<string> _deletedRows = new HashSet<string>();
-		private readonly Dictionary<string, GQIRow> _updatedRows = new Dictionary<string, GQIRow>();
+		private readonly Dictionary<string, PendingRowUpdate> _pendingRowUpdates = new Dictionary<string, PendingRowUpdate>();
 
 		private IGQIUpdater _updater;
 
@@ -31,21 +30,18 @@
 				// replace rows that were already updated in the meantime
 				foreach (var row in page.Rows)
 				{
-					if (_deletedRows.Contains(row.Key))
-					{
-						continue;
-					}
+					var rowToReturn = row;
 
-					GQIRow rowToReturn;
+					if (_pendingRowUpdates.TryGetValue(row.Key, out var pending))
+					{
+						_pendingRowUpdates.Remove(row.Key);
 
-					if (_updatedRows.TryGetValue(row.Key, out var updatedRow))
-					{
-						rowToReturn = updatedRow;
-						_updatedRows.Remove(row.Key);
-					}
-					else
-					{
-						rowToReturn = row;
+						if (pending.Type == PendingUpdateType.Remove)
+						{
+							continue; // Deleted
+						}
+
+						rowToReturn = pending.Row;
 					}
 
 					newRows.Add(rowToReturn);
@@ -92,8 +88,7 @@
 					_returnedRows.Add(row.Key);
 				}
 
-				_updatedRows.Remove(row.Key);
-				_deletedRows.Remove(row.Key);
+				_pendingRowUpdates.Remove(row.Key);
 			}
 		}
 
@@ -113,7 +108,7 @@
 				}
 				else
 				{
-					_updatedRows[row.Key] = row;
+					_pendingRowUpdates[row.Key] = new PendingRowUpdate(PendingUpdateType.Update, row);
 				}
 			}
 		}
@@ -139,8 +134,7 @@
 					_returnedRows.Add(row.Key);
 				}
 
-				_updatedRows.Remove(row.Key);
-				_deletedRows.Remove(row.Key);
+				_pendingRowUpdates.Remove(row.Key);
 			}
 		}
 
@@ -162,8 +156,7 @@
 				}
 				else
 				{
-					_updatedRows.Remove(rowKey);
-					_deletedRows.Add(rowKey);
+					_pendingRowUpdates[rowKey] = new PendingRowUpdate(PendingUpdateType.Remove);
 				}
 			}
 		}
@@ -173,6 +166,25 @@
 			if (_updater == null)
 			{
 				throw new InvalidOperationException($"{nameof(OnStartUpdates)} wasn't called yet (updater is not available)");
+			}
+		}
+
+		private enum PendingUpdateType
+		{
+			Update,
+			Remove,
+		}
+
+		private readonly struct PendingRowUpdate
+		{
+			public PendingUpdateType Type { get; }
+
+			public GQIRow Row { get; }
+
+			public PendingRowUpdate(PendingUpdateType type, GQIRow row = null)
+			{
+				Type = type;
+				Row = row;
 			}
 		}
 	}
