@@ -17,7 +17,7 @@
 		{
 		}
 
-		public TransportType(Guid id) : this(new DomInstance { ID = new DomInstanceId(id), DomDefinitionId = DomDefinition })
+		public TransportType(Guid id) : this(new TransportTypeInstance(id))
 		{
 		}
 
