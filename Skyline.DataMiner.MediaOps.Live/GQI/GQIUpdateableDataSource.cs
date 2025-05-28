@@ -152,8 +152,6 @@
 				{
 					EnsureGqiUpdaterIsAvailable();
 					_updater.RemoveRow(rowKey);
-
-					_returnedRows.Remove(rowKey);
 				}
 				else
 				{
