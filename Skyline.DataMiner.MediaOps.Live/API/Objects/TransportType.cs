@@ -17,6 +17,10 @@
 		{
 		}
 
+		public TransportType(Guid id) : this(new DomInstance { ID = new DomInstanceId(id), DomDefinitionId = DomDefinition })
+		{
+		}
+
 		internal TransportType(TransportTypeInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
@@ -24,16 +28,6 @@
 
 		internal TransportType(DomInstance domInstance) : this(new TransportTypeInstance(domInstance))
 		{
-		}
-
-		internal TransportType(Guid id, string name) : this(new DomInstance { ID = new DomInstanceId(id), DomDefinitionId = DomDefinition })
-		{
-			if (String.IsNullOrWhiteSpace(name))
-			{
-				throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
-			}
-
-			Name = name;
 		}
 
 		internal static DomDefinitionId DomDefinition => SlcConnectivityManagementIds.Definitions.TransportType;
