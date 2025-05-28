@@ -37,9 +37,9 @@
 					}
 
 					if (rowInfo.IsSentToClient ||
-						rowInfo.LastUpdateType == UpdateType.Add ||
 						rowInfo.LastUpdateType == UpdateType.Remove)
 					{
+						// If the row was already sent to the client or removed, skip it
 						continue;
 					}
 
