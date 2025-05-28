@@ -189,7 +189,7 @@
 			Remove,
 		}
 
-		private class RowInfo
+		private sealed class RowInfo
 		{
 			public string Key { get; }
 
@@ -202,6 +202,8 @@
 			public RowInfo(string key)
 			{
 				Key = key ?? throw new ArgumentNullException(nameof(key));
+
+				LastUpdateType = UpdateType.None;
 			}
 		}
 	}
