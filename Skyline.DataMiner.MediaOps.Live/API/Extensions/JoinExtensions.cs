@@ -209,7 +209,7 @@
 			IEnumerable<IEnumerable<TLeft>> leftSource,
 			Func<TLeft, IEnumerable<TKey>> rightKeysSelector,
 			Func<IEnumerable<TKey>, IDictionary<TKey, TRight>> retrieveRightItems,
-			Func<TLeft, IEnumerable<TRight>, TResult> resultSelector)
+			Func<TLeft, ICollection<TRight>, TResult> resultSelector)
 			where TRight : ApiObject<TRight>
 		{
 			var cache = new Dictionary<TKey, TRight>();

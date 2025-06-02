@@ -131,6 +131,17 @@
 		}
 
 		[TestMethod]
+		public void MediaOps_LiveApi_Tests_DeleteAll()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var allVirtualSignalGroups = api.VirtualSignalGroups.ReadAll().ToList();
+			api.VirtualSignalGroups.Delete(allVirtualSignalGroups);
+
+			Assert.AreEqual(0, api.VirtualSignalGroups.CountAll());
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_CreateDelete()
 		{
 			var api = new MediaOpsLiveApiMock();
