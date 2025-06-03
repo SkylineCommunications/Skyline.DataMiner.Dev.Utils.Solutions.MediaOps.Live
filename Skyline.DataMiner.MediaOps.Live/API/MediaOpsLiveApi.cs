@@ -3,39 +3,31 @@
 	using System;
 	using System.Linq;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
-	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	public class MediaOpsLiveApi
 	{
-		public MediaOpsLiveApi(Func<DMSMessage[], DMSMessage[]> messageHandler)
+		public MediaOpsLiveApi(IConnection connection)
 		{
-			MessageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
-			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(messageHandler);
+			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
-			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper);
-			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper);
-			Levels = new LevelRepository(SlcConnectivityManagementHelper);
-			Categories = new CategoryRepository(SlcConnectivityManagementHelper);
-			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
-			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
+			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
+
+			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper, connection);
+			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper, connection);
+			Levels = new LevelRepository(SlcConnectivityManagementHelper, connection);
+			Categories = new CategoryRepository(SlcConnectivityManagementHelper, connection);
+			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper, connection);
+			Connections = new ConnectionRepository(SlcConnectivityManagementHelper, connection);
 		}
 
-		public MediaOpsLiveApi(IEngine engine) : this(engine.SendSLNetMessages)
-		{
-			if (engine == null)
-			{
-				throw new ArgumentNullException(nameof(engine));
-			}
-		}
-
-		internal Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
+		protected IConnection Connection { get; }
 
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
@@ -53,7 +45,7 @@
 
 		public bool IsInstalled()
 		{
-			var moduleSettingsHelper = new ModuleSettingsHelper(MessageHandler);
+			var moduleSettingsHelper = new ModuleSettingsHelper(Connection.HandleMessages);
 
 			var filter = ModuleSettingsExposers.ModuleId.Equal(SlcConnectivityManagementIds.ModuleId);
 			var count = moduleSettingsHelper.ModuleSettings.Count(filter);

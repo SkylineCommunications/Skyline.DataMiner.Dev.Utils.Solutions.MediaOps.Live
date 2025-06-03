@@ -39,7 +39,7 @@
 			try
 			{
 				var sb = new StringBuilder();
-				sb.Append($"Connection metrics: ");
+				sb.Append($"ApiConnection metrics: ");
 				sb.Append($"{_connectionMetrics.NumberOfRequests} requests, ");
 				sb.Append($"{_connectionMetrics.NumberOfDomRequests} DOM requests, ");
 				sb.Append($"{_connectionMetrics.NumberOfDomInstancesRetrieved} DOM instances, ");

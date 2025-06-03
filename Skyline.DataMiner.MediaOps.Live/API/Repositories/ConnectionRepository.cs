@@ -10,20 +10,23 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	using SLDataGateway.API.Types.Querying;
 
-	public class ConnectionRepository : Repository<Connection>
+	using ApiConnection = Skyline.DataMiner.MediaOps.Live.API.Objects.Connection;
+
+	public class ConnectionRepository : Repository<ApiConnection>
 	{
-		internal ConnectionRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal ConnectionRepository(SlcConnectivityManagementHelper helper, IConnection connection) : base(helper, connection)
 		{
 		}
 
-		protected internal override DomDefinitionId DomDefinition => Connection.DomDefinition;
+		protected internal override DomDefinitionId DomDefinition => ApiConnection.DomDefinition;
 
-		public IDictionary<Guid, Connection> GetByDestinationIds(IEnumerable<Guid> destinationEndpointIds)
+		public IDictionary<Guid, ApiConnection> GetByDestinationIds(IEnumerable<Guid> destinationEndpointIds)
 		{
 			if (destinationEndpointIds == null)
 			{
@@ -42,7 +45,7 @@
 				.SafeToDictionary(x => (Guid)x.Destination);
 		}
 
-		public IDictionary<Guid, Connection> GetByDestinations(IEnumerable<Endpoint> destinationEndpoints)
+		public IDictionary<Guid, ApiConnection> GetByDestinations(IEnumerable<Endpoint> destinationEndpoints)
 		{
 			if (destinationEndpoints == null)
 			{
@@ -52,12 +55,12 @@
 			return GetByDestinationIds(destinationEndpoints.Select(x => x.ID));
 		}
 
-		public Connection GetByDestinationId(Guid destinationEndpointId)
+		public ApiConnection GetByDestinationId(Guid destinationEndpointId)
 		{
 			return GetByDestinationIds(new[] { destinationEndpointId }).Values.SingleOrDefault();
 		}
 
-		public Connection GetByDestination(Endpoint destinationEndpoint)
+		public ApiConnection GetByDestination(Endpoint destinationEndpoint)
 		{
 			if (destinationEndpoint == null)
 			{
@@ -67,12 +70,12 @@
 			return GetByDestinationId(destinationEndpoint.ID);
 		}
 
-		protected override Connection CreateInstance(DomInstance domInstance)
+		protected internal override ApiConnection CreateInstance(DomInstance domInstance)
 		{
-			return new Connection(domInstance);
+			return new ApiConnection(domInstance);
 		}
 
-		protected override void ValidateBeforeSave(ICollection<Connection> instances)
+		protected override void ValidateBeforeSave(ICollection<ApiConnection> instances)
 		{
 			foreach (var instance in instances)
 			{
@@ -80,7 +83,7 @@
 			}
 		}
 
-		protected override void ValidateBeforeDelete(ICollection<Connection> instances)
+		protected override void ValidateBeforeDelete(ICollection<ApiConnection> instances)
 		{
 			// no checks needed
 		}
@@ -89,13 +92,13 @@
 		{
 			switch (fieldName)
 			{
-				case nameof(Connection.Destination):
+				case nameof(ApiConnection.Destination):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination), comparer, ApiObjectReference<Endpoint>.Convert(value));
-				case nameof(Connection.IsConnected):
+				case nameof(ApiConnection.IsConnected):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.IsConnected), comparer, (bool)value);
-				case nameof(Connection.ConnectedSource):
+				case nameof(ApiConnection.ConnectedSource):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource), comparer, ApiObjectReference<Endpoint>.Convert(value));
-				case nameof(Connection.PendingConnectedSource):
+				case nameof(ApiConnection.PendingConnectedSource):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.PendingConnectedSource), comparer, ApiObjectReference<Endpoint>.Convert(value));
 			}
 
@@ -106,13 +109,13 @@
 		{
 			switch (fieldName)
 			{
-				case nameof(Connection.Destination):
+				case nameof(ApiConnection.Destination):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination), sortOrder, naturalSort);
-				case nameof(Connection.IsConnected):
+				case nameof(ApiConnection.IsConnected):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.IsConnected), sortOrder, naturalSort);
-				case nameof(Connection.ConnectedSource):
+				case nameof(ApiConnection.ConnectedSource):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource), sortOrder, naturalSort);
-				case nameof(Connection.PendingConnectedSource):
+				case nameof(ApiConnection.PendingConnectedSource):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.PendingConnectedSource), sortOrder, naturalSort);
 			}
 

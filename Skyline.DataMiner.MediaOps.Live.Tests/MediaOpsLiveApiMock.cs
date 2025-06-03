@@ -10,14 +10,12 @@
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{
 		public MediaOpsLiveApiMock(bool installDomModules = true)
-			: base(CreateMessageHandler(out var messageHandler).HandleMessages)
+			: base(new DomConnectionMock())
 		{
-			MessageHandler = messageHandler;
-
 			if (installDomModules)
 			{
 				var slcConnectivityManagementDomModule = new SlcConnectivityManagementDomModule();
-				DomModuleInstaller.Install(MessageHandler.HandleMessages, slcConnectivityManagementDomModule, x => { });
+				DomModuleInstaller.Install(Connection.HandleMessages, slcConnectivityManagementDomModule, x => { });
 			}
 
 			var category = new Category { Name = "Category 1" };
@@ -113,14 +111,6 @@
 				};
 				Connections.CreateOrUpdate([connection1, connection2]);
 			}
-		}
-
-		public DomSLNetMessageHandler MessageHandler { get; }
-
-		private static DomSLNetMessageHandler CreateMessageHandler(out DomSLNetMessageHandler handler)
-		{
-			handler = new DomSLNetMessageHandler();
-			return handler;
 		}
 	}
 }

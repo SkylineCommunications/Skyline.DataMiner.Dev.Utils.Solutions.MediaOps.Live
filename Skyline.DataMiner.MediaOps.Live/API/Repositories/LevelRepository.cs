@@ -9,6 +9,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -16,13 +17,13 @@
 
 	public class LevelRepository : Repository<Level>
 	{
-		internal LevelRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal LevelRepository(SlcConnectivityManagementHelper helper, IConnection connection) : base(helper, connection)
 		{
 		}
 
 		protected internal override DomDefinitionId DomDefinition => Level.DomDefinition;
 
-		protected override Level CreateInstance(DomInstance domInstance)
+		protected internal override Level CreateInstance(DomInstance domInstance)
 		{
 			return new Level(domInstance);
 		}

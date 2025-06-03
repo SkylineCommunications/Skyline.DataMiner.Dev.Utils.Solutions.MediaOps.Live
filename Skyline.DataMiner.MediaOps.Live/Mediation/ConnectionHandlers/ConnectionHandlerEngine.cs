@@ -17,7 +17,7 @@
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
-			Api = new MediaOpsLiveApi(engine);
+			Api = new MediaOpsLiveApi(engine.GetUserConnection());
 		}
 
 		public IEngine Engine { get; }

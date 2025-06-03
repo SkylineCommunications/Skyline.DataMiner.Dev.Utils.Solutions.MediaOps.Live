@@ -9,6 +9,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -16,13 +17,13 @@
 
 	public class CategoryRepository : Repository<Category>
 	{
-		internal CategoryRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal CategoryRepository(SlcConnectivityManagementHelper helper, IConnection connection) : base(helper, connection)
 		{
 		}
 
 		protected internal override DomDefinitionId DomDefinition => Category.DomDefinition;
 
-		protected override Category CreateInstance(DomInstance domInstance)
+		protected internal override Category CreateInstance(DomInstance domInstance)
 		{
 			return new Category(domInstance);
 		}

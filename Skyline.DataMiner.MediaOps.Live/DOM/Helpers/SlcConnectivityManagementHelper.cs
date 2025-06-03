@@ -4,21 +4,16 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
-	public class SlcConnectivityManagementHelper : DomModuleHelperBase
+	internal class SlcConnectivityManagementHelper : DomModuleHelperBase
 	{
-		public SlcConnectivityManagementHelper(Func<DMSMessage[], DMSMessage[]> messageHandler) : base(SlcConnectivityManagementIds.ModuleId, messageHandler)
-		{
-		}
-
-		public SlcConnectivityManagementHelper(IEngine engine) : base(SlcConnectivityManagementIds.ModuleId, engine)
+		public SlcConnectivityManagementHelper(IConnection connection) : base(SlcConnectivityManagementIds.ModuleId, connection)
 		{
 		}
 

@@ -6,9 +6,11 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Querying;
+	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Utils.DOM.Extensions;
@@ -22,18 +24,21 @@
 
 		private readonly ApiRepositoryQueryProvider<T> _queryProvider;
 
-		protected Repository(DomHelper helper)
+		protected Repository(DomHelper helper, IConnection connection)
 		{
 			Helper = helper ?? throw new ArgumentNullException(nameof(helper));
+			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
 			_queryProvider = new ApiRepositoryQueryProvider<T>(this);
 		}
 
-		protected DomHelper Helper { get; }
+		protected internal DomHelper Helper { get; }
+
+		protected internal IConnection Connection { get; }
 
 		protected internal abstract DomDefinitionId DomDefinition { get; }
 
-		protected abstract T CreateInstance(DomInstance domInstance);
+		protected internal abstract T CreateInstance(DomInstance domInstance);
 
 		protected abstract void ValidateBeforeSave(ICollection<T> instances);
 
@@ -362,6 +367,52 @@
 		public virtual IQueryable<T> Query()
 		{
 			return new ApiRepositoryQuery<T>(_queryProvider);
+		}
+
+		/// <summary>
+		/// Subscribes to all items in the repository.
+		/// </summary>
+		/// <returns>
+		/// A <see cref="RepositorySubscription{T}"/> representing the subscription.
+		/// </returns>
+		/// <remarks>
+		/// <b>Warning:</b> The returned <see cref="RepositorySubscription{T}"/> must be disposed when no longer needed
+		/// to avoid resource leaks.
+		/// </remarks>
+		public RepositorySubscription<T> Subscribe()
+		{
+			var filter = new TRUEFilterElement<T>();
+
+			return Subscribe(filter);
+		}
+
+		/// <summary>
+		/// Subscribes to the repository using the specified filter.
+		/// </summary>
+		/// <param name="filter">
+		/// The <see cref="FilterElement{T}"/> used to determine which items to include in the subscription.
+		/// </param>
+		/// <returns>
+		/// A <see cref="RepositorySubscription{T}"/> representing the subscription with the specified filter.
+		/// </returns>
+		/// <exception cref="ArgumentNullException">
+		/// Thrown if the <paramref name="filter"/> is <c>null</c>.
+		/// </exception>
+		/// <remarks>
+		/// <b>Warning:</b> The returned <see cref="RepositorySubscription{T}"/> must be disposed when no longer needed
+		/// to avoid resource leaks.
+		/// </remarks>
+		public RepositorySubscription<T> Subscribe(FilterElement<T> filter)
+		{
+			if (filter is null)
+			{
+				throw new ArgumentNullException(nameof(filter));
+			}
+
+			var domFilter = TranslateFullFilter(filter);
+			domFilter = AddDomDefinitionFilter(domFilter);
+
+			return new RepositorySubscription<T>(this, domFilter);
 		}
 
 		protected internal virtual void CreateWithoutValidation(T instance)
