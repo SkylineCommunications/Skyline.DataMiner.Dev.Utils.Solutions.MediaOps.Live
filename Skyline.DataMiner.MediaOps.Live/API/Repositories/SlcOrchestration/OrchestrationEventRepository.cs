@@ -4,35 +4,36 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
-	using System.Threading.Tasks;
 
-	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
-	using Skyline.DataMiner.Net.ToolsSpace.Collections;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
 
 	using SLDataGateway.API.Types.Querying;
 
 	using Comparer = Skyline.DataMiner.Net.Messages.SLDataGateway.Comparer;
-	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Connection;
 
+	/// <summary>
+	/// Exposes API methods to interact with and orchestrate MediaOps Live Orchestration events.
+	/// </summary>
 	public class OrchestrationEventRepository : Repository<OrchestrationEvent>
 	{
 		private readonly MediaOpsLiveApi _api;
 		private readonly ConfigurationRepository _configurationHelper;
 		private readonly OrchestrationScheduler _scheduler;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationEventRepository"/> class.
+		/// </summary>
+		/// <param name="helper">Orchestration helper.</param>
+		/// <param name="api">Api that calls the repository.</param>
 		public OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper)
 		{
 			_configurationHelper = new ConfigurationRepository(helper);
@@ -168,230 +169,15 @@
 		/// <param name="orchestrationIds">The IDs of the events to execute.</param>
 		public void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds)
 		{
-			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-ExecuteEventNow", performanceLogFilename);
+			var eventExecutionHelper = new OrchestrationEventExecutionHelper(_api);
 
-			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
-			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
+			IEnumerable<Guid> eventIds = orchestrationIds.ToList();
+			if (!eventIds.Any())
 			{
-				List<OrchestrationEventConfiguration> orchestrationEvents = GetEventConfigurationsById(orchestrationIds, performanceTracker).ToList();
-
-				if (!orchestrationEvents.Any())
-				{
-					return;
-				}
-
-				ExecuteEvents(orchestrationEvents, performanceTracker);
+				return;
 			}
-		}
 
-		private void ExecuteEvents(List<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEventConfigurations)
-				{
-					orchestrationEvent.InternalSetState(SlcOrchestrationIds.Enums.EventState.Configuring);
-				}
-
-				SaveEventConfigurations(orchestrationEventConfigurations, performanceTracker);
-
-				List<Task> tasks = new List<Task>();
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(e => e.HasScripts()))
-				{
-					Task nodeOrchestrationTask = Task.Factory.StartNew(
-						() =>
-						{
-							ExecuteEventConfigurationScripts(orchestrationEventConfiguration, performanceTracker);
-							ExecuteConnections(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
-						},
-						TaskCreationOptions.LongRunning);
-
-					tasks.Add(nodeOrchestrationTask);
-				}
-
-				ExecuteConnections(orchestrationEventConfigurations.Where(e => !e.HasScripts()), performanceTracker);
-
-				Task.WaitAll(tasks.ToArray());
-
-				SaveEventConfigurations(orchestrationEventConfigurations, performanceTracker);
-			}
-		}
-
-		private void ExecuteEventConfigurationScripts(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				if (!String.IsNullOrEmpty(orchestrationEventConfiguration.GlobalOrchestrationScript))
-				{
-					ExecuteGlobalConfiguration(orchestrationEventConfiguration, performanceTracker);
-					return;
-				}
-
-				ExecuteNodesConfiguration(orchestrationEventConfiguration, performanceTracker);
-			}
-		}
-
-		private void ExecuteConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
-		{
-			using (new PerformanceTracker(performanceTracker))
-			{
-				List<Connection> allConnections = new List<Connection>();
-				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = orchestrationEventConfigurations
-					.Where(orchestrationEventConfiguration => orchestrationEventConfiguration?.Configuration?.Connections != null && orchestrationEventConfiguration.Configuration.Connections.Any()).ToList();
-
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurationsWithConnections)
-				{
-					allConnections.AddRange(orchestrationEventConfiguration.Configuration.Connections);
-				}
-
-				IEnumerable<IGrouping<Guid, Connection>> groupedByDestination = allConnections.GroupBy(conn => conn.DestinationVsg.Value.ID);
-				IEnumerable<Guid> destinationsWithConflicts = groupedByDestination
-					.Where(group => group
-						.Select(conn => conn.SourceVsg.Value.ID).Distinct().Count() > 1)
-					.Select(group => group.Key);
-
-				List<Connection> connectionsToConfigure = new List<Connection>();
-				foreach (OrchestrationEventConfiguration eventConfigurationsWithConnection in eventConfigurationsWithConnections)
-				{
-					List<Guid> conflictedConnectionIdsInEvent = eventConfigurationsWithConnection.Configuration.Connections
-						.Where(conn => destinationsWithConflicts.Contains(conn.DestinationVsg.Value.ID))
-						.Select(conn => conn.DestinationVsg.Value.ID).ToList();
-
-					if (conflictedConnectionIdsInEvent.Any())
-					{
-						eventConfigurationsWithConnection.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-						eventConfigurationsWithConnection.FailureInfo +=
-							$"\nFollowing Destination VSG(s) have a conflicting configuration for another event at the same time: {String.Join("/", conflictedConnectionIdsInEvent)}";
-						continue;
-					}
-
-					connectionsToConfigure.AddRange(eventConfigurationsWithConnection.Configuration.Connections);
-					eventConfigurationsWithConnection.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
-				}
-
-				ExecuteTakeForConnections(connectionsToConfigure, performanceTracker);
-			}
-		}
-
-		private void ExecuteTakeForConnections(List<Connection> connections, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				if (!connections.Any())
-				{
-					return;
-				}
-
-				TakeHelper takeHelper = new TakeHelper(_api);
-
-				ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
-
-				List<VsgConnectionRequest> requests = new List<VsgConnectionRequest>();
-
-				HashSet<Guid> allInvolvedVsgIds = new HashSet<Guid>();
-				foreach (Connection connection in connections)
-				{
-					allInvolvedVsgIds.Add(connection.SourceVsg.Value.ID);
-					allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
-				}
-
-				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
-
-				foreach (Connection connection in connections)
-				{
-					VirtualSignalGroup srcVirtualSignalGroup = allInvolvedVsgs[connection.SourceVsg.Value.ID];
-					VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
-
-					requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup));
-				}
-
-				takeHelper.Take(_api.Engine, requests, performanceTracker.Collector);
-			}
-		}
-
-		private void ExecuteNodesConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
-				List<Task> nodeOrchestrationTasks = new List<Task>();
-
-				foreach (NodeConfiguration nodeConfiguration in orchestrationEventConfiguration.Configuration.NodeConfigurations)
-				{
-					if (String.IsNullOrEmpty(nodeConfiguration.OrchestrationScriptName))
-					{
-						continue;
-					}
-
-					Task nodeOrchestrationTask = Task.Factory.StartNew(
-						() =>
-						{
-							if (!TryExecuteOrchestrationScript(nodeConfiguration.OrchestrationScriptName, nodeConfiguration.OrchestrationScriptArguments, performanceTracker,
-								    out string[] errorMessages))
-							{
-								errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}");
-								orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-							}
-						},
-						TaskCreationOptions.LongRunning);
-
-					nodeOrchestrationTasks.Add(nodeOrchestrationTask);
-				}
-
-				Task.WaitAll(nodeOrchestrationTasks.ToArray());
-
-				if (orchestrationEventConfiguration.EventState == SlcOrchestrationIds.Enums.EventState.Failed)
-				{
-					orchestrationEventConfiguration.FailureInfo += String.Join("\n", errors);
-					return;
-				}
-
-				orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
-			}
-		}
-
-		private void ExecuteGlobalConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				if (!TryExecuteOrchestrationScript(orchestrationEventConfiguration.GlobalOrchestrationScript, orchestrationEventConfiguration.GlobalOrchestrationScriptArguments, performanceTracker,
-					    out string[] errorMessages))
-				{
-					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", errorMessages)}";
-					orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-					return;
-				}
-
-				orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
-			}
-		}
-
-		private bool TryExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, PerformanceTracker performanceTracker, out string[] errorMessages)
-		{
-			using (new PerformanceTracker(performanceTracker))
-			{
-				IDmsAutomationScript script = _api.Dms.GetScript(scriptName);
-				List<DmsAutomationScriptParamValue> scriptParams = arguments
-					.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
-					.ToList();
-
-				DmsAutomationScriptRunOptions scriptOptions = new DmsAutomationScriptRunOptions
-				{
-					ExtendedErrorInfo = true,
-				};
-
-				DmsAutomationScriptResult scriptResult = script.Execute(scriptParams, new List<DmsAutomationScriptDummyValue>(), scriptOptions);
-
-				if (scriptResult.HadError)
-				{
-					errorMessages = scriptResult.ErrorMessages;
-					return false;
-				}
-
-				errorMessages = Array.Empty<string>();
-				return true;
-			}
+			eventExecutionHelper.ExecuteEventsNow(eventIds);
 		}
 
 		/// <summary>
@@ -426,7 +212,7 @@
 		///     value.
 		/// </returns>
 		/// <exception cref="ArgumentException">Job reference can not be null or whitespace.</exception>
-		internal IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(string jobReference, PerformanceTracker performanceTracker)
+		private IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(string jobReference, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -535,7 +321,7 @@
 		///     match is found.
 		/// </returns>
 		/// <exception cref="ArgumentException">Event ID can not be an empty Guid.</exception>
-		private IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsById(IEnumerable<Guid> eventIds, PerformanceTracker performanceTracker)
+		internal IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsById(IEnumerable<Guid> eventIds, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -628,7 +414,7 @@
 		/// <param name="events">A list of configured or updated event configurations.</param>
 		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>Returns a list of all successfully saved <see cref="OrchestrationEventConfiguration" /> objects.</returns>
-		private IEnumerable<OrchestrationEventConfiguration> SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events, PerformanceTracker performanceTracker)
+		internal IEnumerable<OrchestrationEventConfiguration> SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
@@ -712,19 +498,16 @@
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime), comparer, (double)value);
 
 				case nameof(OrchestrationEvent.ReservationInstance):
-					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance), comparer,
-						(string)value);
+					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance), comparer, (string)value);
 
 				case nameof(OrchestrationEvent.FailureInfo):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.FailureInfo), comparer, (string)value);
 
 				case nameof(OrchestrationEvent.GlobalOrchestrationScript):
-					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptName), comparer,
-						(string)value);
+					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptName), comparer, (string)value);
 
 				case nameof(OrchestrationEvent.JobReference):
-					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference), comparer,
-						Convert.ToString(value));
+					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference), comparer, Convert.ToString(value));
 			}
 
 			return base.CreateFilter(fieldName, comparer, value);
@@ -753,8 +536,7 @@
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.FailureInfo), sortOrder, naturalSort);
 
 				case nameof(OrchestrationEvent.GlobalOrchestrationScript):
-					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptName), sortOrder,
-						naturalSort);
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptName), sortOrder, naturalSort);
 
 				case nameof(OrchestrationEvent.JobReference):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference), sortOrder, naturalSort);

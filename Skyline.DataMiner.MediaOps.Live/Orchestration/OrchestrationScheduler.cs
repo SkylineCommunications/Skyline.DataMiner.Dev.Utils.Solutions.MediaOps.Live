@@ -3,7 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using System.Text;
+
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
@@ -20,14 +20,12 @@
 		private readonly IConnection _connection;
 
 		private readonly HashSet<OrchestrationSchedulerTask> _internalTaskList;
-		private StringBuilder sb;
 
 		public OrchestrationScheduler(IDms dms, IConnection connection)
 		{
 			_dms = dms ?? throw new ArgumentNullException(nameof(dms));
 			_connection = connection;
 			_internalTaskList = new HashSet<OrchestrationSchedulerTask>();
-			sb = new StringBuilder();
 
 			LoadInternalTaskList();
 		}
@@ -55,11 +53,9 @@
 			foreach (object taskObject in getSchedulerTasksResponse.Tasks)
 			{
 				SchedulerTask task = (SchedulerTask)taskObject;
-				sb.AppendLine("TASK" + task.TaskName);
 
 				if (task.Description != OrchestrationSchedulerTask.OrchestrationTaskNaming)
 				{
-					sb.AppendLine("Continue 1");
 					continue;
 				}
 
@@ -68,7 +64,6 @@
 
 				if (eventOrchestrationTask == null)
 				{
-					sb.AppendLine("Continue 2");
 					continue;
 				}
 
@@ -79,8 +74,6 @@
 
 				_internalTaskList.Add(existingTask);
 			}
-
-			sb.AppendLine("TASK" + JsonConvert.SerializeObject(_internalTaskList));
 		}
 
 		/// <summary>

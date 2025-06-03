@@ -9,6 +9,9 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 
+	/// <summary>
+	/// Configuration information for an orchestration event.
+	/// </summary>
 	public class Configuration : ApiObject<Configuration>
 	{
 		private readonly ConfigurationInstance _domInstance;
@@ -16,6 +19,9 @@
 		private readonly WrappedList<NodeConfigurationSection, NodeConfiguration> _wrappedNodeConfigurations;
 		private readonly WrappedList<ConnectionSection, Connection> _wrappedConnections;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="Configuration"/> class.
+		/// </summary>
 		public Configuration() : this(new ConfigurationInstance())
 		{
 		}
@@ -41,6 +47,9 @@
 
 		internal static DomDefinitionId DomDefinition => SlcOrchestrationIds.Definitions.Configuration;
 
+		/// <summary>
+		/// Contains information for all nodes that need to be configured.
+		/// </summary>
 		public IList<NodeConfiguration> NodeConfigurations
 		{
 			get
@@ -55,6 +64,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Contains information about the way nodes need to be connected.
+		/// </summary>
 		public IList<Connection> Connections
 		{
 			get

@@ -6,14 +6,26 @@
 
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
-
+	/// <summary>
+	/// Contains information about scheduler orchestration tasks.
+	/// </summary>
 	public class OrchestrationSchedulerTask
 	{
+		/// <summary>
+		/// The name of the main MediaOps Live Orchestration script.
+		/// </summary>
 		public static readonly string OrchestrationScriptName = "ORC-AS-EventOrchestration";
+
+		/// <summary>
+		/// Default naming for the orchestration tasks.
+		/// </summary>
 		public static readonly string OrchestrationTaskNaming = "MediaOps Live Orchestration Event";
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationSchedulerTask"/> class.
+		/// </summary>
+		/// <param name="dateTimeOffset">Timestamp for the task.</param>
+		/// <param name="orchestrationEventIds">IDs of the events to be orchestrated by the task.</param>
 		public OrchestrationSchedulerTask(DateTimeOffset dateTimeOffset, IEnumerable<Guid> orchestrationEventIds)
 		{
 			if (orchestrationEventIds == null)
@@ -30,17 +42,36 @@
 			}
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationSchedulerTask"/> class, with a known task ID.
+		/// </summary>
+		/// <param name="dateTimeOffset">Timestamp for the task.</param>
+		/// <param name="orchestrationEventIds">IDs of the events to be orchestrated by the task.</param>
+		/// <param name="taskId">The task ID.</param>
 		public OrchestrationSchedulerTask(DateTimeOffset dateTimeOffset, IEnumerable<Guid> orchestrationEventIds, ScheduledTaskId taskId) : this(dateTimeOffset, orchestrationEventIds)
 		{
 			ScheduledTaskId = taskId;
 		}
 
+		/// <summary>
+		/// Gets or sets Unique identifier of the scheduled task in the DataMiner system.
+		/// </summary>
 		public ScheduledTaskId ScheduledTaskId { get; set; }
 
+		/// <summary>
+		/// Gets the IDs of all events that need to orchestrated by the scheduled task.
+		/// </summary>
 		public List<Guid> OrchestrationEventIds { get; }
 
-		public DateTimeOffset DateTime { get;}
+		/// <summary>
+		/// Gets the time of the scheduled task.
+		/// </summary>
+		public DateTimeOffset DateTime { get; }
 
+		/// <summary>
+		/// Generates the full object array data needed to create or update a scheduled orchestration task via IDms Class Library methods.
+		/// </summary>
+		/// <returns>An object array contains all configuration needed to create a scheduled orchestration task.</returns>
 		public object[] GenerateSchedulerTaskData()
 		{
 			return new object[]
@@ -83,37 +114,6 @@
 				"CHECKSETS:FALSE",
 				"DEFER:TRUE",
 			};
-		}
-	}
-
-	/// <summary>
-	/// Simplified class to hold the scheduled task ID.
-	/// </summary>
-	public class ScheduledTaskId
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ScheduledTaskId"/> class.
-		/// </summary>
-		/// <param name="dmaId">DataMiner agent ID.</param>
-		/// <param name="taskId">Agent specific task ID.</param>
-		public ScheduledTaskId(int dmaId, int taskId)
-		{
-			DmaId = dmaId;
-			TaskId = taskId;
-		}
-
-		public int DmaId { get; }
-
-		public int TaskId { get; }
-
-		/// <summary>
-		/// Compares two <see cref="ScheduledTaskId"/> objects.
-		/// </summary>
-		/// <param name="obj">The object to compare with.</param>
-		/// <returns>true if equal, otherwise false.</returns>
-		public bool Equals(ScheduledTaskId obj)
-		{
-			return DmaId == obj.DmaId && TaskId == obj.TaskId;
 		}
 	}
 }

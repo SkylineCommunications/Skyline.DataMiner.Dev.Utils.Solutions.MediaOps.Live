@@ -7,9 +7,12 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 
+	/// <summary>
+	/// This type inherits the information from <see cref="OrchestrationEvent"/> and exposes the full event configuration.
+	/// </summary>
 	public class OrchestrationEventConfiguration : OrchestrationEvent
 	{
-		private readonly Configuration configuration;
+		private readonly Configuration _configuration;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEventConfiguration"/> class.
@@ -20,7 +23,7 @@
 
 		internal OrchestrationEventConfiguration(OrchestrationEventInstance domInstance, ConfigurationInstance configurationInstance) : base(domInstance: domInstance)
 		{
-			configuration = new Configuration(configurationInstance);
+			_configuration = new Configuration(configurationInstance);
 			ConfigurationReference = configurationInstance.ID.Id;
 		}
 
@@ -31,7 +34,7 @@
 		/// <summary>
 		/// Gets the configuration for this event.
 		/// </summary>
-		public Configuration Configuration => configuration;
+		public Configuration Configuration => _configuration;
 
 		/// <summary>
 		/// Gets or sets the script that will execute during the global orchestration step of the event.

@@ -119,19 +119,9 @@
 			List<NodeConfiguration> nodeConfigs = new List<NodeConfiguration>();
 			List<LevelMapping> levelMapping = new List<LevelMapping>
 			{
-				new LevelMapping
-				{
-					Destination = new Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Level
-					{
-						Name = "Destination",
-						Number = 1,
-					},
-					Source = new Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Level
-					{
-						Name = "Source",
-						Number = 1,
-					},
-				},
+				new(
+					new Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Level("Destination",1),
+					new Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Level("Source", 1)),
 			};
 
 			List<OrchestrationScriptArgument> scriptArguments = new List<OrchestrationScriptArgument>

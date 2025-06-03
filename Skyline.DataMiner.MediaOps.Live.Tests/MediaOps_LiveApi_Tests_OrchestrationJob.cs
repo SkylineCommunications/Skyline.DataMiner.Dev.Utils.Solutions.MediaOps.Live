@@ -8,14 +8,14 @@
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_OrchestrationJob
 	{
-		private static readonly MediaOpsLiveApi _api = new MediaOpsLiveApiMock();
+		private static readonly MediaOpsLiveApi Api = new MediaOpsLiveApiMock();
 
 		[TestMethod]
 		public void MediaOps_Live_Api_Tests_OrchestrationJob_CheckDeleteBeforeUpdateWithoutNodes()
 		{
 			var events = NoNodes_CreateEventInstance(2);
 
-			var job = _api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+			var job = Api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
 			job.OrchestrationEvents.AddRange(events);
 
 			var guids = job.OrchestrationEvents.Select(ev => ev.ID).ToList();
@@ -39,7 +39,7 @@
 		{
 			var events = WithNodes_CreateEventConfigurationInstances(2, 5);
 
-			var job = _api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			var job = Api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
 			job.OrchestrationEvents.AddRange(events);
 
 			var guids = job.OrchestrationEvents.Select(ev => ev.ID).ToList();
@@ -87,19 +87,7 @@
 			List<NodeConfiguration> nodeConfigs = [];
 			List<LevelMapping> levelMapping =
 			[
-				new()
-				{
-					Destination = new Level
-					{
-						Name = "Destination",
-						Number = 1,
-					},
-					Source = new Level
-					{
-						Name = "Source",
-						Number = 1,
-					},
-				},
+				new(new Level("Source", 1), new Level("Destination",1)),
 			];
 
 			List<OrchestrationScriptArgument> scriptArguments =

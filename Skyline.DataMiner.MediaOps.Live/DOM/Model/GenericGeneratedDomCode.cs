@@ -350,7 +350,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 		/// <summary>
 		/// Optional method that runs after the internal ToSection method runs.
 		/// </summary>
-		/// <param name="section">The section that was build by the internal ToSection.</param>
 		protected virtual void AfterToSection()
 		{
 		}

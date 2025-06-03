@@ -68,7 +68,10 @@
 					continue;
 				}
 
-				if (orchestrationEvent.JobReference != jobId) throw new InvalidOperationException("One of the job events is already part of another job");
+				if (orchestrationEvent.JobReference != jobId)
+				{
+					throw new InvalidOperationException("One of the job events is already part of another job");
+				}
 			}
 		}
 	}

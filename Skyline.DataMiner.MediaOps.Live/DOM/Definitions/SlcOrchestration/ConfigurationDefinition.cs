@@ -9,7 +9,6 @@
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel.Concatenation;
 	using Skyline.DataMiner.Net.Apps.Sections.SectionDefinitions;
-	using Skyline.DataMiner.Net.GenericEnums;
 	using Skyline.DataMiner.Net.Sections;
 
 	internal class ConfigurationDefinition : IDomDefinitionInfo

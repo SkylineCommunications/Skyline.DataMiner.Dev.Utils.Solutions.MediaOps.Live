@@ -141,7 +141,7 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the time at which the event will execute.
+		/// Gets or sets the planned time at which the event will execute.
 		/// </summary>
 		public DateTimeOffset? EventTime
 		{
@@ -161,6 +161,16 @@
 				_domInstance.OrchestrationEventInfo.EventTime = value?.UtcDateTime;
 			}
 		}
+
+		/// <summary>
+		/// Gets or sets the actual time at which the event has started.
+		/// </summary>
+		public DateTimeOffset? ActualStartTime { get; set; }
+
+		/// <summary>
+		/// Gets or sets the total duration of the orchestration.
+		/// </summary>
+		public DateTimeOffset? OrchestrationDuration { get; set; }
 
 		internal ApiObjectReference<Configuration>? ConfigurationReference
 		{

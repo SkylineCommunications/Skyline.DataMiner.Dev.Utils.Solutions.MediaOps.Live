@@ -637,8 +637,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		{
 			if (section.GetValue<String>(SlcOrchestrationIds.Sections.Connection.SourceNodeID) == null)
 				throw new InvalidOperationException("'SourceNodeID' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			if (section.GetValue<String>(SlcOrchestrationIds.Sections.Connection.LevelMapping) == null)
-				throw new InvalidOperationException("'LevelMapping' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			if (section.GetValue<Guid>(SlcOrchestrationIds.Sections.Connection.SourceVSG) == null)
 				throw new InvalidOperationException("'SourceVSG' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			if (section.GetValue<String>(SlcOrchestrationIds.Sections.Connection.DestinationNodeID) == null)

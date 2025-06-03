@@ -4,7 +4,6 @@
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.DOM.Interfaces;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
