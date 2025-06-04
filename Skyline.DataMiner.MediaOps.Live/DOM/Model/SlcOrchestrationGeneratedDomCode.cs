@@ -953,8 +953,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		{
 			if (section.GetValue<String>(SlcOrchestrationIds.Sections.NodeConfiguration.NodeID) == null)
 				throw new InvalidOperationException("'NodeID' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			if (section.GetValue<String>(SlcOrchestrationIds.Sections.NodeConfiguration.NodeLabel) == null)
-				throw new InvalidOperationException("'NodeLabel' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
 		}
 	}
