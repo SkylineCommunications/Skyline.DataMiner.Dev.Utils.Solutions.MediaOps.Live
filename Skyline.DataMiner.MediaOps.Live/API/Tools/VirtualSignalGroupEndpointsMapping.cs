@@ -2,13 +2,14 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 
 	public class VirtualSignalGroupEndpointsMapping
 	{
-		private readonly ManyToManyMapping<VirtualSignalGroup, ApiObjectReference<Endpoint>> _mapping = new ManyToManyMapping<VirtualSignalGroup, ApiObjectReference<Endpoint>>();
+		private readonly ManyToManyMapping<VirtualSignalGroup, ApiObjectReference<Endpoint>> _mapping = new();
 
 		public int VirtualSignalGroupCount => _mapping.Forward.Count;
 
@@ -36,9 +37,12 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroup));
 			}
 
-			foreach (var levelEndpoint in virtualSignalGroup.GetEndpoints())
+			var endpoints = virtualSignalGroup.GetEndpoints()
+				.Select(x => x.Endpoint);
+
+			foreach (var endpoint in endpoints)
 			{
-				_mapping.Add(virtualSignalGroup, levelEndpoint.Endpoint);
+				_mapping.TryAdd(virtualSignalGroup, endpoint);
 			}
 		}
 

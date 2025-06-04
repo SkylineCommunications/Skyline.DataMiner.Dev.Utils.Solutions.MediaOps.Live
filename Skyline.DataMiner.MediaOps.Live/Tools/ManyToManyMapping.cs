@@ -14,12 +14,12 @@
 
 		#region Public Properties
 
-		public IDictionary<Ta, ICollection<Tb>> Forward
+		public IReadOnlyDictionary<Ta, ICollection<Tb>> Forward
 		{
 			get { return _forwardMapping; }
 		}
 
-		public IDictionary<Tb, ICollection<Ta>> Reverse
+		public IReadOnlyDictionary<Tb, ICollection<Ta>> Reverse
 		{
 			get { return _reverseMapping; }
 		}
@@ -64,6 +64,23 @@
 					throw new ArgumentException("Item already exists", "a");
 				listB.Add(a);
 			}
+		}
+
+		public bool TryAdd(Ta a, Tb b)
+		{
+			if (a == null)
+				throw new ArgumentNullException(nameof(a));
+
+			if (b == null)
+				throw new ArgumentNullException(nameof(b));
+
+			if (Contains(a, b))
+			{
+				return false;
+			}
+
+			Add(a, b);
+			return true;
 		}
 
 		public void Remove(Ta a, Tb b)
