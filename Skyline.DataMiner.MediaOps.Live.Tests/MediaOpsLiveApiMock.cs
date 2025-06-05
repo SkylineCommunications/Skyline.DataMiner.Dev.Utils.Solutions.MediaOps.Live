@@ -9,7 +9,7 @@
 
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{
-		public MediaOpsLiveApiMock(bool installDomModules = true)
+		public MediaOpsLiveApiMock(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true)
 			: base(new DomConnectionMock())
 		{
 			if (installDomModules)
@@ -31,85 +31,91 @@
 
 			for (int i = 1; i <= 10; i++)
 			{
-				var videoSource1 = new Endpoint
+				if (createEndpoints)
 				{
-					Role = Role.Source,
-					Name = $"Video Source {i}",
-					TransportType = transportTypeIP,
-					Element = $"123/{i}",
-					Identifier = $"Key-{i}",
-				};
-				var audioSource1 = new Endpoint
-				{
-					Role = Role.Source,
-					Name = $"Audio Source {i}",
-					TransportType = transportTypeIP,
-					Element = $"123/{i}",
-					Identifier = $"Key-{i}",
-				};
-				var videoDestination1 = new Endpoint
-				{
-					Role = Role.Destination,
-					Name = $"Video Destination {i}",
-					TransportType = transportTypeIP,
-					Element = $"123/{i}",
-					Identifier = $"Key-{i}",
-				};
-				var audioDestination1 = new Endpoint
-				{
-					Role = Role.Destination,
-					Name = $"Audio Destination {i}",
-					TransportType = transportTypeIP,
-					Element = $"123/{i}",
-					Identifier = $"Key-{i}",
-				};
-				Endpoints.CreateOrUpdate([videoSource1, audioSource1, videoDestination1, audioDestination1]);
+					var videoSource1 = new Endpoint
+					{
+						Role = Role.Source,
+						Name = $"Video Source {i}",
+						TransportType = transportTypeIP,
+						Element = $"123/{i}",
+						Identifier = $"Key-{i}",
+					};
+					var audioSource1 = new Endpoint
+					{
+						Role = Role.Source,
+						Name = $"Audio Source {i}",
+						TransportType = transportTypeIP,
+						Element = $"123/{i}",
+						Identifier = $"Key-{i}",
+					};
+					var videoDestination1 = new Endpoint
+					{
+						Role = Role.Destination,
+						Name = $"Video Destination {i}",
+						TransportType = transportTypeIP,
+						Element = $"123/{i}",
+						Identifier = $"Key-{i}",
+					};
+					var audioDestination1 = new Endpoint
+					{
+						Role = Role.Destination,
+						Name = $"Audio Destination {i}",
+						TransportType = transportTypeIP,
+						Element = $"123/{i}",
+						Identifier = $"Key-{i}",
+					};
+					Endpoints.CreateOrUpdate([videoSource1, audioSource1, videoDestination1, audioDestination1]);
 
-				var source1 = new VirtualSignalGroup
-				{
-					Role = Role.Source,
-					Name = $"Source {i}",
-					Description = $"Source {i}",
-					Categories =
-					[
-						category,
-					],
-					Levels =
-					[
-						new LevelEndpoint(videoLevel, videoSource1),
-						new LevelEndpoint(audioLevel, audioSource1),
-					],
-				};
-				var destination1 = new VirtualSignalGroup
-				{
-					Role = Role.Destination,
-					Name = $"Destination {i}",
-					Description = $"Destination {i}",
-					Categories =
-					[
-						category,
-					],
-					Levels =
-					[
-						new LevelEndpoint(videoLevel, videoDestination1),
-						new LevelEndpoint(audioLevel, audioDestination1),
-					],
-				};
-				VirtualSignalGroups.CreateOrUpdate([source1, destination1]);
+					if (createVsgs)
+					{
+						var source1 = new VirtualSignalGroup
+						{
+							Role = Role.Source,
+							Name = $"Source {i}",
+							Description = $"Source {i}",
+							Categories =
+							[
+								category,
+							],
+							Levels =
+							[
+								new LevelEndpoint(videoLevel, videoSource1),
+								new LevelEndpoint(audioLevel, audioSource1),
+							],
+						};
+						var destination1 = new VirtualSignalGroup
+						{
+							Role = Role.Destination,
+							Name = $"Destination {i}",
+							Description = $"Destination {i}",
+							Categories =
+							[
+								category,
+							],
+							Levels =
+							[
+								new LevelEndpoint(videoLevel, videoDestination1),
+								new LevelEndpoint(audioLevel, audioDestination1),
+							],
+						};
+						VirtualSignalGroups.CreateOrUpdate([source1, destination1]);
+					}
 
-				var connection1 = new Connection
-				{
-					Destination = videoDestination1,
-					ConnectedSource = videoSource1,
-					IsConnected = true,
-				};
-				var connection2 = new Connection
-				{
-					Destination = audioDestination1,
-					ConnectedSource = audioSource1,
-					IsConnected = true,
-				};
-				Connections.CreateOrUpdate([connection1, connection2]);
+					var connection1 = new Connection
+					{
+						Destination = videoDestination1,
+						ConnectedSource = videoSource1,
+						IsConnected = true,
+					};
+					var connection2 = new Connection
+					{
+						Destination = audioDestination1,
+						ConnectedSource = audioSource1,
+						IsConnected = true,
+					};
+					Connections.CreateOrUpdate([connection1, connection2]);
+				}
 			}
 		}
 	}
