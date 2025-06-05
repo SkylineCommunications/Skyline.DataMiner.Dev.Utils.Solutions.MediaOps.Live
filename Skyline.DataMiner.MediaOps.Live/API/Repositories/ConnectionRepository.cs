@@ -70,6 +70,27 @@
 			return GetByDestinationId(destinationEndpoint.ID);
 		}
 
+		public IEnumerable<ApiConnection> GetByEndpointIds(IEnumerable<Guid> endpointIds)
+		{
+			if (endpointIds == null)
+			{
+				throw new ArgumentNullException(nameof(endpointIds));
+			}
+
+			FilterElement<DomInstance> CreateFilter(Guid id) =>
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Connection.Id),
+					new ORFilterElement<DomInstance>(
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination).Equal(id),
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource).Equal(id),
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.PendingConnectedSource).Equal(id)));
+
+			return FilterQueryExecutor.RetrieveFilteredItems(
+				endpointIds,
+				x => CreateFilter(x),
+				x => Read(x));
+		}
+
 		protected internal override ApiConnection CreateInstance(DomInstance domInstance)
 		{
 			return new ApiConnection(domInstance);

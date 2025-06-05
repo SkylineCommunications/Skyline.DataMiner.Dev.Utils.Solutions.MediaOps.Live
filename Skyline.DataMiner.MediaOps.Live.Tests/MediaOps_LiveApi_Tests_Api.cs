@@ -279,11 +279,11 @@
 			var result = api.VirtualSignalGroups.ReadAllPaged()
 				.JoinInBatches(
 					api.Endpoints,
-					vsg => vsg.GetEndpoints().Select(x => x.Endpoint),
+					vsg => vsg.GetLevelEndpoints().Select(x => x.Endpoint),
 					(vsg, endpoints) => new { VirtualSignalGroup = vsg, Endpoints = endpoints })
 				.JoinInBatches(
 					api.Levels,
-					vsg => vsg.VirtualSignalGroup.GetEndpoints().Select(x => x.Level),
+					vsg => vsg.VirtualSignalGroup.GetLevelEndpoints().Select(x => x.Level),
 					(vsg, levels) => new { vsg.VirtualSignalGroup, vsg.Endpoints, Levels = levels })
 				.Flatten()
 				.ToList();

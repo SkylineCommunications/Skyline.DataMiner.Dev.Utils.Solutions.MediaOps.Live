@@ -207,6 +207,35 @@
 				.SafeToDictionary(x => x.ID);
 		}
 
+		public virtual IDictionary<ApiObjectReference<T>, T> Read(IEnumerable<ApiObjectReference<T>> ids)
+		{
+			if (ids == null)
+			{
+				throw new ArgumentNullException(nameof(ids));
+			}
+
+			var idsList = ids
+				.Where(x => x != ApiObjectReference<T>.Empty)
+				.Distinct()
+				.ToList();
+
+			if (idsList.Count == 0)
+			{
+				return new Dictionary<ApiObjectReference<T>, T>();
+			}
+
+			FilterElement<DomInstance> CreateFilter(Guid id) =>
+				DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
+				.AND(DomInstanceExposers.Id.Equal(id));
+
+			return FilterQueryExecutor.RetrieveFilteredItems(
+					idsList,
+					x => CreateFilter(x),
+					x => Helper.DomInstances.Read(x))
+				.Select(CreateInstance)
+				.SafeToDictionary(x => new ApiObjectReference<T>(x.ID));
+		}
+
 		public virtual T Read(string name)
 		{
 			if (name == null)

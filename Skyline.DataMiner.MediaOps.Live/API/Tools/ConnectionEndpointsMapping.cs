@@ -37,16 +37,7 @@
 				throw new ArgumentNullException(nameof(connection));
 			}
 
-			var endpoints = new[]
-				{
-					connection.Destination,
-					connection.ConnectedSource,
-					connection.PendingConnectedSource,
-				}
-				.Where(e => e.HasValue)
-				.Select(e => e.Value);
-
-			foreach (var endpoint in endpoints)
+			foreach (var endpoint in connection.GetEndpoints())
 			{
 				_mapping.TryAdd(connection, endpoint);
 			}
@@ -59,10 +50,10 @@
 				throw new ArgumentNullException(nameof(connection));
 			}
 
-			_mapping.RemoveForward(connection);
+			_mapping.TryRemoveForward(connection);
 		}
 
-		public void Update(Connection connection)
+		public void AddOrUpdate(Connection connection)
 		{
 			if (connection is null)
 			{

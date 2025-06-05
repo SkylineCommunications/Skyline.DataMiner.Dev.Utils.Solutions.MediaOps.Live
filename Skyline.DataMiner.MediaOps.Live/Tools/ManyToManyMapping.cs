@@ -106,6 +106,23 @@
 				_reverseMapping.Remove(b);
 		}
 
+		public bool TryRemove(Ta a, Tb b)
+		{
+			if (a == null)
+				throw new ArgumentNullException(nameof(a));
+
+			if (b == null)
+				throw new ArgumentNullException(nameof(b));
+
+			if (!Contains(a, b))
+			{
+				return false;
+			}
+
+			Remove(a, b);
+			return true;
+		}
+
 		public void RemoveForward(Ta a)
 		{
 			if (a == null)
@@ -125,6 +142,20 @@
 			}
 		}
 
+		public bool TryRemoveForward(Ta a)
+		{
+			if (a == null)
+				throw new ArgumentNullException(nameof(a));
+
+			if (!_forwardMapping.ContainsKey(a))
+			{
+				return false;
+			}
+
+			RemoveForward(a);
+			return true;
+		}
+
 		public void RemoveReverse(Tb b)
 		{
 			if (b == null)
@@ -142,6 +173,20 @@
 			}
 
 			_reverseMapping.Remove(b);
+		}
+
+		public bool TryRemoveReverse(Tb b)
+		{
+			if (b == null)
+				throw new ArgumentNullException(nameof(b));
+
+			if (!_reverseMapping.ContainsKey(b))
+			{
+				return false;
+			}
+
+			RemoveReverse(b);
+			return true;
 		}
 
 		public void Clear()

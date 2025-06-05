@@ -37,7 +37,7 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroup));
 			}
 
-			var endpoints = virtualSignalGroup.GetEndpoints()
+			var endpoints = virtualSignalGroup.GetLevelEndpoints()
 				.Select(x => x.Endpoint);
 
 			foreach (var endpoint in endpoints)
@@ -53,10 +53,10 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroup));
 			}
 
-			_mapping.RemoveForward(virtualSignalGroup);
+			_mapping.TryRemoveForward(virtualSignalGroup);
 		}
 
-		public void Update(VirtualSignalGroup virtualSignalGroup)
+		public void AddOrUpdate(VirtualSignalGroup virtualSignalGroup)
 		{
 			if (virtualSignalGroup is null)
 			{
