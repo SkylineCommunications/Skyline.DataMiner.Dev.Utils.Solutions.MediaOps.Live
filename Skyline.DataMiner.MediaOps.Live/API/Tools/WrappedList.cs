@@ -7,7 +7,7 @@
 	using System.Linq;
 
 	[DebuggerDisplay("Count = {Count}")]
-	public class WrappedList<TInput, TOutput> : IList<TOutput>
+	internal class WrappedList<TInput, TOutput> : IList<TOutput>
 	{
 		private readonly IList<TInput> _wrappedList;
 		private readonly Func<TInput, TOutput> _transform;

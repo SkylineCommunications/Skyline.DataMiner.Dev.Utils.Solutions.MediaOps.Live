@@ -26,11 +26,11 @@
 
 		internal static DomDefinitionId DomDefinition => SlcConnectivityManagementIds.Definitions.Connection;
 
-		public ApiObjectReference<Endpoint>? Destination
+		public ApiObjectReference<Endpoint> Destination
 		{
 			get
 			{
-				return _domInstance.ConnectionInfo.Destination;
+				return _domInstance.ConnectionInfo.Destination ?? Guid.Empty;
 			}
 
 			set
