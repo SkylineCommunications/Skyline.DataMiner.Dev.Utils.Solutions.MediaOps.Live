@@ -15,19 +15,23 @@
 
 		public int EndpointCount => _mapping.Reverse.Count;
 
-		public bool TryGetEndpoints(Connection connection, out ICollection<ApiObjectReference<Endpoint>> endpoints)
+		public IEnumerable<ApiObjectReference<Endpoint>> GetEndpoints(Connection connection)
 		{
 			if (connection is null)
 			{
 				throw new ArgumentNullException(nameof(connection));
 			}
 
-			return _mapping.Forward.TryGetValue(connection, out endpoints);
+			return _mapping.Forward.TryGetValue(connection, out var endpoints)
+				? endpoints
+				: Enumerable.Empty<ApiObjectReference<Endpoint>>();
 		}
 
-		public bool TryGetConnections(ApiObjectReference<Endpoint> endpoint, out ICollection<Connection> connections)
+		public IEnumerable<Connection> GetConnections(ApiObjectReference<Endpoint> endpoint)
 		{
-			return _mapping.Reverse.TryGetValue(endpoint, out connections);
+			return _mapping.Reverse.TryGetValue(endpoint, out var connections)
+				? connections
+				: Enumerable.Empty<Connection>();
 		}
 
 		public void Add(Connection connection)

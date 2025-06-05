@@ -62,8 +62,8 @@
 			{
 				EnsureEndpointsAreLoaded([endpoint]);
 
-				return _connectionEndpointsMapping.TryGetConnections(endpoint, out var connections)
-					&& connections.Any(c => c.IsConnected);
+				return _connectionEndpointsMapping.GetConnections(endpoint)
+					.Any(c => c.IsConnected);
 			}
 		}
 
@@ -151,8 +151,8 @@
 			{
 				EnsureEndpointsAreLoaded([endpoint]);
 
-				return _connectionEndpointsMapping.TryGetConnections(endpoint, out var connections)
-					&& connections.Any(c => c.PendingConnectedSource.HasValue && c.PendingConnectedSource != ApiObjectReference<Endpoint>.Empty);
+				return _connectionEndpointsMapping.GetConnections(endpoint)
+					.Any(c => c.PendingConnectedSource.HasValue && c.PendingConnectedSource != ApiObjectReference<Endpoint>.Empty);
 			}
 		}
 
@@ -225,22 +225,33 @@
 
 			if (!destinationEndpoint.IsDestination)
 			{
-				throw new ArgumentException("The virtualSignalGroup must be a destination virtualSignalGroup.", nameof(destinationEndpoint));
+				throw new ArgumentException("The endpoint must be a destination.", nameof(destinationEndpoint));
+			}
+
+			lock (_lock)
+			{
+				return GetConnectedSource(destinationEndpoint.Reference);
+			}
+		}
+
+		public Endpoint GetConnectedSource(ApiObjectReference<Endpoint> destinationEndpoint)
+		{
+			if (destinationEndpoint == ApiObjectReference<Endpoint>.Empty)
+			{
+				throw new ArgumentException("The endpoint reference cannot be empty.", nameof(destinationEndpoint));
 			}
 
 			lock (_lock)
 			{
 				EnsureEndpointsAreLoaded([destinationEndpoint]);
 
-				if (_connectionEndpointsMapping.TryGetConnections(destinationEndpoint, out var connections))
-				{
-					var connectedSource = connections.FirstOrDefault(c => c.Destination == destinationEndpoint)?.ConnectedSource;
+				var connection = _connectionEndpointsMapping.GetConnections(destinationEndpoint)
+					.FirstOrDefault(c => c.Destination == destinationEndpoint);
 
-					if (connectedSource.HasValue &&
-						_endpoints.TryGetValue(connectedSource.Value, out var sourceEndpoint))
-					{
-						return sourceEndpoint;
-					}
+				if (connection?.ConnectedSource != null &&
+					_endpoints.TryGetValue(connection.ConnectedSource.Value, out var sourceEndpoint))
+				{
+					return sourceEndpoint;
 				}
 
 				return null;
@@ -256,7 +267,7 @@
 
 			if (!destinationEndpoints.All(x => x.IsDestination))
 			{
-				throw new ArgumentException("All endpoints must be destination endpoints.", nameof(destinationEndpoints));
+				throw new ArgumentException("All endpoints must be destinations.", nameof(destinationEndpoints));
 			}
 
 			lock (_lock)
@@ -267,6 +278,59 @@
 			}
 		}
 
+		public ICollection<VirtualSignalGroup> GetConnectedSources(VirtualSignalGroup destinationVirtualSignalGroup)
+		{
+			if (destinationVirtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(destinationVirtualSignalGroup));
+			}
+
+			if (!destinationVirtualSignalGroup.IsDestination)
+			{
+				throw new ArgumentException("The virtual signal group must be a destination.", nameof(destinationVirtualSignalGroup));
+			}
+
+			lock (_lock)
+			{
+				EnsureVirtualSignalGroupsAreLoaded([destinationVirtualSignalGroup]);
+
+				var destinationEndpoints = _virtualSignalGroupEndpointsMapping.GetEndpoints(destinationVirtualSignalGroup);
+
+				var connectedSourceEndpoints = destinationEndpoints
+					.Select(GetConnectedSource)
+					.Where(source => source != null)
+					.Distinct();
+
+				var sourceVirtualSignalGroups = connectedSourceEndpoints
+					.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x))
+					.Distinct()
+					.ToList();
+
+				return sourceVirtualSignalGroups;
+			}
+		}
+
+		public IDictionary<VirtualSignalGroup, ICollection<VirtualSignalGroup>> GetConnectedSources(ICollection<VirtualSignalGroup> destinationVirtualSignalGroups)
+		{
+			if (destinationVirtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(destinationVirtualSignalGroups));
+			}
+
+			if (!destinationVirtualSignalGroups.All(x => x.IsDestination))
+			{
+				throw new ArgumentException("All virtual signal groups must be destinations.", nameof(destinationVirtualSignalGroups));
+			}
+
+			lock (_lock)
+			{
+				EnsureVirtualSignalGroupsAreLoaded(destinationVirtualSignalGroups);
+
+				return destinationVirtualSignalGroups.ToDictionary(x => x, GetConnectedSources);
+			}
+		}
+
+
 		public ICollection<Endpoint> GetConnectedDestinations(Endpoint sourceEndpoint)
 		{
 			if (sourceEndpoint is null)
@@ -276,7 +340,20 @@
 
 			if (!sourceEndpoint.IsSource)
 			{
-				throw new ArgumentException("The virtualSignalGroup must be a source virtualSignalGroup.", nameof(sourceEndpoint));
+				throw new ArgumentException("The endpoint must be a source.", nameof(sourceEndpoint));
+			}
+
+			lock (_lock)
+			{
+				return GetConnectedDestinations(sourceEndpoint.Reference);
+			}
+		}
+
+		public ICollection<Endpoint> GetConnectedDestinations(ApiObjectReference<Endpoint> sourceEndpoint)
+		{
+			if (sourceEndpoint == ApiObjectReference<Endpoint>.Empty)
+			{
+				throw new ArgumentException("The endpoint reference cannot be empty.", nameof(sourceEndpoint));
 			}
 
 			lock (_lock)
@@ -285,15 +362,14 @@
 
 				var result = new List<Endpoint>();
 
-				if (_connectionEndpointsMapping.TryGetConnections(sourceEndpoint, out var connections))
+				var connections = _connectionEndpointsMapping.GetConnections(sourceEndpoint)
+					.Where(c => c.ConnectedSource == sourceEndpoint);
+
+				foreach (var connection in connections)
 				{
-					foreach (var connection in connections)
+					if (_endpoints.TryGetValue(connection.Destination, out var destinationEndpoint))
 					{
-						if (connection.ConnectedSource == sourceEndpoint &&
-							_endpoints.TryGetValue(connection.Destination, out var destinationEndpoint))
-						{
-							result.Add(destinationEndpoint);
-						}
+						result.Add(destinationEndpoint);
 					}
 				}
 
@@ -310,7 +386,7 @@
 
 			if (!sourceEndpoints.All(x => x.IsSource))
 			{
-				throw new ArgumentException("All endpoints must be source endpoints.", nameof(sourceEndpoints));
+				throw new ArgumentException("All endpoints must be sources.", nameof(sourceEndpoints));
 			}
 
 			lock (_lock)
@@ -425,12 +501,14 @@
 			{
 				var endpointIds = endpoints.Select(x => x.ID).ToList();
 
-				Debug.WriteLine($"Reading VSGs with endpoints: {String.Join(", ", endpointIds)}");
+				Debug.WriteLine($"Loading VSGs with endpoints: {String.Join(", ", endpointIds)}");
 				var virtualSignalGroups = Api.VirtualSignalGroups.GetByEndpointIds(endpointIds).ToList();
+				Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {String.Join(", ", virtualSignalGroups.Select(x => x.ID))}");
 				UpdateVirtualSignalGroups(virtualSignalGroups);
 
-				Debug.WriteLine($"Reading connections with endpoints: {String.Join(", ", endpointIds)}");
+				Debug.WriteLine($"Loading connections with endpoints: {String.Join(", ", endpointIds)}");
 				var connections = Api.Connections.GetByEndpointIds(endpointIds).ToList();
+				Debug.WriteLine($"Loaded {connections.Count} connections: {String.Join(", ", connections.Select(x => x.ID))}");
 				UpdateConnections(connections);
 			}
 		}
@@ -472,9 +550,9 @@
 
 				if (endpointIdsToRetrieve.Count > 0)
 				{
-					Debug.WriteLine($"Reading endpoints: {String.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
-
+					Debug.WriteLine($"Loading endpoints: {String.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
 					var endpoints = Api.Endpoints.Read(endpointIdsToRetrieve);
+					Debug.WriteLine($"Loaded {endpoints.Count} endpoints: {String.Join(", ", endpoints.Select(x => x.Key.ID))}");
 					UpdateEndpoints(endpoints.Values);
 				}
 			}
@@ -498,9 +576,9 @@
 
 				if (vsgIdsToRetrieve.Count > 0)
 				{
-					Debug.WriteLine($"Reading VSGs: {String.Join(", ", vsgIdsToRetrieve.Select(x => x.ID))}");
-
+					Debug.WriteLine($"Loading VSGs: {String.Join(", ", vsgIdsToRetrieve.Select(x => x.ID))}");
 					var virtualSignalGroups = Api.VirtualSignalGroups.Read(vsgIdsToRetrieve);
+					Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {String.Join(", ", virtualSignalGroups.Select(x => x.Key.ID))}");
 					UpdateVirtualSignalGroups(virtualSignalGroups.Values);
 				}
 			}

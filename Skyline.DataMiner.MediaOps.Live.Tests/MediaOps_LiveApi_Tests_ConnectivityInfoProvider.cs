@@ -119,7 +119,7 @@
 
 			var result = connectivity.GetConnectedDestinations([audioSource1, audioSource2]);
 
-			result.Keys.ShouldBe([audioSource1, audioSource2]);
+			result.Keys.ShouldBe([audioSource1, audioSource2], ignoreOrder: true);
 			result[audioSource1].ShouldBe([audioDestination1, audioDestination2], ignoreOrder: true);
 			result[audioSource2].ShouldBeEmpty();
 		}
@@ -219,6 +219,51 @@
 		#endregion
 
 		#region Virtual Signal Groups
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectedSources()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+
+			var source1 = api.VirtualSignalGroups.Read("Source 1");
+			var source2 = api.VirtualSignalGroups.Read("Source 2");
+			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
+
+			api.CreateConnection(videoSource1, videoDestination1);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			connectivity.GetConnectedSources(destination1).ShouldBe([source1]);
+			connectivity.GetConnectedSources(destination2).ShouldBeEmpty();
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectedSources_Bulk()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+
+			var source1 = api.VirtualSignalGroups.Read("Source 1");
+			var source2 = api.VirtualSignalGroups.Read("Source 2");
+			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
+
+			api.CreateConnection(videoSource1, videoDestination1);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var result = connectivity.GetConnectedSources([destination1, destination2]);
+
+			result.Keys.ShouldBe([destination1, destination2], ignoreOrder: true);
+			result[destination1].ShouldBe([source1]);
+			result[destination2].ShouldBeEmpty();
+		}
 
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_IsConnected()
