@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
@@ -42,14 +43,25 @@
 
 			lock (_lock)
 			{
-				EnsureEndpointsAreLoaded([endpoint.Reference]);
+				EnsureEndpointsAreLoaded([endpoint]);
 
-				if (!_connectionEndpointsMapping.TryGetConnections(endpoint, out var connections))
-				{
-					return false;
-				}
+				return _connectionEndpointsMapping.TryGetConnections(endpoint, out var connections)
+					&& connections.Any(c => c.IsConnected);
+			}
+		}
 
-				return connections.Any(c => c.IsConnected);
+		public IDictionary<Endpoint, bool> IsConnected(ICollection<Endpoint> endpoints)
+		{
+			if (endpoints is null)
+			{
+				throw new ArgumentNullException(nameof(endpoints));
+			}
+
+			lock (_lock)
+			{
+				EnsureEndpointsAreLoaded(endpoints);
+
+				return endpoints.ToDictionary(x => x, IsConnected);
 			}
 		}
 
@@ -62,14 +74,130 @@
 
 			lock (_lock)
 			{
-				EnsureEndpointsAreLoaded([endpoint.Reference]);
+				EnsureEndpointsAreLoaded([endpoint]);
 
-				if (!_connectionEndpointsMapping.TryGetConnections(endpoint, out var connections))
+				return _connectionEndpointsMapping.TryGetConnections(endpoint, out var connections)
+					&& connections.Any(c => c.PendingConnectedSource != Guid.Empty);
+			}
+		}
+
+		public IDictionary<Endpoint, bool> IsPendingConnected(ICollection<Endpoint> endpoints)
+		{
+			if (endpoints is null)
+			{
+				throw new ArgumentNullException(nameof(endpoints));
+			}
+
+			lock (_lock)
+			{
+				EnsureEndpointsAreLoaded(endpoints);
+
+				return endpoints.ToDictionary(x => x, IsPendingConnected);
+			}
+		}
+
+		public Endpoint GetConnectedSource(Endpoint destinationEndpoint)
+		{
+			if (destinationEndpoint is null)
+			{
+				throw new ArgumentNullException(nameof(destinationEndpoint));
+			}
+
+			if (!destinationEndpoint.IsDestination)
+			{
+				throw new ArgumentException("The endpoint must be a destination endpoint.", nameof(destinationEndpoint));
+			}
+
+			lock (_lock)
+			{
+				EnsureEndpointsAreLoaded([destinationEndpoint]);
+
+				if (_connectionEndpointsMapping.TryGetConnections(destinationEndpoint, out var connections))
 				{
-					return false;
+					var connectedSource = connections.FirstOrDefault(c => c.Destination == destinationEndpoint)?.ConnectedSource;
+
+					if (connectedSource.HasValue &&
+						_endpoints.TryGetValue(connectedSource.Value, out var sourceEndpoint))
+					{
+						return sourceEndpoint;
+					}
 				}
 
-				return connections.Any(c => c.PendingConnectedSource != Guid.Empty);
+				return null;
+			}
+		}
+
+		public IDictionary<Endpoint, Endpoint> GetConnectedSource(ICollection<Endpoint> destinationEndpoints)
+		{
+			if (destinationEndpoints is null)
+			{
+				throw new ArgumentNullException(nameof(destinationEndpoints));
+			}
+
+			if (!destinationEndpoints.All(x => x.IsDestination))
+			{
+				throw new ArgumentException("All endpoints must be destination endpoints.", nameof(destinationEndpoints));
+			}
+
+			lock (_lock)
+			{
+				EnsureEndpointsAreLoaded(destinationEndpoints);
+
+				return destinationEndpoints.ToDictionary(x => x, GetConnectedSource);
+			}
+		}
+
+		public ICollection<Endpoint> GetConnectedDestinations(Endpoint sourceEndpoint)
+		{
+			if (sourceEndpoint is null)
+			{
+				throw new ArgumentNullException(nameof(sourceEndpoint));
+			}
+
+			if (!sourceEndpoint.IsSource)
+			{
+				throw new ArgumentException("The endpoint must be a source endpoint.", nameof(sourceEndpoint));
+			}
+
+			lock (_lock)
+			{
+				EnsureEndpointsAreLoaded([sourceEndpoint]);
+
+				var result = new List<Endpoint>();
+
+				if (_connectionEndpointsMapping.TryGetConnections(sourceEndpoint, out var connections))
+				{
+					foreach (var connection in connections)
+					{
+						if (connection.ConnectedSource == sourceEndpoint &&
+							_endpoints.TryGetValue(connection.Destination, out var destinationEndpoint))
+						{
+							result.Add(destinationEndpoint);
+						}
+					}
+				}
+
+				return result;
+			}
+		}
+
+		public IDictionary<Endpoint, ICollection<Endpoint>> GetConnectedDestinations(ICollection<Endpoint> sourceEndpoints)
+		{
+			if (sourceEndpoints is null)
+			{
+				throw new ArgumentNullException(nameof(sourceEndpoints));
+			}
+
+			if (!sourceEndpoints.All(x => x.IsSource))
+			{
+				throw new ArgumentException("All endpoints must be source endpoints.", nameof(sourceEndpoints));
+			}
+
+			lock (_lock)
+			{
+				EnsureEndpointsAreLoaded(sourceEndpoints);
+
+				return sourceEndpoints.ToDictionary(x => x, GetConnectedDestinations);
 			}
 		}
 
@@ -171,46 +299,50 @@
 			}
 		}
 
-		private void LoadExtraDataForEndpoints(IEnumerable<Endpoint> endpoints)
+		private void LoadExtraDataForEndpoints(ICollection<Endpoint> endpoints)
 		{
 			lock (_lock)
 			{
 				var endpointIds = endpoints.Select(x => x.ID).ToList();
 
+				Debug.WriteLine($"Reading VSGs with endpoints: {String.Join(", ", endpointIds)}");
 				var virtualSignalGroups = Api.VirtualSignalGroups.GetByEndpointIds(endpointIds).ToList();
 				UpdateVirtualSignalGroups(virtualSignalGroups);
 
+				Debug.WriteLine($"Reading connections with endpoints: {String.Join(", ", endpointIds)}");
 				var connections = Api.Connections.GetByEndpointIds(endpointIds).ToList();
 				UpdateConnections(connections);
 			}
 		}
 
-		private void LoadExtraDataForVirtualSignalGroups(IEnumerable<VirtualSignalGroup> virtualSignalGroups)
+		private void LoadExtraDataForVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
 		{
 			lock (_lock)
 			{
 				var endpoints = virtualSignalGroups
 					.SelectMany(vsg => vsg.GetLevelEndpoints())
 					.Select(e => e.Endpoint)
-					.Distinct();
+					.Distinct()
+					.ToList();
 
 				EnsureEndpointsAreLoaded(endpoints);
 			}
 		}
 
-		private void LoadExtraDataForConnections(IEnumerable<Connection> connections)
+		private void LoadExtraDataForConnections(ICollection<Connection> connections)
 		{
 			lock (_lock)
 			{
 				var endpoints = connections
 					.SelectMany(x => x.GetEndpoints())
-					.Distinct();
+					.Distinct()
+					.ToList();
 
 				EnsureEndpointsAreLoaded(endpoints);
 			}
 		}
 
-		private void EnsureEndpointsAreLoaded(IEnumerable<ApiObjectReference<Endpoint>> endpointIds)
+		private void EnsureEndpointsAreLoaded(ICollection<ApiObjectReference<Endpoint>> endpointIds)
 		{
 			lock (_lock)
 			{
@@ -220,9 +352,19 @@
 
 				if (endpointIdsToRetrieve.Count > 0)
 				{
+					Debug.WriteLine($"Reading endpoints: {String.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
+
 					var endpoints = Api.Endpoints.Read(endpointIdsToRetrieve);
 					UpdateEndpoints(endpoints.Values);
 				}
+			}
+		}
+
+		private void EnsureEndpointsAreLoaded(ICollection<Endpoint> endpoints)
+		{
+			lock (_lock)
+			{
+				EnsureEndpointsAreLoaded(endpoints.Select(x => x.Reference).ToList());
 			}
 		}
 
@@ -236,6 +378,8 @@
 
 				if (vsgIdsToRetrieve.Count > 0)
 				{
+					Debug.WriteLine($"Reading VSGs: {String.Join(", ", vsgIdsToRetrieve.Select(x => x.ID))}");
+
 					var virtualSignalGroups = Api.VirtualSignalGroups.Read(vsgIdsToRetrieve);
 					UpdateVirtualSignalGroups(virtualSignalGroups.Values);
 				}
