@@ -256,7 +256,7 @@
 
 			if (!destinationEndpoints.All(x => x.IsDestination))
 			{
-				throw new ArgumentException("All virtualSignalGroups must be destination virtualSignalGroups.", nameof(destinationEndpoints));
+				throw new ArgumentException("All endpoints must be destination endpoints.", nameof(destinationEndpoints));
 			}
 
 			lock (_lock)
@@ -310,7 +310,7 @@
 
 			if (!sourceEndpoints.All(x => x.IsSource))
 			{
-				throw new ArgumentException("All virtualSignalGroups must be source virtualSignalGroups.", nameof(sourceEndpoints));
+				throw new ArgumentException("All endpoints must be source endpoints.", nameof(sourceEndpoints));
 			}
 
 			lock (_lock)
@@ -425,11 +425,11 @@
 			{
 				var endpointIds = endpoints.Select(x => x.ID).ToList();
 
-				Debug.WriteLine($"Reading VSGs with virtualSignalGroups: {String.Join(", ", endpointIds)}");
+				Debug.WriteLine($"Reading VSGs with endpoints: {String.Join(", ", endpointIds)}");
 				var virtualSignalGroups = Api.VirtualSignalGroups.GetByEndpointIds(endpointIds).ToList();
 				UpdateVirtualSignalGroups(virtualSignalGroups);
 
-				Debug.WriteLine($"Reading connections with virtualSignalGroups: {String.Join(", ", endpointIds)}");
+				Debug.WriteLine($"Reading connections with endpoints: {String.Join(", ", endpointIds)}");
 				var connections = Api.Connections.GetByEndpointIds(endpointIds).ToList();
 				UpdateConnections(connections);
 			}
@@ -472,7 +472,7 @@
 
 				if (endpointIdsToRetrieve.Count > 0)
 				{
-					Debug.WriteLine($"Reading virtualSignalGroups: {String.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
+					Debug.WriteLine($"Reading endpoints: {String.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
 
 					var endpoints = Api.Endpoints.Read(endpointIdsToRetrieve);
 					UpdateEndpoints(endpoints.Values);
