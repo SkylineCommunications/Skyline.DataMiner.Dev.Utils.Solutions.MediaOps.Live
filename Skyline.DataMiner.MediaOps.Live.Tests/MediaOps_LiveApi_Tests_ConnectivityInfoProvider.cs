@@ -40,6 +40,8 @@
 			Assert.IsTrue(connectionMetrics.NumberOfDomInstancesRetrieved < 100);
 		}
 
+		#region Endpoints
+
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectedSource()
 		{
@@ -213,5 +215,157 @@
 				{ audioDestination2, false },
 			});
 		}
+
+		#endregion
+
+		#region Virtual Signal Groups
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_IsConnected()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var audioSource1 = api.Endpoints.Read("Audio Source 1");
+			var audioSource2 = api.Endpoints.Read("Audio Source 2");
+			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+
+			var source1 = api.VirtualSignalGroups.Read("Source 1");
+			var source2 = api.VirtualSignalGroups.Read("Source 2");
+			var source3 = api.VirtualSignalGroups.Read("Source 3");
+			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
+			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
+
+			api.CreateConnection(videoSource1, videoDestination1);
+			api.CreateConnection(audioSource1, audioDestination1);
+			api.CreateConnection(audioSource2, audioDestination2);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			Assert.AreEqual(ConnectionStatus.Connected, connectivity.IsConnected(source1));
+			Assert.AreEqual(ConnectionStatus.Connected, connectivity.IsConnected(destination1));
+
+			Assert.AreEqual(ConnectionStatus.Partial, connectivity.IsConnected(source2));
+			Assert.AreEqual(ConnectionStatus.Partial, connectivity.IsConnected(destination2));
+
+			Assert.AreEqual(ConnectionStatus.Disconnected, connectivity.IsConnected(source3));
+			Assert.AreEqual(ConnectionStatus.Disconnected, connectivity.IsConnected(destination3));
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_IsConnected_Bulk()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var audioSource1 = api.Endpoints.Read("Audio Source 1");
+			var audioSource2 = api.Endpoints.Read("Audio Source 2");
+			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+
+			var source1 = api.VirtualSignalGroups.Read("Source 1");
+			var source2 = api.VirtualSignalGroups.Read("Source 2");
+			var source3 = api.VirtualSignalGroups.Read("Source 3");
+			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
+			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
+
+			api.CreateConnection(videoSource1, videoDestination1);
+			api.CreateConnection(audioSource1, audioDestination1);
+			api.CreateConnection(audioSource2, audioDestination2);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var result = connectivity.IsConnected([source1, destination1, source2, destination2, source3, destination3]);
+
+			result.ShouldBe(new Dictionary<VirtualSignalGroup, ConnectionStatus>
+			{
+				{ source1, ConnectionStatus.Connected },
+				{ destination1, ConnectionStatus.Connected },
+				{ source2, ConnectionStatus.Partial },
+				{ destination2, ConnectionStatus.Partial },
+				{ source3, ConnectionStatus.Disconnected },
+				{ destination3, ConnectionStatus.Disconnected },
+			});
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_IsPendingConnected()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var audioSource1 = api.Endpoints.Read("Audio Source 1");
+			var audioSource2 = api.Endpoints.Read("Audio Source 2");
+			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+
+			var source1 = api.VirtualSignalGroups.Read("Source 1");
+			var source2 = api.VirtualSignalGroups.Read("Source 2");
+			var source3 = api.VirtualSignalGroups.Read("Source 3");
+			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
+			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
+
+			api.CreatePendingConnection(videoSource1, videoDestination1);
+			api.CreatePendingConnection(audioSource1, audioDestination1);
+			api.CreatePendingConnection(audioSource2, audioDestination2);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			Assert.AreEqual(ConnectionStatus.Connected, connectivity.IsPendingConnected(source1));
+			Assert.AreEqual(ConnectionStatus.Connected, connectivity.IsPendingConnected(destination1));
+
+			Assert.AreEqual(ConnectionStatus.Partial, connectivity.IsPendingConnected(source2));
+			Assert.AreEqual(ConnectionStatus.Partial, connectivity.IsPendingConnected(destination2));
+
+			Assert.AreEqual(ConnectionStatus.Disconnected, connectivity.IsPendingConnected(source3));
+			Assert.AreEqual(ConnectionStatus.Disconnected, connectivity.IsPendingConnected(destination3));
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_IsPendingConnected_Bulk()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var audioSource1 = api.Endpoints.Read("Audio Source 1");
+			var audioSource2 = api.Endpoints.Read("Audio Source 2");
+			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+
+			var source1 = api.VirtualSignalGroups.Read("Source 1");
+			var source2 = api.VirtualSignalGroups.Read("Source 2");
+			var source3 = api.VirtualSignalGroups.Read("Source 3");
+			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
+			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
+
+			api.CreatePendingConnection(videoSource1, videoDestination1);
+			api.CreatePendingConnection(audioSource1, audioDestination1);
+			api.CreatePendingConnection(audioSource2, audioDestination2);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var result = connectivity.IsPendingConnected([source1, destination1, source2, destination2, source3, destination3]);
+
+			result.ShouldBe(new Dictionary<VirtualSignalGroup, ConnectionStatus>
+			{
+				{ source1, ConnectionStatus.Connected },
+				{ destination1, ConnectionStatus.Connected },
+				{ source2, ConnectionStatus.Partial },
+				{ destination2, ConnectionStatus.Partial },
+				{ source3, ConnectionStatus.Disconnected },
+				{ destination3, ConnectionStatus.Disconnected },
+			});
+		}
+
+		#endregion
 	}
 }
