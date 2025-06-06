@@ -30,10 +30,16 @@
 		private RepositorySubscription<Endpoint> _subscriptionEndpoints;
 		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
 		private RepositorySubscription<Connection> _subscriptionConnections;
+		private bool _isSubscribed;
 
-		public ConnectivityInfoProvider(MediaOpsLiveApi api)
+		public ConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
+
+			if (subscribe)
+			{
+				Subscribe();
+			}
 		}
 
 		public MediaOpsLiveApi Api { get; }
@@ -330,7 +336,6 @@
 			}
 		}
 
-
 		public ICollection<Endpoint> GetConnectedDestinations(Endpoint sourceEndpoint)
 		{
 			if (sourceEndpoint is null)
@@ -377,6 +382,37 @@
 			}
 		}
 
+		public ICollection<VirtualSignalGroup> GetConnectedDestinations(VirtualSignalGroup sourceVirtualSignalGroup)
+		{
+			if (sourceVirtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(sourceVirtualSignalGroup));
+			}
+
+			if (!sourceVirtualSignalGroup.IsSource)
+			{
+				throw new ArgumentException("The virtual signal group must be a source.", nameof(sourceVirtualSignalGroup));
+			}
+
+			lock (_lock)
+			{
+				EnsureVirtualSignalGroupsAreLoaded([sourceVirtualSignalGroup]);
+
+				var sourceEndpoints = _virtualSignalGroupEndpointsMapping.GetEndpoints(sourceVirtualSignalGroup);
+
+				var connectedDestinationEndpoints = sourceEndpoints
+					.SelectMany(GetConnectedDestinations)
+					.Distinct();
+
+				var destinationVirtualSignalGroups = connectedDestinationEndpoints
+					.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x))
+					.Distinct()
+					.ToList();
+
+				return destinationVirtualSignalGroups;
+			}
+		}
+
 		public IDictionary<Endpoint, ICollection<Endpoint>> GetConnectedDestinations(ICollection<Endpoint> sourceEndpoints)
 		{
 			if (sourceEndpoints is null)
@@ -397,8 +433,34 @@
 			}
 		}
 
+		public IDictionary<VirtualSignalGroup, ICollection<VirtualSignalGroup>> GetConnectedDestinations(ICollection<VirtualSignalGroup> sourceVirtualSignalGroups)
+		{
+			if (sourceVirtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(sourceVirtualSignalGroups));
+			}
+
+			if (!sourceVirtualSignalGroups.All(x => x.IsSource))
+			{
+				throw new ArgumentException("All virtual signal groups must be sources.", nameof(sourceVirtualSignalGroups));
+			}
+
+			lock (_lock)
+			{
+				EnsureVirtualSignalGroupsAreLoaded(sourceVirtualSignalGroups);
+
+				return sourceVirtualSignalGroups.ToDictionary(x => x, GetConnectedDestinations);
+			}
+		}
+
 		public void Subscribe()
 		{
+			if (_isSubscribed)
+			{
+				return;
+			}
+
+			_isSubscribed = true;
 			_subscriptionEndpoints = Api.Endpoints.Subscribe();
 			_subscriptionVirtualSignalGroups = Api.VirtualSignalGroups.Subscribe();
 			_subscriptionConnections = Api.Connections.Subscribe();
@@ -594,9 +656,12 @@
 
 		public void Dispose()
 		{
-			_subscriptionEndpoints?.Dispose();
-			_subscriptionVirtualSignalGroups?.Dispose();
-			_subscriptionConnections?.Dispose();
+			if (_isSubscribed)
+			{
+				_subscriptionEndpoints?.Dispose();
+				_subscriptionVirtualSignalGroups?.Dispose();
+				_subscriptionConnections?.Dispose();
+			}
 		}
 	}
 }

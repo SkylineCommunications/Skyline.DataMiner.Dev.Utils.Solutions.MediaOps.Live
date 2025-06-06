@@ -48,7 +48,6 @@
 			var api = new MediaOpsLiveApiMock();
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 
@@ -66,7 +65,6 @@
 			var api = new MediaOpsLiveApiMock();
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 
@@ -226,19 +224,26 @@
 			var api = new MediaOpsLiveApiMock();
 
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var audioSource2 = api.Endpoints.Read("Audio Source 2");
 			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var videoDestination2 = api.Endpoints.Read("Video Destination 2");
+			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 
 			var source1 = api.VirtualSignalGroups.Read("Source 1");
 			var source2 = api.VirtualSignalGroups.Read("Source 2");
 			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
+			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
 			api.CreateConnection(videoSource1, videoDestination1);
+			api.CreateConnection(videoSource1, videoDestination2);
+			api.CreateConnection(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
 			connectivity.GetConnectedSources(destination1).ShouldBe([source1]);
-			connectivity.GetConnectedSources(destination2).ShouldBeEmpty();
+			connectivity.GetConnectedSources(destination2).ShouldBe([source1, source2]);
+			connectivity.GetConnectedSources(destination3).ShouldBeEmpty();
 		}
 
 		[TestMethod]
@@ -247,22 +252,92 @@
 			var api = new MediaOpsLiveApiMock();
 
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var audioSource2 = api.Endpoints.Read("Audio Source 2");
 			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var videoDestination2 = api.Endpoints.Read("Video Destination 2");
+			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 
 			var source1 = api.VirtualSignalGroups.Read("Source 1");
 			var source2 = api.VirtualSignalGroups.Read("Source 2");
 			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
+			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
 			api.CreateConnection(videoSource1, videoDestination1);
+			api.CreateConnection(videoSource1, videoDestination2);
+			api.CreateConnection(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
-			var result = connectivity.GetConnectedSources([destination1, destination2]);
+			var result = connectivity.GetConnectedSources([destination1, destination2, destination3]);
 
-			result.Keys.ShouldBe([destination1, destination2], ignoreOrder: true);
+			result.Keys.ShouldBe([destination1, destination2, destination3], ignoreOrder: true);
 			result[destination1].ShouldBe([source1]);
-			result[destination2].ShouldBeEmpty();
+			result[destination2].ShouldBe([source1, source2], ignoreOrder: true);
+			result[destination3].ShouldBeEmpty();
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectedDestinations()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var videoSource2 = api.Endpoints.Read("Video Source 2");
+			var audioSource2 = api.Endpoints.Read("Audio Source 2");
+			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var videoDestination2 = api.Endpoints.Read("Video Destination 2");
+			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+
+			var source1 = api.VirtualSignalGroups.Read("Source 1");
+			var source2 = api.VirtualSignalGroups.Read("Source 2");
+			var source3 = api.VirtualSignalGroups.Read("Source 3");
+			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
+
+			api.CreateConnection(videoSource1, videoDestination1);
+			api.CreateConnection(videoSource2, videoDestination2);
+			api.CreateConnection(audioSource2, audioDestination1);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			connectivity.GetConnectedDestinations(source1).ShouldBe([destination1]);
+			connectivity.GetConnectedDestinations(source2).ShouldBe([destination1, destination2], ignoreOrder: true);
+			connectivity.GetConnectedDestinations(source3).ShouldBeEmpty();
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectedDestinations_Bulk()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var videoSource2 = api.Endpoints.Read("Video Source 2");
+			var audioSource2 = api.Endpoints.Read("Audio Source 2");
+			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var videoDestination2 = api.Endpoints.Read("Video Destination 2");
+			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+
+			var source1 = api.VirtualSignalGroups.Read("Source 1");
+			var source2 = api.VirtualSignalGroups.Read("Source 2");
+			var source3 = api.VirtualSignalGroups.Read("Source 3");
+			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
+
+			api.CreateConnection(videoSource1, videoDestination1);
+			api.CreateConnection(videoSource2, videoDestination2);
+			api.CreateConnection(audioSource2, audioDestination1);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var result = connectivity.GetConnectedDestinations([source1, source2, source3]);
+
+			result.Keys.ShouldBe([source1, source2, source3], ignoreOrder: true);
+			result[source1].ShouldBe([destination1]);
+			result[source2].ShouldBe([destination1, destination2], ignoreOrder: true);
+			result[source3].ShouldBeEmpty();
 		}
 
 		[TestMethod]
