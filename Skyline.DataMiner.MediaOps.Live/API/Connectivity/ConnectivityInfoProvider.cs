@@ -107,7 +107,7 @@
 
 			lock (_lock)
 			{
-				EnsureEndpointsAreLoaded(endpoints);
+				EnsureEndpointsAreLoaded(endpoints.Select(x => x.Reference));
 
 				return endpoints.ToDictionary(x => x, IsConnected);
 			}
@@ -122,7 +122,7 @@
 
 			lock (_lock)
 			{
-				EnsureVirtualSignalGroupsAreLoaded(virtualSignalGroups);
+				EnsureVirtualSignalGroupsAreLoaded(virtualSignalGroups.Select(x => x.Reference));
 
 				return virtualSignalGroups.ToDictionary(x => x, IsConnected);
 			}
@@ -269,7 +269,7 @@
 
 			lock (_lock)
 			{
-				EnsureEndpointsAreLoaded(endpoints);
+				EnsureEndpointsAreLoaded(endpoints.Select(x => x.Reference));
 
 				return endpoints.ToDictionary(x => x, GetConnectivity);
 			}
@@ -299,7 +299,7 @@
 
 			lock (_lock)
 			{
-				EnsureVirtualSignalGroupsAreLoaded(virtualSignalGroups);
+				EnsureVirtualSignalGroupsAreLoaded(virtualSignalGroups.Select(x => x.Reference));
 
 				return virtualSignalGroups.ToDictionary(x => x, GetConnectivity);
 			}
@@ -324,16 +324,9 @@
 			{
 				if (updated != null)
 				{
-					var newItems = updated.Where(item => !_endpoints.ContainsKey(item.ID)).ToList();
-
 					foreach (var item in updated)
 					{
 						_endpoints[item.ID] = item;
-					}
-
-					if (newItems.Count > 0)
-					{
-						LoadExtraDataForEndpoints(newItems);
 					}
 				}
 
@@ -377,18 +370,15 @@
 			{
 				if (updated != null)
 				{
-					var newItems = updated.Where(item => !_connections.ContainsKey(item.ID)).ToList();
-
 					foreach (var item in updated)
 					{
 						_connections[item.ID] = item;
 						_connectionEndpointsMapping.AddOrUpdate(item);
 					}
 
-					if (newItems.Count > 0)
-					{
-						LoadExtraDataForConnections(newItems);
-					}
+					// Ensure that endpoints for the updated connections are loaded
+					var endpoints = updated.SelectMany(x => x.GetEndpoints());
+					EnsureEndpointsAreLoaded(endpoints);
 				}
 
 				if (deleted != null)
@@ -408,32 +398,19 @@
 			{
 				var endpointIds = endpoints.Select(x => x.ID).ToList();
 
-				Debug.WriteLine($"Loading VSGs with endpoints: {string.Join(", ", endpointIds)}");
+				Debug.WriteLine($"Loading VSGs with endpoints: {String.Join(", ", endpointIds)}");
 				var virtualSignalGroups = Api.VirtualSignalGroups.GetByEndpointIds(endpointIds).ToList();
-				Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {string.Join(", ", virtualSignalGroups.Select(x => x.ID))}");
 				UpdateVirtualSignalGroups(virtualSignalGroups);
+				Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {String.Join(", ", virtualSignalGroups.Select(x => x.ID))}");
 
-				Debug.WriteLine($"Loading connections with endpoints: {string.Join(", ", endpointIds)}");
+				Debug.WriteLine($"Loading connections with endpoints: {String.Join(", ", endpointIds)}");
 				var connections = Api.Connections.GetByEndpointIds(endpointIds).ToList();
-				Debug.WriteLine($"Loaded {connections.Count} connections: {string.Join(", ", connections.Select(x => x.ID))}");
 				UpdateConnections(connections);
+				Debug.WriteLine($"Loaded {connections.Count} connections: {String.Join(", ", connections.Select(x => x.ID))}");
 			}
 		}
 
-		private void LoadExtraDataForConnections(ICollection<Connection> connections)
-		{
-			lock (_lock)
-			{
-				var endpoints = connections
-					.SelectMany(x => x.GetEndpoints())
-					.Distinct()
-					.ToList();
-
-				EnsureEndpointsAreLoaded(endpoints);
-			}
-		}
-
-		private void EnsureEndpointsAreLoaded(ICollection<ApiObjectReference<Endpoint>> endpointIds)
+		private void EnsureEndpointsAreLoaded(IEnumerable<ApiObjectReference<Endpoint>> endpointIds)
 		{
 			lock (_lock)
 			{
@@ -443,19 +420,13 @@
 
 				if (endpointIdsToRetrieve.Count > 0)
 				{
-					Debug.WriteLine($"Loading endpoints: {string.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
+					Debug.WriteLine($"Loading endpoints: {String.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
 					var endpoints = Api.Endpoints.Read(endpointIdsToRetrieve);
-					Debug.WriteLine($"Loaded {endpoints.Count} endpoints: {string.Join(", ", endpoints.Select(x => x.Key.ID))}");
 					UpdateEndpoints(endpoints.Values);
-				}
-			}
-		}
+					Debug.WriteLine($"Loaded {endpoints.Count} endpoints");
 
-		private void EnsureEndpointsAreLoaded(ICollection<Endpoint> endpoints)
-		{
-			lock (_lock)
-			{
-				EnsureEndpointsAreLoaded(endpoints.Select(x => x.Reference).ToList());
+					LoadExtraDataForEndpoints(endpoints.Values);
+				}
 			}
 		}
 
@@ -469,19 +440,16 @@
 
 				if (vsgIdsToRetrieve.Count > 0)
 				{
-					Debug.WriteLine($"Loading VSGs: {string.Join(", ", vsgIdsToRetrieve.Select(x => x.ID))}");
+					Debug.WriteLine($"Loading VSGs: {String.Join(", ", vsgIdsToRetrieve.Select(x => x.ID))}");
 					var virtualSignalGroups = Api.VirtualSignalGroups.Read(vsgIdsToRetrieve);
-					Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {string.Join(", ", virtualSignalGroups.Select(x => x.Key.ID))}");
 					UpdateVirtualSignalGroups(virtualSignalGroups.Values);
-				}
-			}
-		}
+					Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs");
 
-		private void EnsureVirtualSignalGroupsAreLoaded(ICollection<VirtualSignalGroup> virtualSignalGroups)
-		{
-			lock (_lock)
-			{
-				EnsureVirtualSignalGroupsAreLoaded(virtualSignalGroups.Select(x => x.Reference).ToList());
+					var endpoints = virtualSignalGroups.Values
+						.SelectMany(vsg => vsg.GetLevelEndpoints())
+						.Select(endpoint => endpoint.Endpoint);
+					EnsureEndpointsAreLoaded(endpoints);
+				}
 			}
 		}
 
