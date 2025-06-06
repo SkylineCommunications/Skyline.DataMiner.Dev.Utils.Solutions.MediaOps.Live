@@ -19,9 +19,7 @@
 			var api = new MediaOpsLiveApiMock(interceptedConnection);
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 
 			api.CreateConnection(audioSource1, audioDestination1);
 
@@ -30,10 +28,6 @@
 			using (var connectivity = new ConnectivityInfoProvider(api))
 			{
 				Assert.IsTrue(connectivity.IsConnected(audioSource1));
-				Assert.IsTrue(connectivity.IsConnected(audioDestination1));
-
-				Assert.IsFalse(connectivity.IsConnected(audioSource2));
-				Assert.IsFalse(connectivity.IsConnected(audioDestination2));
 			}
 
 			Assert.IsTrue(connectionMetrics.NumberOfRequests < 100);

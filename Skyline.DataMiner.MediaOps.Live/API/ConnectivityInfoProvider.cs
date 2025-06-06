@@ -481,7 +481,7 @@
 
 					if (newItems.Count > 0)
 					{
-						LoadExtraDataForEndpoints(updated);
+						LoadExtraDataForEndpoints(newItems);
 					}
 				}
 
@@ -511,7 +511,7 @@
 
 					if (newItems.Count > 0)
 					{
-						LoadExtraDataForVirtualSignalGroups(updated);
+						LoadExtraDataForVirtualSignalGroups(newItems);
 					}
 				}
 
@@ -542,7 +542,7 @@
 
 					if (newItems.Count > 0)
 					{
-						LoadExtraDataForConnections(updated);
+						LoadExtraDataForConnections(newItems);
 					}
 				}
 
