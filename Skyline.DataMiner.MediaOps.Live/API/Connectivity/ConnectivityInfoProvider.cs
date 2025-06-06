@@ -188,6 +188,7 @@
 				}
 
 				return new EndpointConnectivity(
+					endpoint,
 					connectedSource,
 					pendingConnectedSource,
 					connectedDestinations,
@@ -213,44 +214,49 @@
 				var pendingConnectedDestinations = new List<VirtualSignalGroup>();
 
 				var endpoints = _virtualSignalGroupEndpointsMapping.GetEndpoints(virtualSignalGroup).ToList();
-				var endpointsConnectivity = GetConnectivity(endpoints);
+				var endpointsConnectivity = GetConnectivity(endpoints).Values;
 
-				foreach (var endpointConnectivity in endpointsConnectivity)
+				foreach (var connectivity in endpointsConnectivity)
 				{
-					var connectivity = endpointConnectivity.Value;
-
 					if (connectivity.ConnectedSource != null)
 					{
-						connectedSources.AddRange(_virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.ConnectedSource));
+						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.ConnectedSource);
+						connectedSources.AddRange(virtualSignalGroups);
 					}
 
 					if (connectivity.PendingConnectedSource != null)
 					{
-						pendingConnectedSources.AddRange(_virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.PendingConnectedSource));
+						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.PendingConnectedSource);
+						pendingConnectedSources.AddRange(virtualSignalGroups);
 					}
 
 					if (connectivity.ConnectedDestinations.Count > 0)
 					{
-						var vsgs = connectivity.ConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
-						connectedDestinations.AddRange(vsgs);
+						var virtualSignalGroups = connectivity.ConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
+						connectedDestinations.AddRange(virtualSignalGroups);
 					}
 
 					if (connectivity.PendingConnectedDestinations.Count > 0)
 					{
-						var vsgs = connectivity.PendingConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
-						pendingConnectedDestinations.AddRange(vsgs);
+						var virtualSignalGroups = connectivity.PendingConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
+						pendingConnectedDestinations.AddRange(virtualSignalGroups);
 					}
 				}
 
-				var connectionStatus = endpointsConnectivity.Values.All(x => x.IsConnected)
+				var connectionStatus = endpointsConnectivity.All(x => x.IsConnected)
 					? ConnectionStatus.Connected
-					: endpointsConnectivity.Values.Any(x => x.IsConnected) ? ConnectionStatus.Partial : ConnectionStatus.Disconnected;
+					: endpointsConnectivity.Any(x => x.IsConnected)
+						? ConnectionStatus.Partial
+						: ConnectionStatus.Disconnected;
 
-				var pendingConnectionStatus = endpointsConnectivity.Values.All(x => x.IsPendingConnected)
+				var pendingConnectionStatus = endpointsConnectivity.All(x => x.IsPendingConnected)
 					? ConnectionStatus.Connected
-					: endpointsConnectivity.Values.Any(x => x.IsPendingConnected) ? ConnectionStatus.Partial : ConnectionStatus.Disconnected;
+					: endpointsConnectivity.Any(x => x.IsPendingConnected)
+						? ConnectionStatus.Partial
+						: ConnectionStatus.Disconnected;
 
 				return new VirtualSignalGroupConnectivity(
+					virtualSignalGroup,
 					connectionStatus,
 					pendingConnectionStatus,
 					connectedSources,
@@ -330,6 +336,8 @@
 			{
 				UpdateEndpoints(e.Created.Concat(e.Updated), e.Deleted);
 
+				var impactedConnections = FindImpactedConnections(e.Created.Concat(e.Updated).Concat(e.Deleted)).ToList();
+
 				throw new NotImplementedException();
 			}
 		}
@@ -340,7 +348,9 @@
 			{
 				UpdateVirtualSignalGroups(e.Created.Concat(e.Updated), e.Deleted);
 
-				throw new NotImplementedException(); 
+				var impactedConnections = FindImpactedConnections(e.Created.Concat(e.Updated).Concat(e.Deleted)).ToList();
+
+				throw new NotImplementedException();
 			}
 		}
 
@@ -350,7 +360,9 @@
 			{
 				UpdateConnections(e.Created.Concat(e.Updated), e.Deleted);
 
-				throw new NotImplementedException(); 
+				var impactedConnections = FindImpactedConnections(e.Created.Concat(e.Updated).Concat(e.Deleted)).ToList();
+
+				throw new NotImplementedException();
 			}
 		}
 
@@ -492,6 +504,38 @@
 					EnsureEndpointsAreLoaded(endpoints);
 				}
 			}
+		}
+
+		private IEnumerable<VirtualSignalGroupConnectivity> FindImpactedConnections(IEnumerable<Endpoint> endpoints)
+		{
+			var virtualSignalGroups = endpoints
+				.SelectMany(endpoint => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint))
+				.Distinct()
+				.ToList();
+
+			return GetConnectivity(virtualSignalGroups).Values;
+		}
+
+		private IEnumerable<VirtualSignalGroupConnectivity> FindImpactedConnections(IEnumerable<Connection> connections)
+		{
+			var virtualSignalGroups = connections
+				.SelectMany(connection => connection.GetEndpoints())
+				.SelectMany(endpoint => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint))
+				.Distinct()
+				.ToList();
+
+			return GetConnectivity(virtualSignalGroups).Values;
+		}
+
+		private IEnumerable<VirtualSignalGroupConnectivity> FindImpactedConnections(IEnumerable<VirtualSignalGroup> virtualSignalGroups)
+		{
+			var expandedVirtualSignalGroups = virtualSignalGroups
+				.SelectMany(vsg => vsg.GetLevelEndpoints())
+				.SelectMany(levelEndpoint => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(levelEndpoint.Endpoint))
+				.Distinct()
+				.ToList();
+
+			return GetConnectivity(expandedVirtualSignalGroups).Values;
 		}
 
 		public void Dispose()

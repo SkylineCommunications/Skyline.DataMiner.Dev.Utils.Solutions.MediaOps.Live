@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
+	using System;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
@@ -7,16 +8,20 @@
 	public class EndpointConnectivity
 	{
 		public EndpointConnectivity(
+			ApiObjectReference<Endpoint> endpoint,
 			Endpoint connectedSource,
 			Endpoint pendingConnectedSource,
 			IReadOnlyCollection<Endpoint> connectedDestinations,
 			IReadOnlyCollection<Endpoint> pendingConnectedDestinations)
 		{
+			Endpoint = endpoint;
 			ConnectedSource = connectedSource;
 			PendingConnectedSource = pendingConnectedSource;
 			ConnectedDestinations = connectedDestinations ?? [];
 			PendingConnectedDestinations = pendingConnectedDestinations ?? [];
 		}
+
+		public ApiObjectReference<Endpoint> Endpoint { get; }
 
 		/// <summary>
 		/// Gets the endpoint that this endpoint is connected to as a source.
@@ -45,5 +50,10 @@
 		public bool IsConnected => ConnectedSource != null || ConnectedDestinations.Count > 0;
 
 		public bool IsPendingConnected => PendingConnectedSource != null || PendingConnectedDestinations.Count > 0;
+
+		public override string ToString()
+		{
+			return $"{Endpoint.ID} - Connected: {IsConnected}";
+		}
 	}
 }

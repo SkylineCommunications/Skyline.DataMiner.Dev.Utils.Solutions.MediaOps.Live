@@ -15,7 +15,7 @@
 
 		public int EndpointCount => _mapping.Reverse.Count;
 
-		public IEnumerable<ApiObjectReference<Endpoint>> GetEndpoints(VirtualSignalGroup virtualSignalGroup)
+		public IReadOnlyCollection<ApiObjectReference<Endpoint>> GetEndpoints(VirtualSignalGroup virtualSignalGroup)
 		{
 			if (virtualSignalGroup is null)
 			{
@@ -23,15 +23,15 @@
 			}
 
 			return _mapping.Forward.TryGetValue(virtualSignalGroup, out var endpoints)
-				? endpoints
-				: Enumerable.Empty<ApiObjectReference<Endpoint>>();
+				? endpoints.ToList()
+				: Array.Empty<ApiObjectReference<Endpoint>>();
 		}
 
-		public IEnumerable<VirtualSignalGroup> GetVirtualSignalGroups(ApiObjectReference<Endpoint> endpoint)
+		public IReadOnlyCollection<VirtualSignalGroup> GetVirtualSignalGroups(ApiObjectReference<Endpoint> endpoint)
 		{
 			return _mapping.Reverse.TryGetValue(endpoint, out var virtualSignalGroups)
-				? virtualSignalGroups
-				: Enumerable.Empty<VirtualSignalGroup>();
+				? virtualSignalGroups.ToList()
+				: Array.Empty<VirtualSignalGroup>();
 		}
 
 		public void Add(VirtualSignalGroup virtualSignalGroup)

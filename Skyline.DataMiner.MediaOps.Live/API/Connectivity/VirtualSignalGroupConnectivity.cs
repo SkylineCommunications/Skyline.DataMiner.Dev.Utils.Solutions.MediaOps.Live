@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
+	using System;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
@@ -7,6 +8,7 @@
 	public class VirtualSignalGroupConnectivity
 	{
 		public VirtualSignalGroupConnectivity(
+			VirtualSignalGroup virtualSignalGroup,
 			ConnectionStatus connectedStatus,
 			ConnectionStatus pendingConnectedStatus,
 			IReadOnlyCollection<VirtualSignalGroup> connectedSources,
@@ -14,6 +16,7 @@
 			IReadOnlyCollection<VirtualSignalGroup> connectedDestinations,
 			IReadOnlyCollection<VirtualSignalGroup> pendingConnectedDestinations)
 		{
+			VirtualSignalGroup = virtualSignalGroup ?? throw new ArgumentNullException(nameof(virtualSignalGroup));
 			ConnectedStatus = connectedStatus;
 			PendingConnectedStatus = pendingConnectedStatus;
 			ConnectedSources = connectedSources ?? [];
@@ -21,6 +24,8 @@
 			ConnectedDestinations = connectedDestinations ?? [];
 			PendingConnectedDestinations = pendingConnectedDestinations ?? [];
 		}
+
+		public VirtualSignalGroup VirtualSignalGroup { get; }
 
 		public ConnectionStatus ConnectedStatus { get; }
 
@@ -53,5 +58,10 @@
 		public bool IsConnected => ConnectedSources.Count > 0 || ConnectedDestinations.Count > 0;
 
 		public bool IsPendingConnected => PendingConnectedSources.Count > 0 || PendingConnectedDestinations.Count > 0;
+
+		public override string ToString()
+		{
+			return $"{VirtualSignalGroup.ID} - Connected: {ConnectedStatus}";
+		}
 	}
 }
