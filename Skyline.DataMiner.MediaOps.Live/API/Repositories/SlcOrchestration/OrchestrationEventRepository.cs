@@ -90,7 +90,7 @@
 		/// </summary>
 		/// <param name="job">The <see cref="OrchestrationJobConfiguration" /> object to save.</param>
 		/// <returns>The saved <see cref="OrchestrationJobConfiguration" />.</returns>
-		public OrchestrationJobConfiguration SaveOrchestrationJobConfiguration(OrchestrationJobConfiguration job)
+		public OrchestrationJobConfiguration SaveOrchestrationJobConfiguration(OrchestrationJobConfiguration job, bool updateTasks = false)
 		{
 			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
 			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-SaveJobConfiguration", performanceLogFilename);
@@ -101,7 +101,12 @@
 				DeleteEvents(job.RemovedIds, performanceTracker);
 
 				job.ValidateEventsBeforeSaving();
-				_scheduler.CreateOrUpdateEventScheduling(job.OrchestrationEvents);
+
+				if (updateTasks)
+				{
+					_scheduler.CreateOrUpdateEventScheduling(job.OrchestrationEvents);
+				}
+
 				IEnumerable<OrchestrationEventConfiguration> successes = SaveEventConfigurations(job.OrchestrationEvents, performanceTracker);
 				return new OrchestrationJobConfiguration(job.JobId, successes.ToList());
 			}

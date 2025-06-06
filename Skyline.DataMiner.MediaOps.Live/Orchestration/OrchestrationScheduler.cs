@@ -19,19 +19,18 @@
 		private readonly IDms _dms;
 		private readonly IConnection _connection;
 
-		private readonly HashSet<OrchestrationSchedulerTask> _internalTaskList;
+		private Lazy<HashSet<OrchestrationSchedulerTask>> _internalTaskList;
 
 		public OrchestrationScheduler(IDms dms, IConnection connection)
 		{
 			_dms = dms ?? throw new ArgumentNullException(nameof(dms));
 			_connection = connection;
-			_internalTaskList = new HashSet<OrchestrationSchedulerTask>();
-
-			LoadInternalTaskList();
+			_internalTaskList = new Lazy<HashSet<OrchestrationSchedulerTask>>(LoadInternalTaskList);
 		}
 
-		private void LoadInternalTaskList()
+		private HashSet<OrchestrationSchedulerTask> LoadInternalTaskList()
 		{
+			HashSet<OrchestrationSchedulerTask> list = new HashSet<OrchestrationSchedulerTask>();
 			GetInfoMessage getSchedulerTaskInfoMessage = new GetInfoMessage(InfoType.SchedulerTasks);
 
 			var progress = _connection.Async.Launch(getSchedulerTaskInfoMessage);
@@ -72,8 +71,10 @@
 				List<Guid> eventGuidsInput = JsonConvert.DeserializeObject<List<Guid>>(automationScriptInfo.Value);
 				var existingTask = new OrchestrationSchedulerTask(DateTime.SpecifyKind(task.StartTime, DateTimeKind.Local), eventGuidsInput, new ScheduledTaskId(task.HandlingDMA, task.Id));
 
-				_internalTaskList.Add(existingTask);
+				list.Add(existingTask);
 			}
+
+			return list;
 		}
 
 		/// <summary>
@@ -137,7 +138,7 @@
 					int newTaskId = dma.Scheduler.CreateTask(taskForTimeStamp.GenerateSchedulerTaskData());
 					taskForTimeStamp.ScheduledTaskId = new ScheduledTaskId(dma.Id, newTaskId);
 					orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
-					_internalTaskList.Add(taskForTimeStamp);
+					_internalTaskList.Value.Add(taskForTimeStamp);
 					continue;
 				}
 
@@ -168,7 +169,7 @@
 			if (!task.OrchestrationEventIds.Any())
 			{
 				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.DeleteTask(task.ScheduledTaskId.TaskId);
-				_internalTaskList.RemoveWhere(t => t.ScheduledTaskId.Equals(task.ScheduledTaskId));
+				_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(task.ScheduledTaskId));
 			}
 			else
 			{
@@ -186,12 +187,12 @@
 
 		private OrchestrationSchedulerTask FindExistingTaskForTimeStamp(DateTimeOffset timestamp)
 		{
-			return _internalTaskList.FirstOrDefault(task => task.DateTime == timestamp);
+			return _internalTaskList.Value.FirstOrDefault(task => task.DateTime == timestamp);
 		}
 
 		private OrchestrationSchedulerTask FindExistingTaskByTaskId(ScheduledTaskId taskId)
 		{
-			return _internalTaskList.FirstOrDefault(task => task.ScheduledTaskId.Equals(taskId));
+			return _internalTaskList.Value.FirstOrDefault(task => task.ScheduledTaskId.Equals(taskId));
 		}
 	}
 }
