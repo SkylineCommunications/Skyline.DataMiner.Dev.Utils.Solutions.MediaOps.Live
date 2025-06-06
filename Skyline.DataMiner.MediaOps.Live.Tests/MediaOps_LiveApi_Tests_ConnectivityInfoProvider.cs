@@ -268,6 +268,7 @@
 			source1Connectivity.IsPendingConnected.ShouldBeFalse();
 			source1Connectivity.ConnectedStatus.ShouldBe(ConnectionStatus.Connected);
 			source1Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
+			source1Connectivity.ConnectedSources.ShouldBeEmpty();
 			source1Connectivity.ConnectedDestinations.ShouldBe([destination1, destination2], ignoreOrder: true);
 
 			var destination1Connectivity = connectivity.GetConnectivity(destination1);
@@ -277,12 +278,14 @@
 			destination1Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Partial);
 			destination1Connectivity.ConnectedSources.ShouldBe([source1]);
 			destination1Connectivity.PendingConnectedSources.ShouldBe([source2]);
+			destination1Connectivity.ConnectedDestinations.ShouldBeEmpty();
 
 			var source2Connectivity = connectivity.GetConnectivity(source2);
 			source2Connectivity.IsConnected.ShouldBeTrue();
 			source2Connectivity.IsPendingConnected.ShouldBeTrue();
 			source2Connectivity.ConnectedStatus.ShouldBe(ConnectionStatus.Partial);
 			source2Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Partial);
+			source2Connectivity.ConnectedSources.ShouldBeEmpty();
 			source2Connectivity.ConnectedDestinations.ShouldBe([destination2]);
 			source2Connectivity.PendingConnectedDestinations.ShouldBe([destination1]);
 
@@ -292,18 +295,21 @@
 			destination2Connectivity.ConnectedStatus.ShouldBe(ConnectionStatus.Connected);
 			destination2Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
 			destination2Connectivity.ConnectedSources.ShouldBe([source1, source2], ignoreOrder: true);
+			destination2Connectivity.ConnectedDestinations.ShouldBeEmpty();
 
 			var source3Connectivity = connectivity.GetConnectivity(source3);
 			source3Connectivity.IsConnected.ShouldBeFalse();
 			source3Connectivity.IsPendingConnected.ShouldBeFalse();
 			source3Connectivity.ConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
 			source3Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
+			source3Connectivity.ConnectedSources.ShouldBeEmpty();
 
 			var destination3Connectivity = connectivity.GetConnectivity(destination3);
 			destination3Connectivity.IsConnected.ShouldBeFalse();
 			destination3Connectivity.IsPendingConnected.ShouldBeFalse();
 			destination3Connectivity.ConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
 			destination3Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
+			destination3Connectivity.ConnectedDestinations.ShouldBeEmpty();
 		}
 
 		[TestMethod]
