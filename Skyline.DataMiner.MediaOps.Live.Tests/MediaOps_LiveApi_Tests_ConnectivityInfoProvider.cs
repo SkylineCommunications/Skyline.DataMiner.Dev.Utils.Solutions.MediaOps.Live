@@ -2,7 +2,7 @@
 {
 	using Shouldly;
 
-	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.GQI.Metrics;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
@@ -181,6 +181,82 @@
 
 			Assert.IsFalse(connectivity.IsPendingConnected(audioSource2));
 			Assert.IsFalse(connectivity.IsPendingConnected(audioDestination2));
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var audioSource1 = api.Endpoints.Read("Audio Source 1");
+			var audioSource2 = api.Endpoints.Read("Audio Source 2");
+			var audioSource3 = api.Endpoints.Read("Audio Source 3");
+			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+			var audioDestination3 = api.Endpoints.Read("Audio Destination 3");
+
+			api.CreateConnection(audioSource1, audioDestination1);
+			api.CreatePendingConnection(audioSource2, audioDestination2);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var audioSource1Connectivity = connectivity.GetConnectivity(audioSource1);
+			audioSource1Connectivity.IsConnected.ShouldBeTrue();
+			audioSource1Connectivity.ConnectedDestinations.ShouldBe([audioDestination1]);
+
+			var audioDestination1Connectivity = connectivity.GetConnectivity(audioDestination1);
+			audioDestination1Connectivity.IsConnected.ShouldBeTrue();
+			audioDestination1Connectivity.ConnectedSource.ShouldBe(audioSource1);
+
+			var audioSource2Connectivity = connectivity.GetConnectivity(audioSource2);
+			audioSource2Connectivity.IsPendingConnected.ShouldBeTrue();
+			audioSource2Connectivity.PendingConnectedDestinations.ShouldBe([audioDestination2]);
+
+			var audioDestination2Connectivity = connectivity.GetConnectivity(audioDestination2);
+			audioDestination2Connectivity.IsPendingConnected.ShouldBeTrue();
+			audioDestination2Connectivity.PendingConnectedSource.ShouldBe(audioSource2);
+
+			var audioSource3Connectivity = connectivity.GetConnectivity(audioSource3);
+			audioSource3Connectivity.IsConnected.ShouldBeFalse();
+			audioSource3Connectivity.IsPendingConnected.ShouldBeFalse();
+
+			var audioDestination3Connectivity = connectivity.GetConnectivity(audioDestination3);
+			audioDestination3Connectivity.IsConnected.ShouldBeFalse();
+			audioDestination3Connectivity.IsPendingConnected.ShouldBeFalse();
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity_Bulk()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var audioSource1 = api.Endpoints.Read("Audio Source 1");
+			var audioSource2 = api.Endpoints.Read("Audio Source 2");
+			var audioSource3 = api.Endpoints.Read("Audio Source 3");
+			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+			var audioDestination3 = api.Endpoints.Read("Audio Destination 3");
+
+			api.CreateConnection(audioSource1, audioDestination1);
+			api.CreatePendingConnection(audioSource2, audioDestination2);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var result = connectivity.GetConnectivity([audioSource1, audioDestination1, audioSource2, audioDestination2, audioSource3, audioDestination3]);
+
+			result.Keys.ShouldBe([audioSource1, audioDestination1, audioSource2, audioDestination2, audioSource3, audioDestination3], ignoreOrder: true);
+			result[audioSource1].IsConnected.ShouldBeTrue();
+			result[audioSource1].ConnectedDestinations.ShouldBe([audioDestination1]);
+			result[audioDestination1].IsConnected.ShouldBeTrue();
+			result[audioDestination1].ConnectedSource.ShouldBe(audioSource1);
+			result[audioSource2].IsPendingConnected.ShouldBeTrue();
+			result[audioSource2].PendingConnectedDestinations.ShouldBe([audioDestination2]);
+			result[audioDestination2].IsPendingConnected.ShouldBeTrue();
+			result[audioDestination2].PendingConnectedSource.ShouldBe(audioSource2);
+			result[audioSource3].IsConnected.ShouldBeFalse();
+			result[audioSource3].IsPendingConnected.ShouldBeFalse();
+			result[audioDestination3].IsConnected.ShouldBeFalse();
+			result[audioDestination3].IsPendingConnected.ShouldBeFalse();
 		}
 
 		[TestMethod]

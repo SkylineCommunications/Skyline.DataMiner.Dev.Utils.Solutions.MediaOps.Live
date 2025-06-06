@@ -1,20 +1,15 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
 
+	using Skyline.DataMiner.MediaOps.Live.API;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-
-	public enum ConnectionStatus
-	{
-		Disconnected,
-		Partial,
-		Connected,
-	}
 
 	public class ConnectivityInfoProvider : IDisposable
 	{
@@ -158,7 +153,7 @@
 				EnsureEndpointsAreLoaded([endpoint]);
 
 				return _connectionEndpointsMapping.GetConnections(endpoint)
-					.Any(c => c.PendingConnectedSource.HasValue && c.PendingConnectedSource != ApiObjectReference<Endpoint>.Empty);
+					.Any(c => c.PendingConnectedSource != ApiObjectReference<Endpoint>.Empty);
 			}
 		}
 
@@ -453,6 +448,76 @@
 			}
 		}
 
+		public EndpointConnectivity GetConnectivity(Endpoint endpoint)
+		{
+			if (endpoint == null)
+			{
+				throw new ArgumentNullException(nameof(endpoint));
+			}
+
+			lock (_lock)
+			{
+				var reference = endpoint.Reference;
+				EnsureEndpointsAreLoaded([reference]);
+
+				Endpoint connectedSource = null;
+				Endpoint pendingConnectedSource = null;
+				var connectedDestinations = new List<Endpoint>();
+				var pendingConnectedDestinations = new List<Endpoint>();
+
+				var connections = _connectionEndpointsMapping.GetConnections(reference);
+
+				foreach (var connection in connections)
+				{
+					if (connection.ConnectedSource == reference &&
+						_endpoints.TryGetValue(connection.Destination, out var destination))
+					{
+						connectedDestinations.Add(destination);
+					}
+
+					if (connection.PendingConnectedSource == reference &&
+						_endpoints.TryGetValue(connection.Destination, out var pendingDestination))
+					{
+						pendingConnectedDestinations.Add(pendingDestination);
+					}
+
+					if (connection.Destination == reference)
+					{
+						if (connection.ConnectedSource.HasValue)
+						{
+							_endpoints.TryGetValue(connection.ConnectedSource.Value, out connectedSource);
+						}
+
+						if (connection.PendingConnectedSource.HasValue)
+						{
+							_endpoints.TryGetValue(connection.PendingConnectedSource.Value, out pendingConnectedSource);
+						}
+					}
+				}
+
+				return new EndpointConnectivity(
+					connectedSource,
+					pendingConnectedSource,
+					connectedDestinations,
+					pendingConnectedDestinations);
+			}
+		}
+
+		public IDictionary<Endpoint, EndpointConnectivity> GetConnectivity(ICollection<Endpoint> endpoints)
+		{
+			if (endpoints is null)
+			{
+				throw new ArgumentNullException(nameof(endpoints));
+			}
+
+			lock (_lock)
+			{
+				EnsureEndpointsAreLoaded(endpoints);
+
+				return endpoints.ToDictionary(x => x, GetConnectivity);
+			}
+		}
+
 		public void Subscribe()
 		{
 			if (_isSubscribed)
@@ -556,14 +621,14 @@
 			{
 				var endpointIds = endpoints.Select(x => x.ID).ToList();
 
-				Debug.WriteLine($"Loading VSGs with endpoints: {String.Join(", ", endpointIds)}");
+				Debug.WriteLine($"Loading VSGs with endpoints: {string.Join(", ", endpointIds)}");
 				var virtualSignalGroups = Api.VirtualSignalGroups.GetByEndpointIds(endpointIds).ToList();
-				Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {String.Join(", ", virtualSignalGroups.Select(x => x.ID))}");
+				Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {string.Join(", ", virtualSignalGroups.Select(x => x.ID))}");
 				UpdateVirtualSignalGroups(virtualSignalGroups);
 
-				Debug.WriteLine($"Loading connections with endpoints: {String.Join(", ", endpointIds)}");
+				Debug.WriteLine($"Loading connections with endpoints: {string.Join(", ", endpointIds)}");
 				var connections = Api.Connections.GetByEndpointIds(endpointIds).ToList();
-				Debug.WriteLine($"Loaded {connections.Count} connections: {String.Join(", ", connections.Select(x => x.ID))}");
+				Debug.WriteLine($"Loaded {connections.Count} connections: {string.Join(", ", connections.Select(x => x.ID))}");
 				UpdateConnections(connections);
 			}
 		}
@@ -591,9 +656,9 @@
 
 				if (endpointIdsToRetrieve.Count > 0)
 				{
-					Debug.WriteLine($"Loading endpoints: {String.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
+					Debug.WriteLine($"Loading endpoints: {string.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
 					var endpoints = Api.Endpoints.Read(endpointIdsToRetrieve);
-					Debug.WriteLine($"Loaded {endpoints.Count} endpoints: {String.Join(", ", endpoints.Select(x => x.Key.ID))}");
+					Debug.WriteLine($"Loaded {endpoints.Count} endpoints: {string.Join(", ", endpoints.Select(x => x.Key.ID))}");
 					UpdateEndpoints(endpoints.Values);
 				}
 			}
@@ -617,9 +682,9 @@
 
 				if (vsgIdsToRetrieve.Count > 0)
 				{
-					Debug.WriteLine($"Loading VSGs: {String.Join(", ", vsgIdsToRetrieve.Select(x => x.ID))}");
+					Debug.WriteLine($"Loading VSGs: {string.Join(", ", vsgIdsToRetrieve.Select(x => x.ID))}");
 					var virtualSignalGroups = Api.VirtualSignalGroups.Read(vsgIdsToRetrieve);
-					Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {String.Join(", ", virtualSignalGroups.Select(x => x.Key.ID))}");
+					Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {string.Join(", ", virtualSignalGroups.Select(x => x.Key.ID))}");
 					UpdateVirtualSignalGroups(virtualSignalGroups.Values);
 				}
 			}
