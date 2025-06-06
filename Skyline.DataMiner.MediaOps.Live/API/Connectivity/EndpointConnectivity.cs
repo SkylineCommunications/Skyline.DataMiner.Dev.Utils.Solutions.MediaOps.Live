@@ -1,6 +1,5 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
-	using System;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
@@ -15,13 +14,9 @@
 		{
 			ConnectedSource = connectedSource;
 			PendingConnectedSource = pendingConnectedSource;
-			ConnectedDestinations = connectedDestinations ?? Array.Empty<Endpoint>();
-			PendingConnectedDestinations = pendingConnectedDestinations ?? Array.Empty<Endpoint>();
+			ConnectedDestinations = connectedDestinations ?? [];
+			PendingConnectedDestinations = pendingConnectedDestinations ?? [];
 		}
-
-		public bool IsConnected => ConnectedSource != null || ConnectedDestinations.Count > 0;
-
-		public bool IsPendingConnected => PendingConnectedSource != null || PendingConnectedDestinations.Count > 0;
 
 		/// <summary>
 		/// Gets the endpoint that this endpoint is connected to as a source.
@@ -30,7 +25,7 @@
 		public Endpoint ConnectedSource { get; }
 
 		/// <summary>
-		/// Gets the endpoint that this endpoint is pending connected to as a source.
+		/// Gets the pending endpoint that this endpoint is connecting to as a source.
 		/// Null if not connected.
 		/// </summary>
 		public Endpoint PendingConnectedSource { get; }
@@ -42,9 +37,13 @@
 		public IReadOnlyCollection<Endpoint> ConnectedDestinations { get; }
 
 		/// <summary>
-		/// Gets the destinations this endpoint is pending connected to.
+		/// Gets the pending destinations this endpoint is connecting to.
 		/// Empty if none.
 		/// </summary>
 		public IReadOnlyCollection<Endpoint> PendingConnectedDestinations { get; }
+
+		public bool IsConnected => ConnectedSource != null || ConnectedDestinations.Count > 0;
+
+		public bool IsPendingConnected => PendingConnectedSource != null || PendingConnectedDestinations.Count > 0;
 	}
 }

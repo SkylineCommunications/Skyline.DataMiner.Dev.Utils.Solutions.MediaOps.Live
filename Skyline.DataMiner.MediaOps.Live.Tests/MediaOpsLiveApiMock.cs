@@ -148,7 +148,7 @@
 			Connections.CreateOrUpdate(connection);
 		}
 
-		public void CreateConnection(Endpoint source, Endpoint destination)
+		public void CreateConnection(Endpoint? source, Endpoint destination)
 		{
 			if (destination is null)
 			{
@@ -158,7 +158,7 @@
 			CreateConnection(source, null, destination);
 		}
 
-		public void CreatePendingConnection(Endpoint pendingSource, Endpoint destination)
+		public void CreatePendingConnection(Endpoint? pendingSource, Endpoint destination)
 		{
 			if (destination is null)
 			{
