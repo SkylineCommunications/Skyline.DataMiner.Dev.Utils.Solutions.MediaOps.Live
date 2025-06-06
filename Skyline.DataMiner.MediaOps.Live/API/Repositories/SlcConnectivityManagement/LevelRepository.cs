@@ -1,5 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcConnectivityManagement
 {
+	using System;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -28,7 +30,7 @@
 			switch (fieldName)
 			{
 				case nameof(Level.Number):
-					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number), comparer, (long)value);
+					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number), comparer, Convert.ToInt64(value));
 				case nameof(Level.Name):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Name), comparer, (string)value);
 				case nameof(Level.TransportType):
