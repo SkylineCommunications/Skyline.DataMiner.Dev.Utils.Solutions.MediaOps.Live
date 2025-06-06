@@ -501,17 +501,10 @@
 			{
 				if (updated != null)
 				{
-					var newItems = updated.Where(item => !_virtualSignalGroups.ContainsKey(item.ID)).ToList();
-
 					foreach (var item in updated)
 					{
 						_virtualSignalGroups[item.ID] = item;
 						_virtualSignalGroupEndpointsMapping.AddOrUpdate(item);
-					}
-
-					if (newItems.Count > 0)
-					{
-						LoadExtraDataForVirtualSignalGroups(newItems);
 					}
 				}
 
@@ -572,20 +565,6 @@
 				var connections = Api.Connections.GetByEndpointIds(endpointIds).ToList();
 				Debug.WriteLine($"Loaded {connections.Count} connections: {String.Join(", ", connections.Select(x => x.ID))}");
 				UpdateConnections(connections);
-			}
-		}
-
-		private void LoadExtraDataForVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
-		{
-			lock (_lock)
-			{
-				var endpoints = virtualSignalGroups
-					.SelectMany(vsg => vsg.GetLevelEndpoints())
-					.Select(e => e.Endpoint)
-					.Distinct()
-					.ToList();
-
-				EnsureEndpointsAreLoaded(endpoints);
 			}
 		}
 
