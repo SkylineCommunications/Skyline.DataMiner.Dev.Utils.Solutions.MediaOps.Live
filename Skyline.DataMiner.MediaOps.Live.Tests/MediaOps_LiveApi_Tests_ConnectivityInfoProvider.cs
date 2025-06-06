@@ -30,8 +30,23 @@
 				Assert.IsTrue(connectivity.IsConnected(audioSource1));
 			}
 
-			Assert.IsTrue(connectionMetrics.NumberOfRequests < 100);
-			Assert.IsTrue(connectionMetrics.NumberOfDomInstancesRetrieved < 100);
+			Assert.IsTrue(connectionMetrics.NumberOfRequests < 10);
+			Assert.IsTrue(connectionMetrics.NumberOfDomInstancesRetrieved < 10);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Subscription()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var audioSource1 = api.Endpoints.Read("Audio Source 1");
+			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+
+			using (var connectivity = new ConnectivityInfoProvider(api, subscribe: true))
+			{
+				api.CreateConnection(audioSource1, audioDestination1);
+
+			}
 		}
 
 		#region Endpoints

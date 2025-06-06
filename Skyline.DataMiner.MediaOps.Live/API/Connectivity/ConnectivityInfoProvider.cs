@@ -313,20 +313,63 @@
 			}
 
 			_isSubscribed = true;
+
 			_subscriptionEndpoints = Api.Endpoints.Subscribe();
+			_subscriptionEndpoints.Changed += Endpoints_Changed;
+
 			_subscriptionVirtualSignalGroups = Api.VirtualSignalGroups.Subscribe();
+			_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
+
 			_subscriptionConnections = Api.Connections.Subscribe();
+			_subscriptionConnections.Changed += Connections_Changed;
 		}
 
-		private void UpdateEndpoints(ICollection<Endpoint> updated, ICollection<Endpoint> deleted = null)
+		private void Endpoints_Changed(object sender, ApiObjectsChangedEvent<Endpoint> e)
+		{
+			lock (_lock)
+			{
+				UpdateEndpoints(e.Created.Concat(e.Updated), e.Deleted);
+
+				throw new NotImplementedException();
+			}
+		}
+
+		private void VirtualSignalGroups_Changed(object sender, ApiObjectsChangedEvent<VirtualSignalGroup> e)
+		{
+			lock (_lock)
+			{
+				UpdateVirtualSignalGroups(e.Created.Concat(e.Updated), e.Deleted);
+
+				throw new NotImplementedException(); 
+			}
+		}
+
+		private void Connections_Changed(object sender, ApiObjectsChangedEvent<Connection> e)
+		{
+			lock (_lock)
+			{
+				UpdateConnections(e.Created.Concat(e.Updated), e.Deleted);
+
+				throw new NotImplementedException(); 
+			}
+		}
+
+		private void UpdateEndpoints(IEnumerable<Endpoint> updated, IEnumerable<Endpoint> deleted = null)
 		{
 			lock (_lock)
 			{
 				if (updated != null)
 				{
+					var newEndpoints = updated.Where(x => !_endpoints.ContainsKey(x)).ToList();
+
 					foreach (var item in updated)
 					{
 						_endpoints[item.ID] = item;
+					}
+
+					if (newEndpoints.Count > 0)
+					{
+						LoadExtraDataForEndpoints(newEndpoints);
 					}
 				}
 
@@ -340,7 +383,7 @@
 			}
 		}
 
-		private void UpdateVirtualSignalGroups(ICollection<VirtualSignalGroup> updated, ICollection<VirtualSignalGroup> deleted = null)
+		private void UpdateVirtualSignalGroups(IEnumerable<VirtualSignalGroup> updated, IEnumerable<VirtualSignalGroup> deleted = null)
 		{
 			lock (_lock)
 			{
@@ -364,7 +407,7 @@
 			}
 		}
 
-		private void UpdateConnections(ICollection<Connection> updated, ICollection<Connection> deleted = null)
+		private void UpdateConnections(IEnumerable<Connection> updated, IEnumerable<Connection> deleted = null)
 		{
 			lock (_lock)
 			{
@@ -392,7 +435,7 @@
 			}
 		}
 
-		private void LoadExtraDataForEndpoints(ICollection<Endpoint> endpoints)
+		private void LoadExtraDataForEndpoints(IEnumerable<Endpoint> endpoints)
 		{
 			lock (_lock)
 			{
@@ -400,13 +443,13 @@
 
 				Debug.WriteLine($"Loading VSGs with endpoints: {String.Join(", ", endpointIds)}");
 				var virtualSignalGroups = Api.VirtualSignalGroups.GetByEndpointIds(endpointIds).ToList();
-				UpdateVirtualSignalGroups(virtualSignalGroups);
 				Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {String.Join(", ", virtualSignalGroups.Select(x => x.ID))}");
+				UpdateVirtualSignalGroups(virtualSignalGroups);
 
 				Debug.WriteLine($"Loading connections with endpoints: {String.Join(", ", endpointIds)}");
 				var connections = Api.Connections.GetByEndpointIds(endpointIds).ToList();
-				UpdateConnections(connections);
 				Debug.WriteLine($"Loaded {connections.Count} connections: {String.Join(", ", connections.Select(x => x.ID))}");
+				UpdateConnections(connections);
 			}
 		}
 
@@ -422,10 +465,8 @@
 				{
 					Debug.WriteLine($"Loading endpoints: {String.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
 					var endpoints = Api.Endpoints.Read(endpointIdsToRetrieve);
-					UpdateEndpoints(endpoints.Values);
 					Debug.WriteLine($"Loaded {endpoints.Count} endpoints");
-
-					LoadExtraDataForEndpoints(endpoints.Values);
+					UpdateEndpoints(endpoints.Values);
 				}
 			}
 		}
@@ -442,8 +483,8 @@
 				{
 					Debug.WriteLine($"Loading VSGs: {String.Join(", ", vsgIdsToRetrieve.Select(x => x.ID))}");
 					var virtualSignalGroups = Api.VirtualSignalGroups.Read(vsgIdsToRetrieve);
-					UpdateVirtualSignalGroups(virtualSignalGroups.Values);
 					Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs");
+					UpdateVirtualSignalGroups(virtualSignalGroups.Values);
 
 					var endpoints = virtualSignalGroups.Values
 						.SelectMany(vsg => vsg.GetLevelEndpoints())
