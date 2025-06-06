@@ -8,7 +8,7 @@
 	public class EndpointConnectivity
 	{
 		public EndpointConnectivity(
-			ApiObjectReference<Endpoint> endpoint,
+			Endpoint endpoint,
 			Endpoint connectedSource,
 			Endpoint pendingConnectedSource,
 			IReadOnlyCollection<Endpoint> connectedDestinations,
@@ -21,7 +21,7 @@
 			PendingConnectedDestinations = pendingConnectedDestinations ?? [];
 		}
 
-		public ApiObjectReference<Endpoint> Endpoint { get; }
+		public Endpoint Endpoint { get; }
 
 		/// <summary>
 		/// Gets the endpoint that this endpoint is connected to as a source.

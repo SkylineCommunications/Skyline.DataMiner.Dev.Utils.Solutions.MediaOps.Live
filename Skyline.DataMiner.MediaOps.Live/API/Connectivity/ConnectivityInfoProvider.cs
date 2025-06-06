@@ -48,19 +48,6 @@
 
 			lock (_lock)
 			{
-				return IsConnected(endpoint.Reference);
-			}
-		}
-
-		public bool IsConnected(ApiObjectReference<Endpoint> endpoint)
-		{
-			if (endpoint == ApiObjectReference<Endpoint>.Empty)
-			{
-				throw new ArgumentException("The endpoint reference cannot be empty.", nameof(endpoint));
-			}
-
-			lock (_lock)
-			{
 				EnsureEndpointsAreLoaded([endpoint]);
 
 				return _connectionEndpointsMapping.GetConnections(endpoint)
@@ -84,7 +71,9 @@
 
 				foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
 				{
-					if (IsConnected(levelEndpoint.Endpoint))
+					var endpoint = _endpoints[levelEndpoint.Endpoint];
+
+					if (IsConnected(endpoint))
 						anyConnected = true;
 					else
 						anyDisconnected = true;
@@ -137,19 +126,6 @@
 
 			lock (_lock)
 			{
-				return GetConnectivity(endpoint.Reference);
-			}
-		}
-
-		public EndpointConnectivity GetConnectivity(ApiObjectReference<Endpoint> endpoint)
-		{
-			if (endpoint == ApiObjectReference<Endpoint>.Empty)
-			{
-				throw new ArgumentException("The endpoint reference cannot be empty.", nameof(endpoint));
-			}
-
-			lock (_lock)
-			{
 				EnsureEndpointsAreLoaded([endpoint]);
 
 				Endpoint connectedSource = null;
@@ -187,8 +163,13 @@
 					}
 				}
 
+				if (!_endpoints.TryGetValue(endpoint, out var realEndpoint))
+				{
+					throw new InvalidOperationException("Couldn't find endpoint");
+				}
+
 				return new EndpointConnectivity(
-					endpoint,
+					realEndpoint,
 					connectedSource,
 					pendingConnectedSource,
 					connectedDestinations,
@@ -213,7 +194,10 @@
 				var connectedDestinations = new List<VirtualSignalGroup>();
 				var pendingConnectedDestinations = new List<VirtualSignalGroup>();
 
-				var endpoints = _virtualSignalGroupEndpointsMapping.GetEndpoints(virtualSignalGroup).ToList();
+				var endpoints = _virtualSignalGroupEndpointsMapping.GetEndpoints(virtualSignalGroup)
+					.Select(x => _endpoints[x])
+					.ToList();
+
 				var endpointsConnectivity = GetConnectivity(endpoints).Values;
 
 				foreach (var connectivity in endpointsConnectivity)
@@ -276,21 +260,6 @@
 			lock (_lock)
 			{
 				EnsureEndpointsAreLoaded(endpoints.Select(x => x.Reference));
-
-				return endpoints.ToDictionary(x => x, GetConnectivity);
-			}
-		}
-
-		public IDictionary<ApiObjectReference<Endpoint>, EndpointConnectivity> GetConnectivity(ICollection<ApiObjectReference<Endpoint>> endpoints)
-		{
-			if (endpoints is null)
-			{
-				throw new ArgumentNullException(nameof(endpoints));
-			}
-
-			lock (_lock)
-			{
-				EnsureEndpointsAreLoaded(endpoints);
 
 				return endpoints.ToDictionary(x => x, GetConnectivity);
 			}
@@ -406,6 +375,10 @@
 						_virtualSignalGroups[item.ID] = item;
 						_virtualSignalGroupEndpointsMapping.AddOrUpdate(item);
 					}
+
+					// Ensure that endpoints for the updated virtual signal groups are loaded
+					var endpoints = updated.SelectMany(x => x.GetLevelEndpoints()).Select(x => x.Endpoint);
+					EnsureEndpointsAreLoaded(endpoints);
 				}
 
 				if (deleted != null)
