@@ -37,6 +37,8 @@
 			}
 		}
 
+		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
+
 		public MediaOpsLiveApi Api { get; }
 
 		public bool IsConnected(Endpoint endpoint)
@@ -163,17 +165,33 @@
 					}
 				}
 
-				if (!_endpoints.TryGetValue(endpoint, out var realEndpoint))
-				{
-					throw new InvalidOperationException("Couldn't find endpoint");
-				}
-
 				return new EndpointConnectivity(
-					realEndpoint,
+					endpoint,
+					_virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint),
 					connectedSource,
 					pendingConnectedSource,
 					connectedDestinations,
 					pendingConnectedDestinations);
+			}
+		}
+
+		public EndpointConnectivity GetConnectivity(ApiObjectReference<Endpoint> endpointRef)
+		{
+			if (endpointRef == ApiObjectReference<Endpoint>.Empty)
+			{
+				throw new ArgumentNullException(nameof(endpointRef));
+			}
+
+			lock (_lock)
+			{
+				EnsureEndpointsAreLoaded([endpointRef]);
+
+				if (!_endpoints.TryGetValue(endpointRef, out var endpoint))
+				{
+					throw new InvalidOperationException($"Endpoint {endpointRef.ID} not found");
+				}
+
+				return GetConnectivity(endpoint);
 			}
 		}
 
@@ -186,22 +204,25 @@
 
 			lock (_lock)
 			{
-				var reference = virtualSignalGroup.Reference;
-				EnsureVirtualSignalGroupsAreLoaded([reference]);
+				EnsureVirtualSignalGroupsAreLoaded([virtualSignalGroup]);
 
+				var levelsConnectivity = new Dictionary<ApiObjectReference<Level>, EndpointConnectivity>();
 				var connectedSources = new List<VirtualSignalGroup>();
 				var pendingConnectedSources = new List<VirtualSignalGroup>();
 				var connectedDestinations = new List<VirtualSignalGroup>();
 				var pendingConnectedDestinations = new List<VirtualSignalGroup>();
 
-				var endpoints = _virtualSignalGroupEndpointsMapping.GetEndpoints(virtualSignalGroup)
-					.Select(x => _endpoints[x])
-					.ToList();
-
-				var endpointsConnectivity = GetConnectivity(endpoints).Values;
-
-				foreach (var connectivity in endpointsConnectivity)
+				foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
 				{
+					if (!_endpoints.TryGetValue(levelEndpoint.Endpoint, out var endpoint))
+					{
+						throw new InvalidOperationException($"Endpoint {levelEndpoint.Endpoint.ID} not found for virtual signal group {virtualSignalGroup.ID}");
+					}
+
+					var connectivity = GetConnectivity(endpoint);
+
+					levelsConnectivity[levelEndpoint.Level] = connectivity;
+
 					if (connectivity.ConnectedSource != null)
 					{
 						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.ConnectedSource);
@@ -227,22 +248,9 @@
 					}
 				}
 
-				var connectionStatus = endpointsConnectivity.All(x => x.IsConnected)
-					? ConnectionStatus.Connected
-					: endpointsConnectivity.Any(x => x.IsConnected)
-						? ConnectionStatus.Partial
-						: ConnectionStatus.Disconnected;
-
-				var pendingConnectionStatus = endpointsConnectivity.All(x => x.IsPendingConnected)
-					? ConnectionStatus.Connected
-					: endpointsConnectivity.Any(x => x.IsPendingConnected)
-						? ConnectionStatus.Partial
-						: ConnectionStatus.Disconnected;
-
 				return new VirtualSignalGroupConnectivity(
 					virtualSignalGroup,
-					connectionStatus,
-					pendingConnectionStatus,
+					levelsConnectivity,
 					connectedSources,
 					pendingConnectedSources,
 					connectedDestinations,
@@ -299,43 +307,7 @@
 			_subscriptionConnections.Changed += Connections_Changed;
 		}
 
-		private void Endpoints_Changed(object sender, ApiObjectsChangedEvent<Endpoint> e)
-		{
-			lock (_lock)
-			{
-				UpdateEndpoints(e.Created.Concat(e.Updated), e.Deleted);
-
-				var impactedConnections = FindImpactedConnections(e.Created.Concat(e.Updated).Concat(e.Deleted)).ToList();
-
-				throw new NotImplementedException();
-			}
-		}
-
-		private void VirtualSignalGroups_Changed(object sender, ApiObjectsChangedEvent<VirtualSignalGroup> e)
-		{
-			lock (_lock)
-			{
-				UpdateVirtualSignalGroups(e.Created.Concat(e.Updated), e.Deleted);
-
-				var impactedConnections = FindImpactedConnections(e.Created.Concat(e.Updated).Concat(e.Deleted)).ToList();
-
-				throw new NotImplementedException();
-			}
-		}
-
-		private void Connections_Changed(object sender, ApiObjectsChangedEvent<Connection> e)
-		{
-			lock (_lock)
-			{
-				UpdateConnections(e.Created.Concat(e.Updated), e.Deleted);
-
-				var impactedConnections = FindImpactedConnections(e.Created.Concat(e.Updated).Concat(e.Deleted)).ToList();
-
-				throw new NotImplementedException();
-			}
-		}
-
-		private void UpdateEndpoints(IEnumerable<Endpoint> updated, IEnumerable<Endpoint> deleted = null)
+		public void UpdateEndpoints(IEnumerable<Endpoint> updated, IEnumerable<Endpoint> deleted = null)
 		{
 			lock (_lock)
 			{
@@ -364,7 +336,7 @@
 			}
 		}
 
-		private void UpdateVirtualSignalGroups(IEnumerable<VirtualSignalGroup> updated, IEnumerable<VirtualSignalGroup> deleted = null)
+		public void UpdateVirtualSignalGroups(IEnumerable<VirtualSignalGroup> updated, IEnumerable<VirtualSignalGroup> deleted = null)
 		{
 			lock (_lock)
 			{
@@ -392,7 +364,7 @@
 			}
 		}
 
-		private void UpdateConnections(IEnumerable<Connection> updated, IEnumerable<Connection> deleted = null)
+		public void UpdateConnections(IEnumerable<Connection> updated, IEnumerable<Connection> deleted = null)
 		{
 			lock (_lock)
 			{
@@ -417,6 +389,46 @@
 						_connectionEndpointsMapping.Remove(item);
 					}
 				}
+			}
+		}
+
+		private void Endpoints_Changed(object sender, ApiObjectsChangedEvent<Endpoint> e)
+		{
+			lock (_lock)
+			{
+				UpdateEndpoints(e.Created.Concat(e.Updated), e.Deleted);
+			}
+		}
+
+		private void VirtualSignalGroups_Changed(object sender, ApiObjectsChangedEvent<VirtualSignalGroup> e)
+		{
+			lock (_lock)
+			{
+				UpdateVirtualSignalGroups(e.Created.Concat(e.Updated), e.Deleted);
+			}
+		}
+
+		private void Connections_Changed(object sender, ApiObjectsChangedEvent<Connection> e)
+		{
+			lock (_lock)
+			{
+				UpdateConnections(e.Created.Concat(e.Updated), e.Deleted);
+
+				var impactedEndpoints = e.Created.Concat(e.Updated).Concat(e.Deleted)
+					.SelectMany(x => x.GetEndpoints())
+					.Distinct()
+					.ToList();
+
+				var impactedVirtualSignalGroups = impactedEndpoints
+					.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x))
+					.Distinct()
+					.ToList();
+
+				var eventArgs = new ConnectionsUpdatedEvent(
+					impactedEndpoints.Select(GetConnectivity).ToList(),
+					impactedVirtualSignalGroups.Select(GetConnectivity).ToList());
+
+				ConnectionsUpdated?.Invoke(this, eventArgs);
 			}
 		}
 
@@ -477,38 +489,6 @@
 					EnsureEndpointsAreLoaded(endpoints);
 				}
 			}
-		}
-
-		private IEnumerable<VirtualSignalGroupConnectivity> FindImpactedConnections(IEnumerable<Endpoint> endpoints)
-		{
-			var virtualSignalGroups = endpoints
-				.SelectMany(endpoint => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint))
-				.Distinct()
-				.ToList();
-
-			return GetConnectivity(virtualSignalGroups).Values;
-		}
-
-		private IEnumerable<VirtualSignalGroupConnectivity> FindImpactedConnections(IEnumerable<Connection> connections)
-		{
-			var virtualSignalGroups = connections
-				.SelectMany(connection => connection.GetEndpoints())
-				.SelectMany(endpoint => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint))
-				.Distinct()
-				.ToList();
-
-			return GetConnectivity(virtualSignalGroups).Values;
-		}
-
-		private IEnumerable<VirtualSignalGroupConnectivity> FindImpactedConnections(IEnumerable<VirtualSignalGroup> virtualSignalGroups)
-		{
-			var expandedVirtualSignalGroups = virtualSignalGroups
-				.SelectMany(vsg => vsg.GetLevelEndpoints())
-				.SelectMany(levelEndpoint => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(levelEndpoint.Endpoint))
-				.Distinct()
-				.ToList();
-
-			return GetConnectivity(expandedVirtualSignalGroups).Values;
 		}
 
 		public void Dispose()

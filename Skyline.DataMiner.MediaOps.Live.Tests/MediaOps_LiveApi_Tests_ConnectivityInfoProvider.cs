@@ -40,12 +40,31 @@
 			var api = new MediaOpsLiveApiMock();
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
+			var videoSource1 = api.Endpoints.Read("Video Source 1");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
 
 			using (var connectivity = new ConnectivityInfoProvider(api, subscribe: true))
 			{
-				api.CreateConnection(audioSource1, audioDestination1);
+				var receivedEvents = new List<ConnectionsUpdatedEvent>();
+				connectivity.ConnectionsUpdated += (sender, e) => receivedEvents.Add(e);
 
+				api.CreateConnection(audioSource1, audioDestination1);
+				receivedEvents.Count.ShouldBe(1);
+				receivedEvents[0].Endpoints.Count.ShouldBe(2); // Source and Destination
+				receivedEvents[0].VirtualSignalGroups.Count.ShouldBe(2);
+				receivedEvents[0].VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Partial);
+
+				api.CreateConnection(videoSource1, videoDestination1);
+				receivedEvents.Count.ShouldBe(2);
+				receivedEvents[1].Endpoints.Count.ShouldBe(2); // Source and Destination
+				receivedEvents[1].VirtualSignalGroups.Count.ShouldBe(2);
+				receivedEvents[1].VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Connected);
+
+				api.CreateConnection(null, audioDestination1);
+				api.CreateConnection(null, videoDestination1);
+				receivedEvents.Count.ShouldBe(4);
+				receivedEvents[3].VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Disconnected);
 			}
 		}
 
@@ -109,6 +128,9 @@
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 			var audioDestination3 = api.Endpoints.Read("Audio Destination 3");
 
+			var source1 = api.VirtualSignalGroups.Read("Source 1");
+			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+
 			api.CreateConnection(audioSource1, audioDestination1);
 			api.CreatePendingConnection(audioSource2, audioDestination2);
 
@@ -116,17 +138,23 @@
 
 			var audioSource1Connectivity = connectivity.GetConnectivity(audioSource1);
 			audioSource1Connectivity.IsConnected.ShouldBeTrue();
+			audioSource1Connectivity.IsPendingConnected.ShouldBeFalse();
 			audioSource1Connectivity.ConnectedDestinations.ShouldBe([audioDestination1]);
+			audioSource1Connectivity.VirtualSignalGroups.ShouldBe([source1]);
 
 			var audioDestination1Connectivity = connectivity.GetConnectivity(audioDestination1);
 			audioDestination1Connectivity.IsConnected.ShouldBeTrue();
+			audioDestination1Connectivity.IsPendingConnected.ShouldBeFalse();
 			audioDestination1Connectivity.ConnectedSource.ShouldBe(audioSource1);
+			audioDestination1Connectivity.VirtualSignalGroups.ShouldBe([destination1]);
 
 			var audioSource2Connectivity = connectivity.GetConnectivity(audioSource2);
+			audioSource2Connectivity.IsConnected.ShouldBeFalse();
 			audioSource2Connectivity.IsPendingConnected.ShouldBeTrue();
 			audioSource2Connectivity.PendingConnectedDestinations.ShouldBe([audioDestination2]);
 
 			var audioDestination2Connectivity = connectivity.GetConnectivity(audioDestination2);
+			audioDestination2Connectivity.IsConnected.ShouldBeFalse();
 			audioDestination2Connectivity.IsPendingConnected.ShouldBeTrue();
 			audioDestination2Connectivity.PendingConnectedSource.ShouldBe(audioSource2);
 

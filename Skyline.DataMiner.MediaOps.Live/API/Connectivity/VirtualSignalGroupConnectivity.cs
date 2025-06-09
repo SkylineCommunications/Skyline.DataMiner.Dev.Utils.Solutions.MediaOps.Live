@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 
@@ -9,16 +10,14 @@
 	{
 		public VirtualSignalGroupConnectivity(
 			VirtualSignalGroup virtualSignalGroup,
-			ConnectionStatus connectedStatus,
-			ConnectionStatus pendingConnectedStatus,
+			IReadOnlyDictionary<ApiObjectReference<Level>, EndpointConnectivity> levelsConnectivity,
 			IReadOnlyCollection<VirtualSignalGroup> connectedSources,
 			IReadOnlyCollection<VirtualSignalGroup> pendingConnectedSources,
 			IReadOnlyCollection<VirtualSignalGroup> connectedDestinations,
 			IReadOnlyCollection<VirtualSignalGroup> pendingConnectedDestinations)
 		{
 			VirtualSignalGroup = virtualSignalGroup ?? throw new ArgumentNullException(nameof(virtualSignalGroup));
-			ConnectedStatus = connectedStatus;
-			PendingConnectedStatus = pendingConnectedStatus;
+			Levels = levelsConnectivity ?? throw new ArgumentNullException(nameof(levelsConnectivity));
 			ConnectedSources = connectedSources ?? [];
 			PendingConnectedSources = pendingConnectedSources ?? [];
 			ConnectedDestinations = connectedDestinations ?? [];
@@ -27,9 +26,7 @@
 
 		public VirtualSignalGroup VirtualSignalGroup { get; }
 
-		public ConnectionStatus ConnectedStatus { get; }
-
-		public ConnectionStatus PendingConnectedStatus { get; }
+		public IReadOnlyDictionary<ApiObjectReference<Level>, EndpointConnectivity> Levels { get; }
 
 		/// <summary>
 		/// Gets the sources this virtual signal group is connected to.
@@ -55,13 +52,27 @@
 		/// </summary>
 		public IReadOnlyCollection<VirtualSignalGroup> PendingConnectedDestinations { get; }
 
+		public ConnectionStatus ConnectedStatus =>
+			Levels.Values.All(x => x.IsConnected)
+				? ConnectionStatus.Connected
+				: Levels.Values.Any(x => x.IsConnected)
+					? ConnectionStatus.Partial
+					: ConnectionStatus.Disconnected;
+
+		public ConnectionStatus PendingConnectedStatus =>
+			Levels.Values.All(x => x.IsPendingConnected)
+				? ConnectionStatus.Connected
+				: Levels.Values.Any(x => x.IsPendingConnected)
+					? ConnectionStatus.Partial
+					: ConnectionStatus.Disconnected;
+
 		public bool IsConnected => ConnectedSources.Count > 0 || ConnectedDestinations.Count > 0;
 
 		public bool IsPendingConnected => PendingConnectedSources.Count > 0 || PendingConnectedDestinations.Count > 0;
 
 		public override string ToString()
 		{
-			return $"{VirtualSignalGroup.ID} - Connected: {ConnectedStatus}";
+			return $"{VirtualSignalGroup.Name} [{VirtualSignalGroup.Name}] - Connected: {ConnectedStatus}";
 		}
 	}
 }
