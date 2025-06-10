@@ -3,6 +3,7 @@
 	using System;
 	using System.Linq;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
@@ -25,6 +26,14 @@
 			Categories = new CategoryRepository(SlcConnectivityManagementHelper, connection);
 			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper, connection);
 			Connections = new ConnectionRepository(SlcConnectivityManagementHelper, connection);
+		}
+
+		public MediaOpsLiveApi(IEngine engine) : this(engine?.GetUserConnection())
+		{
+			if (engine == null)
+			{
+				throw new ArgumentNullException(nameof(engine));
+			}
 		}
 
 		protected IConnection Connection { get; }
