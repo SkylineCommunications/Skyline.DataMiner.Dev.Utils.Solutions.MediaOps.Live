@@ -11,7 +11,6 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
@@ -89,8 +88,7 @@
 		///     Saves the job configuration to the DataMiner system.
 		/// </summary>
 		/// <param name="job">The <see cref="OrchestrationJobConfiguration" /> object to save.</param>
-		/// <returns>The saved <see cref="OrchestrationJobConfiguration" />.</returns>
-		public OrchestrationJobConfiguration SaveOrchestrationJobConfiguration(OrchestrationJobConfiguration job)
+		public void SaveOrchestrationJobConfiguration(OrchestrationJobConfiguration job)
 		{
 			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
 			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-SaveJobConfiguration", performanceLogFilename);
@@ -104,8 +102,7 @@
 
 				_scheduler.CreateOrUpdateEventScheduling(job.OrchestrationEvents);
 
-				IEnumerable<OrchestrationEventConfiguration> successes = SaveEventConfigurations(job.OrchestrationEvents, performanceTracker);
-				return new OrchestrationJobConfiguration(job.JobId, successes.ToList());
+				SaveEventConfigurations(job.OrchestrationEvents, performanceTracker);
 			}
 		}
 
@@ -113,8 +110,7 @@
 		///     Saves the job to the DataMiner system.
 		/// </summary>
 		/// <param name="job">The <see cref="OrchestrationJob" /> object to save.</param>
-		/// <returns>The saved <see cref="OrchestrationJob" />.</returns>
-		public OrchestrationJob SaveOrchestrationJob(OrchestrationJob job)
+		public void SaveOrchestrationJob(OrchestrationJob job)
 		{
 			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
 			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-SaveJob", performanceLogFilename);
@@ -126,8 +122,7 @@
 
 				job.ValidateEventsBeforeSaving();
 				_scheduler.CreateOrUpdateEventScheduling(job.OrchestrationEvents);
-				IEnumerable<OrchestrationEvent> successes = CreateOrUpdateEvents(job.OrchestrationEvents, performanceTracker);
-				return new OrchestrationJob(job.JobId, successes.ToList());
+				CreateOrUpdateEvents(job.OrchestrationEvents, performanceTracker);
 			}
 		}
 
@@ -399,14 +394,11 @@
 		/// </summary>
 		/// <param name="events">A list of configured or updated event configurations.</param>
 		/// <param name="performanceTracker">Performance tracking object.</param>
-		/// <returns>Returns a list of all successfully saved event configurations.</returns>
-		private IEnumerable<OrchestrationEvent> CreateOrUpdateEvents(IEnumerable<OrchestrationEvent> events, PerformanceTracker performanceTracker)
+		private void CreateOrUpdateEvents(IEnumerable<OrchestrationEvent> events, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				BulkCreateOrUpdateResult<DomInstance, DomInstanceId> results = CreateOrUpdateWithResult(events);
-
-				return results.SuccessfulItems.Select(item => new OrchestrationEvent(item));
+				CreateOrUpdate(events);
 			}
 		}
 
@@ -415,8 +407,7 @@
 		/// </summary>
 		/// <param name="events">A list of configured or updated event configurations.</param>
 		/// <param name="performanceTracker">Performance tracking object.</param>
-		/// <returns>Returns a list of all successfully saved <see cref="OrchestrationEventConfiguration" /> objects.</returns>
-		internal IEnumerable<OrchestrationEventConfiguration> SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events, PerformanceTracker performanceTracker)
+		internal void SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
@@ -439,9 +430,7 @@
 				_configurationHelper.Delete(configsToDelete);
 				_configurationHelper.CreateOrUpdate(configsToWrite);
 
-				BulkCreateOrUpdateResult<DomInstance, DomInstanceId> results = CreateOrUpdateWithResult(orchestrationEventConfigurations);
-
-				return orchestrationEventConfigurations.Where(config => results.SuccessfulIds.Contains(config.DomInstance.ID));
+				CreateOrUpdate(orchestrationEventConfigurations);
 			}
 		}
 
@@ -481,6 +470,16 @@
 		protected override OrchestrationEvent CreateInstance(DomInstance domInstance)
 		{
 			return new OrchestrationEvent(domInstance);
+		}
+
+		protected override void ValidateBeforeSave(ICollection<OrchestrationEvent> instances)
+		{
+			
+		}
+
+		protected override void ValidateBeforeDelete(ICollection<OrchestrationEvent> instances)
+		{
+			
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)

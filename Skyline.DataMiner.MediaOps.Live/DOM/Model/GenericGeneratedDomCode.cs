@@ -7,7 +7,9 @@
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Sections;
@@ -23,6 +25,20 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 			if (id == null)
 				throw new ArgumentNullException("id");
 			domInstance = new DomInstance { DomDefinitionId = id };
+		}
+
+		protected DomInstanceBase(DomDefinitionId definitionId, DomInstanceId instanceId)
+		{
+			if (definitionId == null)
+				throw new ArgumentNullException("definitionId");
+			if (instanceId == null)
+				throw new ArgumentNullException("instanceId");
+
+			domInstance = new DomInstance()
+			{
+				ID = instanceId,
+				DomDefinitionId = definitionId
+			};
 		}
 
 		protected DomInstanceBase(DomInstance domInstance)
@@ -214,6 +230,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 {
 	using System;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
 

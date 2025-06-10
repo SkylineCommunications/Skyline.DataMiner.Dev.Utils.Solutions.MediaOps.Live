@@ -2,8 +2,10 @@
 {
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
 	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement.Connection;
@@ -12,7 +14,7 @@
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{
 		public MediaOpsLiveApiMock(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true)
-			: base(CreateMessageHandler(out var messageHandler).HandleMessages)
+			: base(new MediaOpsLiveApiConnectionMock(CreateMessageHandler(out var messageHandler)))
 		{
 			MessageHandler = messageHandler;
 
@@ -106,19 +108,20 @@
 						VirtualSignalGroups.CreateOrUpdate([source1, destination1]);
 					}
 
-				var connection1 = new Connection
-				{
-					Destination = videoDestination1,
-					ConnectedSource = videoSource1,
-					IsConnected = true,
-				};
-				var connection2 = new Connection
-				{
-					Destination = audioDestination1,
-					ConnectedSource = audioSource1,
-					IsConnected = true,
-				};
-				Connections.CreateOrUpdate([connection1, connection2]);
+					var connection1 = new Connection
+					{
+						Destination = videoDestination1,
+						ConnectedSource = videoSource1,
+						IsConnected = true,
+					};
+					var connection2 = new Connection
+					{
+						Destination = audioDestination1,
+						ConnectedSource = audioSource1,
+						IsConnected = true,
+					};
+					Connections.CreateOrUpdate([connection1, connection2]);
+				}
 			}
 
 			OrchestrationJobConfiguration? job = Orchestration.GetOrCreateNewOrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");

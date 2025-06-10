@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcOrchestration
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
@@ -38,6 +39,14 @@
 		protected override Configuration CreateInstance(DomInstance domInstance)
 		{
 			return new Configuration(domInstance);
+		}
+
+		protected override void ValidateBeforeSave(ICollection<Configuration> instances)
+		{
+		}
+
+		protected override void ValidateBeforeDelete(ICollection<Configuration> instances)
+		{
 		}
 	}
 }
