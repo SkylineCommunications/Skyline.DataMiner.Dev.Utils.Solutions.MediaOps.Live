@@ -11,7 +11,7 @@
 
 	internal class ConnectionDefinition : IDomDefinitionInfo
 	{
-		public DomDefinition Definition { get; } = new DomDefinition("ApiConnection")
+		public DomDefinition Definition { get; } = new DomDefinition("Connection")
 		{
 			ID = SlcConnectivityManagementIds.Definitions.Connection,
 			SectionDefinitionLinks =
@@ -30,7 +30,7 @@
 			var sectionDefinition = new CustomSectionDefinition
 			{
 				ID = SlcConnectivityManagementIds.Sections.ConnectionInfo.Id,
-				Name = "ApiConnection Info",
+				Name = "Connection Info",
 			};
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
