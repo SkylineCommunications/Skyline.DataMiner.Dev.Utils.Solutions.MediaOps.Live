@@ -283,6 +283,9 @@
 		{
 			var api = new MediaOpsLiveApiMock();
 
+			var videoLevel = api.Levels.Read("Video");
+			var audioLevel = api.Levels.Read("Audio");
+
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var videoSource2 = api.Endpoints.Read("Video Source 2");
@@ -300,6 +303,7 @@
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
 			api.CreateConnection(videoSource1, videoDestination1);
+			api.CreateConnection(audioSource1, audioDestination1);
 			api.CreateConnection(audioSource1, audioDestination2);
 			api.CreateConnection(videoSource2, videoDestination2);
 			api.CreatePendingConnection(audioSource2, audioDestination1);
@@ -313,6 +317,9 @@
 			source1Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
 			source1Connectivity.ConnectedSources.ShouldBeEmpty();
 			source1Connectivity.ConnectedDestinations.ShouldBe([destination1, destination2], ignoreOrder: true);
+			source1Connectivity.Levels.Keys.ShouldBe([videoLevel, audioLevel], ignoreOrder: true);
+			source1Connectivity.Levels[videoLevel].ConnectedDestinations.ShouldBe([videoDestination1]);
+			source1Connectivity.Levels[audioLevel].ConnectedDestinations.ShouldBe([audioDestination2]);
 
 			var destination1Connectivity = connectivity.GetConnectivity(destination1);
 			destination1Connectivity.IsConnected.ShouldBeTrue();
@@ -322,6 +329,9 @@
 			destination1Connectivity.ConnectedSources.ShouldBe([source1]);
 			destination1Connectivity.PendingConnectedSources.ShouldBe([source2]);
 			destination1Connectivity.ConnectedDestinations.ShouldBeEmpty();
+			destination1Connectivity.Levels.Keys.ShouldBe([videoLevel, audioLevel], ignoreOrder: true);
+			destination1Connectivity.Levels[videoLevel].ConnectedSource.ShouldBe(videoSource1);
+			destination1Connectivity.Levels[audioLevel].PendingConnectedSource.ShouldBe(audioSource2);
 
 			var source2Connectivity = connectivity.GetConnectivity(source2);
 			source2Connectivity.IsConnected.ShouldBeTrue();

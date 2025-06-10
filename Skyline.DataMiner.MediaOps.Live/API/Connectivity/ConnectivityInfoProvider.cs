@@ -207,10 +207,10 @@
 				EnsureVirtualSignalGroupsAreLoaded([virtualSignalGroup]);
 
 				var levelsConnectivity = new Dictionary<ApiObjectReference<Level>, EndpointConnectivity>();
-				var connectedSources = new List<VirtualSignalGroup>();
-				var pendingConnectedSources = new List<VirtualSignalGroup>();
-				var connectedDestinations = new List<VirtualSignalGroup>();
-				var pendingConnectedDestinations = new List<VirtualSignalGroup>();
+				var connectedSources = new HashSet<VirtualSignalGroup>();
+				var pendingConnectedSources = new HashSet<VirtualSignalGroup>();
+				var connectedDestinations = new HashSet<VirtualSignalGroup>();
+				var pendingConnectedDestinations = new HashSet<VirtualSignalGroup>();
 
 				foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
 				{
@@ -226,25 +226,25 @@
 					if (connectivity.ConnectedSource != null)
 					{
 						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.ConnectedSource);
-						connectedSources.AddRange(virtualSignalGroups);
+						connectedSources.UnionWith(virtualSignalGroups);
 					}
 
 					if (connectivity.PendingConnectedSource != null)
 					{
 						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.PendingConnectedSource);
-						pendingConnectedSources.AddRange(virtualSignalGroups);
+						pendingConnectedSources.UnionWith(virtualSignalGroups);
 					}
 
 					if (connectivity.ConnectedDestinations.Count > 0)
 					{
 						var virtualSignalGroups = connectivity.ConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
-						connectedDestinations.AddRange(virtualSignalGroups);
+						connectedDestinations.UnionWith(virtualSignalGroups);
 					}
 
 					if (connectivity.PendingConnectedDestinations.Count > 0)
 					{
 						var virtualSignalGroups = connectivity.PendingConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
-						pendingConnectedDestinations.AddRange(virtualSignalGroups);
+						pendingConnectedDestinations.UnionWith(virtualSignalGroups);
 					}
 				}
 
