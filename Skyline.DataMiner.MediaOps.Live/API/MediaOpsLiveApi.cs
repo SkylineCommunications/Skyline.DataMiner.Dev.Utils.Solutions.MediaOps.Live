@@ -2,11 +2,14 @@
 {
 	using System;
 	using System.Linq;
-
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
 	using Skyline.DataMiner.Net.Messages;
@@ -14,10 +17,17 @@
 
 	public class MediaOpsLiveApi
 	{
-		public MediaOpsLiveApi(Func<DMSMessage[], DMSMessage[]> messageHandler)
+		public MediaOpsLiveApi(ICommunication communication)
 		{
-			MessageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
-			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(messageHandler);
+			if (communication is null)
+			{
+				throw new ArgumentNullException(nameof(communication));
+			}
+
+			Dms = DmsFactory.CreateDms(communication);
+			MessageHandler = communication.SendMessages;
+			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(communication);
+			SlcOrchestrationHelper = new SlcOrchestrationHelper(communication);
 
 			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper);
 			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper);
@@ -25,19 +35,54 @@
 			Categories = new CategoryRepository(SlcConnectivityManagementHelper);
 			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
 			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
+
+			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
 		}
 
-		public MediaOpsLiveApi(IEngine engine) : this(engine.SendSLNetMessages)
+		public MediaOpsLiveApi(IConnection connection)
+		{
+			if (connection is null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			Connection = connection;
+			Dms = connection.GetDms();
+			MessageHandler = connection.HandleMessages;
+			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
+			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
+
+			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper);
+			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper);
+			Levels = new LevelRepository(SlcConnectivityManagementHelper);
+			Categories = new CategoryRepository(SlcConnectivityManagementHelper);
+			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
+			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
+
+			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
+		}
+
+		public MediaOpsLiveApi(IEngine engine) : this(engine?.GetUserConnection())
 		{
 			if (engine == null)
 			{
 				throw new ArgumentNullException(nameof(engine));
 			}
+
+			Engine = engine;
 		}
 
 		internal Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
 
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
+
+		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+
+		internal IConnection Connection { get; }
+
+		internal IEngine Engine { get; }
+
+		internal IDms Dms { get; }
 
 		public EndpointRepository Endpoints { get; }
 
@@ -51,11 +96,13 @@
 
 		public ConnectionRepository Connections { get; }
 
+		public OrchestrationEventRepository Orchestration { get; }
+
 		public bool IsInstalled()
 		{
 			var moduleSettingsHelper = new ModuleSettingsHelper(MessageHandler);
 
-			var filter = ModuleSettingsExposers.ModuleId.Equal(SlcConnectivityManagementIds.ModuleId);
+			var filter = ModuleSettingsExposers.ModuleId.Equal(SlcConnectivityManagementIds.ModuleId).OR(ModuleSettingsExposers.ModuleId.Equal(SlcOrchestrationIds.ModuleId));
 			var count = moduleSettingsHelper.ModuleSettings.Count(filter);
 
 			if (count == 0)
@@ -63,12 +110,17 @@
 				return false;
 			}
 
-			var definitions = SlcConnectivityManagementHelper.DomHelper.DomDefinitions.ReadAll()
+			var connectivityManagementDefinitions = SlcConnectivityManagementHelper.DomHelper.DomDefinitions.ReadAll()
 				.Select(x => x.ID)
 				.ToList();
 
-			return definitions.Contains(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup) &&
-				   definitions.Contains(SlcConnectivityManagementIds.Definitions.Endpoint);
+			var orchestrationDefinitions = SlcOrchestrationHelper.DomHelper.DomDefinitions.ReadAll()
+				.Select(x => x.ID)
+				.ToList();
+
+			return connectivityManagementDefinitions.Contains(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup) &&
+				   connectivityManagementDefinitions.Contains(SlcConnectivityManagementIds.Definitions.Endpoint) &&
+				   orchestrationDefinitions.Contains(SlcOrchestrationIds.Definitions.OrchestrationEvent);
 		}
 	}
 }

@@ -12,6 +12,9 @@
 
 			api = new MediaOpsLiveApiMock(installDomModules: true);
 
+			var slcOrchestrationDomModule = new SlcOrchestrationDomModule();
+			DomModuleInstaller.Install(api.MessageHandler.HandleMessages, slcOrchestrationDomModule, x => { });
+
 			Assert.IsTrue(api.IsInstalled());
 		}
 	}
