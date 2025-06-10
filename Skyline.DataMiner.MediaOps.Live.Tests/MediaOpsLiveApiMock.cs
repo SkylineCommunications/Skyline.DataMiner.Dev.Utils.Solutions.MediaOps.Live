@@ -144,6 +144,11 @@
 			connection.ConnectedSource = source;
 			connection.IsConnected = source != null;
 
+			if (connection.PendingConnectedSource == source)
+			{
+				connection.PendingConnectedSource = null;
+			}
+
 			Connections.CreateOrUpdate(connection);
 		}
 
@@ -156,6 +161,12 @@
 
 			var connection = Connections.GetByDestination(destination)
 				?? new Connection { Destination = destination, IsConnected = false };
+
+			if (connection.ConnectedSource == pendingSource)
+			{
+				// already connected to the pending source
+				return;
+			}
 
 			connection.PendingConnectedSource = pendingSource;
 
