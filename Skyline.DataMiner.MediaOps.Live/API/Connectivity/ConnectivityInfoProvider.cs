@@ -132,8 +132,8 @@
 
 				Endpoint connectedSource = null;
 				Endpoint pendingConnectedSource = null;
-				var connectedDestinations = new List<Endpoint>();
-				var pendingConnectedDestinations = new List<Endpoint>();
+				var connectedDestinations = new HashSet<Endpoint>();
+				var pendingConnectedDestinations = new HashSet<Endpoint>();
 
 				var connections = _connectionEndpointsMapping.GetConnections(endpoint);
 

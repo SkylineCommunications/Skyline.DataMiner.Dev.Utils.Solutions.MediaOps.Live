@@ -289,7 +289,8 @@
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var videoSource2 = api.Endpoints.Read("Video Source 2");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
+			var videoSource3 = api.Endpoints.Read("Video Source 3");
+			var audioSource3 = api.Endpoints.Read("Audio Source 3");
 			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var videoDestination2 = api.Endpoints.Read("Video Destination 2");
@@ -303,10 +304,10 @@
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
 			api.CreateConnection(videoSource1, videoDestination1);
-			api.CreateConnection(audioSource1, audioDestination1);
 			api.CreateConnection(audioSource1, audioDestination2);
 			api.CreateConnection(videoSource2, videoDestination2);
-			api.CreatePendingConnection(audioSource2, audioDestination1);
+			api.CreatePendingConnection(videoSource3, videoDestination1);
+			api.CreatePendingConnection(audioSource3, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -325,22 +326,23 @@
 			destination1Connectivity.IsConnected.ShouldBeTrue();
 			destination1Connectivity.IsPendingConnected.ShouldBeTrue();
 			destination1Connectivity.ConnectedStatus.ShouldBe(ConnectionStatus.Partial);
-			destination1Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Partial);
+			destination1Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Connected);
 			destination1Connectivity.ConnectedSources.ShouldBe([source1]);
-			destination1Connectivity.PendingConnectedSources.ShouldBe([source2]);
+			destination1Connectivity.PendingConnectedSources.ShouldBe([source3]);
 			destination1Connectivity.ConnectedDestinations.ShouldBeEmpty();
 			destination1Connectivity.Levels.Keys.ShouldBe([videoLevel, audioLevel], ignoreOrder: true);
 			destination1Connectivity.Levels[videoLevel].ConnectedSource.ShouldBe(videoSource1);
-			destination1Connectivity.Levels[audioLevel].PendingConnectedSource.ShouldBe(audioSource2);
+			destination1Connectivity.Levels[videoLevel].PendingConnectedSource.ShouldBe(videoSource3);
+			destination1Connectivity.Levels[audioLevel].PendingConnectedSource.ShouldBe(audioSource3);
 
 			var source2Connectivity = connectivity.GetConnectivity(source2);
 			source2Connectivity.IsConnected.ShouldBeTrue();
-			source2Connectivity.IsPendingConnected.ShouldBeTrue();
+			source2Connectivity.IsPendingConnected.ShouldBeFalse();
 			source2Connectivity.ConnectedStatus.ShouldBe(ConnectionStatus.Partial);
-			source2Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Partial);
+			source2Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
 			source2Connectivity.ConnectedSources.ShouldBeEmpty();
 			source2Connectivity.ConnectedDestinations.ShouldBe([destination2]);
-			source2Connectivity.PendingConnectedDestinations.ShouldBe([destination1]);
+			source2Connectivity.PendingConnectedDestinations.ShouldBeEmpty();
 
 			var destination2Connectivity = connectivity.GetConnectivity(destination2);
 			destination2Connectivity.IsConnected.ShouldBeTrue();
@@ -352,16 +354,19 @@
 
 			var source3Connectivity = connectivity.GetConnectivity(source3);
 			source3Connectivity.IsConnected.ShouldBeFalse();
-			source3Connectivity.IsPendingConnected.ShouldBeFalse();
+			source3Connectivity.IsPendingConnected.ShouldBeTrue();
 			source3Connectivity.ConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
-			source3Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
+			source3Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Connected);
 			source3Connectivity.ConnectedSources.ShouldBeEmpty();
+			source3Connectivity.ConnectedDestinations.ShouldBeEmpty();
+			source3Connectivity.PendingConnectedDestinations.ShouldBe([destination1]);
 
 			var destination3Connectivity = connectivity.GetConnectivity(destination3);
 			destination3Connectivity.IsConnected.ShouldBeFalse();
 			destination3Connectivity.IsPendingConnected.ShouldBeFalse();
 			destination3Connectivity.ConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
 			destination3Connectivity.PendingConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
+			destination3Connectivity.ConnectedSources.ShouldBeEmpty();
 			destination3Connectivity.ConnectedDestinations.ShouldBeEmpty();
 		}
 
@@ -376,7 +381,8 @@
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var videoSource2 = api.Endpoints.Read("Video Source 2");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
+			var videoSource3 = api.Endpoints.Read("Video Source 3");
+			var audioSource3 = api.Endpoints.Read("Audio Source 3");
 			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var videoDestination2 = api.Endpoints.Read("Video Destination 2");
@@ -392,7 +398,8 @@
 			api.CreateConnection(videoSource1, videoDestination1);
 			api.CreateConnection(audioSource1, audioDestination2);
 			api.CreateConnection(videoSource2, videoDestination2);
-			api.CreatePendingConnection(audioSource2, audioDestination1);
+			api.CreatePendingConnection(videoSource3, videoDestination1);
+			api.CreatePendingConnection(audioSource3, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -413,19 +420,20 @@
 			result[destination1].IsConnected.ShouldBeTrue();
 			result[destination1].IsPendingConnected.ShouldBeTrue();
 			result[destination1].ConnectedStatus.ShouldBe(ConnectionStatus.Partial);
-			result[destination1].PendingConnectedStatus.ShouldBe(ConnectionStatus.Partial);
+			result[destination1].PendingConnectedStatus.ShouldBe(ConnectionStatus.Connected);
 			result[destination1].ConnectedSources.ShouldBe([source1]);
-			result[destination1].PendingConnectedSources.ShouldBe([source2]);
+			result[destination1].PendingConnectedSources.ShouldBe([source3]);
 			result[destination1].Levels.Keys.ShouldBe([videoLevel, audioLevel], ignoreOrder: true);
 			result[destination1].Levels[videoLevel].ConnectedSource.ShouldBe(videoSource1);
-			result[destination1].Levels[audioLevel].PendingConnectedSource.ShouldBe(audioSource2);
+			result[destination1].Levels[videoLevel].PendingConnectedSource.ShouldBe(videoSource3);
+			result[destination1].Levels[audioLevel].PendingConnectedSource.ShouldBe(audioSource3);
 
 			result[source2].IsConnected.ShouldBeTrue();
-			result[source2].IsPendingConnected.ShouldBeTrue();
+			result[source2].IsPendingConnected.ShouldBeFalse();
 			result[source2].ConnectedStatus.ShouldBe(ConnectionStatus.Partial);
-			result[source2].PendingConnectedStatus.ShouldBe(ConnectionStatus.Partial);
+			result[source2].PendingConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
 			result[source2].ConnectedDestinations.ShouldBe([destination2]);
-			result[source2].PendingConnectedDestinations.ShouldBe([destination1]);
+			result[source2].PendingConnectedDestinations.ShouldBeEmpty();
 
 			result[destination2].IsConnected.ShouldBeTrue();
 			result[destination2].IsPendingConnected.ShouldBeFalse();
@@ -435,11 +443,11 @@
 			result[destination2].PendingConnectedSources.ShouldBeEmpty();
 
 			result[source3].IsConnected.ShouldBeFalse();
-			result[source3].IsPendingConnected.ShouldBeFalse();
+			result[source3].IsPendingConnected.ShouldBeTrue();
 			result[source3].ConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
-			result[source3].PendingConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
+			result[source3].PendingConnectedStatus.ShouldBe(ConnectionStatus.Connected);
 			result[source3].ConnectedDestinations.ShouldBeEmpty();
-			result[source3].PendingConnectedDestinations.ShouldBeEmpty();
+			result[source3].PendingConnectedDestinations.ShouldBe([destination1]);
 
 			result[destination3].IsConnected.ShouldBeFalse();
 			result[destination3].IsPendingConnected.ShouldBeFalse();

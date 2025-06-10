@@ -131,7 +131,7 @@
 			}
 		}
 
-		public void CreateConnection(Endpoint? source, Endpoint? pendingSource, Endpoint destination)
+		public void CreateConnection(Endpoint? source, Endpoint destination)
 		{
 			if (destination is null)
 			{
@@ -143,19 +143,8 @@
 
 			connection.ConnectedSource = source;
 			connection.IsConnected = source != null;
-			connection.PendingConnectedSource = pendingSource;
 
 			Connections.CreateOrUpdate(connection);
-		}
-
-		public void CreateConnection(Endpoint? source, Endpoint destination)
-		{
-			if (destination is null)
-			{
-				throw new ArgumentNullException(nameof(destination));
-			}
-
-			CreateConnection(source, null, destination);
 		}
 
 		public void CreatePendingConnection(Endpoint? pendingSource, Endpoint destination)
@@ -165,7 +154,12 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			CreateConnection(null, pendingSource, destination);
+			var connection = Connections.GetByDestination(destination)
+				?? new Connection { Destination = destination, IsConnected = false };
+
+			connection.PendingConnectedSource = pendingSource;
+
+			Connections.CreateOrUpdate(connection);
 		}
 	}
 }
