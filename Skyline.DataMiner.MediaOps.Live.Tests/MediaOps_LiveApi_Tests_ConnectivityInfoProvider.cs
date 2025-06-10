@@ -360,6 +360,9 @@
 		{
 			var api = new MediaOpsLiveApiMock();
 
+			var videoLevel = api.Levels.Read("Video");
+			var audioLevel = api.Levels.Read("Audio");
+
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var videoSource2 = api.Endpoints.Read("Video Source 2");
@@ -393,6 +396,9 @@
 			result[source1].PendingConnectedStatus.ShouldBe(ConnectionStatus.Disconnected);
 			result[source1].ConnectedDestinations.ShouldBe([destination1, destination2], ignoreOrder: true);
 			result[source1].PendingConnectedDestinations.ShouldBeEmpty();
+			result[source1].Levels.Keys.ShouldBe([videoLevel, audioLevel], ignoreOrder: true);
+			result[source1].Levels[videoLevel].ConnectedDestinations.ShouldBe([videoDestination1]);
+			result[source1].Levels[audioLevel].ConnectedDestinations.ShouldBe([audioDestination2]);
 
 			result[destination1].IsConnected.ShouldBeTrue();
 			result[destination1].IsPendingConnected.ShouldBeTrue();
@@ -400,6 +406,9 @@
 			result[destination1].PendingConnectedStatus.ShouldBe(ConnectionStatus.Partial);
 			result[destination1].ConnectedSources.ShouldBe([source1]);
 			result[destination1].PendingConnectedSources.ShouldBe([source2]);
+			result[destination1].Levels.Keys.ShouldBe([videoLevel, audioLevel], ignoreOrder: true);
+			result[destination1].Levels[videoLevel].ConnectedSource.ShouldBe(videoSource1);
+			result[destination1].Levels[audioLevel].PendingConnectedSource.ShouldBe(audioSource2);
 
 			result[source2].IsConnected.ShouldBeTrue();
 			result[source2].IsPendingConnected.ShouldBeTrue();
