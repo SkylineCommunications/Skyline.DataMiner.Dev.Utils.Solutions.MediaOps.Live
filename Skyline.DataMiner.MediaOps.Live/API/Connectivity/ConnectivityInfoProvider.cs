@@ -290,21 +290,49 @@
 
 		public void Subscribe()
 		{
-			if (_isSubscribed)
+			lock (_lock)
 			{
-				return;
+				if (_isSubscribed)
+				{
+					return;
+				}
+
+				_subscriptionEndpoints = Api.Endpoints.Subscribe();
+				_subscriptionVirtualSignalGroups = Api.VirtualSignalGroups.Subscribe();
+				_subscriptionConnections = Api.Connections.Subscribe();
+
+				_subscriptionEndpoints.Changed += Endpoints_Changed;
+				_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
+				_subscriptionConnections.Changed += Connections_Changed;
+
+				_isSubscribed = true;
 			}
+		}
 
-			_isSubscribed = true;
+		public void Unsubscribe()
+		{
+			lock (_lock)
+			{
+				if (!_isSubscribed)
+				{
+					return;
+				}
 
-			_subscriptionEndpoints = Api.Endpoints.Subscribe();
-			_subscriptionEndpoints.Changed += Endpoints_Changed;
+				_subscriptionEndpoints.Changed -= Endpoints_Changed;
+				_subscriptionVirtualSignalGroups.Changed -= VirtualSignalGroups_Changed;
+				_subscriptionConnections.Changed -= Connections_Changed;
 
-			_subscriptionVirtualSignalGroups = Api.VirtualSignalGroups.Subscribe();
-			_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
+				_subscriptionEndpoints.Dispose();
+				_subscriptionEndpoints = null;
 
-			_subscriptionConnections = Api.Connections.Subscribe();
-			_subscriptionConnections.Changed += Connections_Changed;
+				_subscriptionVirtualSignalGroups.Dispose();
+				_subscriptionVirtualSignalGroups = null;
+
+				_subscriptionConnections.Dispose();
+				_subscriptionConnections = null;
+
+				_isSubscribed = false;
+			}
 		}
 
 		public void UpdateEndpoints(IEnumerable<Endpoint> updated, IEnumerable<Endpoint> deleted = null)
@@ -493,12 +521,7 @@
 
 		public void Dispose()
 		{
-			if (_isSubscribed)
-			{
-				_subscriptionEndpoints?.Dispose();
-				_subscriptionVirtualSignalGroups?.Dispose();
-				_subscriptionConnections?.Dispose();
-			}
+			Unsubscribe();
 		}
 	}
 }
