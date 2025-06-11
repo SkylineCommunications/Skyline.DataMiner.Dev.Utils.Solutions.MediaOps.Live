@@ -41,30 +41,50 @@
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var audioSource2 = api.Endpoints.Read("Audio Source 2");
+			var videoSource2 = api.Endpoints.Read("Video Source 2");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
 
-			using var connectivity = new ConnectivityInfoProvider(api, subscribe: true);
+			var source1 = api.VirtualSignalGroups.Read("Source 1");
+			var source2 = api.VirtualSignalGroups.Read("Source 2");
+			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+			connectivity.Subscribe();
 
 			var receivedEvents = new List<ConnectionsUpdatedEvent>();
 			connectivity.ConnectionsUpdated += (sender, e) => receivedEvents.Add(e);
 
 			api.CreateConnection(audioSource1, audioDestination1);
 			receivedEvents.Count.ShouldBe(1);
-			receivedEvents[0].Endpoints.Count.ShouldBe(2); // Source and Destination
-			receivedEvents[0].VirtualSignalGroups.Count.ShouldBe(2);
-			receivedEvents[0].VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Partial);
+			receivedEvents.Last().Endpoints.Count.ShouldBe(2); // Source and Destination
+			receivedEvents.Last().VirtualSignalGroups.Count.ShouldBe(2);
+			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Partial);
+			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([source1, destination1], ignoreOrder: true);
 
 			api.CreateConnection(videoSource1, videoDestination1);
 			receivedEvents.Count.ShouldBe(2);
-			receivedEvents[1].Endpoints.Count.ShouldBe(2); // Source and Destination
-			receivedEvents[1].VirtualSignalGroups.Count.ShouldBe(2);
-			receivedEvents[1].VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Connected);
+			receivedEvents.Last().Endpoints.Count.ShouldBe(2); // Source and Destination
+			receivedEvents.Last().VirtualSignalGroups.Count.ShouldBe(2);
+			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Connected);
+			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([source1, destination1], ignoreOrder: true);
+
+			api.CreatePendingConnection(audioSource2, audioDestination1);
+			api.CreatePendingConnection(videoSource2, videoDestination1);
+			receivedEvents.Count.ShouldBe(4);
+			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([source1, source2, destination1], ignoreOrder: true);
+
+			api.CreateConnection(audioSource2, audioDestination1);
+			api.CreateConnection(videoSource2, videoDestination1);
+			receivedEvents.Count.ShouldBe(6);
+			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([source2, destination1], ignoreOrder: true);
 
 			api.CreateConnection(null, audioDestination1);
 			api.CreateConnection(null, videoDestination1);
-			receivedEvents.Count.ShouldBe(4);
-			receivedEvents[3].VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Disconnected);
+			receivedEvents.Count.ShouldBe(8);
+			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Disconnected);
+			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([destination1], ignoreOrder: true);
 		}
 
 		#region Endpoints

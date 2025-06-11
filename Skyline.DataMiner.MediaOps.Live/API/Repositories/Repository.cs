@@ -613,9 +613,14 @@
 		{
 			var domDefFilter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id);
 
-			if (!(domFilter is ANDFilterElement<DomInstance> andFilter) ||
+			if (domFilter is not ANDFilterElement<DomInstance> andFilter ||
 				!andFilter.subFilters.Contains(domDefFilter))
 			{
+				if (domFilter is TRUEFilterElement<DomInstance>)
+				{
+					return domDefFilter;
+				}
+
 				domFilter = new ANDFilterElement<DomInstance>(
 					domDefFilter,
 					domFilter);
