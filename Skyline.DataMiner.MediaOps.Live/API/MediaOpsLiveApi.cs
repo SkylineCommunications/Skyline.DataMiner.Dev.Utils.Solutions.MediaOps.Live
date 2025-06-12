@@ -2,8 +2,8 @@
 {
 	using System;
 	using System.Linq;
+
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -19,7 +19,6 @@
 		public MediaOpsLiveApi(IConnection connection)
 		{
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
-			Dms = connection.GetDms();
 
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
@@ -36,23 +35,16 @@
 
 		public MediaOpsLiveApi(IEngine engine) : this(engine?.GetUserConnection())
 		{
-			if (engine == null)
-			{
-				throw new ArgumentNullException(nameof(engine));
-			}
-
-			Engine = engine;
+			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 		}
 
-		internal IConnection Connection { get; }
+		protected internal IConnection Connection { get; }
+
+		protected internal IEngine Engine { get; }
 
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
-
-		internal IEngine Engine { get; }
-
-		internal IDms Dms { get; }
 
 		public EndpointRepository Endpoints { get; }
 

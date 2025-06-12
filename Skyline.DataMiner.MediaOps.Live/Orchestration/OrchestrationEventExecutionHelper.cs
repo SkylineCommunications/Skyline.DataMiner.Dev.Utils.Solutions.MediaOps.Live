@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Threading.Tasks;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -271,7 +272,8 @@
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				IDmsAutomationScript script = _api.Dms.GetScript(scriptName);
+				IDms dms = _api.Connection.GetDms();
+				IDmsAutomationScript script = dms.GetScript(scriptName);
 				List<DmsAutomationScriptParamValue> scriptParams = arguments
 					.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
 					.ToList();
