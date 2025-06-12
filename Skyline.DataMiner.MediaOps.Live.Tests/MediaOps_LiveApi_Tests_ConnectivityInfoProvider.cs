@@ -78,13 +78,15 @@
 			api.CreateConnection(audioSource2, audioDestination1);
 			api.CreateConnection(videoSource2, videoDestination1);
 			receivedEvents.Count.ShouldBe(6);
-			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([source2, destination1], ignoreOrder: true);
+			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
+				.ShouldBe([source1, source2, destination1], ignoreOrder: true);
 
 			api.CreateConnection(null, audioDestination1);
 			api.CreateConnection(null, videoDestination1);
 			receivedEvents.Count.ShouldBe(8);
 			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Disconnected);
-			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([destination1], ignoreOrder: true);
+			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
+				.ShouldBe([source2, destination1], ignoreOrder: true);
 		}
 
 		#region Endpoints

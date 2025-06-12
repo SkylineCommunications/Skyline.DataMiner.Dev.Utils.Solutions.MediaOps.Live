@@ -440,12 +440,19 @@
 		{
 			lock (_lock)
 			{
+				var allUpdatedConnections = e.Created.Concat(e.Updated).Concat(e.Deleted).ToList();
+
+				var impactedEndpointsBeforeUpdate = allUpdatedConnections
+					.SelectMany(_connectionEndpointsMapping.GetEndpoints)
+					.ToList();
+
 				UpdateConnections(e.Created.Concat(e.Updated), e.Deleted);
 
-				var impactedEndpoints = e.Created.Concat(e.Updated).Concat(e.Deleted)
-					.SelectMany(x => x.GetEndpoints())
-					.Distinct()
+				var impactedEndpointsAfterUpdate = allUpdatedConnections
+					.SelectMany(_connectionEndpointsMapping.GetEndpoints)
 					.ToList();
+
+				var impactedEndpoints = impactedEndpointsBeforeUpdate.Union(impactedEndpointsAfterUpdate).ToList();
 
 				var impactedVirtualSignalGroups = impactedEndpoints
 					.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x))
