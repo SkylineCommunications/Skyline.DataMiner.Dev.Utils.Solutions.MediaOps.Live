@@ -1,6 +1,5 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using Skyline.DataMiner.Analytics.GenericInterface.JoinFilter;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
