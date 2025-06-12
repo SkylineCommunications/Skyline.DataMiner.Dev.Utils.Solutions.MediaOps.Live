@@ -18,8 +18,16 @@
 			ID = SlcOrchestrationIds.Definitions.Configuration,
 			SectionDefinitionLinks =
 			{
-				new SectionDefinitionLink(SlcOrchestrationIds.Sections.NodeConfiguration.Id),
-				new SectionDefinitionLink(SlcOrchestrationIds.Sections.Connection.Id),
+				new SectionDefinitionLink(SlcOrchestrationIds.Sections.NodeConfiguration.Id)
+				{
+					AllowMultipleSections = true,
+					IsOptional = true,
+				},
+				new SectionDefinitionLink(SlcOrchestrationIds.Sections.Connection.Id)
+				{
+					AllowMultipleSections = true,
+					IsOptional = true,
+				},
 			},
 			ModuleSettingsOverrides = new ModuleSettingsOverrides
 			{
@@ -62,7 +70,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.NodeConfiguration.NodeLabel,
 					Name = "Node Label",
-					IsOptional = false,
+					IsOptional = true,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
@@ -71,6 +79,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.NodeConfiguration.OrchestrationScriptName,
 					Name = "Orchestration Script Name",
+					IsOptional = true,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
@@ -79,6 +88,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.NodeConfiguration.OrchestrationScriptArguments,
 					Name = "Orchestration Script Arguments",
+					IsOptional = true,
 				});
 
 			return sectionDefinition;
@@ -98,6 +108,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.Connection.DestinationNodeID,
 					Name = "Destination Node ID",
+					IsOptional = false,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
@@ -106,6 +117,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.Connection.SourceNodeID,
 					Name = "Source Node ID",
+					IsOptional = false,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
@@ -114,6 +126,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.Connection.LevelMapping,
 					Name = "Level Mapping",
+					IsOptional = true,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
