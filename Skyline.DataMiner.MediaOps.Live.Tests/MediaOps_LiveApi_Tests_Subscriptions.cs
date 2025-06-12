@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 

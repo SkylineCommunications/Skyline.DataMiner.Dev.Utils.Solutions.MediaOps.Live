@@ -4,7 +4,7 @@
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public static class ConnectionAwaiter
 	{
@@ -58,7 +58,7 @@
 			EventHandler<Connection> connectionEventHandler = (s, e) =>
 			{
 				if (e.ConnectedSource == source &&
-					e.Destination == destination)
+				    e.Destination == destination)
 				{
 					tsc.TrySetResult(true);
 				}

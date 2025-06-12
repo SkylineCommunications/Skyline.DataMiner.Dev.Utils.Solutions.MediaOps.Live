@@ -4,10 +4,16 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
+
+	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Connection;
+	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{
@@ -22,7 +28,10 @@
 			if (installDomModules)
 			{
 				var slcConnectivityManagementDomModule = new SlcConnectivityManagementDomModule();
-				DomModuleInstaller.Install(Connection.HandleMessages, slcConnectivityManagementDomModule, x => { });
+				DomModuleInstaller.Install(connection.HandleMessages, slcConnectivityManagementDomModule, x => { });
+
+				var slcOrchestrationDomModule = new SlcOrchestrationDomModule();
+				DomModuleInstaller.Install(connection.HandleMessages, slcOrchestrationDomModule, x => { });
 			}
 
 			var category = new Category { Name = "Category 1" };
@@ -129,6 +138,11 @@
 					Connections.CreateOrUpdate([connection1, connection2]);
 				}
 			}
+
+			OrchestrationJobConfiguration? job = Orchestration.GetOrCreateNewOrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");
+			job.OrchestrationEvents.AddRange(WithNodes_CreateEventConfigurationInstances(10, 10));
+
+			//Orchestration.SaveOrchestrationJobConfiguration(job);
 		}
 
 		public void CreateConnection(Endpoint? source, Endpoint destination)
@@ -171,6 +185,67 @@
 			connection.PendingConnectedSource = pendingSource;
 
 			Connections.CreateOrUpdate(connection);
+		}
+
+		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)
+		{
+			List<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection> connections = new List<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection>();
+			List<NodeConfiguration> nodeConfigs = new List<NodeConfiguration>();
+			List<LevelMapping> levelMapping = new List<LevelMapping>
+			{
+				new(
+					new Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Level("Destination",1),
+					new Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Level("Source", 1)),
+			};
+
+			List<OrchestrationScriptArgument> scriptArguments = new List<OrchestrationScriptArgument>
+			{
+				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Element, "Name", "Value"),
+				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "Name", "Value"),
+				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "Name", "Value"),
+			};
+
+			for (int i = 1; i <= nodes; i++)
+			{
+				connections.Add(new Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection
+				{
+					DestinationNodeId = "1",
+					DestinationVsg = Guid.NewGuid(),
+					SourceVsg = Guid.NewGuid(),
+					SourceNodeId = "1",
+					LevelMappings = levelMapping,
+				});
+
+				nodeConfigs.Add(new NodeConfiguration
+				{
+					NodeId = "1",
+					NodeLabel = "Node Label",
+					OrchestrationScriptName = "OrchestrationScript",
+					OrchestrationScriptArguments = scriptArguments,
+				});
+			}
+
+			List<OrchestrationEventConfiguration> orchestrationEventConfigurations = new List<OrchestrationEventConfiguration>();
+
+			for (int i = 1; i <= count; i++)
+			{
+				orchestrationEventConfigurations.Add(new OrchestrationEventConfiguration
+				{
+					Name = $"Test Event {i}",
+					EventTime = DateTime.UtcNow,
+					EventType = SlcOrchestrationIds.Enums.EventType.Other,
+					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
+					GlobalOrchestrationScript = "Test Script",
+					GlobalOrchestrationScriptArguments = scriptArguments,
+					Configuration =
+					{
+						Connections = connections,
+						NodeConfigurations = nodeConfigs,
+					},
+				});
+			}
+
+			return orchestrationEventConfigurations;
 		}
 	}
 }

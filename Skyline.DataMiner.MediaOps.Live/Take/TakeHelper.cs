@@ -11,7 +11,7 @@
 	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
@@ -213,8 +213,7 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var ids = connectionContexts.Select(x => x.Destination.ID);
-				var connections = _api.SlcConnectivityManagementHelper.GetConnectionsForDestinations(ids);
+				var connections = _api.SlcConnectivityManagementHelper.GetConnectionsForDestinations(connectionContexts.Select(x => x.Destination.ID));
 
 				foreach (var connectionToCreate in connectionContexts)
 				{

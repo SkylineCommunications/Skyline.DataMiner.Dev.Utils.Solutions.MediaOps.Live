@@ -2,6 +2,7 @@
 {
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
 
 	[TestClass]
@@ -50,7 +51,7 @@
 			vsg = _api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
 			Assert.AreEqual(1, vsg.Levels.Count);
 
-			vsg.Levels.Add(new API.Objects.LevelEndpoint(videoLevel, videoSource1));
+			vsg.Levels.Add(new LevelEndpoint(videoLevel, videoSource1));
 			_api.VirtualSignalGroups.Update(vsg);
 			vsg = _api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
 			Assert.AreEqual(2, vsg.Levels.Count);

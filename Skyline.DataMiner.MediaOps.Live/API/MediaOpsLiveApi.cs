@@ -2,11 +2,13 @@
 {
 	using System;
 	using System.Linq;
-
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
@@ -17,8 +19,10 @@
 		public MediaOpsLiveApi(IConnection connection)
 		{
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
+			Dms = connection.GetDms();
 
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
+			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
 
 			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper, connection);
 			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper, connection);
@@ -26,6 +30,8 @@
 			Categories = new CategoryRepository(SlcConnectivityManagementHelper, connection);
 			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper, connection);
 			Connections = new ConnectionRepository(SlcConnectivityManagementHelper, connection);
+
+			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
 		}
 
 		public MediaOpsLiveApi(IEngine engine) : this(engine?.GetUserConnection())
@@ -34,11 +40,19 @@
 			{
 				throw new ArgumentNullException(nameof(engine));
 			}
+
+			Engine = engine;
 		}
 
-		protected IConnection Connection { get; }
+		internal IConnection Connection { get; }
 
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
+
+		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+
+		internal IEngine Engine { get; }
+
+		internal IDms Dms { get; }
 
 		public EndpointRepository Endpoints { get; }
 
@@ -52,11 +66,13 @@
 
 		public ConnectionRepository Connections { get; }
 
+		public OrchestrationEventRepository Orchestration { get; }
+
 		public bool IsInstalled()
 		{
 			var moduleSettingsHelper = new ModuleSettingsHelper(Connection.HandleMessages);
 
-			var filter = ModuleSettingsExposers.ModuleId.Equal(SlcConnectivityManagementIds.ModuleId);
+			var filter = ModuleSettingsExposers.ModuleId.Equal(SlcConnectivityManagementIds.ModuleId).OR(ModuleSettingsExposers.ModuleId.Equal(SlcOrchestrationIds.ModuleId));
 			var count = moduleSettingsHelper.ModuleSettings.Count(filter);
 
 			if (count == 0)
@@ -64,12 +80,17 @@
 				return false;
 			}
 
-			var definitions = SlcConnectivityManagementHelper.DomHelper.DomDefinitions.ReadAll()
+			var connectivityManagementDefinitions = SlcConnectivityManagementHelper.DomHelper.DomDefinitions.ReadAll()
 				.Select(x => x.ID)
 				.ToList();
 
-			return definitions.Contains(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup) &&
-				   definitions.Contains(SlcConnectivityManagementIds.Definitions.Endpoint);
+			var orchestrationDefinitions = SlcOrchestrationHelper.DomHelper.DomDefinitions.ReadAll()
+				.Select(x => x.ID)
+				.ToList();
+
+			return connectivityManagementDefinitions.Contains(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup) &&
+				   connectivityManagementDefinitions.Contains(SlcConnectivityManagementIds.Definitions.Endpoint) &&
+				   orchestrationDefinitions.Contains(SlcOrchestrationIds.Definitions.OrchestrationEvent);
 		}
 	}
 }

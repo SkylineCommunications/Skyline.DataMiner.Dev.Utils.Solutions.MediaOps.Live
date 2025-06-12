@@ -5,6 +5,7 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class VirtualSignalGroupConnectivity
 	{

@@ -1,8 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Take
 {
 	using System;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class ConnectionRequest
 	{

@@ -2,8 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class VsgConnectionRequest
 	{
