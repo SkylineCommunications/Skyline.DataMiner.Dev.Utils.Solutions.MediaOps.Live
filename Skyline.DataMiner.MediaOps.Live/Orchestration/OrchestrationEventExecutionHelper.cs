@@ -117,27 +117,9 @@
 					allConnections.AddRange(orchestrationEventConfiguration.Configuration.Connections);
 				}
 
-				IEnumerable<IGrouping<Guid, Connection>> groupedByDestination = allConnections.GroupBy(conn => conn.DestinationVsg.Value.ID);
-				IEnumerable<Guid> destinationsWithConflicts = groupedByDestination
-					.Where(group => group
-						.Select(conn => conn.SourceVsg.Value.ID).Distinct().Count() > 1)
-					.Select(group => group.Key);
-
 				List<Connection> connectionsToConfigure = new List<Connection>();
 				foreach (OrchestrationEventConfiguration eventConfigurationsWithConnection in eventConfigurationsWithConnections)
 				{
-					List<Guid> conflictedConnectionIdsInEvent = eventConfigurationsWithConnection.Configuration.Connections
-						.Where(conn => destinationsWithConflicts.Contains(conn.DestinationVsg.Value.ID))
-						.Select(conn => conn.DestinationVsg.Value.ID).ToList();
-
-					if (conflictedConnectionIdsInEvent.Any())
-					{
-						eventConfigurationsWithConnection.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-						eventConfigurationsWithConnection.FailureInfo +=
-							$"\nFollowing Destination VSGs have a conflicting configuration for another event at the same time: {String.Join("/", conflictedConnectionIdsInEvent)}";
-						continue;
-					}
-
 					connectionsToConfigure.AddRange(eventConfigurationsWithConnection.Configuration.Connections);
 					eventConfigurationsWithConnection.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 				}

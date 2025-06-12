@@ -115,7 +115,7 @@
 			sectionDefinition.AddOrReplaceFieldDescriptor(
 				new ReservationFieldDescriptor
 				{
-					FieldType = typeof(Guid),
+					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance,
 					Name = "Reservation Instance",
 					IsOptional = true,
