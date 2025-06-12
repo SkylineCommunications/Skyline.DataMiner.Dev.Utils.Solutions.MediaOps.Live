@@ -441,19 +441,9 @@
 		{
 			lock (_lock)
 			{
-				var allUpdatedConnections = e.Created.Concat(e.Updated).Concat(e.Deleted).ToList();
-
-				var impactedEndpointsBeforeUpdate = allUpdatedConnections
-					.SelectMany(_connectionEndpointsMapping.GetEndpoints)
-					.ToList();
+				var impactedEndpoints = GetImpactedEndpointsForChangedConnections(e);
 
 				UpdateConnections(e.Created.Concat(e.Updated), e.Deleted);
-
-				var impactedEndpointsAfterUpdate = allUpdatedConnections
-					.SelectMany(_connectionEndpointsMapping.GetEndpoints)
-					.ToList();
-
-				var impactedEndpoints = impactedEndpointsBeforeUpdate.Union(impactedEndpointsAfterUpdate).ToList();
 
 				var impactedVirtualSignalGroups = impactedEndpoints
 					.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x))
@@ -466,6 +456,43 @@
 
 				ConnectionsUpdated?.Invoke(this, eventArgs);
 			}
+		}
+
+		private ICollection<ApiObjectReference<Endpoint>> GetImpactedEndpointsForChangedConnections(ApiObjectsChangedEvent<Connection> change)
+		{
+			var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
+
+			foreach (var updated in change.Created.Union(change.Updated))
+			{
+				impactedEndpoints.UnionWith(updated.GetEndpoints());
+
+				if (_connections.TryGetValue(updated.ID, out var existing))
+				{
+					if (existing.ConnectedSource != ApiObjectReference<Endpoint>.Empty &&
+						existing.ConnectedSource != updated.ConnectedSource)
+					{
+						impactedEndpoints.Add(existing.ConnectedSource.Value);
+					}
+
+					if (existing.PendingConnectedSource != ApiObjectReference<Endpoint>.Empty &&
+						existing.PendingConnectedSource != updated.PendingConnectedSource)
+					{
+						impactedEndpoints.Add(existing.PendingConnectedSource.Value);
+					}
+				}
+			}
+
+			foreach (var deleted in change.Deleted)
+			{
+				impactedEndpoints.UnionWith(deleted.GetEndpoints());
+
+				if (_connections.TryGetValue(deleted.ID, out var existing))
+				{
+					impactedEndpoints.UnionWith(existing.GetEndpoints());
+				}
+			}
+
+			return impactedEndpoints;
 		}
 
 		private void LoadExtraDataForEndpoints(IEnumerable<Endpoint> endpoints)
