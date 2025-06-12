@@ -6,7 +6,7 @@
 
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 
 	public partial class GlobalConfigurationSection
 	{

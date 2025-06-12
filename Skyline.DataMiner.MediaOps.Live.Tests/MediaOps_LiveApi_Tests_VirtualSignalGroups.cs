@@ -2,7 +2,7 @@
 {
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
 
 	[TestClass]

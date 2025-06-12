@@ -4,8 +4,8 @@
 	using System.Linq;
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;

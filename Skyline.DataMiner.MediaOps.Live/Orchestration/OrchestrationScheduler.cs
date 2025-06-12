@@ -8,7 +8,7 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Exceptions;

@@ -5,13 +5,13 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.SubscriptionFilters;
 
-	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement.Connection;
+	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Connection;
 
 	public class ConnectionWatcher : IDisposable
 	{

@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
 {
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 

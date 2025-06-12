@@ -1,7 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Data
 {
 	using System;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class EndpointInfo
 	{

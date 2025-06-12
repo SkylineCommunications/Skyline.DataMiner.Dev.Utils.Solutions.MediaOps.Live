@@ -1,7 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Take
 {
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	/// <summary>
 	/// Represents a mapping between source and destination levels.

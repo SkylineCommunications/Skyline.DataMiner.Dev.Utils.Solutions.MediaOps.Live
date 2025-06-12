@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.SlcOrchestration
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration
 {
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;

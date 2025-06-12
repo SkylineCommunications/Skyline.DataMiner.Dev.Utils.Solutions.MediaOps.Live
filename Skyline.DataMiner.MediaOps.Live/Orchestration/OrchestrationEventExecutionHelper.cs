@@ -6,8 +6,8 @@
 	using System.Threading.Tasks;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
@@ -16,9 +16,9 @@
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
 
-	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.Connection;
-	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.SlcConnectivityManagement.Level;
-	using LevelMapping = Skyline.DataMiner.MediaOps.Live.API.Objects.SlcOrchestration.LevelMapping;
+	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection;
+	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
+	using LevelMapping = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.LevelMapping;
 
 	internal class OrchestrationEventExecutionHelper
 	{
