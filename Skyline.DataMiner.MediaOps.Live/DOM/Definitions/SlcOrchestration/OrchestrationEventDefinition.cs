@@ -20,8 +20,14 @@
 			SectionDefinitionLinks =
 			{
 				new SectionDefinitionLink(SlcOrchestrationIds.Sections.OrchestrationEventInfo.Id),
-				new SectionDefinitionLink(SlcOrchestrationIds.Sections.GlobalConfiguration.Id),
-				new SectionDefinitionLink(SlcOrchestrationIds.Sections.Configuration.Id),
+				new SectionDefinitionLink(SlcOrchestrationIds.Sections.GlobalConfiguration.Id)
+				{
+					IsOptional = true,
+				},
+				new SectionDefinitionLink(SlcOrchestrationIds.Sections.Configuration.Id)
+				{
+					IsOptional = true,
+				},
 			},
 			ModuleSettingsOverrides = new ModuleSettingsOverrides
 			{
@@ -103,6 +109,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.OrchestrationEventInfo.FailureInfo,
 					Name = "Failure Info",
+					IsOptional = true,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
@@ -111,7 +118,7 @@
 					FieldType = typeof(Guid),
 					ID = SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance,
 					Name = "Reservation Instance",
-					IsOptional = false,
+					IsOptional = true,
 				});
 
 			return sectionDefinition;
@@ -131,6 +138,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptName,
 					Name = "Orchestration Script Name",
+					IsOptional = true,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
@@ -139,6 +147,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptArguments,
 					Name = "Orchestration Script Arguments",
+					IsOptional = true,
 				});
 
 			return sectionDefinition;
