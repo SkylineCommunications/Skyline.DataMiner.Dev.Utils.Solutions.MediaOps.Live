@@ -9,6 +9,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -16,7 +17,7 @@
 
 	public class TransportTypeRepository : Repository<TransportType>
 	{
-		internal TransportTypeRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal TransportTypeRepository(SlcConnectivityManagementHelper helper, IConnection connection) : base(helper, connection)
 		{
 		}
 
@@ -33,7 +34,7 @@
 			}
 		}
 
-		protected override TransportType CreateInstance(DomInstance domInstance)
+		protected internal override TransportType CreateInstance(DomInstance domInstance)
 		{
 			return new TransportType(domInstance);
 		}

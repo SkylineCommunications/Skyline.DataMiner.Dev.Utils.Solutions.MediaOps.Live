@@ -4,20 +4,15 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
-	public class SlcOrchestrationHelper : DomModuleHelperBase
+	internal class SlcOrchestrationHelper : DomModuleHelperBase
 	{
-		public SlcOrchestrationHelper(ICommunication communication) : base(SlcOrchestrationIds.ModuleId, communication.SendMessages)
-		{
-		}
-
-		public SlcOrchestrationHelper(IConnection connection) : base(SlcOrchestrationIds.ModuleId, connection.HandleMessages)
+		public SlcOrchestrationHelper(IConnection connection) : base(SlcOrchestrationIds.ModuleId, connection)
 		{
 		}
 

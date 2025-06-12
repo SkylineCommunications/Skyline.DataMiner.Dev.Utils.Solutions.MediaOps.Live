@@ -21,10 +21,11 @@
 
 		private Lazy<HashSet<OrchestrationSchedulerTask>> _internalTaskList;
 
-		public OrchestrationScheduler(IDms dms, IConnection connection)
+		public OrchestrationScheduler(IConnection connection)
 		{
-			_dms = dms ?? throw new ArgumentNullException(nameof(dms));
-			_connection = connection;
+			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
+			_dms = connection.GetDms();
+
 			_internalTaskList = new Lazy<HashSet<OrchestrationSchedulerTask>>(LoadInternalTaskList);
 		}
 

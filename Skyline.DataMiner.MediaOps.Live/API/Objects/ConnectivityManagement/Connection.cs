@@ -1,6 +1,8 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	using System;
+	using System.Collections.Generic;
+	using System.Linq;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Validation;
@@ -27,11 +29,11 @@
 
 		internal static DomDefinitionId DomDefinition => SlcConnectivityManagementIds.Definitions.Connection;
 
-		public ApiObjectReference<Endpoint>? Destination
+		public ApiObjectReference<Endpoint> Destination
 		{
 			get
 			{
-				return _domInstance.ConnectionInfo.Destination;
+				return _domInstance.ConnectionInfo.Destination ?? Guid.Empty;
 			}
 
 			set
@@ -77,6 +79,20 @@
 			{
 				_domInstance.ConnectionInfo.PendingConnectedSource = value;
 			}
+		}
+
+		public IEnumerable<ApiObjectReference<Endpoint>> GetEndpoints()
+		{
+			var endpoints = new[]
+				{
+					Destination,
+					ConnectedSource,
+					PendingConnectedSource,
+				}
+				.Where(e => e.HasValue && e.Value != ApiObjectReference<Endpoint>.Empty)
+				.Select(e => e.Value);
+
+			return endpoints;
 		}
 
 		public ValidationResult Validate()

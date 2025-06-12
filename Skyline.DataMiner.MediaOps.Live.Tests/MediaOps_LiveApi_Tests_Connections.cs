@@ -7,7 +7,7 @@
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_Connections
 	{
-		private static readonly MediaOpsLiveApi _api = new MediaOpsLiveApiMock();
+		private static readonly MediaOpsLiveApi _api = new MediaOpsLiveApiMock(createConnections: true);
 
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Connections_GetByDestinations()

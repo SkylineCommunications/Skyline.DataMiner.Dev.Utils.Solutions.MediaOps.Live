@@ -196,8 +196,8 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var endpointIds = vsgConnectionRequests.SelectMany(x => x.Source.GetEndpoints())
-						.Concat(vsgConnectionRequests.SelectMany(x => x.Destination.GetEndpoints()))
+				var endpointIds = vsgConnectionRequests.SelectMany(x => x.Source.GetLevelEndpoints())
+						.Concat(vsgConnectionRequests.SelectMany(x => x.Destination.GetLevelEndpoints()))
 						.Select(x => x.Endpoint.ID)
 						.Distinct();
 

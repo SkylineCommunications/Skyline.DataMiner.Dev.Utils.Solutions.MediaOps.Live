@@ -1,27 +1,37 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
+	using System;
+
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
+
 	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Connection;
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{
-		public MediaOpsLiveApiMock(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true)
-			: base(new MediaOpsLiveApiConnectionMock(CreateMessageHandler(out var messageHandler)))
+		public MediaOpsLiveApiMock(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false)
+			: this(new DomConnectionMock(), installDomModules, createEndpoints, createVsgs, createConnections)
 		{
-			MessageHandler = messageHandler;
+		}
 
+		public MediaOpsLiveApiMock(Net.IConnection connection, bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false)
+			: base(connection)
+		{
 			if (installDomModules)
 			{
 				var slcConnectivityManagementDomModule = new SlcConnectivityManagementDomModule();
-				DomModuleInstaller.Install(MessageHandler.HandleMessages, slcConnectivityManagementDomModule, x => { });
+				DomModuleInstaller.Install(connection.HandleMessages, slcConnectivityManagementDomModule, x => { });
+
+				var slcOrchestrationDomModule = new SlcOrchestrationDomModule();
+				DomModuleInstaller.Install(connection.HandleMessages, slcOrchestrationDomModule, x => { });
 			}
 
 			var category = new Category { Name = "Category 1" };
@@ -35,79 +45,84 @@
 			var dataLevel = new Level { Number = 3, Name = "Data", TransportType = transportTypeIP };
 			Levels.CreateOrUpdate([videoLevel, audioLevel, dataLevel]);
 
+			if (!createEndpoints)
+			{
+				return;
+			}
+
 			for (int i = 1; i <= 10; i++)
 			{
-				if (createEndpoints)
+				var videoSource1 = new Endpoint
 				{
-					var videoSource1 = new Endpoint
+					Role = Role.Source,
+					Name = $"Video Source {i}",
+					TransportType = transportTypeIP,
+					Element = $"123/{i}",
+					Identifier = $"Key-{i}",
+				};
+				var audioSource1 = new Endpoint
+				{
+					Role = Role.Source,
+					Name = $"Audio Source {i}",
+					TransportType = transportTypeIP,
+					Element = $"123/{i}",
+					Identifier = $"Key-{i}",
+				};
+				var videoDestination1 = new Endpoint
+				{
+					Role = Role.Destination,
+					Name = $"Video Destination {i}",
+					TransportType = transportTypeIP,
+					Element = $"123/{i}",
+					Identifier = $"Key-{i}",
+				};
+				var audioDestination1 = new Endpoint
+				{
+					Role = Role.Destination,
+					Name = $"Audio Destination {i}",
+					TransportType = transportTypeIP,
+					Element = $"123/{i}",
+					Identifier = $"Key-{i}",
+				};
+				Endpoints.CreateOrUpdate([videoSource1, audioSource1, videoDestination1, audioDestination1]);
+
+				if (createVsgs)
+				{
+					var source1 = new VirtualSignalGroup
 					{
 						Role = Role.Source,
-						Name = $"Video Source {i}",
-						TransportType = transportTypeIP,
-						Element = $"123/{i}",
-						Identifier = $"Key-{i}",
+						Name = $"Source {i}",
+						Description = $"Source {i}",
+						Categories =
+						[
+							category,
+						],
+						Levels =
+						[
+							new LevelEndpoint(videoLevel, videoSource1),
+							new LevelEndpoint(audioLevel, audioSource1),
+						],
 					};
-					var audioSource1 = new Endpoint
-					{
-						Role = Role.Source,
-						Name = $"Audio Source {i}",
-						TransportType = transportTypeIP,
-						Element = $"123/{i}",
-						Identifier = $"Key-{i}",
-					};
-					var videoDestination1 = new Endpoint
-					{
-						Role = Role.Destination,
-						Name = $"Video Destination {i}",
-						TransportType = transportTypeIP,
-						Element = $"123/{i}",
-						Identifier = $"Key-{i}",
-					};
-					var audioDestination1 = new Endpoint
+					var destination1 = new VirtualSignalGroup
 					{
 						Role = Role.Destination,
-						Name = $"Audio Destination {i}",
-						TransportType = transportTypeIP,
-						Element = $"123/{i}",
-						Identifier = $"Key-{i}",
+						Name = $"Destination {i}",
+						Description = $"Destination {i}",
+						Categories =
+						[
+							category,
+						],
+						Levels =
+						[
+							new LevelEndpoint(videoLevel, videoDestination1),
+							new LevelEndpoint(audioLevel, audioDestination1),
+						],
 					};
-					Endpoints.CreateOrUpdate([videoSource1, audioSource1, videoDestination1, audioDestination1]);
+					VirtualSignalGroups.CreateOrUpdate([source1, destination1]);
+				}
 
-					if (createVsgs)
-					{
-						var source1 = new VirtualSignalGroup
-						{
-							Role = Role.Source,
-							Name = $"Source {i}",
-							Description = $"Source {i}",
-							Categories =
-							[
-								category,
-							],
-							Levels =
-							[
-								new LevelEndpoint(videoLevel, videoSource1),
-								new LevelEndpoint(audioLevel, audioSource1),
-							],
-						};
-						var destination1 = new VirtualSignalGroup
-						{
-							Role = Role.Destination,
-							Name = $"Destination {i}",
-							Description = $"Destination {i}",
-							Categories =
-							[
-								category,
-							],
-							Levels =
-							[
-								new LevelEndpoint(videoLevel, videoDestination1),
-								new LevelEndpoint(audioLevel, audioDestination1),
-							],
-						};
-						VirtualSignalGroups.CreateOrUpdate([source1, destination1]);
-					}
-
+				if (createConnections)
+				{
 					var connection1 = new Connection
 					{
 						Destination = videoDestination1,
@@ -130,12 +145,46 @@
 			//Orchestration.SaveOrchestrationJobConfiguration(job);
 		}
 
-		public DomSLNetMessageHandler MessageHandler { get; }
-
-		private static DomSLNetMessageHandler CreateMessageHandler(out DomSLNetMessageHandler handler)
+		public void CreateConnection(Endpoint? source, Endpoint destination)
 		{
-			handler = new DomSLNetMessageHandler();
-			return handler;
+			if (destination is null)
+			{
+				throw new ArgumentNullException(nameof(destination));
+			}
+
+			var connection = Connections.GetByDestination(destination)
+				?? new Connection { Destination = destination };
+
+			connection.ConnectedSource = source;
+			connection.IsConnected = source != null;
+
+			if (connection.PendingConnectedSource == source)
+			{
+				connection.PendingConnectedSource = null;
+			}
+
+			Connections.CreateOrUpdate(connection);
+		}
+
+		public void CreatePendingConnection(Endpoint? pendingSource, Endpoint destination)
+		{
+			if (destination is null)
+			{
+				throw new ArgumentNullException(nameof(destination));
+			}
+
+			var connection = Connections.GetByDestination(destination)
+				?? new Connection { Destination = destination, IsConnected = false };
+
+			if (connection.ConnectedSource == pendingSource)
+			{
+				// already connected to the pending source
+				return;
+			}
+
+			connection.PendingConnectedSource = pendingSource;
+
+			Connections.CreateOrUpdate(connection);
 		}
 
 		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)

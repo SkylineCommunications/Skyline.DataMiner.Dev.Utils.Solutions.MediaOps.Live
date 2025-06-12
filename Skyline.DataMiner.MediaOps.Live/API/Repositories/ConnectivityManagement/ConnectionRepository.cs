@@ -16,13 +16,15 @@
 
 	using SLDataGateway.API.Types.Querying;
 
+	using ApiConnection = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Connection;
+
 	public class ConnectionRepository : Repository<Connection>
 	{
-		internal ConnectionRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal ConnectionRepository(SlcConnectivityManagementHelper helper, Net.IConnection connection) : base(helper, connection)
 		{
 		}
 
-		protected internal override DomDefinitionId DomDefinition => Connection.DomDefinition;
+		protected internal override DomDefinitionId DomDefinition => ApiConnection.DomDefinition;
 
 		public IDictionary<Guid, Connection> GetByDestinationIds(IEnumerable<Guid> destinationEndpointIds)
 		{
@@ -68,7 +70,28 @@
 			return GetByDestinationId(destinationEndpoint.ID);
 		}
 
-		protected override Connection CreateInstance(DomInstance domInstance)
+		public IEnumerable<Connection> GetByEndpointIds(IEnumerable<Guid> endpointIds)
+		{
+			if (endpointIds == null)
+			{
+				throw new ArgumentNullException(nameof(endpointIds));
+			}
+
+			FilterElement<DomInstance> CreateFilter(Guid id) =>
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Connection.Id),
+					new ORFilterElement<DomInstance>(
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination).Equal(id),
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource).Equal(id),
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.PendingConnectedSource).Equal(id)));
+
+			return FilterQueryExecutor.RetrieveFilteredItems(
+				endpointIds,
+				x => CreateFilter(x),
+				x => Read(x));
+		}
+
+		protected internal override Connection CreateInstance(DomInstance domInstance)
 		{
 			return new Connection(domInstance);
 		}
@@ -90,13 +113,13 @@
 		{
 			switch (fieldName)
 			{
-				case nameof(Connection.Destination):
+				case nameof(ApiConnection.Destination):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination), comparer, ApiObjectReference<Endpoint>.Convert(value));
-				case nameof(Connection.IsConnected):
+				case nameof(ApiConnection.IsConnected):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.IsConnected), comparer, (bool)value);
-				case nameof(Connection.ConnectedSource):
+				case nameof(ApiConnection.ConnectedSource):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource), comparer, ApiObjectReference<Endpoint>.Convert(value));
-				case nameof(Connection.PendingConnectedSource):
+				case nameof(ApiConnection.PendingConnectedSource):
 					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.PendingConnectedSource), comparer, ApiObjectReference<Endpoint>.Convert(value));
 			}
 
@@ -107,13 +130,13 @@
 		{
 			switch (fieldName)
 			{
-				case nameof(Connection.Destination):
+				case nameof(ApiConnection.Destination):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination), sortOrder, naturalSort);
-				case nameof(Connection.IsConnected):
+				case nameof(ApiConnection.IsConnected):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.IsConnected), sortOrder, naturalSort);
-				case nameof(Connection.ConnectedSource):
+				case nameof(ApiConnection.ConnectedSource):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource), sortOrder, naturalSort);
-				case nameof(Connection.PendingConnectedSource):
+				case nameof(ApiConnection.PendingConnectedSource):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.PendingConnectedSource), sortOrder, naturalSort);
 			}
 

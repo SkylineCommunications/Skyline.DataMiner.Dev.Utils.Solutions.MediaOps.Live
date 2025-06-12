@@ -2,8 +2,8 @@
 {
 	using System;
 	using System.Linq;
+
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -12,77 +12,39 @@
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
-	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	public class MediaOpsLiveApi
 	{
-		public MediaOpsLiveApi(ICommunication communication)
-		{
-			if (communication is null)
-			{
-				throw new ArgumentNullException(nameof(communication));
-			}
-
-			Dms = DmsFactory.CreateDms(communication);
-			MessageHandler = communication.SendMessages;
-			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(communication);
-			SlcOrchestrationHelper = new SlcOrchestrationHelper(communication);
-
-			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper);
-			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper);
-			Levels = new LevelRepository(SlcConnectivityManagementHelper);
-			Categories = new CategoryRepository(SlcConnectivityManagementHelper);
-			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
-			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
-
-			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
-		}
-
 		public MediaOpsLiveApi(IConnection connection)
 		{
-			if (connection is null)
-			{
-				throw new ArgumentNullException(nameof(connection));
-			}
+			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
-			Connection = connection;
-			Dms = connection.GetDms();
-			MessageHandler = connection.HandleMessages;
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
 
-			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper);
-			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper);
-			Levels = new LevelRepository(SlcConnectivityManagementHelper);
-			Categories = new CategoryRepository(SlcConnectivityManagementHelper);
-			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper);
-			Connections = new ConnectionRepository(SlcConnectivityManagementHelper);
+			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper, connection);
+			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper, connection);
+			Levels = new LevelRepository(SlcConnectivityManagementHelper, connection);
+			Categories = new CategoryRepository(SlcConnectivityManagementHelper, connection);
+			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper, connection);
+			Connections = new ConnectionRepository(SlcConnectivityManagementHelper, connection);
 
 			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
 		}
 
 		public MediaOpsLiveApi(IEngine engine) : this(engine?.GetUserConnection())
 		{
-			if (engine == null)
-			{
-				throw new ArgumentNullException(nameof(engine));
-			}
-
-			Engine = engine;
+			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 		}
 
-		internal Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
+		protected internal IConnection Connection { get; }
+
+		protected internal IEngine Engine { get; }
 
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
-
-		internal IConnection Connection { get; }
-
-		internal IEngine Engine { get; }
-
-		internal IDms Dms { get; }
 
 		public EndpointRepository Endpoints { get; }
 
@@ -100,7 +62,7 @@
 
 		public bool IsInstalled()
 		{
-			var moduleSettingsHelper = new ModuleSettingsHelper(MessageHandler);
+			var moduleSettingsHelper = new ModuleSettingsHelper(Connection.HandleMessages);
 
 			var filter = ModuleSettingsExposers.ModuleId.Equal(SlcConnectivityManagementIds.ModuleId).OR(ModuleSettingsExposers.ModuleId.Equal(SlcOrchestrationIds.ModuleId));
 			var count = moduleSettingsHelper.ModuleSettings.Count(filter);

@@ -6,12 +6,13 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	public class ConfigurationRepository : Repository<Configuration>
 	{
-		public ConfigurationRepository(SlcOrchestrationHelper helper) : base(helper)
+		internal ConfigurationRepository(SlcOrchestrationHelper helper, IConnection connection) : base(helper, connection)
 		{
 		}
 
@@ -36,7 +37,7 @@
 			return result.First();
 		}
 
-		protected override Configuration CreateInstance(DomInstance domInstance)
+		protected internal override Configuration CreateInstance(DomInstance domInstance)
 		{
 			return new Configuration(domInstance);
 		}

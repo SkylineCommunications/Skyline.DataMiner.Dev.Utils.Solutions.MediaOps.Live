@@ -120,7 +120,7 @@
 
 		public bool IsDestination => Role == Role.Destination;
 
-		public IEnumerable<(ApiObjectReference<Level> Level, ApiObjectReference<Endpoint> Endpoint)> GetEndpoints()
+		public IEnumerable<(ApiObjectReference<Level> Level, ApiObjectReference<Endpoint> Endpoint)> GetLevelEndpoints()
 		{
 			if (Levels == null)
 			{

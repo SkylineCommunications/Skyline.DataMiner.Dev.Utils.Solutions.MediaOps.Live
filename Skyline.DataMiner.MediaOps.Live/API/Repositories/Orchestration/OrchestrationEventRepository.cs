@@ -33,10 +33,10 @@
 		/// </summary>
 		/// <param name="helper">Orchestration helper.</param>
 		/// <param name="api">Api that calls the repository.</param>
-		public OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper)
+		internal OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper, api.Connection)
 		{
-			_configurationHelper = new ConfigurationRepository(helper);
-			_scheduler = new OrchestrationScheduler(api.Dms, api.Connection);
+			_configurationHelper = new ConfigurationRepository(helper, api.Connection);
+			_scheduler = new OrchestrationScheduler(api.Connection);
 			_api = api;
 		}
 
@@ -467,7 +467,7 @@
 			}
 		}
 
-		protected override OrchestrationEvent CreateInstance(DomInstance domInstance)
+		protected internal override OrchestrationEvent CreateInstance(DomInstance domInstance)
 		{
 			return new OrchestrationEvent(domInstance);
 		}

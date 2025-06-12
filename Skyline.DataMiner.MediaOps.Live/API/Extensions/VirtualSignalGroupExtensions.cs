@@ -29,7 +29,7 @@
 				.Batch(100)
 				.JoinInBatches(
 					endpointsRepository,
-					vsg => vsg.GetEndpoints().Select(x => x.Endpoint),
+					vsg => vsg.GetLevelEndpoints().Select(x => x.Endpoint),
 					(vsg, endpoints) => (vsg, endpoints))
 				.Flatten();
 		}
@@ -50,7 +50,7 @@
 
 			return virtualSignalGroups.JoinInBatches(
 				endpointsRepository,
-				vsg => vsg.GetEndpoints().Select(x => x.Endpoint),
+				vsg => vsg.GetLevelEndpoints().Select(x => x.Endpoint),
 				(vsg, endpoints) => (vsg, endpoints));
 		}
 	}

@@ -3,7 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
@@ -11,13 +11,9 @@
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
-	public class SlcConnectivityManagementHelper : DomModuleHelperBase
+	internal class SlcConnectivityManagementHelper : DomModuleHelperBase
 	{
-		public SlcConnectivityManagementHelper(ICommunication communication) : base(SlcConnectivityManagementIds.ModuleId, communication.SendMessages)
-		{
-		}
-
-		public SlcConnectivityManagementHelper(IConnection connection) : base(SlcConnectivityManagementIds.ModuleId, connection.HandleMessages)
+		public SlcConnectivityManagementHelper(IConnection connection) : base(SlcConnectivityManagementIds.ModuleId, connection)
 		{
 		}
 

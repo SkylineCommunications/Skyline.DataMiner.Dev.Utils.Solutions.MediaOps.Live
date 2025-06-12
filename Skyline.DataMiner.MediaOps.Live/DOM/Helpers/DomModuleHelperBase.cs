@@ -2,29 +2,28 @@
 {
 	using System;
 
-	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 
-	public abstract class DomModuleHelperBase
+	internal abstract class DomModuleHelperBase
 	{
-		protected DomModuleHelperBase(string moduleId, Func<DMSMessage[], DMSMessage[]> messageHandler)
+		protected DomModuleHelperBase(string moduleId, IConnection connection)
 		{
 			ModuleId = moduleId ?? throw new ArgumentNullException(nameof(moduleId));
-			MessageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
+			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
+			MessageHandler = connection.HandleMessages;
 
-			DomHelper = new DomHelper(messageHandler, moduleId);
-		}
-
-		protected DomModuleHelperBase(string moduleId, IEngine engine) : this(moduleId, engine.SendSLNetMessages)
-		{
+			DomHelper = new DomHelper(MessageHandler, moduleId);
 		}
 
 		public string ModuleId { get; }
 
-		public DomHelper DomHelper { get; }
-
 		protected Func<DMSMessage[], DMSMessage[]> MessageHandler { get; }
+
+		public IConnection Connection { get; }
+
+		public DomHelper DomHelper { get; }
 
 		public static implicit operator DomHelper(DomModuleHelperBase helper)
 		{

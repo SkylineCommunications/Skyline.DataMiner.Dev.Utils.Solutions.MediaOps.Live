@@ -10,6 +10,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -17,7 +18,7 @@
 
 	public class VirtualSignalGroupRepository : Repository<VirtualSignalGroup>
 	{
-		internal VirtualSignalGroupRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal VirtualSignalGroupRepository(SlcConnectivityManagementHelper helper, IConnection connection) : base(helper, connection)
 		{
 		}
 
@@ -48,7 +49,7 @@
 			return GetByEndpointIds(endpoints.Select(x => x.ID));
 		}
 
-		protected override VirtualSignalGroup CreateInstance(DomInstance domInstance)
+		protected internal override VirtualSignalGroup CreateInstance(DomInstance domInstance)
 		{
 			return new VirtualSignalGroup(domInstance);
 		}

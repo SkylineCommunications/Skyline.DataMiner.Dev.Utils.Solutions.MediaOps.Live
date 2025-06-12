@@ -11,6 +11,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Utils.DOM.Extensions;
@@ -19,7 +20,7 @@
 
 	public class EndpointRepository : Repository<Endpoint>
 	{
-		internal EndpointRepository(SlcConnectivityManagementHelper helper) : base(helper)
+		internal EndpointRepository(SlcConnectivityManagementHelper helper, IConnection connection) : base(helper, connection)
 		{
 		}
 
@@ -129,7 +130,7 @@
 			base.Delete(instances);
 		}
 
-		protected override Endpoint CreateInstance(DomInstance domInstance)
+		protected internal override Endpoint CreateInstance(DomInstance domInstance)
 		{
 			return new Endpoint(domInstance);
 		}
