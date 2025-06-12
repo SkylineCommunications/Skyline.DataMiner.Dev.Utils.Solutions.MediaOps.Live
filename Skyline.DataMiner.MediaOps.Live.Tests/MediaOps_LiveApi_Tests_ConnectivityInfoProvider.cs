@@ -68,12 +68,17 @@
 			receivedEvents.Last().Endpoints.Count.ShouldBe(2); // Source and Destination
 			receivedEvents.Last().VirtualSignalGroups.Count.ShouldBe(2);
 			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Connected);
-			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([source1, destination1], ignoreOrder: true);
+			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
+				.ShouldBe([source1, destination1], ignoreOrder: true);
+
+			api.CreateConnection(videoSource1, videoDestination1);
+			receivedEvents.Count.ShouldBe(2); // No new event, as the connection already exists
 
 			api.CreatePendingConnection(audioSource2, audioDestination1);
 			api.CreatePendingConnection(videoSource2, videoDestination1);
 			receivedEvents.Count.ShouldBe(4);
-			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([source1, source2, destination1], ignoreOrder: true);
+			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
+				.ShouldBe([source2, destination1], ignoreOrder: true);
 
 			api.CreateConnection(audioSource2, audioDestination1);
 			api.CreateConnection(videoSource2, videoDestination1);

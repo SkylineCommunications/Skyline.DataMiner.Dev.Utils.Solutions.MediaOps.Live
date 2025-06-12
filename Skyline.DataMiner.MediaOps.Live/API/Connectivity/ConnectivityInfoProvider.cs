@@ -445,54 +445,69 @@
 
 				UpdateConnections(e.Created.Concat(e.Updated), e.Deleted);
 
-				var impactedVirtualSignalGroups = impactedEndpoints
-					.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x))
-					.Distinct()
-					.ToList();
+				if (impactedEndpoints.Count > 0)
+				{
+					var impactedVirtualSignalGroups = impactedEndpoints
+						.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x))
+						.Distinct()
+						.ToList();
 
-				var eventArgs = new ConnectionsUpdatedEvent(
-					impactedEndpoints.Select(GetConnectivity).ToList(),
-					impactedVirtualSignalGroups.Select(GetConnectivity).ToList());
+					var eventArgs = new ConnectionsUpdatedEvent(
+						impactedEndpoints.Select(GetConnectivity).ToList(),
+						impactedVirtualSignalGroups.Select(GetConnectivity).ToList());
 
-				ConnectionsUpdated?.Invoke(this, eventArgs);
+					ConnectionsUpdated?.Invoke(this, eventArgs);
+				}
 			}
 		}
 
 		private ICollection<ApiObjectReference<Endpoint>> GetImpactedEndpointsForChangedConnections(ApiObjectsChangedEvent<Connection> change)
 		{
-			var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
+			var impactedEndpoints = new List<ApiObjectReference<Endpoint>>();
 
-			foreach (var updated in change.Created.Union(change.Updated))
+			foreach (var connection in change.Created.Concat(change.Updated))
 			{
-				impactedEndpoints.UnionWith(updated.GetEndpoints());
-
-				if (_connections.TryGetValue(updated.ID, out var existing))
+				if (!_connections.TryGetValue(connection.ID, out var existing))
 				{
-					if (existing.ConnectedSource != ApiObjectReference<Endpoint>.Empty &&
-						existing.ConnectedSource != updated.ConnectedSource)
-					{
+					impactedEndpoints.AddRange(connection.GetEndpoints());
+					continue;
+				}
+
+				bool hasChangeDetected = false;
+
+				if (connection.ConnectedSource != existing.ConnectedSource)
+				{
+					hasChangeDetected = true;
+					if (existing.ConnectedSource.HasValue)
 						impactedEndpoints.Add(existing.ConnectedSource.Value);
-					}
-
-					if (existing.PendingConnectedSource != ApiObjectReference<Endpoint>.Empty &&
-						existing.PendingConnectedSource != updated.PendingConnectedSource)
-					{
-						impactedEndpoints.Add(existing.PendingConnectedSource.Value);
-					}
+					if (connection.ConnectedSource.HasValue)
+						impactedEndpoints.Add(connection.ConnectedSource.Value);
 				}
-			}
 
-			foreach (var deleted in change.Deleted)
-			{
-				impactedEndpoints.UnionWith(deleted.GetEndpoints());
-
-				if (_connections.TryGetValue(deleted.ID, out var existing))
+				if (connection.PendingConnectedSource != existing.PendingConnectedSource)
 				{
-					impactedEndpoints.UnionWith(existing.GetEndpoints());
+					hasChangeDetected = true;
+					if (existing.PendingConnectedSource.HasValue)
+						impactedEndpoints.Add(existing.PendingConnectedSource.Value);
+					if (connection.PendingConnectedSource.HasValue)
+						impactedEndpoints.Add(connection.PendingConnectedSource.Value);
+				}
+
+				if (hasChangeDetected)
+				{
+					impactedEndpoints.Add(connection.Destination);
 				}
 			}
 
-			return impactedEndpoints;
+			foreach (var connection in change.Deleted)
+			{
+				impactedEndpoints.AddRange(connection.GetEndpoints());
+			}
+
+			return impactedEndpoints
+				.Where(x => x != ApiObjectReference<Endpoint>.Empty)
+				.Distinct()
+				.ToList();
 		}
 
 		private void LoadExtraDataForEndpoints(IEnumerable<Endpoint> endpoints)
