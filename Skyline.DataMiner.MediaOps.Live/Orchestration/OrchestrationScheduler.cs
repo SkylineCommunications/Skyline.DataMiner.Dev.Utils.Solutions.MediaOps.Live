@@ -19,7 +19,7 @@
 		private readonly IDms _dms;
 		private readonly IConnection _connection;
 
-		private Lazy<HashSet<OrchestrationSchedulerTask>> _internalTaskList;
+		private readonly Lazy<HashSet<OrchestrationSchedulerTask>> _internalTaskList;
 
 		public OrchestrationScheduler(IConnection connection)
 		{
@@ -76,6 +76,11 @@
 			}
 
 			return list;
+		}
+
+		public IEnumerable<OrchestrationSchedulerTask> GetPastEventTasks()
+		{
+			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime < DateTimeOffset.UtcNow);
 		}
 
 		/// <summary>
