@@ -22,6 +22,7 @@
 	{
 		private const int _defaultPageSize = 500;
 
+		private readonly FilterElement<DomInstance> _domDefinitionFilter;
 		private readonly ApiRepositoryQueryProvider<T> _queryProvider;
 
 		protected Repository(DomHelper helper, IConnection connection)
@@ -29,6 +30,7 @@
 			Helper = helper ?? throw new ArgumentNullException(nameof(helper));
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
+			_domDefinitionFilter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id);
 			_queryProvider = new ApiRepositoryQueryProvider<T>(this);
 		}
 
@@ -122,8 +124,7 @@
 
 		public virtual long CountAll()
 		{
-			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id);
-			return Helper.DomInstances.Count(filter);
+			return Count(_domDefinitionFilter);
 		}
 
 		public virtual long Count(FilterElement<T> filter)
@@ -136,7 +137,7 @@
 			var domFilter = TranslateFullFilter(filter);
 			domFilter = AddDomDefinitionFilter(domFilter);
 
-			return Helper.DomInstances.Count(domFilter);
+			return Count(domFilter);
 		}
 
 		internal long Count(FilterElement<DomInstance> domFilter)
@@ -153,14 +154,12 @@
 
 		public virtual IEnumerable<T> ReadAll()
 		{
-			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id);
-			return Helper.DomInstances.Read(filter).Select(CreateInstance);
+			return Read(_domDefinitionFilter);
 		}
 
 		public virtual IEnumerable<IEnumerable<T>> ReadAllPaged(long pageSize = _defaultPageSize)
 		{
-			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id);
-			return Helper.DomInstances.ReadPaged(filter, pageSize).Select(x => x.Select(CreateInstance));
+			return ReadPaged(_domDefinitionFilter, pageSize);
 		}
 
 		public virtual T Read(Guid id)
@@ -170,12 +169,10 @@
 				return null;
 			}
 
-			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
+			var filter = _domDefinitionFilter
 				.AND(DomInstanceExposers.Id.Equal(id));
 
-			var domInstance = Helper.DomInstances.Read(filter).SingleOrDefault();
-
-			return domInstance != null ? CreateInstance(domInstance) : null;
+			return Read(filter).SingleOrDefault();
 		}
 
 		public virtual IDictionary<Guid, T> Read(IEnumerable<Guid> ids)
@@ -196,14 +193,13 @@
 			}
 
 			FilterElement<DomInstance> CreateFilter(Guid id) =>
-				DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
+				_domDefinitionFilter
 				.AND(DomInstanceExposers.Id.Equal(id));
 
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					idsList,
 					x => CreateFilter(x),
-					x => Helper.DomInstances.Read(x))
-				.Select(CreateInstance)
+					x => Read(x))
 				.SafeToDictionary(x => x.ID);
 		}
 
@@ -225,14 +221,13 @@
 			}
 
 			FilterElement<DomInstance> CreateFilter(Guid id) =>
-				DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
+				_domDefinitionFilter
 				.AND(DomInstanceExposers.Id.Equal(id));
 
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					idsList,
 					x => CreateFilter(x),
-					x => Helper.DomInstances.Read(x))
-				.Select(CreateInstance)
+					x => Read(x))
 				.SafeToDictionary(x => new ApiObjectReference<T>(x.ID));
 		}
 
@@ -243,12 +238,10 @@
 				throw new ArgumentNullException(nameof(name));
 			}
 
-			var filter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
+			var filter = _domDefinitionFilter
 				.AND(DomInstanceExposers.Name.Equal(name));
 
-			var domInstance = Helper.DomInstances.Read(filter).SingleOrDefault();
-
-			return domInstance != null ? CreateInstance(domInstance) : null;
+			return Read(filter).SingleOrDefault();
 		}
 
 		public virtual IDictionary<string, T> Read(IEnumerable<string> names)
@@ -259,14 +252,14 @@
 			}
 
 			FilterElement<DomInstance> CreateFilter(string name) =>
-				DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)
+				_domDefinitionFilter
 				.AND(DomInstanceExposers.Name.Equal(name));
 
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					names,
 					x => CreateFilter(x),
-					x => Helper.DomInstances.Read(x))
-				.SafeToDictionary(x => x.Name, CreateInstance);
+					x => Read(x))
+				.SafeToDictionary(x => x.DomInstance.Name, x => x);
 		}
 
 		public virtual IEnumerable<T> Read(FilterElement<T> filter)
@@ -288,13 +281,7 @@
 				throw new ArgumentNullException(nameof(domFilter));
 			}
 
-			if (!(domFilter is ANDFilterElement<DomInstance> andFilter) ||
-				!andFilter.subFilters.Contains(DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id)))
-			{
-				domFilter = new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id),
-					domFilter);
-			}
+			domFilter = AddDomDefinitionFilter(domFilter);
 
 			var domInstances = Helper.DomInstances.Read(domFilter);
 
@@ -611,22 +598,24 @@
 
 		private FilterElement<DomInstance> AddDomDefinitionFilter(FilterElement<DomInstance> domFilter)
 		{
-			var domDefFilter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id);
-
-			if (domFilter is not ANDFilterElement<DomInstance> andFilter ||
-				!andFilter.subFilters.Contains(domDefFilter))
+			if (domFilter == _domDefinitionFilter)
 			{
-				if (domFilter is TRUEFilterElement<DomInstance>)
-				{
-					return domDefFilter;
-				}
-
-				domFilter = new ANDFilterElement<DomInstance>(
-					domDefFilter,
-					domFilter);
+				return domFilter;
 			}
 
-			return domFilter;
+			if (domFilter is TRUEFilterElement<DomInstance>)
+			{
+				return _domDefinitionFilter;
+			}
+
+			if (domFilter is ANDFilterElement<DomInstance> andFilter)
+			{
+				return !andFilter.subFilters.Contains(_domDefinitionFilter)
+					? andFilter.AND(_domDefinitionFilter)
+					: domFilter;
+			}
+
+			return new ANDFilterElement<DomInstance>(_domDefinitionFilter, domFilter);
 		}
 	}
 }
