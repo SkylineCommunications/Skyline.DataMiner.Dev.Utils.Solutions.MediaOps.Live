@@ -2,6 +2,9 @@
 {
 	public partial class OrchestrationEventInstance
 	{
+		/// <summary>
+		/// Apply default setting after initializing the instance.
+		/// </summary>
 		protected override void AfterLoad()
 		{
 			if (!OrchestrationEventInfo.EventState.HasValue)

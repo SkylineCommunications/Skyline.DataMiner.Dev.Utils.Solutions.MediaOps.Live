@@ -18,8 +18,14 @@
 			TaskId = taskId;
 		}
 
+		/// <summary>
+		/// Gets or sets DataMiner agent ID.
+		/// </summary>
 		public int DmaId { get; }
 
+		/// <summary>
+		/// Gets or sets unique task ID on the DataMiner agent.
+		/// </summary>
 		public int TaskId { get; }
 
 		/// <summary>

@@ -26,7 +26,7 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 		private readonly ConfigurationRepository _configurationHelper;
-		private readonly OrchestrationScheduler _scheduler;
+		private readonly OrchestrationSlidingWindowScheduler _slidingWindowScheduler;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEventRepository"/> class.
@@ -36,11 +36,20 @@
 		internal OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper, api.Connection)
 		{
 			_configurationHelper = new ConfigurationRepository(helper, api.Connection);
-			_scheduler = new OrchestrationScheduler(api.Connection);
+			_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(api.Connection, TimeSpan.FromHours(1), TimeSpan.FromHours(12));
 			_api = api;
 		}
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
+
+		/// <summary>
+		/// Executes a sync for the current timing window (default 1 hour in the past and 12 hours into the future).
+		/// This consists of deleting past orchestration tasks and prepare tasks for upcoming events.
+		/// </summary>
+		public void SyncCurrentSlidingWindow()
+		{
+			_slidingWindowScheduler.SyncSchedulerWithWindow();
+		}
 
 		/// <summary>
 		///     Creates a <see cref="OrchestrationJob" /> object with all events for the given job reference.
@@ -100,7 +109,7 @@
 
 				job.ValidateEventsBeforeSaving();
 
-				_scheduler.CreateOrUpdateEventScheduling(job.OrchestrationEvents);
+				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
 
 				SaveEventConfigurations(job.OrchestrationEvents, performanceTracker);
 			}
@@ -121,7 +130,7 @@
 				DeleteEvents(job.RemovedIds, performanceTracker);
 
 				job.ValidateEventsBeforeSaving();
-				_scheduler.CreateOrUpdateEventScheduling(job.OrchestrationEvents);
+				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
 				CreateOrUpdateEvents(job.OrchestrationEvents, performanceTracker);
 			}
 		}
@@ -138,7 +147,7 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				_scheduler.DeleteEventTasks(job.OrchestrationEvents);
+				_slidingWindowScheduler.DeleteEvents(job.OrchestrationEvents);
 				DeleteEvents(job.OrchestrationEvents, performanceTracker);
 			}
 		}
@@ -155,7 +164,7 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				_scheduler.DeleteEventTasks(job.OrchestrationEvents);
+				_slidingWindowScheduler.DeleteEvents(job.OrchestrationEvents);
 				DeleteEvents(job.OrchestrationEvents, performanceTracker);
 			}
 		}
@@ -474,12 +483,10 @@
 
 		protected override void ValidateBeforeSave(ICollection<OrchestrationEvent> instances)
 		{
-			
 		}
 
 		protected override void ValidateBeforeDelete(ICollection<OrchestrationEvent> instances)
 		{
-			
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)

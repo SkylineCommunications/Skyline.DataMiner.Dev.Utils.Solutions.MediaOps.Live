@@ -33,9 +33,15 @@
 		/// <summary>
 		/// Cleanup all past scheduler orchestration tasks and remove the task reference from events.
 		/// </summary>
-		public void CleanupPastSchedulerTasks()
+		/// <param name="time">The reference time.</param>
+		public void CleanupSchedulerTasksBeforeTime(DateTimeOffset time)
 		{
-			IEnumerable<OrchestrationSchedulerTask> tasksToRemove = _scheduler.GetPastEventTasks();
+			IEnumerable<OrchestrationSchedulerTask> tasksToRemove = _scheduler.GetEventTasksBeforeTime(time);
+			CleanupTasks(tasksToRemove);
+		}
+
+		private void CleanupTasks(IEnumerable<OrchestrationSchedulerTask> tasksToRemove)
+		{
 			IEnumerable<Guid> eventsFromTasksToRemove = tasksToRemove.SelectMany(task => task.OrchestrationEventIds);
 
 			ORFilterElement<DomInstance> filter = new ORFilterElement<DomInstance>(eventsFromTasksToRemove.Select(id => FilterElementFactory.Create(DomInstanceExposers.Id, Comparer.Equals, id)).ToArray());
