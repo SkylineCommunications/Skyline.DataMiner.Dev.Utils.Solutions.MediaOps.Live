@@ -125,7 +125,7 @@
 				String.Empty,
 				"00:00:00",
 				"daily",
-				"360",
+				$"{Constants.SlidingWindowSchedulerExecutionFrequencyInMinutes}",
 				String.Empty,
 				Constants.OrchestrationSlidingWindowSchedulerTaskNaming,
 				"TRUE",
