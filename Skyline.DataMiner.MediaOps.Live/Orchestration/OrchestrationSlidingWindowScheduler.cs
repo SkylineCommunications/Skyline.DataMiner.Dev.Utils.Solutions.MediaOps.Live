@@ -4,10 +4,14 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Async;
+	using Skyline.DataMiner.Net.Exceptions;
+	using Skyline.DataMiner.Net.Messages;
 
 	internal class OrchestrationSlidingWindowScheduler
 	{
@@ -25,6 +29,7 @@
 			_scheduler = new OrchestrationScheduler(connection);
 			_orchestrationHelper = new SlcOrchestrationHelper(connection);
 
+			Connection = connection;
 			TimeSpanPast = timeSpanPast;
 			TimeSpanFuture = timeSpanFuture;
 			WindowBaseTime = DateTimeOffset.UtcNow;
@@ -58,14 +63,98 @@
 			_scheduler.DeleteEventTasks(events);
 		}
 
-		public TimeSpan TimeSpanPast { get; set; }
+		private bool SchedulerTaskExists()
+		{
+			HashSet<OrchestrationSchedulerTask> list = new HashSet<OrchestrationSchedulerTask>();
+			GetInfoMessage getSchedulerTaskInfoMessage = new GetInfoMessage(InfoType.SchedulerTasks);
 
-		public TimeSpan TimeSpanFuture { get; set; }
+			AsyncProgress progress = Connection.Async.Launch(getSchedulerTaskInfoMessage);
 
-		public DateTimeOffset WindowBaseTime { get; set; }
+			AsyncResponseEvent result = progress.WaitForAsyncResponse(5 * 60);
+
+			if (result == null || !result.Messages.Any())
+			{
+				throw new DataMinerException("Scheduler task information could not be retrieved");
+			}
+
+			if (result.Failure != null)
+			{
+				throw result.Failure;
+			}
+
+			GetSchedulerTasksResponseMessage getSchedulerTasksResponse = (GetSchedulerTasksResponseMessage)result.Messages.FirstOrDefault();
+
+			if (getSchedulerTasksResponse == null)
+			{
+				throw new InvalidOperationException("Scheduler task could not be retrieved.");
+			}
+
+			return getSchedulerTasksResponse.Tasks.ToArray().Any(task => ((SchedulerTask)task).TaskName == Constants.OrchestrationSlidingWindowSchedulerTaskNaming);
+		}
+
+		public void SetupSchedulerTasks()
+		{
+			if (SchedulerTaskExists())
+			{
+				return;
+			}
+
+			IDms dms = Connection.GetDms();
+
+			IDma dma = dms.GetAgents().First();
+
+			dma.Scheduler.CreateTask(GenerateSchedulerTaskData());
+		}
+
+		private static object[] GenerateSchedulerTaskData()
+		{
+			return
+			[
+				new object[] { GenerateGeneralInfoTaskData() },
+				new object[] { GenerateActionsTaskData() },
+				new object[] { },
+			];
+		}
+
+		private static string[] GenerateGeneralInfoTaskData()
+		{
+			return
+			[
+				Constants.OrchestrationSlidingWindowSchedulerTaskNaming,
+				String.Empty,
+				String.Empty,
+				"00:00:00",
+				"daily",
+				"360",
+				String.Empty,
+				Constants.OrchestrationSlidingWindowSchedulerTaskNaming,
+				"TRUE",
+				String.Empty,
+				String.Empty,
+			];
+		}
+
+		private static string[] GenerateActionsTaskData()
+		{
+			return
+			[
+				"automation",
+				Constants.OrchestrationSlidingWindowSchedulerScriptName,
+				"CHECKSETS:FALSE",
+				"DEFER:TRUE",
+			];
+		}
+
+		private TimeSpan TimeSpanPast { get; }
+
+		private TimeSpan TimeSpanFuture { get; }
+
+		private DateTimeOffset WindowBaseTime { get; }
 
 		private DateTimeOffset WindowEndTime => WindowBaseTime + TimeSpanFuture;
 
 		private DateTimeOffset WindowStartTime => WindowBaseTime - TimeSpanPast;
+
+		private IConnection Connection { get;  }
 	}
 }

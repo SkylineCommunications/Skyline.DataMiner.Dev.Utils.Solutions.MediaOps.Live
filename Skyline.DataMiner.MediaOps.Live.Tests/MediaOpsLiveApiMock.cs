@@ -142,7 +142,7 @@
 			OrchestrationJobConfiguration? job = Orchestration.GetOrCreateNewOrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");
 			job.OrchestrationEvents.AddRange(WithNodes_CreateEventConfigurationInstances(10, 10));
 
-			//Orchestration.SaveOrchestrationJobConfiguration(job);
+			Orchestration.SaveEventConfigurations(job.OrchestrationEvents);
 		}
 
 		public void CreateConnection(Endpoint? source, Endpoint destination)
@@ -237,6 +237,7 @@
 					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
 					GlobalOrchestrationScript = "Test Script",
 					GlobalOrchestrationScriptArguments = scriptArguments,
+					JobReference = "dd2cd5f2-ee7d-42b8-9b96-1e562d472b63",
 					Configuration =
 					{
 						Connections = connections,

@@ -36,7 +36,10 @@
 		internal OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper, api.Connection)
 		{
 			_configurationHelper = new ConfigurationRepository(helper, api.Connection);
-			_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(api.Connection, TimeSpan.FromHours(1), TimeSpan.FromHours(12));
+			_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(
+				api.Connection,
+				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
+				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future));
 			_api = api;
 		}
 
@@ -49,6 +52,15 @@
 		public void SyncCurrentSlidingWindow()
 		{
 			_slidingWindowScheduler.SyncSchedulerWithWindow();
+		}
+
+		/// <summary>
+		/// Creates a recurring scheduled task to prepare orchestration tasks in a sliding window manner.
+		/// If the task already exists, no new task is created.
+		/// </summary>
+		public void SetupSlidingWindowSchedulerTasks()
+		{
+			_slidingWindowScheduler.SetupSchedulerTasks();
 		}
 
 		/// <summary>
@@ -420,27 +432,32 @@
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				List<Configuration> configsToDelete = new List<Configuration>();
-				List<Configuration> configsToWrite = new List<Configuration>();
+				SaveEventConfigurations(events);
+			}
+		}
 
-				IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations = events.ToList();
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+		internal void SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
+		{
+			List<Configuration> configsToDelete = new List<Configuration>();
+			List<Configuration> configsToWrite = new List<Configuration>();
+
+			IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations = events.ToList();
+			foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+			{
+				if (orchestrationEventConfiguration.Configuration.IsEmpty())
 				{
-					if (orchestrationEventConfiguration.Configuration.IsEmpty())
-					{
-						orchestrationEventConfiguration.ConfigurationReference = null;
-						configsToDelete.Add(orchestrationEventConfiguration.Configuration);
-					}
-
-					orchestrationEventConfiguration.ConfigurationReference = orchestrationEventConfiguration.Configuration.ID;
-					configsToWrite.Add(orchestrationEventConfiguration.Configuration);
+					orchestrationEventConfiguration.ConfigurationReference = null;
+					configsToDelete.Add(orchestrationEventConfiguration.Configuration);
 				}
 
-				_configurationHelper.Delete(configsToDelete);
-				_configurationHelper.CreateOrUpdate(configsToWrite);
-
-				CreateOrUpdate(orchestrationEventConfigurations);
+				orchestrationEventConfiguration.ConfigurationReference = orchestrationEventConfiguration.Configuration.ID;
+				configsToWrite.Add(orchestrationEventConfiguration.Configuration);
 			}
+
+			_configurationHelper.Delete(configsToDelete);
+			_configurationHelper.CreateOrUpdate(configsToWrite);
+
+			CreateOrUpdate(orchestrationEventConfigurations);
 		}
 
 		/// <summary>

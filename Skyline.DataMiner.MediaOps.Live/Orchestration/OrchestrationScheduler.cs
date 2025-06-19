@@ -163,7 +163,7 @@
 
 		private void CreateOrUpdateEventTasks(IEnumerable<OrchestrationEvent> orchestrationEvents)
 		{
-			IEnumerable<IGrouping<DateTimeOffset?, OrchestrationEvent>> groupedByTimeEvents = orchestrationEvents.GroupBy(e => e.EventTime);
+			IEnumerable<IGrouping<DateTimeOffset?, OrchestrationEvent>> groupedByTimeEvents = orchestrationEvents.GroupBy(e => e.EventTime).OrderBy(g => g.Key);
 
 			foreach (IGrouping<DateTimeOffset?, OrchestrationEvent> groupedByTimeEvent in groupedByTimeEvents)
 			{
@@ -180,6 +180,11 @@
 
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
+				if (_internalTaskList.Value.Count >= Constants.SchedulerMaxTotalOrchestrationEvents)
+				{
+					throw new InvalidOperationException($"Orchestration task limit: {Constants.SchedulerMaxTotalOrchestrationEvents} has been reached. Likely some events have not been scheduled");
+				}
+
 				// Create new task for timestamp during first iteration if none exist yet
 				if (taskForTimeStamp == null)
 				{
@@ -190,6 +195,7 @@
 					taskForTimeStamp.ScheduledTaskId = new ScheduledTaskId(dma.Id, newTaskId);
 					orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
 					_internalTaskList.Value.Add(taskForTimeStamp);
+
 					continue;
 				}
 
