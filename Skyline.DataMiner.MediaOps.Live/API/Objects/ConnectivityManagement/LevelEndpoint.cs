@@ -58,12 +58,12 @@
 
 		public void Validate()
 		{
-			if (Level == null)
+			if (Level == null || Level == ApiObjectReference<Level>.Empty)
 			{
 				throw new InvalidOperationException($"{nameof(Level)} cannot be null.");
 			}
 
-			if (Endpoint == null)
+			if (Endpoint == null || Endpoint == ApiObjectReference<Endpoint>.Empty)
 			{
 				throw new InvalidOperationException($"{nameof(Endpoint)} cannot be null.");
 			}

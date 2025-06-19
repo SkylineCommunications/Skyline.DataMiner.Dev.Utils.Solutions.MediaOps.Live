@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Data
+﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers
 {
 	using System;
 
@@ -31,14 +31,6 @@
 				Action = action,
 				InputData = engine.GetScriptParam("Input Data").Value,
 			};
-		}
-
-		public enum ScriptAction
-		{
-			GetSupportedElements,
-			GetSubscriptionInfo,
-			HandleParameterUpdate,
-			Connect,
 		}
 
 		public ScriptAction Action { get; private set; }

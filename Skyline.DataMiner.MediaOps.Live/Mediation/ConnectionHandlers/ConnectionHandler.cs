@@ -31,17 +31,20 @@
 
 			switch (inputData.Action)
 			{
-				case ConnectionHandlerInputData.ScriptAction.GetSupportedElements:
+				case ScriptAction.GetSupportedElements:
 					HandleGetSupportedElements(engine, inputData);
 					break;
-				case ConnectionHandlerInputData.ScriptAction.GetSubscriptionInfo:
+				case ScriptAction.GetSubscriptionInfo:
 					HandleGetSubscriptionInfo(engine, inputData);
 					break;
-				case ConnectionHandlerInputData.ScriptAction.HandleParameterUpdate:
+				case ScriptAction.HandleParameterUpdate:
 					HandleParameterUpdate(engine, inputData);
 					break;
-				case ConnectionHandlerInputData.ScriptAction.Connect:
+				case ScriptAction.Connect:
 					HandleConnect(engine, inputData);
+					break;
+				case ScriptAction.Disconnect:
+					HandleDisconnect(engine, inputData);
 					break;
 				default:
 					throw new InvalidOperationException($"Unknown action: '{inputData.Action}'");
@@ -55,6 +58,8 @@
 		public abstract void ProcessParameterUpdate(IEngine engine, IConnectionHandlerEngine connectionEngine, ParameterUpdate update);
 
 		public abstract void Connect(IEngine engine, IConnectionHandlerEngine connectionEngine, CreateConnectionsRequest createConnectionsRequest);
+
+		public abstract void Disconnect(IEngine engine, IConnectionHandlerEngine connectionEngine, DisconnectDestinationsRequest disconnectDestinationsRequest);
 
 		private void HandleGetSupportedElements(IEngine engine, ConnectionHandlerInputData inputData)
 		{
@@ -90,6 +95,14 @@
 			var connectionHandlerEngine = new ConnectionHandlerEngine(engine);
 
 			Connect(engine, connectionHandlerEngine, createConnectionRequest);
+		}
+
+		private void HandleDisconnect(IEngine engine, ConnectionHandlerInputData inputData)
+		{
+			var disconnectDestinationsRequest = inputData.Deserialize<DisconnectDestinationsRequest>();
+			var connectionHandlerEngine = new ConnectionHandlerEngine(engine);
+
+			Disconnect(engine, connectionHandlerEngine, disconnectDestinationsRequest);
 		}
 	}
 }
