@@ -2,8 +2,12 @@
 {
 	using System.Collections.Generic;
 
-	public class CreateConnectionsRequest
+	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
+
+	public class CreateConnectionsRequest : IConnectionHandlerRequest
 	{
+		public ScriptAction Action => ScriptAction.Connect;
+
 		public ICollection<ConnectionInfo> Connections { get; set; }
 	}
 }
