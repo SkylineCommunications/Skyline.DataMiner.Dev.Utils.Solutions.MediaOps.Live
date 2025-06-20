@@ -43,6 +43,9 @@
 			_api = api;
 		}
 
+		/// <summary>
+		/// Gets the DOM definition GUID.
+		/// </summary>
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
 
 		/// <summary>

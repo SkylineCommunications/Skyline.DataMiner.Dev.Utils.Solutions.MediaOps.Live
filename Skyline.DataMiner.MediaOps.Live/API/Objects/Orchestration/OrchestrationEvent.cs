@@ -165,23 +165,56 @@
 		/// <summary>
 		/// Gets or sets the actual time at which the event has started.
 		/// </summary>
-		public DateTimeOffset? ActualStartTime { get; set; }
+		public DateTimeOffset? ActualStartTime
+		{
+			get
+			{
+				if (_domInstance.OrchestrationEventInfo.ActualStartTime == null)
+				{
+					return null;
+				}
+
+				DateTimeOffset time = DateTime.SpecifyKind(_domInstance.OrchestrationEventInfo.ActualStartTime.Value, DateTimeKind.Utc);
+				return time;
+			}
+
+			set
+			{
+				_domInstance.OrchestrationEventInfo.ActualStartTime = value?.UtcDateTime;
+			}
+		}
 
 		/// <summary>
 		/// Gets or sets the total duration of the orchestration.
 		/// </summary>
-		public DateTimeOffset? OrchestrationDuration { get; set; }
+		public TimeSpan? OrchestrationDuration
+		{
+			get
+			{
+				if (_domInstance.OrchestrationEventInfo.OrchestrationDuration == null)
+				{
+					return TimeSpan.FromTicks(0);
+				}
+
+				return _domInstance.OrchestrationEventInfo.OrchestrationDuration.Value;
+			}
+
+			set
+			{
+				_domInstance.OrchestrationEventInfo.OrchestrationDuration = value;
+			}
+		}
 
 		internal ApiObjectReference<Configuration>? ConfigurationReference
 		{
 			get
 			{
-				return _domInstance.Configuration.ConfigurationInfo;
+				return _domInstance.ConfigurationInfo.Configuration;
 			}
 
 			set
 			{
-				_domInstance.Configuration.ConfigurationInfo = value;
+				_domInstance.ConfigurationInfo.Configuration = value;
 			}
 		}
 

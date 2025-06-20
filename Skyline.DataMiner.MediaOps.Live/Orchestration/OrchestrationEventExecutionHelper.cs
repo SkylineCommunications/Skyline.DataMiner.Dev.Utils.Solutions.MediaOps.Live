@@ -64,6 +64,7 @@
 				foreach (OrchestrationEventConfiguration orchestrationEvent in eventConfigurations)
 				{
 					orchestrationEvent.InternalSetState(SlcOrchestrationIds.Enums.EventState.Configuring);
+					orchestrationEvent.ActualStartTime = DateTimeOffset.UtcNow;
 				}
 
 				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
@@ -108,7 +109,8 @@
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = orchestrationEventConfigurations
+				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
+				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = eventConfigurations
 					.Where(orchestrationEventConfiguration => orchestrationEventConfiguration?.Configuration?.Connections != null && orchestrationEventConfiguration.Configuration.Connections.Any()).ToList();
 
 				List<Connection> connectionsToConfigure = [];
@@ -119,6 +121,10 @@
 				}
 
 				ExecuteTakeForConnections(connectionsToConfigure, performanceTracker);
+				foreach (OrchestrationEventConfiguration eventConfiguration in eventConfigurations.Where(e => e.ActualStartTime != null))
+				{
+					eventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - eventConfiguration.ActualStartTime;
+				}
 			}
 		}
 
