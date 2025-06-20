@@ -19,7 +19,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			if (source != null && !source.IsSource)
+			if (!source.IsSource)
 			{
 				throw new ArgumentException("Source must have role 'Source'", nameof(source));
 			}
