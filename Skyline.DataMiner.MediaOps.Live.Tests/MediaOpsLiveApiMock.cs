@@ -145,7 +145,7 @@
 			//Orchestration.SaveOrchestrationJobConfiguration(job);
 		}
 
-		public void CreateConnection(Endpoint? source, Endpoint destination)
+		public void CreateTestConnection(Endpoint? source, Endpoint destination)
 		{
 			if (destination is null)
 			{
@@ -166,7 +166,7 @@
 			Connections.CreateOrUpdate(connection);
 		}
 
-		public void CreatePendingConnection(Endpoint? pendingSource, Endpoint destination)
+		public void CreateTestPendingConnection(Endpoint? pendingSource, Endpoint destination)
 		{
 			if (destination is null)
 			{

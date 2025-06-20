@@ -21,7 +21,7 @@
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 
-			api.CreateConnection(audioSource1, audioDestination1);
+			api.CreateTestConnection(audioSource1, audioDestination1);
 
 			var connectionMetrics = new ConnectionMetrics(interceptedConnection);
 
@@ -56,14 +56,14 @@
 			var receivedEvents = new List<ConnectionsUpdatedEvent>();
 			connectivity.ConnectionsUpdated += (sender, e) => receivedEvents.Add(e);
 
-			api.CreateConnection(audioSource1, audioDestination1);
+			api.CreateTestConnection(audioSource1, audioDestination1);
 			receivedEvents.Count.ShouldBe(1);
 			receivedEvents.Last().Endpoints.Count.ShouldBe(2); // Source and Destination
 			receivedEvents.Last().VirtualSignalGroups.Count.ShouldBe(2);
 			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Partial);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([source1, destination1], ignoreOrder: true);
 
-			api.CreateConnection(videoSource1, videoDestination1);
+			api.CreateTestConnection(videoSource1, videoDestination1);
 			receivedEvents.Count.ShouldBe(2);
 			receivedEvents.Last().Endpoints.Count.ShouldBe(2); // Source and Destination
 			receivedEvents.Last().VirtualSignalGroups.Count.ShouldBe(2);
@@ -71,23 +71,23 @@
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.ShouldBe([source1, destination1], ignoreOrder: true);
 
-			api.CreateConnection(videoSource1, videoDestination1);
+			api.CreateTestConnection(videoSource1, videoDestination1);
 			receivedEvents.Count.ShouldBe(2); // No new event, as the connection already exists
 
-			api.CreatePendingConnection(audioSource2, audioDestination1);
-			api.CreatePendingConnection(videoSource2, videoDestination1);
+			api.CreateTestPendingConnection(audioSource2, audioDestination1);
+			api.CreateTestPendingConnection(videoSource2, videoDestination1);
 			receivedEvents.Count.ShouldBe(4);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.ShouldBe([source2, destination1], ignoreOrder: true);
 
-			api.CreateConnection(audioSource2, audioDestination1);
-			api.CreateConnection(videoSource2, videoDestination1);
+			api.CreateTestConnection(audioSource2, audioDestination1);
+			api.CreateTestConnection(videoSource2, videoDestination1);
 			receivedEvents.Count.ShouldBe(6);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.ShouldBe([source1, source2, destination1], ignoreOrder: true);
 
-			api.CreateConnection(null, audioDestination1);
-			api.CreateConnection(null, videoDestination1);
+			api.CreateTestConnection(null, audioDestination1);
+			api.CreateTestConnection(null, videoDestination1);
 			receivedEvents.Count.ShouldBe(8);
 			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedStatus == ConnectionStatus.Disconnected);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
@@ -106,7 +106,7 @@
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 
-			api.CreateConnection(audioSource1, audioDestination1);
+			api.CreateTestConnection(audioSource1, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -127,7 +127,7 @@
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 
-			api.CreateConnection(audioSource1, audioDestination1);
+			api.CreateTestConnection(audioSource1, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -157,8 +157,8 @@
 			var source1 = api.VirtualSignalGroups.Read("Source 1");
 			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
 
-			api.CreateConnection(audioSource1, audioDestination1);
-			api.CreatePendingConnection(audioSource2, audioDestination2);
+			api.CreateTestConnection(audioSource1, audioDestination1);
+			api.CreateTestPendingConnection(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -205,8 +205,8 @@
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 			var audioDestination3 = api.Endpoints.Read("Audio Destination 3");
 
-			api.CreateConnection(audioSource1, audioDestination1);
-			api.CreatePendingConnection(audioSource2, audioDestination2);
+			api.CreateTestConnection(audioSource1, audioDestination1);
+			api.CreateTestPendingConnection(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -250,9 +250,9 @@
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
-			api.CreateConnection(videoSource1, videoDestination1);
-			api.CreateConnection(audioSource1, audioDestination1);
-			api.CreateConnection(audioSource2, audioDestination2);
+			api.CreateTestConnection(videoSource1, videoDestination1);
+			api.CreateTestConnection(audioSource1, audioDestination1);
+			api.CreateTestConnection(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -285,9 +285,9 @@
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
-			api.CreateConnection(videoSource1, videoDestination1);
-			api.CreateConnection(audioSource1, audioDestination1);
-			api.CreateConnection(audioSource2, audioDestination2);
+			api.CreateTestConnection(videoSource1, videoDestination1);
+			api.CreateTestConnection(audioSource1, audioDestination1);
+			api.CreateTestConnection(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -329,11 +329,11 @@
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
-			api.CreateConnection(videoSource1, videoDestination1);
-			api.CreateConnection(audioSource1, audioDestination2);
-			api.CreateConnection(videoSource2, videoDestination2);
-			api.CreatePendingConnection(videoSource3, videoDestination1);
-			api.CreatePendingConnection(audioSource3, audioDestination1);
+			api.CreateTestConnection(videoSource1, videoDestination1);
+			api.CreateTestConnection(audioSource1, audioDestination2);
+			api.CreateTestConnection(videoSource2, videoDestination2);
+			api.CreateTestPendingConnection(videoSource3, videoDestination1);
+			api.CreateTestPendingConnection(audioSource3, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -421,11 +421,11 @@
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
-			api.CreateConnection(videoSource1, videoDestination1);
-			api.CreateConnection(audioSource1, audioDestination2);
-			api.CreateConnection(videoSource2, videoDestination2);
-			api.CreatePendingConnection(videoSource3, videoDestination1);
-			api.CreatePendingConnection(audioSource3, audioDestination1);
+			api.CreateTestConnection(videoSource1, videoDestination1);
+			api.CreateTestConnection(audioSource1, audioDestination2);
+			api.CreateTestConnection(videoSource2, videoDestination2);
+			api.CreateTestPendingConnection(videoSource3, videoDestination1);
+			api.CreateTestPendingConnection(audioSource3, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
