@@ -16,7 +16,7 @@
 	using Skyline.DataMiner.Net.Messages;
 
 	/// <summary>
-	/// Class that handled orchestration scheduled tasks that execute the orchestration for orchestration events
+	/// Class that handled orchestration scheduled tasks that execute the orchestration for orchestration events.
 	/// </summary>
 	public class OrchestrationScheduler
 	{

@@ -247,33 +247,6 @@
 		/// <summary>
 		///     Get the <see cref="OrchestrationEvent" /> object that matches the given event ID value.
 		/// </summary>
-		/// <param name="eventId">The ID of the instance to lookup.</param>
-		/// <param name="performanceTracker">Performance tracking object.</param>
-		/// <returns>
-		///     A <see cref="OrchestrationEvent" /> object that matches the given event ID value, or null if no match is
-		///     found.
-		/// </returns>
-		/// <exception cref="ArgumentException">Event ID can not be an empty Guid.</exception>
-		private OrchestrationEvent GetEventById(Guid eventId, PerformanceTracker performanceTracker)
-		{
-			using (new PerformanceTracker(performanceTracker))
-			{
-				if (eventId == Guid.Empty)
-				{
-					throw new ArgumentException($"'{nameof(eventId)}' cannot be empty.", nameof(eventId));
-				}
-
-				ManagedFilter<DomInstance, Guid> filter = DomInstanceExposers.Id.Equal(eventId);
-
-				IEnumerable<OrchestrationEvent> result = Read(filter);
-
-				return result.FirstOrDefault();
-			}
-		}
-
-		/// <summary>
-		///     Get the <see cref="OrchestrationEvent" /> object that matches the given event ID value.
-		/// </summary>
 		/// <param name="eventIds">The ID of the instance to lookup.</param>
 		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>
@@ -302,36 +275,6 @@
 		/// <summary>
 		///     Get the <see cref="OrchestrationEventConfiguration" /> object that matches the given event ID value.
 		/// </summary>
-		/// <param name="eventId">The ID of the instance to lookup.</param>
-		/// <param name="performanceTracker">Performance tracking object.</param>
-		/// <returns>
-		///     A <see cref="OrchestrationEventConfiguration" /> object that matches the given event ID value, or null if no
-		///     match is found.
-		/// </returns>
-		/// <exception cref="ArgumentException">Event ID can not be an empty Guid.</exception>
-		private OrchestrationEventConfiguration GetEventConfigurationById(Guid eventId, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				if (eventId == Guid.Empty)
-				{
-					throw new ArgumentException($"'{nameof(eventId)}' cannot be empty.", nameof(eventId));
-				}
-
-				OrchestrationEvent orchestrationEvent = GetEventById(eventId, performanceTracker);
-
-				if (orchestrationEvent == null)
-				{
-					return null;
-				}
-
-				return GetEventsAsEventConfigurations(orchestrationEvent, performanceTracker);
-			}
-		}
-
-		/// <summary>
-		///     Get the <see cref="OrchestrationEventConfiguration" /> object that matches the given event ID value.
-		/// </summary>
 		/// <param name="eventIds">The IDs of the instances to lookup.</param>
 		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>
@@ -352,30 +295,6 @@
 				IEnumerable<OrchestrationEvent> orchestrationEvents = GetEventsById(instanceIds, performanceTracker);
 
 				return GetEventsAsEventConfigurations(orchestrationEvents, performanceTracker).Values;
-			}
-		}
-
-		/// <summary>
-		///     Convert a <see cref="OrchestrationEvent" /> object to a <see cref="OrchestrationEventConfiguration" /> object by
-		///     retrieving configuration data from DataMiner.
-		/// </summary>
-		/// <param name="event">The <see cref="OrchestrationEvent" /> object to convert.</param>
-		/// <param name="performanceTracker">Performance tracking object.</param>
-		/// <returns>
-		///     The <see cref="OrchestrationEventConfiguration" /> object that corresponds to the given input, or null if the
-		///     operation failed.
-		/// </returns>
-		/// <exception cref="ArgumentNullException">Event can not be null.</exception>
-		private OrchestrationEventConfiguration GetEventsAsEventConfigurations(OrchestrationEvent @event, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				if (@event == null)
-				{
-					throw new ArgumentNullException(nameof(@event));
-				}
-
-				return GetEventsAsEventConfigurations(new List<OrchestrationEvent> { @event }, performanceTracker).Values.FirstOrDefault();
 			}
 		}
 

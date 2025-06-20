@@ -19,12 +19,12 @@
 		}
 
 		/// <summary>
-		/// Gets or sets DataMiner agent ID.
+		/// Gets the DataMiner agent ID.
 		/// </summary>
 		public int DmaId { get; }
 
 		/// <summary>
-		/// Gets or sets unique task ID on the DataMiner agent.
+		/// Gets the unique task ID on the DataMiner agent.
 		/// </summary>
 		public int TaskId { get; }
 

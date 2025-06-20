@@ -1,9 +1,12 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live
 {
+	/// <summary>
+	/// Contains static fields used in MediaOps Live solution.
+	/// </summary>
 	public static class Constants
 	{
 		/// <summary>
-		/// Name of the MediaOps Live mediation protocol.
+		/// Gets the name of the MediaOps Live mediation protocol.
 		/// </summary>
 		public static string MediationProtocolName => "Skyline MediaOps Mediation";
 

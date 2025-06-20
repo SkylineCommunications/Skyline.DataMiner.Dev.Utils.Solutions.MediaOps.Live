@@ -136,7 +136,7 @@
 
 			set
 			{
-				ApplyEventState(value);
+				PublicSetState(value);
 			}
 		}
 
@@ -217,104 +217,23 @@
 			return new OrchestrationEventConfiguration(_domInstance, new ConfigurationInstance(configurationDomInstance));
 		}
 
-		/// <summary>
-		/// Apply the <see cref="SlcOrchestrationIds.Enums.EventState.Cancelled"/> state to the booking. This is only allowed if the current state is Confirmed.
-		/// </summary>
-		/// <returns>True if the new state could be applied, false if the state was blocked.</returns>
-		public bool TryCancel()
-		{
-			switch (EventState)
-			{
-				case null:
-				case SlcOrchestrationIds.Enums.EventState.Confirmed:
-					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
-					return true;
-
-				case SlcOrchestrationIds.Enums.EventState.Cancelled:
-					return true;
-
-				default:
-					// Transition not allowed;
-					return false;
-			}
-		}
-
-		/// <summary>
-		/// Apply the <see cref="SlcOrchestrationIds.Enums.EventState.Confirmed"/> state to the booking. This is only allowed if the current state is Cancelled or Draft.
-		/// </summary>
-		/// <returns>True if the new state could be applied, false if the state was blocked.</returns>
-		public bool TryConfirm()
-		{
-			switch (EventState)
-			{
-				case null:
-				case SlcOrchestrationIds.Enums.EventState.Draft:
-				case SlcOrchestrationIds.Enums.EventState.Cancelled:
-					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
-					return true;
-
-				case SlcOrchestrationIds.Enums.EventState.Confirmed:
-					return true;
-
-				default:
-					// Transition not allowed;
-					return false;
-			}
-		}
-
-		/// <summary>
-		/// Apply the <see cref="SlcOrchestrationIds.Enums.EventState.Draft"/> state to the booking. This is only allowed if the current state is Confirmed or Cancelled.
-		/// </summary>
-		/// <returns>True if the new state could be applied, false if the state was blocked.</returns>
-		public bool TrySetToDraft()
-		{
-			switch (EventState)
-			{
-				case null:
-				case SlcOrchestrationIds.Enums.EventState.Confirmed:
-				case SlcOrchestrationIds.Enums.EventState.Cancelled:
-					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
-					return true;
-
-				case SlcOrchestrationIds.Enums.EventState.Draft:
-					return true;
-
-				default:
-					// Transition not allowed;
-					return false;
-			}
-		}
-
 		internal void InternalSetState(SlcOrchestrationIds.Enums.EventState? state)
 		{
 			_domInstance.OrchestrationEventInfo.EventState = state;
 		}
 
-		private void ApplyEventState(SlcOrchestrationIds.Enums.EventState? state)
+		private void PublicSetState(SlcOrchestrationIds.Enums.EventState? state)
 		{
-			bool result;
 			switch (state)
 			{
 				case SlcOrchestrationIds.Enums.EventState.Cancelled:
-					result = TryCancel();
-					break;
-
-				case SlcOrchestrationIds.Enums.EventState.Confirmed:
-					result = TryConfirm();
-					break;
-
 				case SlcOrchestrationIds.Enums.EventState.Draft:
-					result = TrySetToDraft();
-					break;
+				case SlcOrchestrationIds.Enums.EventState.Confirmed:
+					_domInstance.OrchestrationEventInfo.EventState = state;
+					return;
 
 				default:
-					// Other states not supported for now.
-					return;
-			}
-
-			if (!result)
-			{
-				throw new ArgumentException($"Event state {state} can not be applied.");
+					throw new ArgumentException($"Event state {state} can not be applied.");
 			}
 		}
 	}

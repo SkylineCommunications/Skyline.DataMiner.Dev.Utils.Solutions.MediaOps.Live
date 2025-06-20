@@ -78,7 +78,6 @@
 			}
 		}
 
-
 		/// <summary>
 		/// Gets or sets the virtual signal group to apply on the destination node.
 		/// </summary>

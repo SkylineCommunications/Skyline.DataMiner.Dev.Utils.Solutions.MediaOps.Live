@@ -65,7 +65,6 @@
 
 		private bool SchedulerTaskExists()
 		{
-			HashSet<OrchestrationSchedulerTask> list = new HashSet<OrchestrationSchedulerTask>();
 			GetInfoMessage getSchedulerTaskInfoMessage = new GetInfoMessage(InfoType.SchedulerTasks);
 
 			AsyncProgress progress = Connection.Async.Launch(getSchedulerTaskInfoMessage);
