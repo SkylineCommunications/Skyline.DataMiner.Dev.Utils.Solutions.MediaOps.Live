@@ -157,7 +157,7 @@
 		{
 			foreach (OrchestrationEvent orchestrationEvent in events)
 			{
-				DeleteEventTask(orchestrationEvent);
+				DeleteEventFromCurrentTask(orchestrationEvent);
 			}
 		}
 
@@ -177,6 +177,7 @@
 		private void CreateOrUpdateEventTasksForTimeStamp(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents)
 		{
 			OrchestrationSchedulerTask taskForTimeStamp = FindExistingTaskForTimeStamp(timestamp);
+			bool taskUpdated = false;
 
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
@@ -188,14 +189,13 @@
 				// Create new task for timestamp during first iteration if none exist yet
 				if (taskForTimeStamp == null)
 				{
-					DeleteEventTask(orchestrationEvent);
+					DeleteEventFromCurrentTask(orchestrationEvent);
 					taskForTimeStamp = new OrchestrationSchedulerTask(timestamp, new List<Guid> { orchestrationEvent.ID });
 					IDma dma = SelectRandomDma();
 					int newTaskId = dma.Scheduler.CreateTask(taskForTimeStamp.GenerateSchedulerTaskData());
 					taskForTimeStamp.ScheduledTaskId = new ScheduledTaskId(dma.Id, newTaskId);
 					orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
 					_internalTaskList.Value.Add(taskForTimeStamp);
-
 					continue;
 				}
 
@@ -205,14 +205,19 @@
 					continue;
 				}
 
-				DeleteEventTask(orchestrationEvent);
+				DeleteEventFromCurrentTask(orchestrationEvent);
 				taskForTimeStamp.OrchestrationEventIds.Add(orchestrationEvent.ID);
-				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData());
 				orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
+				taskUpdated = true;
+			}
+
+			if (taskUpdated)
+			{
+				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData()); 
 			}
 		}
 
-		private void DeleteEventTask(OrchestrationEvent orchestrationEvent)
+		private void DeleteEventFromCurrentTask(OrchestrationEvent orchestrationEvent)
 		{
 			if (orchestrationEvent.ReservationInstance == null)
 			{
