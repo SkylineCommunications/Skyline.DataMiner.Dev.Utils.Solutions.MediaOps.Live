@@ -155,9 +155,11 @@
 		/// <param name="events">List of event to remove corresponding task for.</param>
 		public void DeleteEventTasks(IEnumerable<OrchestrationEvent> events)
 		{
-			foreach (OrchestrationEvent orchestrationEvent in events)
+			IEnumerable<IGrouping<DateTimeOffset?, OrchestrationEvent>> groupedByTimeEvents = events.GroupBy(e => e.EventTime).OrderBy(g => g.Key);
+
+			foreach (IGrouping<DateTimeOffset?, OrchestrationEvent> groupedByTimeEvent in groupedByTimeEvents)
 			{
-				DeleteEventFromCurrentTask(orchestrationEvent);
+				DeleteEventsFromCurrentTask(groupedByTimeEvent.Key.Value, groupedByTimeEvent);
 			}
 		}
 
@@ -189,7 +191,7 @@
 				// Create new task for timestamp during first iteration if none exist yet
 				if (taskForTimeStamp == null)
 				{
-					DeleteEventFromCurrentTask(orchestrationEvent);
+					DeleteEventsFromCurrentTask(orchestrationEvent);
 					taskForTimeStamp = new OrchestrationSchedulerTask(timestamp, new List<Guid> { orchestrationEvent.ID });
 					IDma dma = SelectRandomDma();
 					int newTaskId = dma.Scheduler.CreateTask(taskForTimeStamp.GenerateSchedulerTaskData());
@@ -205,7 +207,7 @@
 					continue;
 				}
 
-				DeleteEventFromCurrentTask(orchestrationEvent);
+				DeleteEventsFromCurrentTask(orchestrationEvent);
 				taskForTimeStamp.OrchestrationEventIds.Add(orchestrationEvent.ID);
 				orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
 				taskUpdated = true;
@@ -217,28 +219,26 @@
 			}
 		}
 
-		private void DeleteEventFromCurrentTask(OrchestrationEvent orchestrationEvent)
+		private void DeleteEventsFromCurrentTask(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents)
 		{
-			if (orchestrationEvent.ReservationInstance == null)
+			OrchestrationSchedulerTask taskForTimeStamp = FindExistingTaskForTimeStamp(timestamp);
+
+			taskForTimeStamp.OrchestrationEventIds.RemoveAll(eventId => orchestrationEvents.Any(e => e.ID == eventId));
+
+			if (!taskForTimeStamp.OrchestrationEventIds.Any())
 			{
-				return;
-			}
-
-			OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.ReservationInstance);
-
-			task.OrchestrationEventIds.Remove(orchestrationEvent.ID);
-
-			if (!task.OrchestrationEventIds.Any())
-			{
-				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.DeleteTask(task.ScheduledTaskId.TaskId);
-				_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(task.ScheduledTaskId));
+				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.DeleteTask(taskForTimeStamp.ScheduledTaskId.TaskId);
+				_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(taskForTimeStamp.ScheduledTaskId));
 			}
 			else
 			{
-				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.UpdateTask(task.GenerateSchedulerTaskData());
+				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData());
 			}
 
-			orchestrationEvent.ReservationInstance = null;
+			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
+			{
+				orchestrationEvent.ReservationInstance = null;
+			}
 		}
 
 		private IDma SelectRandomDma()
