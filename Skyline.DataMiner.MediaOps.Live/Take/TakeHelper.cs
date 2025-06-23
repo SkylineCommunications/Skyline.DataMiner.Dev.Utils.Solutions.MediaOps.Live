@@ -125,7 +125,7 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				var takeContexts = connectionRequests
-					.Select(x => new TakeContext(x))
+					.Select(x => new ConnectionOperationContext(x))
 					.ToList();
 
 				var notifyPendingConnectionsTask = StartNotifyPendingConnectionsTask(takeContexts, out var lockAcquired, performanceTracker);
@@ -238,7 +238,7 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				var takeContexts = disconnectRequests
-					.Select(x => new TakeContext(x))
+					.Select(x => new ConnectionOperationContext(x))
 					.ToList();
 
 				FindConnectionHandlerScripts(engine, takeContexts, performanceTracker);
@@ -246,7 +246,7 @@
 			}
 		}
 
-		private Task StartNotifyPendingConnectionsTask(ICollection<TakeContext> takeContexts, out TaskCompletionSource<bool> lockAcquired, PerformanceTracker performanceTracker)
+		private Task StartNotifyPendingConnectionsTask(ICollection<ConnectionOperationContext> takeContexts, out TaskCompletionSource<bool> lockAcquired, PerformanceTracker performanceTracker)
 		{
 			var localLockAcquired = new TaskCompletionSource<bool>();
 			lockAcquired = localLockAcquired; // assign to the out parameter
@@ -266,7 +266,7 @@
 				TaskCreationOptions.LongRunning);
 		}
 
-		private void HandleFailedConnections(ICollection<TakeContext> takeContexts, PerformanceTracker performanceTracker)
+		private void HandleFailedConnections(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			var failedConnections = takeContexts.Where(x => !x.HasSucceeded).ToList();
 			if (failedConnections.Count == 0)
@@ -300,7 +300,7 @@
 			}
 		}
 
-		private void GetOrCreateDomConnections(ICollection<TakeContext> takeContexts, PerformanceTracker performanceTracker)
+		private void GetOrCreateDomConnections(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -325,7 +325,7 @@
 			}
 		}
 
-		private void WaitUntilAllConnected(IEngine engine, ConnectionWatcher connectionWatcher, ICollection<TakeContext> takeContexts, PerformanceTracker performanceTracker)
+		private void WaitUntilAllConnected(IEngine engine, ConnectionWatcher connectionWatcher, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -347,7 +347,7 @@
 			}
 		}
 
-		private bool IsConnectionEstablished(IEngine engine, ConnectionWatcher connectionWatcher, TakeContext takeContext, PerformanceTracker performanceTracker)
+		private bool IsConnectionEstablished(IEngine engine, ConnectionWatcher connectionWatcher, ConnectionOperationContext takeContext, PerformanceTracker performanceTracker)
 		{
 			if (takeContext.DomConnection?.ConnectionInfo?.ConnectedSource == takeContext.Source?.ID)
 			{
@@ -364,30 +364,7 @@
 			}
 		}
 
-		private string FindConnectionHandlerScript(IEngine engine, IDmsElement element)
-		{
-			var hostingAgentId = element.Host.Id;
-
-			var mediationElement = engine.FindElementsByProtocol(Constants.MediationProtocolName)
-				.FirstOrDefault(e => e.RawInfo.HostingAgentID == hostingAgentId);
-
-			if (mediationElement == null)
-			{
-				throw new InvalidOperationException($"Couldn't find MediaOps mediation element on hosting agent {hostingAgentId}");
-			}
-
-			var elementKey = element.DmsElementId.Value;
-			var script = Convert.ToString(mediationElement.GetParameterByPrimaryKey(1003, elementKey));
-
-			if (String.IsNullOrEmpty(script))
-			{
-				throw new InvalidOperationException($"No connection handler script found for element '{elementKey}'.");
-			}
-
-			return script;
-		}
-
-		private void FindConnectionHandlerScripts(IEngine engine, ICollection<TakeContext> takeContexts, PerformanceTracker performanceTracker)
+		private void FindConnectionHandlerScripts(IEngine engine, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -396,9 +373,9 @@
 				foreach (var group in takeContexts.GroupBy(x => x.Destination.Element))
 				{
 					var elementKey = group.Key;
-					var element = dms.GetElement(new DmsElementId(elementKey));
+					var element = dms.GetElementReference(new DmsElementId(elementKey));
 
-					var script = FindConnectionHandlerScript(engine, element);
+					var script = ConnectionHandlerScript.FindScriptForElement(engine, element);
 
 					if (String.IsNullOrWhiteSpace(script))
 					{
@@ -413,7 +390,7 @@
 			}
 		}
 
-		private void ExecuteConnectionHandlerScripts(IEngine engine, ScriptAction action, ICollection<TakeContext> takeContexts, PerformanceTracker performanceTracker)
+		private void ExecuteConnectionHandlerScripts(IEngine engine, ScriptAction action, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -446,7 +423,7 @@
 			}
 		}
 
-		private void NotifyPendingConnections(ICollection<TakeContext> takeContexts, PerformanceTracker performanceTracker)
+		private void NotifyPendingConnections(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -474,7 +451,7 @@
 			}
 		}
 
-		private void ClearPendingSourceOnFailedConnections(ICollection<TakeContext> failedConnections, PerformanceTracker performanceTracker)
+		private void ClearPendingSourceOnFailedConnections(ICollection<ConnectionOperationContext> failedConnections, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{

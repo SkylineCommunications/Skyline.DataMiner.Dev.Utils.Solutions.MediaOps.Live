@@ -5,12 +5,14 @@
 	using System.Diagnostics;
 	using System.Linq;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.MediaOps.Live.Mediation;
 
 	public class ConnectivityInfoProvider : IDisposable
 	{
@@ -22,6 +24,7 @@
 
 		private readonly VirtualSignalGroupEndpointsMapping _virtualSignalGroupEndpointsMapping = new();
 		private readonly ConnectionEndpointsMapping _connectionEndpointsMapping = new();
+		private readonly PendingConnectionActionMapping _pendingConnectionActionsMapping = new();
 
 		private RepositorySubscription<Endpoint> _subscriptionEndpoints;
 		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
@@ -31,16 +34,28 @@
 		public ConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
+			Dms = api.Connection.GetDms();
 
 			if (subscribe)
 			{
 				Subscribe();
+			}
+
+			var mediationElements = MediationElement.GetMediationElements(Dms);
+			var pendingConnectionActions = mediationElements.SelectMany(x => x.GetPendingConnectionActions())
+				.ToList();
+
+			foreach (var action in pendingConnectionActions)
+			{
+				_pendingConnectionActionsMapping.AddOrUpdate(action);
 			}
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
 
 		public MediaOpsLiveApi Api { get; }
+
+		public IDms Dms { get; }
 
 		public bool IsConnected(Endpoint endpoint)
 		{
@@ -53,8 +68,7 @@
 			{
 				EnsureEndpointsAreLoaded([endpoint]);
 
-				return _connectionEndpointsMapping.GetConnections(endpoint)
-					.Any(c => c.IsConnected);
+				return _connectionEndpointsMapping.GetConnections(endpoint).Any(c => c.IsConnected);
 			}
 		}
 
@@ -137,31 +151,38 @@
 				var pendingConnectedDestinations = new HashSet<Endpoint>();
 
 				var connections = _connectionEndpointsMapping.GetConnections(endpoint);
+				var pendingActions = _pendingConnectionActionsMapping.GetPendingConnectionActions(endpoint);
 
 				foreach (var connection in connections)
 				{
-					if (connection.ConnectedSource == endpoint &&
-						_endpoints.TryGetValue(connection.Destination, out var destination))
+					if (connection.ConnectedSource.HasValue)
 					{
-						connectedDestinations.Add(destination);
-					}
+						if (connection.ConnectedSource == endpoint &&
+							_endpoints.TryGetValue(connection.Destination, out var destination))
+						{
+							connectedDestinations.Add(destination);
+						}
 
-					if (connection.PendingConnectedSource == endpoint &&
-						_endpoints.TryGetValue(connection.Destination, out var pendingDestination))
-					{
-						pendingConnectedDestinations.Add(pendingDestination);
-					}
-
-					if (connection.Destination == endpoint)
-					{
-						if (connection.ConnectedSource.HasValue)
+						if (connection.Destination == endpoint)
 						{
 							_endpoints.TryGetValue(connection.ConnectedSource.Value, out connectedSource);
 						}
+					}
 
-						if (connection.PendingConnectedSource.HasValue)
+					foreach (var pendingAction in pendingActions)
+					{
+						if (pendingAction.PendingSource.HasValue)
 						{
-							_endpoints.TryGetValue(connection.PendingConnectedSource.Value, out pendingConnectedSource);
+							if (pendingAction.Destination == endpoint)
+							{
+								_endpoints.TryGetValue(pendingAction.PendingSource.Value, out pendingConnectedSource);
+							}
+
+							if (pendingAction.PendingSource == endpoint &&
+								_endpoints.TryGetValue(pendingAction.Destination, out var pendingDestination))
+							{
+								pendingConnectedDestinations.Add(pendingDestination);
+							}
 						}
 					}
 				}
