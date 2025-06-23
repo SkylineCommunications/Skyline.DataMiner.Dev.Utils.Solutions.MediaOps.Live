@@ -1,34 +1,54 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
 	using System;
+	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	internal class PendingConnectionAction
 	{
-		public PendingConnectionAction(ApiObjectReference<Endpoint> destination, PendingActionType action, ApiObjectReference<Endpoint>? pendingSource)
+		public PendingConnectionAction(object[] row)
 		{
-			if (destination == ApiObjectReference<Endpoint>.Empty)
+			if (row is null)
 			{
-				throw new ArgumentException("Destination cannot be an empty reference.");
+				throw new ArgumentNullException(nameof(row));
 			}
 
-			if (pendingSource.HasValue && pendingSource == ApiObjectReference<Endpoint>.Empty)
-			{
-				throw new ArgumentException("Pending source cannot be an empty reference.");
-			}
+			var destinationIdValue = Convert.ToString(row[0]);
+			Guid.TryParse(destinationIdValue, out var destinationId);
+			Destination = destinationId;
 
-			Destination = destination;
+			var actionValue = Convert.ToString(row[2]);
+			Enum.TryParse<PendingActionType>(actionValue, out var action);
 			Action = action;
-			PendingSource = pendingSource;
-		}
 
-		public ApiObjectReference<Endpoint> Destination { get; }
+			var pendingSourceIdValue = Convert.ToString(row[5]);
+			if (!String.IsNullOrWhiteSpace(pendingSourceIdValue) &&
+				Guid.TryParse(pendingSourceIdValue, out var parsedPendingSourceId))
+			{
+				PendingSource = parsedPendingSourceId;
+			}
+		}
 
 		public PendingActionType Action { get; }
 
+		public ApiObjectReference<Endpoint> Destination { get; }
+
 		public ApiObjectReference<Endpoint>? PendingSource { get; }
+
+		public IEnumerable<ApiObjectReference<Endpoint>> GetEndpoints()
+		{
+			if (Destination != ApiObjectReference<Endpoint>.Empty)
+			{
+				yield return Destination;
+			}
+
+			if (PendingSource.HasValue && PendingSource != ApiObjectReference<Endpoint>.Empty)
+			{
+				yield return PendingSource.Value;
+			}
+		}
 
 		internal enum PendingActionType
 		{

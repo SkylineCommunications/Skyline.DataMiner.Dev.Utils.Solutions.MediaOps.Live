@@ -30,21 +30,7 @@
 
 			foreach (var row in table.Values)
 			{
-				var destinationIdValue = Convert.ToString(row[0]);
-				Guid.TryParse(destinationIdValue, out var destinationId);
-
-				var actionValue = Convert.ToString(row[2]);
-				Enum.TryParse<PendingConnectionAction.PendingActionType>(actionValue, out var action);
-
-				var pendingSourceIdValue = Convert.ToString(row[5]);
-				Guid? pendingSourceId = null;
-				if (!String.IsNullOrWhiteSpace(pendingSourceIdValue) &&
-					Guid.TryParse(pendingSourceIdValue, out var parsedPendingSourceId))
-				{
-					pendingSourceId = parsedPendingSourceId;
-				}
-
-				yield return new PendingConnectionAction(destinationId, action, pendingSourceId);
+				yield return new PendingConnectionAction(row);
 			}
 		}
 

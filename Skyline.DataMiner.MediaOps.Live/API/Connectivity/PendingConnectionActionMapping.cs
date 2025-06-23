@@ -42,11 +42,9 @@
 				throw new ArgumentNullException(nameof(pendingAction));
 			}
 
-			_mapping.TryAdd(pendingAction, pendingAction.Destination);
-
-			if (pendingAction.PendingSource.HasValue)
+			foreach (var endpoint in pendingAction.GetEndpoints())
 			{
-				_mapping.TryAdd(pendingAction, pendingAction.PendingSource.Value);
+				_mapping.TryAdd(pendingAction, endpoint);
 			}
 		}
 
