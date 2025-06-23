@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class VsgConnectionRequest
@@ -10,7 +11,7 @@
 		{
 			if (source == null)
 			{
-				// ignore
+				throw new ArgumentNullException(nameof(source));
 			}
 
 			if (destination == null)
@@ -18,7 +19,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			if (source != null && !source.IsSource)
+			if (!source.IsSource)
 			{
 				throw new ArgumentException("Source must have role 'Source'", nameof(source));
 			}

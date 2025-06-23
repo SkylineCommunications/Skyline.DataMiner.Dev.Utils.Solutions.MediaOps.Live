@@ -129,7 +129,8 @@
 
 			foreach (var item in Levels)
 			{
-				if (item.Level == null || item.Endpoint == null)
+				if (item.Level == ApiObjectReference<Level>.Empty ||
+					item.Endpoint == ApiObjectReference<Endpoint>.Empty)
 				{
 					continue;
 				}

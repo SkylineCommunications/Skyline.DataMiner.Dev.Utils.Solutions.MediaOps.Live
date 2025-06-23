@@ -4,9 +4,9 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 
-	internal class CreateConnectionContext
+	internal class TakeContext
 	{
-		internal CreateConnectionContext(ConnectionRequest request)
+		internal TakeContext(ConnectionRequest request)
 		{
 			if (request == null)
 			{
@@ -14,6 +14,16 @@
 			}
 
 			Source = request.Source;
+			Destination = request.Destination;
+		}
+
+		internal TakeContext(DisconnectRequest request)
+		{
+			if (request == null)
+			{
+				throw new ArgumentNullException(nameof(request));
+			}
+
 			Destination = request.Destination;
 		}
 
