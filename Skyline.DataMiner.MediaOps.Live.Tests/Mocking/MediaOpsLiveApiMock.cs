@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
+﻿namespace Skyline.DataMiner.MediaOps.Live.Tests.Mocking
 {
 	using System;
 
@@ -10,7 +10,6 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
-	using Skyline.DataMiner.Utils.DOM.UnitTesting;
 
 	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Connection;
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
@@ -18,7 +17,7 @@
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{
 		public MediaOpsLiveApiMock(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false)
-			: this(new DomConnectionMock(), installDomModules, createEndpoints, createVsgs, createConnections)
+			: this(new SLNetConnectionMock(), installDomModules, createEndpoints, createVsgs, createConnections)
 		{
 		}
 
@@ -189,13 +188,13 @@
 
 		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)
 		{
-			List<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection> connections = new List<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection>();
+			List<API.Objects.Orchestration.Connection> connections = new List<API.Objects.Orchestration.Connection>();
 			List<NodeConfiguration> nodeConfigs = new List<NodeConfiguration>();
 			List<LevelMapping> levelMapping = new List<LevelMapping>
 			{
 				new(
-					new Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Level("Destination",1),
-					new Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Level("Source", 1)),
+					new API.Objects.Orchestration.Level("Destination",1),
+					new API.Objects.Orchestration.Level("Source", 1)),
 			};
 
 			List<OrchestrationScriptArgument> scriptArguments = new List<OrchestrationScriptArgument>
@@ -207,7 +206,7 @@
 
 			for (int i = 1; i <= nodes; i++)
 			{
-				connections.Add(new Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection
+				connections.Add(new API.Objects.Orchestration.Connection
 				{
 					DestinationNodeId = "1",
 					DestinationVsg = Guid.NewGuid(),

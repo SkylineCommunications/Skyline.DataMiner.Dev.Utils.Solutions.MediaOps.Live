@@ -5,7 +5,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.GQI.Metrics;
-	using Skyline.DataMiner.Utils.DOM.UnitTesting;
+	using Skyline.DataMiner.MediaOps.Live.Tests.Mocking;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_ConnectivityInfoProvider
@@ -13,7 +13,7 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Performance()
 		{
-			var connection = new DomConnectionMock();
+			var connection = new SLNetConnectionMock();
 			var interceptedConnection = new ConnectionInterceptor(connection);
 
 			var api = new MediaOpsLiveApiMock(interceptedConnection);

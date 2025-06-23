@@ -4,6 +4,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
+	using Skyline.DataMiner.MediaOps.Live.Tests.Mocking;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_VirtualSignalGroups

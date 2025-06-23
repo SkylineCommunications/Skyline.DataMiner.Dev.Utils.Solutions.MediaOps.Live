@@ -3,6 +3,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.Tests.Mocking;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_Connections
