@@ -2,7 +2,10 @@
 {
 	public partial class OrchestrationEventInstance
 	{
-		protected override void AfterLoad()
+		/// <summary>
+		/// Apply default setting after initializing the instance.
+		/// </summary>
+		protected sealed override void AfterLoad()
 		{
 			if (!OrchestrationEventInfo.EventState.HasValue)
 			{

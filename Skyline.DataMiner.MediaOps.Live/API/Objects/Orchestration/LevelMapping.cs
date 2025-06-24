@@ -1,7 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
 {
 	/// <summary>
-	/// Contains information on a specific mapping between a source and destination level
+	/// Contains information on a specific mapping between a source and destination level.
 	/// </summary>
 	public class LevelMapping
 	{
@@ -17,12 +17,12 @@
 		}
 
 		/// <summary>
-		/// Gets the source level.
+		/// Gets or sets the source level.
 		/// </summary>
 		public Level Source { get; set; }
 
 		/// <summary>
-		/// Gets the destination level.
+		/// Gets or sets the destination level.
 		/// </summary>
 		public Level Destination { get; set; }
 	}

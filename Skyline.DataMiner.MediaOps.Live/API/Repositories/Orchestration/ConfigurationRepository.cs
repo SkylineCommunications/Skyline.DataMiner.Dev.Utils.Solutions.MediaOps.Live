@@ -10,7 +10,7 @@
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
-	public class ConfigurationRepository : Repository<Configuration>
+	internal class ConfigurationRepository : Repository<Configuration>
 	{
 		internal ConfigurationRepository(SlcOrchestrationHelper helper, IConnection connection) : base(helper, connection)
 		{
@@ -23,18 +23,18 @@
 			Delete(GetByDomInstanceId(domInstanceId));
 		}
 
-		public Configuration GetByDomInstanceId(Guid domInstanceId)
+		private Configuration GetByDomInstanceId(Guid domInstanceId)
 		{
-			var filter = DomInstanceExposers.Id.Equal(domInstanceId);
+			ManagedFilter<DomInstance, Guid> filter = DomInstanceExposers.Id.Equal(domInstanceId);
 
-			var result = Read(filter);
+			List<Configuration> result = Read(filter).ToList();
 
-			if (result == null || !result.Any())
+			if (!result.Any())
 			{
 				return null;
 			}
 
-			return result.First();
+			return result[0];
 		}
 
 		protected internal override Configuration CreateInstance(DomInstance domInstance)

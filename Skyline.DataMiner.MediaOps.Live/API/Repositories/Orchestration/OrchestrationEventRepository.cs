@@ -26,7 +26,7 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 		private readonly ConfigurationRepository _configurationHelper;
-		private readonly OrchestrationScheduler _scheduler;
+		private readonly OrchestrationSlidingWindowScheduler _slidingWindowScheduler;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEventRepository"/> class.
@@ -36,11 +36,35 @@
 		internal OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper, api.Connection)
 		{
 			_configurationHelper = new ConfigurationRepository(helper, api.Connection);
-			_scheduler = new OrchestrationScheduler(api.Connection);
+			_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(
+				api.Connection,
+				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
+				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future));
 			_api = api;
 		}
 
+		/// <summary>
+		/// Gets the DOM definition GUID.
+		/// </summary>
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
+
+		/// <summary>
+		/// Executes a sync for the current timing window (default 1 hour in the past and 12 hours into the future).
+		/// This consists of deleting past orchestration tasks and prepare tasks for upcoming events.
+		/// </summary>
+		public void SyncCurrentSlidingWindow()
+		{
+			_slidingWindowScheduler.SyncSchedulerWithWindow();
+		}
+
+		/// <summary>
+		/// Creates a recurring scheduled task to prepare orchestration tasks in a sliding window manner.
+		/// If the task already exists, no new task is created.
+		/// </summary>
+		public void SetupSlidingWindowSchedulerTasks()
+		{
+			_slidingWindowScheduler.SetupSchedulerTasks();
+		}
 
 		/// <summary>
 		///     Creates a <see cref="OrchestrationJob" /> object with all events for the given job reference.
@@ -100,7 +124,7 @@
 
 				job.ValidateEventsBeforeSaving();
 
-				_scheduler.CreateOrUpdateEventScheduling(job.OrchestrationEvents);
+				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
 
 				SaveEventConfigurations(job.OrchestrationEvents, performanceTracker);
 			}
@@ -121,7 +145,7 @@
 				DeleteEvents(job.RemovedIds, performanceTracker);
 
 				job.ValidateEventsBeforeSaving();
-				_scheduler.CreateOrUpdateEventScheduling(job.OrchestrationEvents);
+				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
 				CreateOrUpdateEvents(job.OrchestrationEvents, performanceTracker);
 			}
 		}
@@ -138,7 +162,7 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				_scheduler.DeleteEventTasks(job.OrchestrationEvents);
+				_slidingWindowScheduler.DeleteEvents(job.OrchestrationEvents);
 				DeleteEvents(job.OrchestrationEvents, performanceTracker);
 			}
 		}
@@ -155,7 +179,7 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				_scheduler.DeleteEventTasks(job.OrchestrationEvents);
+				_slidingWindowScheduler.DeleteEvents(job.OrchestrationEvents);
 				DeleteEvents(job.OrchestrationEvents, performanceTracker);
 			}
 		}
@@ -226,33 +250,6 @@
 		/// <summary>
 		///     Get the <see cref="OrchestrationEvent" /> object that matches the given event ID value.
 		/// </summary>
-		/// <param name="eventId">The ID of the instance to lookup.</param>
-		/// <param name="performanceTracker">Performance tracking object.</param>
-		/// <returns>
-		///     A <see cref="OrchestrationEvent" /> object that matches the given event ID value, or null if no match is
-		///     found.
-		/// </returns>
-		/// <exception cref="ArgumentException">Event ID can not be an empty Guid.</exception>
-		private OrchestrationEvent GetEventById(Guid eventId, PerformanceTracker performanceTracker)
-		{
-			using (new PerformanceTracker(performanceTracker))
-			{
-				if (eventId == Guid.Empty)
-				{
-					throw new ArgumentException($"'{nameof(eventId)}' cannot be empty.", nameof(eventId));
-				}
-
-				ManagedFilter<DomInstance, Guid> filter = DomInstanceExposers.Id.Equal(eventId);
-
-				IEnumerable<OrchestrationEvent> result = Read(filter);
-
-				return result.FirstOrDefault();
-			}
-		}
-
-		/// <summary>
-		///     Get the <see cref="OrchestrationEvent" /> object that matches the given event ID value.
-		/// </summary>
 		/// <param name="eventIds">The ID of the instance to lookup.</param>
 		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>
@@ -281,36 +278,6 @@
 		/// <summary>
 		///     Get the <see cref="OrchestrationEventConfiguration" /> object that matches the given event ID value.
 		/// </summary>
-		/// <param name="eventId">The ID of the instance to lookup.</param>
-		/// <param name="performanceTracker">Performance tracking object.</param>
-		/// <returns>
-		///     A <see cref="OrchestrationEventConfiguration" /> object that matches the given event ID value, or null if no
-		///     match is found.
-		/// </returns>
-		/// <exception cref="ArgumentException">Event ID can not be an empty Guid.</exception>
-		private OrchestrationEventConfiguration GetEventConfigurationById(Guid eventId, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				if (eventId == Guid.Empty)
-				{
-					throw new ArgumentException($"'{nameof(eventId)}' cannot be empty.", nameof(eventId));
-				}
-
-				OrchestrationEvent orchestrationEvent = GetEventById(eventId, performanceTracker);
-
-				if (orchestrationEvent == null)
-				{
-					return null;
-				}
-
-				return GetEventsAsEventConfigurations(orchestrationEvent, performanceTracker);
-			}
-		}
-
-		/// <summary>
-		///     Get the <see cref="OrchestrationEventConfiguration" /> object that matches the given event ID value.
-		/// </summary>
 		/// <param name="eventIds">The IDs of the instances to lookup.</param>
 		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>
@@ -331,30 +298,6 @@
 				IEnumerable<OrchestrationEvent> orchestrationEvents = GetEventsById(instanceIds, performanceTracker);
 
 				return GetEventsAsEventConfigurations(orchestrationEvents, performanceTracker).Values;
-			}
-		}
-
-		/// <summary>
-		///     Convert a <see cref="OrchestrationEvent" /> object to a <see cref="OrchestrationEventConfiguration" /> object by
-		///     retrieving configuration data from DataMiner.
-		/// </summary>
-		/// <param name="event">The <see cref="OrchestrationEvent" /> object to convert.</param>
-		/// <param name="performanceTracker">Performance tracking object.</param>
-		/// <returns>
-		///     The <see cref="OrchestrationEventConfiguration" /> object that corresponds to the given input, or null if the
-		///     operation failed.
-		/// </returns>
-		/// <exception cref="ArgumentNullException">Event can not be null.</exception>
-		private OrchestrationEventConfiguration GetEventsAsEventConfigurations(OrchestrationEvent @event, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				if (@event == null)
-				{
-					throw new ArgumentNullException(nameof(@event));
-				}
-
-				return GetEventsAsEventConfigurations(new List<OrchestrationEvent> { @event }, performanceTracker).Values.FirstOrDefault();
 			}
 		}
 
@@ -411,27 +354,32 @@
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				List<Configuration> configsToDelete = new List<Configuration>();
-				List<Configuration> configsToWrite = new List<Configuration>();
+				SaveEventConfigurations(events);
+			}
+		}
 
-				IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations = events.ToList();
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+		internal void SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
+		{
+			List<Configuration> configsToDelete = new List<Configuration>();
+			List<Configuration> configsToWrite = new List<Configuration>();
+
+			IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations = events.ToList();
+			foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+			{
+				if (orchestrationEventConfiguration.Configuration.IsEmpty())
 				{
-					if (orchestrationEventConfiguration.Configuration.IsEmpty())
-					{
-						orchestrationEventConfiguration.ConfigurationReference = null;
-						configsToDelete.Add(orchestrationEventConfiguration.Configuration);
-					}
-
-					orchestrationEventConfiguration.ConfigurationReference = orchestrationEventConfiguration.Configuration.ID;
-					configsToWrite.Add(orchestrationEventConfiguration.Configuration);
+					orchestrationEventConfiguration.ConfigurationReference = null;
+					configsToDelete.Add(orchestrationEventConfiguration.Configuration);
 				}
 
-				_configurationHelper.Delete(configsToDelete);
-				_configurationHelper.CreateOrUpdate(configsToWrite);
-
-				CreateOrUpdate(orchestrationEventConfigurations);
+				orchestrationEventConfiguration.ConfigurationReference = orchestrationEventConfiguration.Configuration.ID;
+				configsToWrite.Add(orchestrationEventConfiguration.Configuration);
 			}
+
+			_configurationHelper.Delete(configsToDelete);
+			_configurationHelper.CreateOrUpdate(configsToWrite);
+
+			CreateOrUpdate(orchestrationEventConfigurations);
 		}
 
 		/// <summary>
@@ -474,12 +422,10 @@
 
 		protected override void ValidateBeforeSave(ICollection<OrchestrationEvent> instances)
 		{
-			
 		}
 
 		protected override void ValidateBeforeDelete(ICollection<OrchestrationEvent> instances)
 		{
-			
 		}
 
 		protected internal override FilterElement<DomInstance> CreateFilter(string fieldName, Comparer comparer, object value)

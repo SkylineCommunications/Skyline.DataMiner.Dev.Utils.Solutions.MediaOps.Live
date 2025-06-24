@@ -11,16 +11,25 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Async;
 	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
 
+	/// <summary>
+	/// Class that handled orchestration scheduled tasks that execute the orchestration for orchestration events.
+	/// </summary>
 	public class OrchestrationScheduler
 	{
 		private readonly IDms _dms;
 		private readonly IConnection _connection;
 
-		private Lazy<HashSet<OrchestrationSchedulerTask>> _internalTaskList;
+		private readonly Lazy<HashSet<OrchestrationSchedulerTask>> _internalTaskList;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationScheduler"/> class.
+		/// </summary>
+		/// <param name="connection">DataMiner user connection.</param>
+		/// <exception cref="ArgumentNullException">Connection cannot be null.</exception>
 		public OrchestrationScheduler(IConnection connection)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -34,9 +43,9 @@
 			HashSet<OrchestrationSchedulerTask> list = new HashSet<OrchestrationSchedulerTask>();
 			GetInfoMessage getSchedulerTaskInfoMessage = new GetInfoMessage(InfoType.SchedulerTasks);
 
-			var progress = _connection.Async.Launch(getSchedulerTaskInfoMessage);
+			AsyncProgress progress = _connection.Async.Launch(getSchedulerTaskInfoMessage);
 
-			var result = progress.WaitForAsyncResponse(5 * 60);
+			AsyncResponseEvent result = progress.WaitForAsyncResponse(5 * 60);
 
 			if (result == null || !result.Messages.Any())
 			{
@@ -50,17 +59,22 @@
 
 			GetSchedulerTasksResponseMessage getSchedulerTasksResponse = (GetSchedulerTasksResponseMessage)result.Messages.FirstOrDefault();
 
+			if (getSchedulerTasksResponse == null)
+			{
+				throw new InvalidOperationException("Scheduler task could not be retrieved.");
+			}
+
 			foreach (object taskObject in getSchedulerTasksResponse.Tasks)
 			{
 				SchedulerTask task = (SchedulerTask)taskObject;
 
-				if (task.Description != OrchestrationSchedulerTask.OrchestrationTaskNaming)
+				if (task.Description != Constants.OrchestrationTaskNaming)
 				{
 					continue;
 				}
 
 				SchedulerAction eventOrchestrationTask = task.Actions.FirstOrDefault(action =>
-					action.ActionType == SchedulerActionType.Automation && action.ScriptInstance.ScriptName == OrchestrationSchedulerTask.OrchestrationScriptName);
+					action.ActionType == SchedulerActionType.Automation && action.ScriptInstance.ScriptName == Constants.OrchestrationScriptName);
 
 				if (eventOrchestrationTask == null)
 				{
@@ -70,12 +84,44 @@
 				AutomationScriptInstanceInfo automationScriptInfo = (AutomationScriptInstanceInfo)eventOrchestrationTask.ScriptInstance.ParameterIdToValue[0];
 
 				List<Guid> eventGuidsInput = JsonConvert.DeserializeObject<List<Guid>>(automationScriptInfo.Value);
-				var existingTask = new OrchestrationSchedulerTask(DateTime.SpecifyKind(task.StartTime, DateTimeKind.Local), eventGuidsInput, new ScheduledTaskId(task.HandlingDMA, task.Id));
+				OrchestrationSchedulerTask existingTask =
+					new OrchestrationSchedulerTask(DateTime.SpecifyKind(task.StartTime, DateTimeKind.Local), eventGuidsInput, new ScheduledTaskId(task.HandlingDMA, task.Id));
 
 				list.Add(existingTask);
 			}
 
 			return list;
+		}
+
+		/// <summary>
+		/// Get all events that executed before a certain timestamp.
+		/// </summary>
+		/// <param name="time">The reference timestamp.</param>
+		/// <returns>A collection of tasks scheduled before the give time.</returns>
+		public IEnumerable<OrchestrationSchedulerTask> GetEventTasksBeforeTime(DateTimeOffset time)
+		{
+			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime < time.ToUniversalTime());
+		}
+
+		/// <summary>
+		/// Get all events that executed after a certain time.
+		/// </summary>
+		/// <param name="time">The reference timestamp.</param>
+		/// <returns>A collection of tasks scheduled after the give time.</returns>
+		public IEnumerable<OrchestrationSchedulerTask> GetEventTasksAfterTime(DateTimeOffset time)
+		{
+			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime > time.ToUniversalTime());
+		}
+
+		/// <summary>
+		/// Get all events in a time range.
+		/// </summary>
+		/// <param name="from">The starting reference timestamp.</param>
+		/// <param name="to">The ending reference timestamp.</param>
+		/// <returns>A collection of task in given time range.</returns>
+		public IEnumerable<OrchestrationSchedulerTask> GetEventTasksInTimeRange(DateTimeOffset from, DateTimeOffset to)
+		{
+			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime <= to.ToUniversalTime() && task.DateTime.UtcDateTime >= from.ToUniversalTime());
 		}
 
 		/// <summary>
@@ -103,17 +149,23 @@
 			}
 		}
 
+		/// <summary>
+		/// Delete scheduled orchestration task and remove reference on the orchestration event.
+		/// </summary>
+		/// <param name="events">List of event to remove corresponding task for.</param>
 		public void DeleteEventTasks(IEnumerable<OrchestrationEvent> events)
 		{
-			foreach (OrchestrationEvent orchestrationEvent in events)
+			IEnumerable<IGrouping<DateTimeOffset?, OrchestrationEvent>> groupedByTimeEvents = events.GroupBy(e => e.EventTime).OrderBy(g => g.Key);
+
+			foreach (IGrouping<DateTimeOffset?, OrchestrationEvent> groupedByTimeEvent in groupedByTimeEvents)
 			{
-				DeleteEventTask(orchestrationEvent);
+				DeleteEventTasksForEvents(groupedByTimeEvent.Key.Value, groupedByTimeEvent.ToList());
 			}
 		}
 
 		private void CreateOrUpdateEventTasks(IEnumerable<OrchestrationEvent> orchestrationEvents)
 		{
-			IEnumerable<IGrouping<DateTimeOffset?, OrchestrationEvent>> groupedByTimeEvents = orchestrationEvents.GroupBy(e => e.EventTime);
+			IEnumerable<IGrouping<DateTimeOffset?, OrchestrationEvent>> groupedByTimeEvents = orchestrationEvents.GroupBy(e => e.EventTime).OrderBy(g => g.Key);
 
 			foreach (IGrouping<DateTimeOffset?, OrchestrationEvent> groupedByTimeEvent in groupedByTimeEvents)
 			{
@@ -127,13 +179,19 @@
 		private void CreateOrUpdateEventTasksForTimeStamp(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents)
 		{
 			OrchestrationSchedulerTask taskForTimeStamp = FindExistingTaskForTimeStamp(timestamp);
+			bool taskUpdated = false;
 
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
+				if (_internalTaskList.Value.Count >= Constants.SchedulerMaxTotalOrchestrationEvents)
+				{
+					throw new InvalidOperationException($"Orchestration task limit: {Constants.SchedulerMaxTotalOrchestrationEvents} has been reached. Likely some events have not been scheduled");
+				}
+
 				// Create new task for timestamp during first iteration if none exist yet
 				if (taskForTimeStamp == null)
 				{
-					DeleteEventTask(orchestrationEvent);
+					DeleteEventTaskForEvent(orchestrationEvent);
 					taskForTimeStamp = new OrchestrationSchedulerTask(timestamp, new List<Guid> { orchestrationEvent.ID });
 					IDma dma = SelectRandomDma();
 					int newTaskId = dma.Scheduler.CreateTask(taskForTimeStamp.GenerateSchedulerTaskData());
@@ -149,14 +207,41 @@
 					continue;
 				}
 
-				DeleteEventTask(orchestrationEvent);
+				DeleteEventTaskForEvent(orchestrationEvent);
 				taskForTimeStamp.OrchestrationEventIds.Add(orchestrationEvent.ID);
-				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData());
 				orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
+				taskUpdated = true;
+			}
+
+			if (taskUpdated)
+			{
+				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData()); 
 			}
 		}
 
-		private void DeleteEventTask(OrchestrationEvent orchestrationEvent)
+		private void DeleteEventTasksForEvents(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents)
+		{
+			OrchestrationSchedulerTask taskForTimeStamp = FindExistingTaskForTimeStamp(timestamp);
+
+			taskForTimeStamp.OrchestrationEventIds.RemoveAll(eventId => orchestrationEvents.Any(e => e.ID == eventId));
+
+			if (!taskForTimeStamp.OrchestrationEventIds.Any())
+			{
+				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.DeleteTask(taskForTimeStamp.ScheduledTaskId.TaskId);
+				_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(taskForTimeStamp.ScheduledTaskId));
+			}
+			else
+			{
+				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData());
+			}
+
+			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
+			{
+				orchestrationEvent.ReservationInstance = null;
+			}
+		}
+
+		private void DeleteEventTaskForEvent(OrchestrationEvent orchestrationEvent)
 		{
 			if (orchestrationEvent.ReservationInstance == null)
 			{
@@ -182,7 +267,7 @@
 
 		private IDma SelectRandomDma()
 		{
-			var agents = _dms.GetAgents().ToList();
+			List<IDma> agents = _dms.GetAgents().ToList();
 			return agents[new Random().Next(agents.Count)];
 		}
 

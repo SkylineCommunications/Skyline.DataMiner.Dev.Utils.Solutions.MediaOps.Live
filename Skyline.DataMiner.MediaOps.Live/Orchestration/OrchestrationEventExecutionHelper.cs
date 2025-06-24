@@ -45,12 +45,12 @@
 					return;
 				}
 
-				List<SlcOrchestrationIds.Enums.EventState> statesToDiscard = new List<SlcOrchestrationIds.Enums.EventState>
-				{
+				List<SlcOrchestrationIds.Enums.EventState> statesToDiscard =
+				[
 					SlcOrchestrationIds.Enums.EventState.Failed,
 					SlcOrchestrationIds.Enums.EventState.Completed,
 					SlcOrchestrationIds.Enums.EventState.Configuring,
-				};
+				];
 
 				ExecuteEvents(orchestrationEvents.Where(e => !statesToDiscard.Contains(e.EventState.Value)), performanceTracker);
 			}
@@ -64,11 +64,12 @@
 				foreach (OrchestrationEventConfiguration orchestrationEvent in eventConfigurations)
 				{
 					orchestrationEvent.InternalSetState(SlcOrchestrationIds.Enums.EventState.Configuring);
+					orchestrationEvent.ActualStartTime = DateTimeOffset.UtcNow;
 				}
 
 				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
 
-				List<Task> tasks = new List<Task>();
+				List<Task> tasks = [];
 				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(e => e.HasScripts()))
 				{
 					Task nodeOrchestrationTask = Task.Factory.StartNew(
@@ -108,16 +109,11 @@
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				List<Connection> allConnections = new List<Connection>();
-				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = orchestrationEventConfigurations
+				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
+				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = eventConfigurations
 					.Where(orchestrationEventConfiguration => orchestrationEventConfiguration?.Configuration?.Connections != null && orchestrationEventConfiguration.Configuration.Connections.Any()).ToList();
 
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurationsWithConnections)
-				{
-					allConnections.AddRange(orchestrationEventConfiguration.Configuration.Connections);
-				}
-
-				List<Connection> connectionsToConfigure = new List<Connection>();
+				List<Connection> connectionsToConfigure = [];
 				foreach (OrchestrationEventConfiguration eventConfigurationsWithConnection in eventConfigurationsWithConnections)
 				{
 					connectionsToConfigure.AddRange(eventConfigurationsWithConnection.Configuration.Connections);
@@ -125,6 +121,10 @@
 				}
 
 				ExecuteTakeForConnections(connectionsToConfigure, performanceTracker);
+				foreach (OrchestrationEventConfiguration eventConfiguration in eventConfigurations.Where(e => e.ActualStartTime != null))
+				{
+					eventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - eventConfiguration.ActualStartTime;
+				}
 			}
 		}
 
@@ -139,7 +139,7 @@
 
 				TakeHelper takeHelper = new TakeHelper(_api);
 
-				List<VsgConnectionRequest> requests = new List<VsgConnectionRequest>();
+				List<VsgConnectionRequest> requests = [];
 
 				HashSet<Guid> allInvolvedVsgIds = new HashSet<Guid>();
 				HashSet<int> allInvolvedLevelNumbers = new HashSet<int>();
@@ -192,7 +192,7 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
-				List<Task> nodeOrchestrationTasks = new List<Task>();
+				List<Task> nodeOrchestrationTasks = [];
 
 				foreach (NodeConfiguration nodeConfiguration in orchestrationEventConfiguration.Configuration.NodeConfigurations)
 				{
@@ -204,15 +204,17 @@
 					Task nodeOrchestrationTask = Task.Factory.StartNew(
 						() =>
 						{
-							if (!TryExecuteOrchestrationScript(
-									nodeConfiguration.OrchestrationScriptName,
-									nodeConfiguration.OrchestrationScriptArguments,
-									performanceTracker,
-									out string[] errorMessages))
+							if (TryExecuteOrchestrationScript(
+								    nodeConfiguration.OrchestrationScriptName,
+								    nodeConfiguration.OrchestrationScriptArguments,
+								    performanceTracker,
+								    out string[] errorMessages))
 							{
-								errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}");
-								orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+								return;
 							}
+
+							errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}");
+							orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						},
 						TaskCreationOptions.LongRunning);
 
@@ -273,7 +275,7 @@
 					return false;
 				}
 
-				errorMessages = Array.Empty<string>();
+				errorMessages = [];
 				return true;
 			}
 		}

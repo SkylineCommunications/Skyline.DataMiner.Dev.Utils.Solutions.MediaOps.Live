@@ -69,6 +69,26 @@
 			return GetOrchestrationEventIterator(filter);
 		}
 
+		public IEnumerable<OrchestrationEventInstance> GetOrchestrationEventsAfterTime(DateTime time)
+		{
+			DateTime localStart = time.ToLocalTime();
+
+			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).GreaterThanOrEqual(localStart));
+
+			return GetOrchestrationEventIterator(filter);
+		}
+
+		public IEnumerable<OrchestrationEventInstance> GetOrchestrationEventsBeforeTime(DateTime time)
+		{
+			DateTime localEnd = time.ToLocalTime();
+
+			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).LessThanOrEqual(localEnd));
+
+			return GetOrchestrationEventIterator(filter);
+		}
+
 		public void SaveOrchestrationEventInstances(IEnumerable<OrchestrationEventInstance> eventInstances)
 		{
 			DomHelper.DomInstances.CreateOrUpdate(eventInstances.Select(inst => inst.ToInstance()).ToList());

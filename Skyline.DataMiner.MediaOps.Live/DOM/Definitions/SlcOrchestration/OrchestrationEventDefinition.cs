@@ -24,7 +24,7 @@
 				{
 					IsOptional = true,
 				},
-				new SectionDefinitionLink(SlcOrchestrationIds.Sections.Configuration.Id)
+				new SectionDefinitionLink(SlcOrchestrationIds.Sections.ConfigurationInfo.Id)
 				{
 					IsOptional = true,
 				},
@@ -121,6 +121,24 @@
 					IsOptional = true,
 				});
 
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(DateTime),
+					ID = SlcOrchestrationIds.Sections.OrchestrationEventInfo.ActualStartTime,
+					Name = "Actual Start Time",
+					IsOptional = true,
+				});
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(TimeSpan),
+					ID = SlcOrchestrationIds.Sections.OrchestrationEventInfo.OrchestrationDuration,
+					Name = "Orchestration Duration",
+					IsOptional = true,
+				});
+
 			return sectionDefinition;
 		}
 
@@ -157,7 +175,7 @@
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{
-				ID = SlcOrchestrationIds.Sections.Configuration.Id,
+				ID = SlcOrchestrationIds.Sections.ConfigurationInfo.Id,
 				Name = "Configuration Info",
 			};
 
@@ -165,7 +183,7 @@
 				new DomInstanceFieldDescriptor(SlcOrchestrationIds.ModuleId)
 				{
 					FieldType = typeof(Guid),
-					ID = SlcOrchestrationIds.Sections.Configuration.ConfigurationInfo,
+					ID = SlcOrchestrationIds.Sections.ConfigurationInfo.Configuration,
 					Name = "Configuration",
 					IsOptional = false,
 					DomDefinitionIds = { SlcOrchestrationIds.Definitions.Configuration },
