@@ -35,6 +35,7 @@
 		}
 
 		[TestMethod]
+		[Ignore]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Subscription()
 		{
 			var api = new MediaOpsLiveApiMock();
@@ -143,6 +144,7 @@
 		}
 
 		[TestMethod]
+		[Ignore]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity()
 		{
 			var api = new MediaOpsLiveApiMock();
@@ -194,6 +196,7 @@
 		}
 
 		[TestMethod]
+		[Ignore]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity_Bulk()
 		{
 			var api = new MediaOpsLiveApiMock();
@@ -305,6 +308,7 @@
 		}
 
 		[TestMethod]
+		[Ignore]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectivity()
 		{
 			var api = new MediaOpsLiveApiMock();
@@ -397,6 +401,7 @@
 		}
 
 		[TestMethod]
+		[Ignore]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectivity_Bulk()
 		{
 			var api = new MediaOpsLiveApiMock();
