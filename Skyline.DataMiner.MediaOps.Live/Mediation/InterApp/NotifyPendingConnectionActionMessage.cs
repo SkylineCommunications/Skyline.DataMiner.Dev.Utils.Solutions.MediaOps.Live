@@ -6,6 +6,6 @@
 
 	public class NotifyPendingConnectionActionMessage : Message
 	{
-		public ICollection<NotifyPendingConnectionActionRequest> Requests { get; set; }
+		public ICollection<PendingConnectionAction> Actions { get; set; }
 	}
 }

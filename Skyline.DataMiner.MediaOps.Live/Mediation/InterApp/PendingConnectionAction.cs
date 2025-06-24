@@ -1,0 +1,15 @@
+﻿namespace InterApp.Messages
+{
+	using System;
+
+	public class PendingConnectionAction
+	{
+		public ConnectionAction Action { get; set; }
+
+		public DateTimeOffset Time { get; set; }
+
+		public EndpointInfo Destination { get; set; }
+
+		public EndpointInfo PendingSource { get; set; }
+	}
+}

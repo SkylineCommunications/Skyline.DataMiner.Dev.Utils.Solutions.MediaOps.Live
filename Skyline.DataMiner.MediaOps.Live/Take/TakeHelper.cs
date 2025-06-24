@@ -323,14 +323,14 @@
 				{
 					var mediationElement = group.Key;
 
-					var requests = new List<InterApp.Messages.NotifyPendingConnectionActionRequest>();
+					var requests = new List<InterApp.Messages.PendingConnectionAction>();
 
 					foreach (var connection in group)
 					{
-						var request = new InterApp.Messages.NotifyPendingConnectionActionRequest
+						var request = new InterApp.Messages.PendingConnectionAction
 						{
-							StartTime = now,
-							Destination = new InterApp.Messages.Endpoint
+							Time = now,
+							Destination = new InterApp.Messages.EndpointInfo
 							{
 								ID = connection.Destination.ID,
 								Name = connection.Destination.Name,
@@ -341,7 +341,7 @@
 						{
 							case ScriptAction.Connect:
 								request.Action = InterApp.Messages.ConnectionAction.Connect;
-								request.PendingSource = new InterApp.Messages.Endpoint
+								request.PendingSource = new InterApp.Messages.EndpointInfo
 								{
 									ID = connection.Source.ID,
 									Name = connection.Source.Name,
@@ -359,7 +359,7 @@
 
 					var commands = InterAppCallFactory.CreateNew();
 
-					var message = new InterApp.Messages.NotifyPendingConnectionActionMessage { Requests = requests };
+					var message = new InterApp.Messages.NotifyPendingConnectionActionMessage { Actions = requests };
 					commands.Messages.Add(message);
 
 					commands.Send(

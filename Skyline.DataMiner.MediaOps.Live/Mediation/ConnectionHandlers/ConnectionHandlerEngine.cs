@@ -127,14 +127,14 @@
 			{
 				var mediationElement = group.Key;
 
-				var requests = new List<InterApp.Messages.ClearPendingConnectionActionRequest>();
+				var requests = new List<InterApp.Messages.ConnectionChange>();
 
 				foreach (var connection in group)
 				{
-					var request = new InterApp.Messages.ClearPendingConnectionActionRequest
+					var request = new InterApp.Messages.ConnectionChange
 					{
-						StartTime = now,
-						Destination = new InterApp.Messages.Endpoint
+						Time = now,
+						Destination = new InterApp.Messages.EndpointInfo
 						{
 							ID = connection.DestinationEndpoint.ID,
 							Name = connection.DestinationEndpoint.Name,
@@ -143,7 +143,7 @@
 
 					if (connection.SourceEndpoint != null)
 					{
-						request.ConnectedSource = new InterApp.Messages.Endpoint
+						request.ConnectedSource = new InterApp.Messages.EndpointInfo
 						{
 							ID = connection.SourceEndpoint.ID,
 							Name = connection.SourceEndpoint.Name,
@@ -155,7 +155,7 @@
 
 				var commands = InterAppCallFactory.CreateNew();
 
-				var message = new InterApp.Messages.ClearPendingConnectionActionMessage { Requests = requests };
+				var message = new InterApp.Messages.NotifyConnectionChangesMessage { Changes = requests };
 				commands.Messages.Add(message);
 
 				commands.Send(

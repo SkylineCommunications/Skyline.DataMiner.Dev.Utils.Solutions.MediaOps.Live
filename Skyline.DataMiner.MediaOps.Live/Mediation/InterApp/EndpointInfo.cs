@@ -2,7 +2,7 @@
 {
 	using System;
 
-	public class Endpoint
+	public class EndpointInfo
 	{
 		public Guid ID { get; set; }
 

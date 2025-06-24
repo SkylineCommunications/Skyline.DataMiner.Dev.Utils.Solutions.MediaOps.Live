@@ -4,8 +4,8 @@
 
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallSingle;
 
-	public class ClearPendingConnectionActionMessage : Message
+	public class NotifyConnectionChangesMessage : Message
 	{
-		public ICollection<ClearPendingConnectionActionRequest> Requests { get; set; }
+		public ICollection<ConnectionChange> Changes { get; set; }
 	}
 }
