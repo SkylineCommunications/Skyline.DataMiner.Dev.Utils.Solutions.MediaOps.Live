@@ -173,13 +173,16 @@
 						if (pendingAction.Action == PendingConnectionAction.PendingActionType.Connect &&
 							pendingAction.PendingSource.HasValue)
 						{
-							if (pendingAction.Destination == endpoint)
+							if (pendingAction.Destination == endpoint &&
+								_endpoints.TryGetValue(pendingAction.PendingSource.Value, out var pendingSource) &&
+								connectedSource != pendingSource)
 							{
-								_endpoints.TryGetValue(pendingAction.PendingSource.Value, out pendingConnectedSource);
+								pendingConnectedSource = pendingSource;
 							}
 
 							if (pendingAction.PendingSource == endpoint &&
-								_endpoints.TryGetValue(pendingAction.Destination, out var pendingDestination))
+								_endpoints.TryGetValue(pendingAction.Destination, out var pendingDestination) &&
+								!connectedDestinations.Contains(pendingDestination))
 							{
 								pendingConnectedDestinations.Add(pendingDestination);
 							}
@@ -505,8 +508,15 @@
 					var pendingAction = new PendingConnectionAction(row);
 
 					impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
+
+					if (_pendingConnectionActions.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
+					{
+						// Cannot use mapping.AddOrUpdate because PendingConnectionAction doesn't implement IEquatable
+						_pendingConnectionActionsMapping.Remove(existingPendingConnectionAction);
+					}
+
 					_pendingConnectionActions[pendingAction.Destination] = pendingAction;
-					_pendingConnectionActionsMapping.AddOrUpdate(pendingAction);
+					_pendingConnectionActionsMapping.Add(pendingAction);
 				}
 
 				if (impactedEndpoints.Count > 0)
@@ -653,7 +663,7 @@
 
 				foreach (var action in pendingConnectionActions)
 				{
-					_pendingConnectionActionsMapping.AddOrUpdate(action);
+					_pendingConnectionActionsMapping.Add(action);
 				}
 			}
 		}
