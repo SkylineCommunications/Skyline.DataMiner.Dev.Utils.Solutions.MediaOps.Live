@@ -231,9 +231,11 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				GetDestinationElements(engine, takeContexts, performanceTracker);
-				GetMediationElements(engine, takeContexts, performanceTracker);
-				FindConnectionHandlerScripts(engine, takeContexts, performanceTracker);
+				var dms = engine.GetDms();
+
+				GetDestinationElements(dms, takeContexts, performanceTracker);
+				GetMediationElements(dms, takeContexts, performanceTracker);
+				FindConnectionHandlerScripts(takeContexts, performanceTracker);
 			}
 		}
 
@@ -249,12 +251,10 @@
 			}
 		}
 
-		private void GetDestinationElements(IEngine engine, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void GetDestinationElements(IDms dms, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var dms = engine.GetDms();
-
 				foreach (var group in takeContexts.GroupBy(x => x.Destination.Element))
 				{
 					var elementKey = group.Key;
@@ -268,11 +268,10 @@
 			}
 		}
 
-		private void GetMediationElements(IEngine engine, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void GetMediationElements(IDms dms, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var dms = engine.GetDms();
 				var allMediationElements = MediationElement.GetAllMediationElements(dms).ToList();
 
 				foreach (var group in takeContexts.GroupBy(x => x.DestinationElement.Host))
@@ -295,7 +294,7 @@
 			}
 		}
 
-		private void FindConnectionHandlerScripts(IEngine engine, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void FindConnectionHandlerScripts(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -405,6 +404,5 @@
 				}
 			}
 		}
-
 	}
 }

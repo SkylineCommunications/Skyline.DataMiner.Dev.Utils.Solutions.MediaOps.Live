@@ -34,7 +34,6 @@
 		private RepositorySubscription<Connection> _subscriptionConnections;
 
 		private bool _isSubscribed;
-		private bool _isDisposed;
 
 		public ConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
@@ -662,7 +661,6 @@
 		public void Dispose()
 		{
 			Unsubscribe();
-			_isDisposed = true;
 		}
 	}
 }
