@@ -23,7 +23,7 @@
 			Enum.TryParse<PendingActionType>(actionValue, out var action);
 			Action = action;
 
-			var pendingSourceIdValue = Convert.ToString(row[5]);
+			var pendingSourceIdValue = Convert.ToString(row[4]);
 			if (!String.IsNullOrWhiteSpace(pendingSourceIdValue) &&
 				Guid.TryParse(pendingSourceIdValue, out var parsedPendingSourceId))
 			{
