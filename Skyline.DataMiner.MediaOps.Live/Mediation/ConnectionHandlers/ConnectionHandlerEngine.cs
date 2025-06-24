@@ -5,6 +5,8 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
+	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
@@ -13,6 +15,8 @@
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
+		private readonly object _lock = new object();
+
 		public ConnectionHandlerEngine(IEngine engine)
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
@@ -33,7 +37,7 @@
 				throw new ArgumentNullException(nameof(connectionInfo));
 			}
 
-			RegisterConnections(new[] { connectionInfo });
+			RegisterConnections([connectionInfo]);
 		}
 
 		public void RegisterConnections(ICollection<ConnectionInfo> connectionInfos)
@@ -43,13 +47,18 @@
 				throw new ArgumentNullException(nameof(connectionInfos));
 			}
 
-			var destinationEndpointIds = connectionInfos.Select(x => x.DestinationEndpoint.ID).ToList();
+			UpdateDomConnections(connectionInfos);
+			NotifyPendingConnectionActions(connectionInfos);
+		}
 
-			using (new MultiConnectionUpdateLock(destinationEndpointIds))
+		private void UpdateDomConnections(ICollection<ConnectionInfo> connectionInfos)
+		{
+			lock (_lock)
 			{
-				var updatedConnections = new List<ConnectionInstance>();
-
+				var destinationEndpointIds = connectionInfos.Select(x => x.DestinationEndpoint.ID).ToList();
 				var connectionsByDestination = Helper.GetConnectionsForDestinations(destinationEndpointIds);
+
+				var updatedConnections = new List<ConnectionInstance>();
 
 				foreach (var connectionInfo in connectionInfos)
 				{
@@ -103,6 +112,59 @@
 			return wasConnected != connection.ConnectionInfo.IsConnected ||
 				   previousSource != connection.ConnectionInfo.ConnectedSource ||
 				   previousPendingSource != null;
+		}
+
+		private void NotifyPendingConnectionActions(ICollection<ConnectionInfo> connectionInfos)
+		{
+			var now = DateTimeOffset.Now;
+			var dms = Engine.GetDms();
+
+			var mediationElementMap = MediationElement.GetMediationElements(dms, connectionInfos.Select(x => x.DestinationEndpoint));
+
+			foreach (var group in connectionInfos
+				.Where(x => mediationElementMap.ContainsKey(x.DestinationEndpoint))
+				.GroupBy(x => mediationElementMap[x.DestinationEndpoint]))
+			{
+				var mediationElement = group.Key;
+
+				var requests = new List<InterApp.Messages.ClearPendingConnectionActionRequest>();
+
+				foreach (var connection in group)
+				{
+					var request = new InterApp.Messages.ClearPendingConnectionActionRequest
+					{
+						StartTime = now,
+						Destination = new InterApp.Messages.Endpoint
+						{
+							ID = connection.DestinationEndpoint.ID,
+							Name = connection.DestinationEndpoint.Name,
+						},
+					};
+
+					if (connection.SourceEndpoint != null)
+					{
+						request.ConnectedSource = new InterApp.Messages.Endpoint
+						{
+							ID = connection.SourceEndpoint.ID,
+							Name = connection.SourceEndpoint.Name,
+						};
+					}
+
+					requests.Add(request);
+				}
+
+				var commands = InterAppCallFactory.CreateNew();
+
+				var message = new InterApp.Messages.ClearPendingConnectionActionMessage { Requests = requests };
+				commands.Messages.Add(message);
+
+				commands.Send(
+					Engine.GetUserConnection(),
+					mediationElement.DmaId,
+					mediationElement.ElementId,
+					9000000,
+					[typeof(InterApp.Messages.NotifyPendingConnectionActionMessage)]);
+			}
 		}
 	}
 }

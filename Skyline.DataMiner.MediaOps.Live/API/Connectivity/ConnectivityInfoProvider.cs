@@ -328,7 +328,7 @@
 				_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
 				_subscriptionConnections.Changed += Connections_Changed;
 
-				foreach (var mediationElement in MediationElement.GetMediationElements(Dms))
+				foreach (var mediationElement in MediationElement.GetAllMediationElements(Dms))
 				{
 					var tableSubscription = new TableSubscription(Api.Connection, mediationElement.DmsElement, 3000);
 					tableSubscription.OnChanged += PendingConnectionActions_OnChanged;
@@ -647,7 +647,7 @@
 		{
 			lock (_lock)
 			{
-				var pendingConnectionActions = MediationElement.GetMediationElements(Dms)
+				var pendingConnectionActions = MediationElement.GetAllMediationElements(Dms)
 					.AsParallel()
 					.SelectMany(x => x.GetPendingConnectionActions())
 					.ToList();
