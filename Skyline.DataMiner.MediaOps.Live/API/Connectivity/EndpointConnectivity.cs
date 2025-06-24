@@ -22,6 +22,9 @@
 			PendingConnectedDestinations = pendingConnectedDestinations ?? [];
 		}
 
+		/// <summary>
+		/// Gets the endpoint this connectivity information is for.
+		/// </summary>
 		public Endpoint Endpoint { get; }
 
 		/// <summary>

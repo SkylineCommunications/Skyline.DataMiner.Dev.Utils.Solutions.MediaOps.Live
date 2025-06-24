@@ -25,8 +25,14 @@
 			PendingConnectedDestinations = pendingConnectedDestinations ?? [];
 		}
 
+		/// <summary>
+		/// Gets the virtual signal group this connectivity information is for.
+		/// </summary>
 		public VirtualSignalGroup VirtualSignalGroup { get; }
 
+		/// <summary>
+		/// Gets the connectivity information for each level.
+		/// </summary>
 		public IReadOnlyDictionary<ApiObjectReference<Level>, EndpointConnectivity> Levels { get; }
 
 		/// <summary>
