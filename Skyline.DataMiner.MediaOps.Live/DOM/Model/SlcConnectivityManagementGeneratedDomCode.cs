@@ -196,7 +196,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			}
 		}
 
-		protected override void InitializeProperties()
+		protected sealed override void InitializeProperties()
 		{
 			var _levelInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.LevelInfo.Id));
 			if (_levelInfo is null)
@@ -270,7 +270,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			}
 		}
 
-		protected override void InitializeProperties()
+		protected sealed override void InitializeProperties()
 		{
 			var _connectionInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.ConnectionInfo.Id));
 			if (_connectionInfo is null)
@@ -344,7 +344,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			}
 		}
 
-		protected override void InitializeProperties()
+		protected sealed override void InitializeProperties()
 		{
 			var _categoryInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.CategoryInfo.Id));
 			if (_categoryInfo is null)
@@ -434,7 +434,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			}
 		}
 
-		protected override void InitializeProperties()
+		protected sealed override void InitializeProperties()
 		{
 			var _endpointInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.EndpointInfo.Id));
 			if (_endpointInfo is null)
@@ -534,7 +534,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			}
 		}
 
-		protected override void InitializeProperties()
+		protected sealed override void InitializeProperties()
 		{
 			VirtualSignalGroupLevels = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Id)).Select(section => new VirtualSignalGroupLevelsSection(section)).ToList();
 			var _virtualSignalGroupInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Id));
@@ -615,7 +615,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			}
 		}
 
-		protected override void InitializeProperties()
+		protected sealed override void InitializeProperties()
 		{
 			var _transportTypeInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Id));
 			if (_transportTypeInfo is null)

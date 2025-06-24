@@ -26,10 +26,10 @@
 
 		public string ModuleId => ModuleSettings.ModuleId;
 
-		public IEnumerable<IDomDefinitionInfo> Definitions { get; } = new IDomDefinitionInfo[]
-		{
+		public IEnumerable<IDomDefinitionInfo> Definitions { get; } =
+		[
 			new OrchestrationEventDefinition(),
 			new ConfigurationDefinition(),
-		};
+		];
 	}
 }

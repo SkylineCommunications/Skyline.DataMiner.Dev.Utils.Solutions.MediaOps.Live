@@ -12,16 +12,6 @@
 	public class OrchestrationSchedulerTask
 	{
 		/// <summary>
-		/// The name of the main MediaOps Live Orchestration script.
-		/// </summary>
-		public static readonly string OrchestrationScriptName = "ORC-AS-EventOrchestration";
-
-		/// <summary>
-		/// Default naming for the orchestration tasks.
-		/// </summary>
-		public static readonly string OrchestrationTaskNaming = "MediaOps Live Orchestration Event";
-
-		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationSchedulerTask"/> class.
 		/// </summary>
 		/// <param name="dateTimeOffset">Timestamp for the task.</param>
@@ -74,46 +64,45 @@
 		/// <returns>An object array contains all configuration needed to create a scheduled orchestration task.</returns>
 		public object[] GenerateSchedulerTaskData()
 		{
-			return new object[]
-			{
+			return
+			[
 				new object[] { GenerateGeneralInfoTaskData() },
 				new object[] { GenerateActionsTaskData() },
 				new object[] { },
-			};
+			];
 		}
 
 		private string[] GenerateGeneralInfoTaskData()
 		{
-			List<string> generalInfoTaskData = ScheduledTaskId == null ? new List<string>() : new List<string> { ScheduledTaskId.TaskId.ToString() };
+			List<string> generalInfoTaskData = ScheduledTaskId == null ? [] : [ScheduledTaskId.TaskId.ToString()];
 
-			generalInfoTaskData.AddRange(new[]
-			{
-				$"{OrchestrationTaskNaming} {DateTime.LocalDateTime:yyyy-MM-dd_HH:mm:ss}",
+			generalInfoTaskData.AddRange([
+				$"{Constants.OrchestrationTaskNaming} {DateTime.LocalDateTime:yyyy-MM-dd_HH:mm:ss}",
 				DateTime.LocalDateTime.ToString("yyyy-MM-dd"),
 				DateTime.LocalDateTime.AddDays(1).ToString("yyyy-MM-dd"),
 				DateTime.LocalDateTime.ToString("HH:mm:ss"),
 				"once",
 				"1",
 				String.Empty,
-				OrchestrationTaskNaming,
+				Constants.OrchestrationTaskNaming,
 				"TRUE",
 				String.Empty,
 				String.Empty,
-			});
+			]);
 
 			return generalInfoTaskData.ToArray();
 		}
 
 		private string[] GenerateActionsTaskData()
 		{
-			return new[]
-			{
+			return
+			[
 				"automation",
-				OrchestrationScriptName,
+				Constants.OrchestrationScriptName,
 				$"PARAMETER:2:{JsonConvert.SerializeObject(OrchestrationEventIds)}",
 				"CHECKSETS:FALSE",
 				"DEFER:TRUE",
-			};
+			];
 		}
 	}
 }

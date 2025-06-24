@@ -17,12 +17,12 @@
 		}
 
 		/// <summary>
-		/// Gets the level number.
+		/// Gets or sets the level number.
 		/// </summary>
 		public int Number { get; set; }
 
 		/// <summary>
-		/// Gets the level name.
+		/// Gets or sets the level name.
 		/// </summary>
 		public string Name { get; set; }
 	}

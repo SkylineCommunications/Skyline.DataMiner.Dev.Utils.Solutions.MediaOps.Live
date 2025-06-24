@@ -42,6 +42,9 @@
 
 		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
+		/// <summary>
+		/// Gets the list of orchestration events relating to this job.
+		/// </summary>
 		public List<OrchestrationEventConfiguration> OrchestrationEvents { get; }
 
 		private static void ValidateConfigurationsBeforeSaving(IEnumerable<OrchestrationEvent> orchestrationEventConfigurations)

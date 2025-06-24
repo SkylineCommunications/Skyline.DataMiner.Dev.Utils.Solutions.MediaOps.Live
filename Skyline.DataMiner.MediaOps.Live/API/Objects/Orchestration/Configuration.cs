@@ -48,7 +48,7 @@
 		internal static DomDefinitionId DomDefinition => SlcOrchestrationIds.Definitions.Configuration;
 
 		/// <summary>
-		/// Contains information for all nodes that need to be configured.
+		/// Gets or sets information for all nodes that need to be configured.
 		/// </summary>
 		public IList<NodeConfiguration> NodeConfigurations
 		{
@@ -65,7 +65,7 @@
 		}
 
 		/// <summary>
-		/// Contains information about the way nodes need to be connected.
+		/// Gets or sets the information about the way nodes need to be connected.
 		/// </summary>
 		public IList<Connection> Connections
 		{
