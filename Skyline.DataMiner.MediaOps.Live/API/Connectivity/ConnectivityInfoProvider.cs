@@ -486,7 +486,7 @@
 
 		private void PendingConnectionActions_OnChanged(object sender, TableValueChange e)
 		{
-			lock (this)
+			lock (_lock)
 			{
 				var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
 
