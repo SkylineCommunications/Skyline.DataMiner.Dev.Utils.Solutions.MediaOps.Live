@@ -48,7 +48,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				public static FieldDescriptorID Destination { get; } = new FieldDescriptorID(new Guid("83e65e2f-dbdc-410b-bb76-b38d1cc03935"));
 				public static FieldDescriptorID IsConnected { get; } = new FieldDescriptorID(new Guid("72f8694c-abda-4a18-b5ee-029c9cb5c945"));
 				public static FieldDescriptorID ConnectedSource { get; } = new FieldDescriptorID(new Guid("811b70b7-c5db-429c-9c1e-af7b0f39ffba"));
-				public static FieldDescriptorID PendingConnectedSource { get; } = new FieldDescriptorID(new Guid("a6a5d036-0541-4041-8f39-9b676b757ee9"));
 			}
 
 			public static class VirtualSignalGroupInfo
@@ -1026,49 +1025,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				else
 				{
 					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource, (Guid)value);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the PendingConnectedSource field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public Guid? PendingConnectedSource
-		{
-			get
-			{
-				var wrapper = section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.ConnectionInfo.PendingConnectedSource);
-				if (wrapper != null)
-				{
-					return (Guid?)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.ConnectionInfo.PendingConnectedSource);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.ConnectionInfo.PendingConnectedSource, (Guid)value);
 				}
 			}
 		}

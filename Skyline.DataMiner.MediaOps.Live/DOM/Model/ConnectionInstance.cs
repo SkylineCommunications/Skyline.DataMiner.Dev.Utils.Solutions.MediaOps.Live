@@ -17,11 +17,6 @@
 				yield return connectedSource;
 			}
 
-			if (ConnectionInfo.PendingConnectedSource is Guid pendingConnectedSource && pendingConnectedSource != Guid.Empty)
-			{
-				yield return pendingConnectedSource;
-			}
-
 			if (ConnectionInfo.Destination is Guid destination && destination != Guid.Empty)
 			{
 				yield return destination;

@@ -103,15 +103,12 @@
 		{
 			var wasConnected = connection.ConnectionInfo.IsConnected;
 			var previousSource = connection.ConnectionInfo.ConnectedSource;
-			var previousPendingSource = connection.ConnectionInfo.PendingConnectedSource;
 
 			connection.ConnectionInfo.IsConnected = sourceEndpointId != null;
 			connection.ConnectionInfo.ConnectedSource = sourceEndpointId;
-			connection.ConnectionInfo.PendingConnectedSource = null;
 
 			return wasConnected != connection.ConnectionInfo.IsConnected ||
-				   previousSource != connection.ConnectionInfo.ConnectedSource ||
-				   previousPendingSource != null;
+				   previousSource != connection.ConnectionInfo.ConnectedSource;
 		}
 
 		private void NotifyPendingConnectionActions(ICollection<ConnectionInfo> connectionInfos)

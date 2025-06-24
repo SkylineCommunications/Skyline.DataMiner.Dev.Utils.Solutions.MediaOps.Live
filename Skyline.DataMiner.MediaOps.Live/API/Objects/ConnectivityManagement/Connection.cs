@@ -68,26 +68,12 @@
 			}
 		}
 
-		public ApiObjectReference<Endpoint>? PendingConnectedSource
-		{
-			get
-			{
-				return _domInstance.ConnectionInfo.PendingConnectedSource;
-			}
-
-			set
-			{
-				_domInstance.ConnectionInfo.PendingConnectedSource = value;
-			}
-		}
-
 		public IEnumerable<ApiObjectReference<Endpoint>> GetEndpoints()
 		{
 			var endpoints = new[]
 				{
 					Destination,
 					ConnectedSource,
-					PendingConnectedSource,
 				}
 				.Where(e => e.HasValue && e.Value != ApiObjectReference<Endpoint>.Empty)
 				.Select(e => e.Value);
@@ -114,6 +100,5 @@
 		public static readonly Exposer<Connection, ApiObjectReference<Endpoint>?> Destination = new Exposer<Connection, ApiObjectReference<Endpoint>?>(x => x.Destination, nameof(Connection.Destination));
 		public static readonly Exposer<Connection, bool> IsConnected = new Exposer<Connection, bool>(x => x.IsConnected, nameof(Connection.IsConnected));
 		public static readonly Exposer<Connection, ApiObjectReference<Endpoint>?> ConnectedSource = new Exposer<Connection, ApiObjectReference<Endpoint>?>(x => x.ConnectedSource, nameof(Connection.ConnectedSource));
-		public static readonly Exposer<Connection, ApiObjectReference<Endpoint>?> PendingConnectedSource = new Exposer<Connection, ApiObjectReference<Endpoint>?>(x => x.PendingConnectedSource, nameof(Connection.PendingConnectedSource));
 	}
 }

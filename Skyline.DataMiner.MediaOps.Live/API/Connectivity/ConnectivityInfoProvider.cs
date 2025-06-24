@@ -549,15 +549,6 @@
 						impactedEndpoints.Add(connection.ConnectedSource.Value);
 				}
 
-				if (connection.PendingConnectedSource != existing.PendingConnectedSource)
-				{
-					hasChangeDetected = true;
-					if (existing.PendingConnectedSource.HasValue)
-						impactedEndpoints.Add(existing.PendingConnectedSource.Value);
-					if (connection.PendingConnectedSource.HasValue)
-						impactedEndpoints.Add(connection.PendingConnectedSource.Value);
-				}
-
 				if (hasChangeDetected)
 				{
 					impactedEndpoints.Add(connection.Destination);
