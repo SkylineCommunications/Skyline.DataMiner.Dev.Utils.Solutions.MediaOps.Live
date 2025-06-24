@@ -560,7 +560,7 @@
 				impactedEndpoints.UnionWith(connection.GetEndpoints());
 			}
 
-			impactedEndpoints.RemoveWhere(x => x != ApiObjectReference<Endpoint>.Empty);
+			impactedEndpoints.RemoveWhere(x => x == ApiObjectReference<Endpoint>.Empty);
 
 			return impactedEndpoints;
 		}
