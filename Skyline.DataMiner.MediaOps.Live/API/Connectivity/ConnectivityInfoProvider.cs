@@ -71,7 +71,7 @@
 			}
 		}
 
-		public ConnectionStatus IsConnected(VirtualSignalGroup virtualSignalGroup)
+		public ConnectionState IsConnected(VirtualSignalGroup virtualSignalGroup)
 		{
 			if (virtualSignalGroup is null)
 			{
@@ -96,10 +96,10 @@
 
 					// Early exit optimization: if both true, partial state confirmed
 					if (anyConnected && anyDisconnected)
-						return ConnectionStatus.Partial;
+						return ConnectionState.Partial;
 				}
 
-				return anyConnected ? ConnectionStatus.Connected : ConnectionStatus.Disconnected;
+				return anyConnected ? ConnectionState.Connected : ConnectionState.Disconnected;
 			}
 		}
 
@@ -118,7 +118,7 @@
 			}
 		}
 
-		public IDictionary<VirtualSignalGroup, ConnectionStatus> IsConnected(ICollection<VirtualSignalGroup> virtualSignalGroups)
+		public IDictionary<VirtualSignalGroup, ConnectionState> IsConnected(ICollection<VirtualSignalGroup> virtualSignalGroups)
 		{
 			if (virtualSignalGroups is null)
 			{
@@ -144,59 +144,59 @@
 			{
 				EnsureEndpointsAreLoaded([endpoint]);
 
-				Endpoint connectedSource = null;
-				Endpoint pendingConnectedSource = null;
-				var connectedDestinations = new HashSet<Endpoint>();
-				var pendingConnectedDestinations = new HashSet<Endpoint>();
+				var connectedSource = (EndpointConnection)null;
+				var pendingConnectedSource = (Endpoint)null;
+				var destinationStates = new Dictionary<Endpoint, EndpointConnectionState>();
 
 				var connections = _connectionEndpointsMapping.GetConnections(endpoint);
-				var pendingActions = _pendingConnectionActionsMapping.GetPendingConnectionActions(endpoint);
 
-				foreach (var connection in connections)
+				foreach (var connection in connections.Where(x => x.ConnectedSource.HasValue))
 				{
-					if (connection.ConnectedSource.HasValue)
-					{
-						if (connection.ConnectedSource == endpoint &&
-							_endpoints.TryGetValue(connection.Destination, out var destination))
-						{
-							connectedDestinations.Add(destination);
-						}
+					var isDisconnecting = _pendingConnectionActionsMapping.IsDisconnecting(connection.Destination);
 
-						if (connection.Destination == endpoint)
-						{
-							_endpoints.TryGetValue(connection.ConnectedSource.Value, out connectedSource);
-						}
+					if (connection.ConnectedSource == endpoint &&
+						_endpoints.TryGetValue(connection.Destination, out var destination))
+					{
+						destinationStates[destination] = isDisconnecting ? EndpointConnectionState.Disconnecting : EndpointConnectionState.Connected;
 					}
 
-					foreach (var pendingAction in pendingActions)
+					if (connection.Destination == endpoint &&
+						connection.ConnectedSource.HasValue &&
+						_endpoints.TryGetValue(connection.ConnectedSource.Value, out var connectedSourceEndpoint))
 					{
-						if (pendingAction.Action == PendingConnectionAction.PendingActionType.Connect &&
+						var state = isDisconnecting ? EndpointConnectionState.Disconnecting : EndpointConnectionState.Connected;
+
+						connectedSource = new EndpointConnection(connectedSourceEndpoint, EndpointConnectionState.Connected);
+					}
+				}
+
+				var pendingActions = _pendingConnectionActionsMapping.GetPendingConnectionActions(endpoint);
+
+				foreach (var pendingAction in pendingActions)
+				{
+					if (pendingAction.Action == PendingConnectionAction.PendingActionType.Connect)
+					{
+						if (pendingAction.Destination == endpoint &&
 							pendingAction.PendingSource.HasValue)
 						{
-							if (pendingAction.Destination == endpoint &&
-								_endpoints.TryGetValue(pendingAction.PendingSource.Value, out var pendingSource) &&
-								connectedSource != pendingSource)
-							{
-								pendingConnectedSource = pendingSource;
-							}
-
-							if (pendingAction.PendingSource == endpoint &&
-								_endpoints.TryGetValue(pendingAction.Destination, out var pendingDestination) &&
-								!connectedDestinations.Contains(pendingDestination))
-							{
-								pendingConnectedDestinations.Add(pendingDestination);
-							}
+							_endpoints.TryGetValue(pendingAction.PendingSource.Value, out pendingConnectedSource);
+						}
+						else if (pendingAction.PendingSource == endpoint &&
+							_endpoints.TryGetValue(pendingAction.Destination, out var destination))
+						{
+							destinationStates[destination] = EndpointConnectionState.Connecting;
 						}
 					}
 				}
+
+				var destinationConnections = destinationStates.Select(x => new EndpointConnection(x.Key, x.Value)).ToList();
 
 				return new EndpointConnectivity(
 					endpoint,
 					_virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint),
 					connectedSource,
 					pendingConnectedSource,
-					connectedDestinations,
-					pendingConnectedDestinations);
+					destinationConnections);
 			}
 		}
 
@@ -250,7 +250,7 @@
 
 					if (connectivity.ConnectedSource != null)
 					{
-						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.ConnectedSource);
+						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.ConnectedSource.Endpoint);
 						connectedSources.UnionWith(virtualSignalGroups);
 					}
 
@@ -260,13 +260,13 @@
 						pendingConnectedSources.UnionWith(virtualSignalGroups);
 					}
 
-					if (connectivity.ConnectedDestinations.Count > 0)
+					if (connectivity.ConnectedDestinations.Any())
 					{
 						var virtualSignalGroups = connectivity.ConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
 						connectedDestinations.UnionWith(virtualSignalGroups);
 					}
 
-					if (connectivity.PendingConnectedDestinations.Count > 0)
+					if (connectivity.PendingConnectedDestinations.Any())
 					{
 						var virtualSignalGroups = connectivity.PendingConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
 						pendingConnectedDestinations.UnionWith(virtualSignalGroups);
@@ -480,6 +480,7 @@
 
 				UpdateConnections(e.Created.Concat(e.Updated), e.Deleted);
 
+				EnsureEndpointsAreLoaded(impactedEndpoints);
 				RaiseConnectionsUpdated(impactedEndpoints);
 			}
 		}
@@ -521,6 +522,7 @@
 
 				if (impactedEndpoints.Count > 0)
 				{
+					EnsureEndpointsAreLoaded(impactedEndpoints);
 					RaiseConnectionsUpdated(impactedEndpoints);
 				}
 			}

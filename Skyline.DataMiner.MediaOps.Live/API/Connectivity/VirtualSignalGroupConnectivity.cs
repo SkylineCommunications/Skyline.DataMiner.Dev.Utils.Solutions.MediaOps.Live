@@ -7,7 +7,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	public class VirtualSignalGroupConnectivity
+	public sealed class VirtualSignalGroupConnectivity
 	{
 		public VirtualSignalGroupConnectivity(
 			VirtualSignalGroup virtualSignalGroup,
@@ -59,27 +59,22 @@
 		/// </summary>
 		public IReadOnlyCollection<VirtualSignalGroup> PendingConnectedDestinations { get; }
 
-		public ConnectionStatus ConnectedStatus =>
+		public ConnectionState ConnectedState =>
 			Levels.Values.All(x => x.IsConnected)
-				? ConnectionStatus.Connected
+				? ConnectionState.Connected
 				: Levels.Values.Any(x => x.IsConnected)
-					? ConnectionStatus.Partial
-					: ConnectionStatus.Disconnected;
+					? ConnectionState.Partial
+					: ConnectionState.Disconnected;
 
-		public ConnectionStatus PendingConnectedStatus =>
-			Levels.Values.All(x => x.IsPendingConnected)
-				? ConnectionStatus.Connected
-				: Levels.Values.Any(x => x.IsPendingConnected)
-					? ConnectionStatus.Partial
-					: ConnectionStatus.Disconnected;
+		public bool IsConnected => Levels.Values.Any(x => x.IsConnected);
 
-		public bool IsConnected => ConnectedSources.Count > 0 || ConnectedDestinations.Count > 0;
+		public bool IsPendingConnected => Levels.Values.Any(x => x.IsPendingConnected);
 
-		public bool IsPendingConnected => PendingConnectedSources.Count > 0 || PendingConnectedDestinations.Count > 0;
+		public bool IsDisconnecting => Levels.Values.Any(x => x.IsDisconnecting);
 
 		public override string ToString()
 		{
-			return $"{VirtualSignalGroup.Name} [{VirtualSignalGroup.Name}] - Connected: {ConnectedStatus}";
+			return $"{VirtualSignalGroup.Name} [{VirtualSignalGroup.Name}] - Connected: {ConnectedState}";
 		}
 	}
 }

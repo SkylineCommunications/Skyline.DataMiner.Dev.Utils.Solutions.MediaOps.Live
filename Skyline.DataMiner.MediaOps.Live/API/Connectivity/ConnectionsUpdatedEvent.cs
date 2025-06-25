@@ -3,7 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 
-	public class ConnectionsUpdatedEvent
+	public sealed class ConnectionsUpdatedEvent
 	{
 		public ConnectionsUpdatedEvent(
 			IReadOnlyCollection<EndpointConnectivity> endpoints,

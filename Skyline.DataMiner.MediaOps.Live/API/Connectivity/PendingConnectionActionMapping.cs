@@ -8,7 +8,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 
-	internal class PendingConnectionActionMapping
+	internal sealed class PendingConnectionActionMapping
 	{
 		private readonly ManyToManyMapping<PendingConnectionAction, ApiObjectReference<Endpoint>> _mapping = new();
 
@@ -33,6 +33,23 @@
 			return _mapping.Reverse.TryGetValue(endpoint, out var connections)
 				? connections.ToList()
 				: Array.Empty<PendingConnectionAction>();
+		}
+
+		public bool IsConnecting(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
+		{
+			var actions = GetPendingConnectionActions(destination);
+
+			return actions.Any(x => x.Action == PendingConnectionAction.PendingActionType.Connect &&
+				x.Destination == destination &&
+				x.PendingSource == source);
+		}
+
+		public bool IsDisconnecting(ApiObjectReference<Endpoint> destination)
+		{
+			var actions = GetPendingConnectionActions(destination);
+
+			return actions.Any(x => x.Action == PendingConnectionAction.PendingActionType.Disconnect &&
+				x.Destination == destination);
 		}
 
 		public void Add(PendingConnectionAction pendingAction)

@@ -6,7 +6,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	internal class PendingConnectionAction
+	internal sealed class PendingConnectionAction
 	{
 		public PendingConnectionAction(object[] row)
 		{
