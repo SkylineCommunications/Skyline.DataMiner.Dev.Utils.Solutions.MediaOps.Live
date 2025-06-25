@@ -9,7 +9,6 @@
 	using Skyline.DataMiner.Net.Async;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.SubscriptionFilters;
-	using Skyline.DataMiner.Utils.DOM.UnitTesting;
 
 	/// <summary>
 	/// A mock implementation of <see cref="IConnection"/> used for testing purposes.
@@ -19,27 +18,17 @@
 		private readonly ConcurrentDictionary<string, Subscription> _subscriptions = new ConcurrentDictionary<string, Subscription>();
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="SLNetConnectionMock"/> class
-		/// using the specified <see cref="DomSLNetMessageHandler"/>.
+		/// Initializes a new instance of the <see cref="SLNetConnectionMock"/> class.
 		/// </summary>
-		/// <param name="messageHandler">The message handler to use for processing messages.</param>
-		public SLNetConnectionMock(DomSLNetMessageHandler messageHandler)
+		/// <param name="dms">Mocked DMS.</param>
+		internal SLNetConnectionMock(Dms dms)
 		{
-			DomSLNetMessageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
-			DomSLNetMessageHandler.OnInstancesChanged += DomSLNetMessageHandler_OnInstancesChanged;
+			Dms = dms ?? throw new ArgumentNullException(nameof(dms));
 		}
 
-		/// <summary>
-		/// Initializes a new instance of the <see cref="SLNetConnectionMock"/> class
-		/// with a default instance of <see cref="DomSLNetMessageHandler"/>.
-		/// </summary>
-		public SLNetConnectionMock() : this(new DomSLNetMessageHandler())
-		{
-		}
+		internal Dms Dms { get; }
 
-		private DomSLNetMessageHandler DomSLNetMessageHandler { get; }
-
-		private void DomSLNetMessageHandler_OnInstancesChanged(object sender, DomInstancesChangedEventMessage e)
+		internal void NotifyDomInstancesChanged(DomInstancesChangedEventMessage e)
 		{
 			foreach (var subscription in _subscriptions.Values)
 			{
@@ -133,9 +122,9 @@
 				throw new ArgumentNullException(nameof(msg));
 			}
 
-			if (DomSLNetMessageHandler.TryHandleMessage(msg, out var response))
+			if (Dms.TryHandleMessage(msg, out var responses))
 			{
-				return [response];
+				return responses.ToArray();
 			}
 
 			return [];

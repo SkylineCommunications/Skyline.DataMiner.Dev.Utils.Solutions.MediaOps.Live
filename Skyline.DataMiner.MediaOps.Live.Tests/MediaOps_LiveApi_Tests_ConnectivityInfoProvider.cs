@@ -2,6 +2,7 @@
 {
 	using Shouldly;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.GQI.Metrics;
@@ -13,7 +14,7 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Performance()
 		{
-			var connection = new SLNetConnectionMock();
+			var connection = new Dms().CreateConnection();
 			var interceptedConnection = new ConnectionInterceptor(connection);
 
 			var api = new MediaOpsLiveApiMock(interceptedConnection);
@@ -35,7 +36,6 @@
 		}
 
 		[TestMethod]
-		[Ignore]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Subscription()
 		{
 			var api = new MediaOpsLiveApiMock();
@@ -144,10 +144,20 @@
 		}
 
 		[TestMethod]
-		[Ignore]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity()
 		{
-			var api = new MediaOpsLiveApiMock();
+			var dms = new Dms();
+
+			var mediationElement = new Element(123, 1, "MediaOps Mediation 1")
+			{
+				ProtocolName = "Skyline MediaOps Mediation",
+				ProtocolVersion = "1.0.0.1",
+			};
+			mediationElement.AddTable(3000);
+			dms.AddElement(mediationElement);
+
+			var connection = dms.CreateConnection();
+			var api = new MediaOpsLiveApiMock(connection);
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var audioSource2 = api.Endpoints.Read("Audio Source 2");
@@ -202,7 +212,6 @@
 		}
 
 		[TestMethod]
-		[Ignore]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity_Bulk()
 		{
 			var api = new MediaOpsLiveApiMock();
@@ -314,7 +323,6 @@
 		}
 
 		[TestMethod]
-		[Ignore]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectivity()
 		{
 			var api = new MediaOpsLiveApiMock();
@@ -407,7 +415,6 @@
 		}
 
 		[TestMethod]
-		[Ignore]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectivity_Bulk()
 		{
 			var api = new MediaOpsLiveApiMock();

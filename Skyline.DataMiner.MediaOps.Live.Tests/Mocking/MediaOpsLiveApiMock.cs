@@ -17,7 +17,7 @@
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{
 		public MediaOpsLiveApiMock(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false)
-			: this(new SLNetConnectionMock(), installDomModules, createEndpoints, createVsgs, createConnections)
+			: this(new Dms().CreateConnection(), installDomModules, createEndpoints, createVsgs, createConnections)
 		{
 		}
 
@@ -167,7 +167,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			throw new NotImplementedException();
+			// throw new NotImplementedException();
 		}
 
 		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)
