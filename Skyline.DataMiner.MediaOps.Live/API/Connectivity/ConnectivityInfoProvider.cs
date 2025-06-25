@@ -152,21 +152,21 @@
 
 				foreach (var connection in connections.Where(x => x.ConnectedSource.HasValue))
 				{
-					var isDisconnecting = _pendingConnectionActionsMapping.IsDisconnecting(connection.Destination);
-
-					if (connection.ConnectedSource == endpoint &&
-						_endpoints.TryGetValue(connection.Destination, out var destination))
-					{
-						destinationStates[destination] = isDisconnecting ? EndpointConnectionState.Disconnecting : EndpointConnectionState.Connected;
-					}
-
-					if (connection.Destination == endpoint &&
-						connection.ConnectedSource.HasValue &&
+					if (connection.ConnectedSource.HasValue &&
+						_endpoints.TryGetValue(connection.Destination, out var destination) &&
 						_endpoints.TryGetValue(connection.ConnectedSource.Value, out var connectedSourceEndpoint))
 					{
+						var isDisconnecting = _pendingConnectionActionsMapping.IsDisconnecting(connection.Destination);
 						var state = isDisconnecting ? EndpointConnectionState.Disconnecting : EndpointConnectionState.Connected;
 
-						connectedSource = new EndpointConnection(connectedSourceEndpoint, EndpointConnectionState.Connected);
+						if (connection.Destination == endpoint)
+						{
+							connectedSource = new EndpointConnection(connectedSourceEndpoint, state);
+						}
+						else if (connection.ConnectedSource == endpoint)
+						{
+							destinationStates[destination] = state;
+						}
 					}
 				}
 
@@ -174,15 +174,19 @@
 
 				foreach (var pendingAction in pendingActions)
 				{
-					if (pendingAction.Action == PendingConnectionAction.PendingActionType.Connect)
+					if (!_endpoints.TryGetValue(pendingAction.Destination, out var destination))
 					{
-						if (pendingAction.Destination == endpoint &&
-							pendingAction.PendingSource.HasValue)
+						continue;
+					}
+
+					if (pendingAction.Action == PendingConnectionAction.PendingActionType.Connect &&
+						pendingAction.PendingSource.HasValue)
+					{
+						if (pendingAction.Destination == endpoint)
 						{
 							_endpoints.TryGetValue(pendingAction.PendingSource.Value, out pendingConnectedSource);
 						}
-						else if (pendingAction.PendingSource == endpoint &&
-							_endpoints.TryGetValue(pendingAction.Destination, out var destination))
+						else if (pendingAction.PendingSource == endpoint)
 						{
 							destinationStates[destination] = EndpointConnectionState.Connecting;
 						}
