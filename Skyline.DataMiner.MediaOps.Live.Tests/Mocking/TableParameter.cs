@@ -12,18 +12,31 @@
 		public TableParameter(int id)
 		{
 			Id = id;
-
-			_rows.TryAdd("Row1", new object[] { "Value1", "Value2" });
 		}
 
 		public int Id { get; }
 
 		public IReadOnlyDictionary<string, object[]> Rows => _rows;
 
+		public void SetRow(string key, object[] row)
+		{
+			if (String.IsNullOrEmpty(key))
+			{
+				throw new ArgumentException($"'{nameof(key)}' cannot be null or empty.", nameof(key));
+			}
+
+			if (row is null)
+			{
+				throw new ArgumentNullException(nameof(row));
+			}
+
+			_rows[key] = row;
+		}
+
 		internal ParameterValue ToParameterValue()
 		{
 			var rowList = _rows.Values.ToList();
-			var columnCount = rowList.Count > 0 ? rowList.Max(x => x.Length) : 1;
+			var columnCount = rowList.Count > 0 ? rowList.Max(x => x.Length) : 0;
 			var columns = new object[columnCount];
 
 			for (int c = 0; c < columnCount; c++)
