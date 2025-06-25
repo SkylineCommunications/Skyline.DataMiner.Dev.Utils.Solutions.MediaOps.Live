@@ -2,7 +2,7 @@
 {
 	using Shouldly;
 
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.GQI.Metrics;
@@ -14,15 +14,15 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Performance()
 		{
-			var connection = new Dms().CreateConnection();
+			var simulation = new MediaOpsLiveSimulation();
+			var connection = simulation.Dms.CreateConnection();
 			var interceptedConnection = new ConnectionInterceptor(connection);
-
-			var api = new MediaOpsLiveApiMock(interceptedConnection);
+			var api = new MediaOpsLiveApi(interceptedConnection);
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 
-			api.CreateTestConnection(audioSource1, audioDestination1);
+			simulation.CreateTestConnection(audioSource1, audioDestination1);
 
 			var connectionMetrics = new ConnectionMetrics(interceptedConnection);
 
@@ -38,7 +38,8 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Subscription()
 		{
-			var api = new MediaOpsLiveApiMock();
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
@@ -57,14 +58,14 @@
 			var receivedEvents = new List<ConnectionsUpdatedEvent>();
 			connectivity.ConnectionsUpdated += (sender, e) => receivedEvents.Add(e);
 
-			api.CreateTestConnection(audioSource1, audioDestination1);
+			simulation.CreateTestConnection(audioSource1, audioDestination1);
 			receivedEvents.Count.ShouldBe(1);
 			receivedEvents.Last().Endpoints.Count.ShouldBe(2); // Source and Destination
 			receivedEvents.Last().VirtualSignalGroups.Count.ShouldBe(2);
 			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedState == ConnectionState.Partial);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([source1, destination1], ignoreOrder: true);
 
-			api.CreateTestConnection(videoSource1, videoDestination1);
+			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			receivedEvents.Count.ShouldBe(2);
 			receivedEvents.Last().Endpoints.Count.ShouldBe(2); // Source and Destination
 			receivedEvents.Last().VirtualSignalGroups.Count.ShouldBe(2);
@@ -72,23 +73,23 @@
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.ShouldBe([source1, destination1], ignoreOrder: true);
 
-			api.CreateTestConnection(videoSource1, videoDestination1);
+			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			receivedEvents.Count.ShouldBe(2); // No new event, as the connection already exists
 
-			api.CreateTestPendingConnection(audioSource2, audioDestination1);
-			api.CreateTestPendingConnection(videoSource2, videoDestination1);
+			simulation.CreateTestPendingConnection(audioSource2, audioDestination1);
+			simulation.CreateTestPendingConnection(videoSource2, videoDestination1);
 			receivedEvents.Count.ShouldBe(4);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.ShouldBe([source2, destination1], ignoreOrder: true);
 
-			api.CreateTestConnection(audioSource2, audioDestination1);
-			api.CreateTestConnection(videoSource2, videoDestination1);
+			simulation.CreateTestConnection(audioSource2, audioDestination1);
+			simulation.CreateTestConnection(videoSource2, videoDestination1);
 			receivedEvents.Count.ShouldBe(6);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.ShouldBe([source1, source2, destination1], ignoreOrder: true);
 
-			api.CreateTestConnection(null, audioDestination1);
-			api.CreateTestConnection(null, videoDestination1);
+			simulation.CreateTestConnection(null, audioDestination1);
+			simulation.CreateTestConnection(null, videoDestination1);
 			receivedEvents.Count.ShouldBe(8);
 			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedState == ConnectionState.Disconnected);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
@@ -100,14 +101,15 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_IsConnected()
 		{
-			var api = new MediaOpsLiveApiMock();
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var audioSource2 = api.Endpoints.Read("Audio Source 2");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 
-			api.CreateTestConnection(audioSource1, audioDestination1);
+			simulation.CreateTestConnection(audioSource1, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -121,14 +123,15 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_IsConnected_Bulk()
 		{
-			var api = new MediaOpsLiveApiMock();
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var audioSource2 = api.Endpoints.Read("Audio Source 2");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 
-			api.CreateTestConnection(audioSource1, audioDestination1);
+			simulation.CreateTestConnection(audioSource1, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -146,18 +149,8 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity()
 		{
-			var dms = new Dms();
-
-			var mediationElement = new Element(123, 1, "MediaOps Mediation 1")
-			{
-				ProtocolName = "Skyline MediaOps Mediation",
-				ProtocolVersion = "1.0.0.1",
-			};
-			mediationElement.AddTable(3000);
-			dms.AddElement(mediationElement);
-
-			var connection = dms.CreateConnection();
-			var api = new MediaOpsLiveApiMock(connection);
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var audioSource2 = api.Endpoints.Read("Audio Source 2");
@@ -169,8 +162,8 @@
 			var source1 = api.VirtualSignalGroups.Read("Source 1");
 			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
 
-			api.CreateTestConnection(audioSource1, audioDestination1);
-			api.CreateTestPendingConnection(audioSource2, audioDestination2);
+			simulation.CreateTestConnection(audioSource1, audioDestination1);
+			simulation.CreateTestPendingConnection(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -214,7 +207,8 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity_Bulk()
 		{
-			var api = new MediaOpsLiveApiMock();
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var audioSource2 = api.Endpoints.Read("Audio Source 2");
@@ -223,8 +217,8 @@
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 			var audioDestination3 = api.Endpoints.Read("Audio Destination 3");
 
-			api.CreateTestConnection(audioSource1, audioDestination1);
-			api.CreateTestPendingConnection(audioSource2, audioDestination2);
+			simulation.CreateTestConnection(audioSource1, audioDestination1);
+			simulation.CreateTestPendingConnection(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -252,7 +246,8 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_IsConnected()
 		{
-			var api = new MediaOpsLiveApiMock();
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
 
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
@@ -268,9 +263,9 @@
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
-			api.CreateTestConnection(videoSource1, videoDestination1);
-			api.CreateTestConnection(audioSource1, audioDestination1);
-			api.CreateTestConnection(audioSource2, audioDestination2);
+			simulation.CreateTestConnection(videoSource1, videoDestination1);
+			simulation.CreateTestConnection(audioSource1, audioDestination1);
+			simulation.CreateTestConnection(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -287,7 +282,8 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_IsConnected_Bulk()
 		{
-			var api = new MediaOpsLiveApiMock();
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
 
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
@@ -303,9 +299,9 @@
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
-			api.CreateTestConnection(videoSource1, videoDestination1);
-			api.CreateTestConnection(audioSource1, audioDestination1);
-			api.CreateTestConnection(audioSource2, audioDestination2);
+			simulation.CreateTestConnection(videoSource1, videoDestination1);
+			simulation.CreateTestConnection(audioSource1, audioDestination1);
+			simulation.CreateTestConnection(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -325,7 +321,8 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectivity()
 		{
-			var api = new MediaOpsLiveApiMock();
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
 
 			var videoLevel = api.Levels.Read("Video");
 			var audioLevel = api.Levels.Read("Audio");
@@ -347,11 +344,11 @@
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
-			api.CreateTestConnection(videoSource1, videoDestination1);
-			api.CreateTestConnection(audioSource1, audioDestination2);
-			api.CreateTestConnection(videoSource2, videoDestination2);
-			api.CreateTestPendingConnection(videoSource3, videoDestination1);
-			api.CreateTestPendingConnection(audioSource3, audioDestination1);
+			simulation.CreateTestConnection(videoSource1, videoDestination1);
+			simulation.CreateTestConnection(audioSource1, audioDestination2);
+			simulation.CreateTestConnection(videoSource2, videoDestination2);
+			simulation.CreateTestPendingConnection(videoSource3, videoDestination1);
+			simulation.CreateTestPendingConnection(audioSource3, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -417,7 +414,8 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectivity_Bulk()
 		{
-			var api = new MediaOpsLiveApiMock();
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
 
 			var videoLevel = api.Levels.Read("Video");
 			var audioLevel = api.Levels.Read("Audio");
@@ -439,11 +437,11 @@
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 
-			api.CreateTestConnection(videoSource1, videoDestination1);
-			api.CreateTestConnection(audioSource1, audioDestination2);
-			api.CreateTestConnection(videoSource2, videoDestination2);
-			api.CreateTestPendingConnection(videoSource3, videoDestination1);
-			api.CreateTestPendingConnection(audioSource3, audioDestination1);
+			simulation.CreateTestConnection(videoSource1, videoDestination1);
+			simulation.CreateTestConnection(audioSource1, audioDestination2);
+			simulation.CreateTestConnection(videoSource2, videoDestination2);
+			simulation.CreateTestPendingConnection(videoSource3, videoDestination1);
+			simulation.CreateTestPendingConnection(audioSource3, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 

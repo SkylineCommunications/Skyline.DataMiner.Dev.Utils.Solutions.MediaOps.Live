@@ -21,12 +21,12 @@
 		/// Initializes a new instance of the <see cref="SLNetConnectionMock"/> class.
 		/// </summary>
 		/// <param name="dms">Mocked DMS.</param>
-		internal SLNetConnectionMock(Dms dms)
+		internal SLNetConnectionMock(SimulatedDms dms)
 		{
 			Dms = dms ?? throw new ArgumentNullException(nameof(dms));
 		}
 
-		internal Dms Dms { get; }
+		internal SimulatedDms Dms { get; }
 
 		internal void NotifyDomInstancesChanged(DomInstancesChangedEventMessage e)
 		{

@@ -5,7 +5,6 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -114,9 +113,10 @@
 		private void NotifyPendingConnectionActions(ICollection<ConnectionInfo> connectionInfos)
 		{
 			var now = DateTimeOffset.Now;
-			var dms = Engine.GetDms();
 
-			var mediationElementMap = MediationElement.GetMediationElements(dms, connectionInfos.Select(x => x.DestinationEndpoint));
+			var mediationElementMap = MediationElement.GetMediationElements(
+				Api,
+				connectionInfos.Select(x => x.DestinationEndpoint));
 
 			foreach (var group in connectionInfos
 				.Where(x => mediationElementMap.ContainsKey(x.DestinationEndpoint))

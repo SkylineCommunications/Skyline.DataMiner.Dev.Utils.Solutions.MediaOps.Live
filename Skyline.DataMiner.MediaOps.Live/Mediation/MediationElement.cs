@@ -5,6 +5,7 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
@@ -18,6 +19,8 @@
 		}
 
 		internal IDmsElement DmsElement { get; }
+
+		internal DmsElementId Id => DmsElement.DmsElementId;
 
 		internal int DmaId => DmsElement.AgentId;
 
@@ -82,17 +85,19 @@
 			}
 		}
 
-		public static IDictionary<EndpointInfo, MediationElement> GetMediationElements(IDms dms, IEnumerable<EndpointInfo> endpoints)
+		public static IDictionary<EndpointInfo, MediationElement> GetMediationElements(MediaOpsLiveApi api, IEnumerable<EndpointInfo> endpoints)
 		{
-			if (dms is null)
+			if (api is null)
 			{
-				throw new ArgumentNullException(nameof(dms));
+				throw new ArgumentNullException(nameof(api));
 			}
 
 			if (endpoints is null)
 			{
 				throw new ArgumentNullException(nameof(endpoints));
 			}
+
+			var dms = api.Connection.GetDms();
 
 			var endpointToElement = endpoints
 				.GroupBy(e => e.Element)
@@ -124,11 +129,11 @@
 			return result;
 		}
 
-		public static IDictionary<Endpoint, MediationElement> GetMediationElements(IDms dms, IEnumerable<Endpoint> endpoints)
+		public static IDictionary<Endpoint, MediationElement> GetMediationElements(MediaOpsLiveApi api, IEnumerable<Endpoint> endpoints)
 		{
-			if (dms is null)
+			if (api is null)
 			{
-				throw new ArgumentNullException(nameof(dms));
+				throw new ArgumentNullException(nameof(api));
 			}
 
 			if (endpoints is null)
@@ -137,7 +142,7 @@
 			}
 
 			var endpointInfoMap = endpoints.ToDictionary(EndpointInfo.Create);
-			var mediationElementMap = GetMediationElements(dms, endpointInfoMap.Keys);
+			var mediationElementMap = GetMediationElements(api, endpointInfoMap.Keys);
 
 			var result = new Dictionary<Endpoint, MediationElement>();
 

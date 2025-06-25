@@ -8,30 +8,29 @@
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
 
-	internal class Dms
+	public class SimulatedDms
 	{
-		private readonly ConcurrentDictionary<DmsElementId, Element> _elements = new();
+		private readonly ConcurrentDictionary<DmsElementId, SimulatedElement> _elements = new();
 		private readonly ConcurrentBag<SLNetConnectionMock> _connections = new();
 		private readonly DomSLNetMessageHandler _domSLNetMessageHandler = new();
 
-		public Dms()
+		public SimulatedDms()
 		{
 			_domSLNetMessageHandler.OnInstancesChanged += DomSLNetMessageHandler_OnInstancesChanged;
 		}
 
-		public IReadOnlyDictionary<DmsElementId, Element> Elements => _elements;
+		public IReadOnlyDictionary<DmsElementId, SimulatedElement> Elements => _elements;
 
-		public void AddElement(Element element)
+		public SimulatedElement CreateElement(int dmaId, int elementId, string name, string protocolName, string protocolVersion = "1.0.0.1")
 		{
-			if (element is null)
-			{
-				throw new ArgumentNullException(nameof(element));
-			}
+			var element = new SimulatedElement(this, dmaId, elementId, name, protocolName, protocolVersion);
 
 			if (!_elements.TryAdd(element.Id, element))
 			{
 				throw new InvalidOperationException($"Element with ID {element.Id} already exists.");
 			}
+
+			return element;
 		}
 
 		public IConnection CreateConnection()
@@ -72,7 +71,7 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(GetLiteElementInfo msg)
 		{
-			IEnumerable<Element> elements = _elements.Values;
+			IEnumerable<SimulatedElement> elements = _elements.Values;
 
 			if (!String.IsNullOrEmpty(msg.ProtocolName))
 			{

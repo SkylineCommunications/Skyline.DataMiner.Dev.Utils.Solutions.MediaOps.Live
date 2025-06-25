@@ -6,15 +6,21 @@
 
 	using DmsElementId = Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId;
 
-	internal class Element
+	public class SimulatedElement
 	{
 		private readonly ConcurrentDictionary<int, TableParameter> _tables = new();
 
-		public Element(int dmaId, int elementId, string name)
+		public SimulatedElement(SimulatedDms dms, int dmaId, int elementId, string name, string protocolName, string protocolVersion)
 		{
+			Dms = dms;
+
 			Id = new DmsElementId(dmaId, elementId);
 			Name = name;
+			ProtocolName = protocolName;
+			ProtocolVersion = protocolVersion;
 		}
+
+		public SimulatedDms Dms { get; }
 
 		public DmsElementId Id { get; }
 
@@ -26,17 +32,17 @@
 
 		public string Name { get; }
 
-		public string ProtocolName { get; set; }
+		public string ProtocolName { get; }
 
-		public string ProtocolVersion { get; set; }
+		public string ProtocolVersion { get; }
 
 		public ElementState State { get; set; } = ElementState.Active;
 
 		public IReadOnlyDictionary<int, TableParameter> Tables => _tables;
 
-		public TableParameter AddTable(int id)
+		public TableParameter CreateTable(int id)
 		{
-			var table = new TableParameter(id);
+			var table = new TableParameter(this, id);
 			_tables.TryAdd(id, table);
 
 			return table;

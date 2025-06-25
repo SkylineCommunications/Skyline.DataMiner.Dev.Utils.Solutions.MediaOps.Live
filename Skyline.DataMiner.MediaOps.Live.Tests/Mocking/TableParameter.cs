@@ -5,14 +5,17 @@
 
 	using Skyline.DataMiner.Net.Messages;
 
-	internal class TableParameter
+	public class TableParameter
 	{
 		private readonly ConcurrentDictionary<string, object[]> _rows = new();
 
-		public TableParameter(int id)
+		public TableParameter(SimulatedElement element, int id)
 		{
+			Element = element;
 			Id = id;
 		}
+
+		public SimulatedElement Element { get; }
 
 		public int Id { get; }
 
@@ -37,6 +40,13 @@
 		{
 			var rowList = _rows.Values.ToList();
 			var columnCount = rowList.Count > 0 ? rowList.Max(x => x.Length) : 0;
+
+			if (columnCount == 0)
+			{
+				// Create at least one column that represents the keys.
+				columnCount = 1;
+			}
+
 			var columns = new object[columnCount];
 
 			for (int c = 0; c < columnCount; c++)
