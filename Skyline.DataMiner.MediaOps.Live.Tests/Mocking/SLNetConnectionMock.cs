@@ -12,7 +12,7 @@
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
 
 	/// <summary>
-	/// A mock implementation of <see cref="IConnection"/> used for testing purposes,
+	/// A mock implementation of <see cref="IConnection"/> used for testing purposes.
 	/// </summary>
 	public class SLNetConnectionMock : IConnection
 	{
@@ -22,6 +22,7 @@
 		/// Initializes a new instance of the <see cref="SLNetConnectionMock"/> class
 		/// using the specified <see cref="DomSLNetMessageHandler"/>.
 		/// </summary>
+		/// <param name="messageHandler">The message handler to use for processing messages.</param>
 		public SLNetConnectionMock(DomSLNetMessageHandler messageHandler)
 		{
 			DomSLNetMessageHandler = messageHandler ?? throw new ArgumentNullException(nameof(messageHandler));
@@ -95,24 +96,31 @@
 		/// <inheritdoc/>
 		public ServerDetails ServerDetails => throw new NotImplementedException();
 
-#pragma warning disable 67
+#pragma warning disable CS0067 // The event is never used
 		/// <inheritdoc/>
-		public event ConnectionClosedHandler OnClose;
+		public event ConnectionClosedHandler? OnClose;
+
 		/// <inheritdoc/>
-		public event NewMessageEventHandler OnNewMessage;
+		public event NewMessageEventHandler? OnNewMessage;
+
 		/// <inheritdoc/>
-		public event AbnormalCloseEventHandler OnAbnormalClose;
+		public event AbnormalCloseEventHandler? OnAbnormalClose;
+
 		/// <inheritdoc/>
-		public event EventsDroppedEventHandler OnEventsDropped;
+		public event EventsDroppedEventHandler? OnEventsDropped;
+
 		/// <inheritdoc/>
-		public event SubscriptionCompleteEventHandler OnSubscriptionComplete;
+		public event SubscriptionCompleteEventHandler? OnSubscriptionComplete;
+
 		/// <inheritdoc/>
-		public event AuthenticationChallengeEventHandler OnAuthenticationChallenge;
+		public event AuthenticationChallengeEventHandler? OnAuthenticationChallenge;
+
 		/// <inheritdoc/>
-		public event EventHandler<SubscriptionStateEventArgs> OnSubscriptionState;
-#pragma warning restore 67
+		public event EventHandler<SubscriptionStateEventArgs>? OnSubscriptionState;
+#pragma warning restore CS0067
 
 		/// <summary>
+		/// Gets a value indicating whether there are subscribers to the <see cref="OnNewMessage"/> event.
 		/// For unit testing purposes.
 		/// </summary>
 		internal bool HasOnNewMessageSubscribers => OnNewMessage?.GetInvocationList().Any() ?? false;
