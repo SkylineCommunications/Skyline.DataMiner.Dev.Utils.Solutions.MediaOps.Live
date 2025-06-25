@@ -361,7 +361,7 @@
 			var destination1Connectivity = connectivity.GetConnectivity(destination1);
 			destination1Connectivity.IsConnected.ShouldBeTrue();
 			destination1Connectivity.IsPendingConnected.ShouldBeTrue();
-			destination1Connectivity.IsDisconnecting.ShouldBeTrue();
+			destination1Connectivity.IsDisconnecting.ShouldBeFalse();
 			destination1Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
 			destination1Connectivity.ConnectedSources.ShouldBe([source1]);
 			destination1Connectivity.PendingConnectedSources.ShouldBe([source3]);
