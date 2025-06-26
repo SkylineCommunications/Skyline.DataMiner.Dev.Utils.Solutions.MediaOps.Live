@@ -17,6 +17,8 @@
 
 		public EndpointConnectionState State { get; }
 
+		public bool IsConnected => State is EndpointConnectionState.Connected or EndpointConnectionState.Disconnecting;
+
 		public override bool Equals(object obj)
 		{
 			return Equals(obj as EndpointConnection);

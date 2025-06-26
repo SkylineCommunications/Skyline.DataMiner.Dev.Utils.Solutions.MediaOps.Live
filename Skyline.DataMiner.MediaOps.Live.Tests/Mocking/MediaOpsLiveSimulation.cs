@@ -36,7 +36,7 @@
 
 		public MediaOpsLiveApi Api { get; }
 
-		public void CreateTestConnection(Endpoint? source, Endpoint destination)
+		public void CreateTestConnection(Endpoint source, Endpoint destination)
 		{
 			if (destination is null)
 			{
@@ -54,7 +54,10 @@
 			Api.Connections.CreateOrUpdate(connection);
 		}
 
-		public void CreateTestPendingConnectionAction(Endpoint? pendingSource, Endpoint destination)
+		public void CreateTestPendingConnectionAction(
+			Endpoint pendingSource,
+			Endpoint destination,
+			PendingConnectionAction.PendingActionType action = PendingConnectionAction.PendingActionType.Connect)
 		{
 			if (destination is null)
 			{
@@ -63,14 +66,17 @@
 
 			var mediationElement = MediationElement.GetMediationElements(Api, [destination])[destination];
 
-			var pendingActionsTable = Dms.Elements[mediationElement.Id].Tables[3000];
+			var pendingActionsTable = Dms
+				.Agents[mediationElement.DmaId]
+				.Elements[mediationElement.ElementId]
+				.Tables[3000];
 
 			var rowKey = Convert.ToString(destination.ID);
 			var row = new object[]
 			{
 				rowKey,
 				destination.Name,
-				(int)PendingConnectionAction.PendingActionType.Connect,
+				(int)action,
 				DateTime.Now.ToOADate(),
 				pendingSource?.ID.ToString() ?? String.Empty,
 				pendingSource?.Name ?? String.Empty,
@@ -88,7 +94,10 @@
 
 			var mediationElement = MediationElement.GetMediationElements(Api, [destination])[destination];
 
-			var pendingActionsTable = Dms.Elements[mediationElement.Id].Tables[3000];
+			var pendingActionsTable = Dms
+				.Agents[mediationElement.DmaId]
+				.Elements[mediationElement.ElementId]
+				.Tables[3000];
 
 			var rowKey = Convert.ToString(destination.ID);
 			pendingActionsTable.DeleteRow(rowKey);
@@ -125,7 +134,8 @@
 
 			for (int i = 1; i <= 10; i++)
 			{
-				Dms.CreateElement(123, i, $"MediaOps Simulator {i}", "Skyline MediaOps Simulator");
+				Dms.GetOrCreateAgent(123)
+					.CreateElement(i, $"MediaOps Simulator {i}", "Skyline MediaOps Simulator");
 
 				var videoSource1 = new Endpoint
 				{
@@ -214,7 +224,7 @@
 				}
 			}
 
-			OrchestrationJobConfiguration? job = Api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");
+			OrchestrationJobConfiguration job = Api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");
 			job.OrchestrationEvents.AddRange(WithNodes_CreateEventConfigurationInstances(10, 10));
 
 			Api.Orchestration.SaveEventConfigurations(job.OrchestrationEvents);
@@ -222,7 +232,9 @@
 
 		private void CreateMediationElement()
 		{
-			var element = Dms.CreateElement(123, 1000, "MediaOps Mediation 1", "Skyline MediaOps Mediation");
+			var element = Dms.GetOrCreateAgent(123)
+				.CreateElement(1000, "MediaOps Mediation 1", "Skyline MediaOps Mediation");
+
 			element.CreateTable(3000);
 		}
 

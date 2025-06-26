@@ -155,16 +155,22 @@
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var audioSource2 = api.Endpoints.Read("Audio Source 2");
 			var audioSource3 = api.Endpoints.Read("Audio Source 3");
+			var audioSource4 = api.Endpoints.Read("Audio Source 4");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 			var audioDestination3 = api.Endpoints.Read("Audio Destination 3");
+			var audioDestination4 = api.Endpoints.Read("Audio Destination 4");
 
 			var source1 = api.VirtualSignalGroups.Read("Source 1");
 			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
 
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
-			simulation.CreateTestPendingConnectionAction(audioSource1, audioDestination1);
-			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination2);
+			simulation.CreateTestPendingConnectionAction(audioSource1, audioDestination1); // should be ignored
+
+			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination2); // pending connection
+
+			simulation.CreateTestConnection(audioSource3, audioDestination3);
+			simulation.CreateTestPendingConnectionAction(audioSource3, audioDestination3, PendingConnectionAction.PendingActionType.Disconnect); // pending disconnect
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -172,7 +178,7 @@
 			audioSource1Connectivity.IsConnected.ShouldBeTrue();
 			audioSource1Connectivity.IsPendingConnected.ShouldBeFalse();
 			audioSource1Connectivity.IsDisconnecting.ShouldBeFalse();
-			audioSource1Connectivity.ConnectedDestinations.ShouldBe([audioDestination1]);
+			audioSource1Connectivity.DestinationConnections.ShouldBe([new (audioDestination1, EndpointConnectionState.Connected)]);
 			audioSource1Connectivity.VirtualSignalGroups.ShouldBe([source1]);
 
 			var audioDestination1Connectivity = connectivity.GetConnectivity(audioDestination1);
@@ -195,14 +201,26 @@
 			audioDestination2Connectivity.PendingConnectedSource.ShouldBe(audioSource2);
 
 			var audioSource3Connectivity = connectivity.GetConnectivity(audioSource3);
-			audioSource3Connectivity.IsConnected.ShouldBeFalse();
+			audioSource3Connectivity.IsConnected.ShouldBeTrue();
 			audioSource3Connectivity.IsPendingConnected.ShouldBeFalse();
-			audioSource3Connectivity.IsDisconnecting.ShouldBeFalse();
+			audioSource3Connectivity.IsDisconnecting.ShouldBeTrue();
+			audioSource3Connectivity.DestinationConnections.ShouldBe([new(audioDestination3, EndpointConnectionState.Disconnecting)]);
 
 			var audioDestination3Connectivity = connectivity.GetConnectivity(audioDestination3);
-			audioDestination3Connectivity.IsConnected.ShouldBeFalse();
+			audioDestination3Connectivity.IsConnected.ShouldBeTrue();
 			audioDestination3Connectivity.IsPendingConnected.ShouldBeFalse();
-			audioDestination3Connectivity.IsDisconnecting.ShouldBeFalse();
+			audioDestination3Connectivity.IsDisconnecting.ShouldBeTrue();
+			audioDestination3Connectivity.ConnectedSource.ShouldBe(new(audioSource3, EndpointConnectionState.Disconnecting));
+
+			var audioSource4Connectivity = connectivity.GetConnectivity(audioSource4);
+			audioSource4Connectivity.IsConnected.ShouldBeFalse();
+			audioSource4Connectivity.IsPendingConnected.ShouldBeFalse();
+			audioSource4Connectivity.IsDisconnecting.ShouldBeFalse();
+
+			var audioDestination4Connectivity = connectivity.GetConnectivity(audioDestination4);
+			audioDestination4Connectivity.IsConnected.ShouldBeFalse();
+			audioDestination4Connectivity.IsPendingConnected.ShouldBeFalse();
+			audioDestination4Connectivity.IsDisconnecting.ShouldBeFalse();
 		}
 
 		[TestMethod]
@@ -333,23 +351,29 @@
 			var videoSource2 = api.Endpoints.Read("Video Source 2");
 			var videoSource3 = api.Endpoints.Read("Video Source 3");
 			var audioSource3 = api.Endpoints.Read("Audio Source 3");
+			var videoSource4 = api.Endpoints.Read("Video Source 4");
 			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var videoDestination2 = api.Endpoints.Read("Video Destination 2");
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+			var videoDestination4 = api.Endpoints.Read("Video Destination 4");
 
 			var source1 = api.VirtualSignalGroups.Read("Source 1");
 			var source2 = api.VirtualSignalGroups.Read("Source 2");
 			var source3 = api.VirtualSignalGroups.Read("Source 3");
+			var source4 = api.VirtualSignalGroups.Read("Source 4");
 			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
+			var destination4 = api.VirtualSignalGroups.Read("Destination 4");
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			simulation.CreateTestConnection(audioSource1, audioDestination2);
 			simulation.CreateTestConnection(videoSource2, videoDestination2);
+			simulation.CreateTestConnection(videoSource4, videoDestination4);
 			simulation.CreateTestPendingConnectionAction(videoSource3, videoDestination1);
 			simulation.CreateTestPendingConnectionAction(audioSource3, audioDestination1);
+			simulation.CreateTestPendingConnectionAction(videoSource4, videoDestination4, PendingConnectionAction.PendingActionType.Disconnect);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -410,6 +434,16 @@
 			destination3Connectivity.ConnectedState.ShouldBe(ConnectionState.Disconnected);
 			destination3Connectivity.ConnectedSources.ShouldBeEmpty();
 			destination3Connectivity.ConnectedDestinations.ShouldBeEmpty();
+
+			var source4Connectivity = connectivity.GetConnectivity(source4);
+			source4Connectivity.IsConnected.ShouldBeTrue();
+			source4Connectivity.IsPendingConnected.ShouldBeFalse();
+			source4Connectivity.IsDisconnecting.ShouldBeTrue();
+
+			var destination4Connectivity = connectivity.GetConnectivity(destination4);
+			destination4Connectivity.IsConnected.ShouldBeTrue();
+			destination4Connectivity.IsPendingConnected.ShouldBeFalse();
+			destination4Connectivity.IsDisconnecting.ShouldBeTrue();
 		}
 
 		[TestMethod]

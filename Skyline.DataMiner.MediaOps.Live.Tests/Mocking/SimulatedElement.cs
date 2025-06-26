@@ -6,29 +6,28 @@
 
 	using DmsElementId = Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId;
 
-	public class SimulatedElement
+	public sealed class SimulatedElement
 	{
 		private readonly ConcurrentDictionary<int, TableParameter> _tables = new();
 
-		public SimulatedElement(SimulatedDms dms, int dmaId, int elementId, string name, string protocolName, string protocolVersion)
+		public SimulatedElement(SimulatedDma dma, int elementId, string name, string protocolName, string protocolVersion)
 		{
-			Dms = dms;
-
-			Id = new DmsElementId(dmaId, elementId);
+			Dma = dma ?? throw new ArgumentNullException(nameof(dma));
+			ElementId = elementId;
 			Name = name;
 			ProtocolName = protocolName;
 			ProtocolVersion = protocolVersion;
 		}
 
-		public SimulatedDms Dms { get; }
+		public SimulatedDma Dma { get; }
 
-		public DmsElementId Id { get; }
+		public int ElementId { get; }
 
-		public int DmaId => Id.AgentId;
+		public int DmaId => Dma.DmaId;
 
-		public int HostingDmaId => Id.AgentId;
+		public int HostingDmaId => DmaId;
 
-		public int ElementId => Id.ElementId;
+		public DmsElementId Id => new DmsElementId(DmaId, ElementId);
 
 		public string Name { get; }
 
@@ -43,7 +42,11 @@
 		public TableParameter CreateTable(int id)
 		{
 			var table = new TableParameter(this, id);
-			_tables.TryAdd(id, table);
+
+			if (!_tables.TryAdd(id, table))
+			{
+				throw new InvalidOperationException($"Table with ID {id} already exists in element {Name}.");
+			}
 
 			return table;
 		}

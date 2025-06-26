@@ -87,25 +87,25 @@
 
 #pragma warning disable CS0067 // The event is never used
 		/// <inheritdoc/>
-		public event ConnectionClosedHandler? OnClose;
+		public event ConnectionClosedHandler OnClose;
 
 		/// <inheritdoc/>
-		public event NewMessageEventHandler? OnNewMessage;
+		public event NewMessageEventHandler OnNewMessage;
 
 		/// <inheritdoc/>
-		public event AbnormalCloseEventHandler? OnAbnormalClose;
+		public event AbnormalCloseEventHandler OnAbnormalClose;
 
 		/// <inheritdoc/>
-		public event EventsDroppedEventHandler? OnEventsDropped;
+		public event EventsDroppedEventHandler OnEventsDropped;
 
 		/// <inheritdoc/>
-		public event SubscriptionCompleteEventHandler? OnSubscriptionComplete;
+		public event SubscriptionCompleteEventHandler OnSubscriptionComplete;
 
 		/// <inheritdoc/>
-		public event AuthenticationChallengeEventHandler? OnAuthenticationChallenge;
+		public event AuthenticationChallengeEventHandler OnAuthenticationChallenge;
 
 		/// <inheritdoc/>
-		public event EventHandler<SubscriptionStateEventArgs>? OnSubscriptionState;
+		public event EventHandler<SubscriptionStateEventArgs> OnSubscriptionState;
 #pragma warning restore CS0067
 
 		/// <summary>

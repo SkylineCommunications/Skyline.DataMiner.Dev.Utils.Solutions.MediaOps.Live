@@ -6,9 +6,9 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	internal sealed class PendingConnectionAction
+	public sealed class PendingConnectionAction
 	{
-		public PendingConnectionAction(object[] row)
+		internal PendingConnectionAction(object[] row)
 		{
 			if (row is null)
 			{
@@ -55,7 +55,7 @@
 			}
 		}
 
-		internal enum PendingActionType
+		public enum PendingActionType
 		{
 			Connect,
 			Disconnect,

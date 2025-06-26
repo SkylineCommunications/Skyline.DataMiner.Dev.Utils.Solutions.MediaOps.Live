@@ -3,14 +3,13 @@
 	using System;
 	using System.Collections.Concurrent;
 
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
 
-	public class SimulatedDms
+	public sealed class SimulatedDms
 	{
-		private readonly ConcurrentDictionary<DmsElementId, SimulatedElement> _elements = new();
+		private readonly ConcurrentDictionary<int, SimulatedDma> _agents = new();
 		private readonly ConcurrentBag<SLNetConnectionMock> _connections = new();
 		private readonly DomSLNetMessageHandler _domSLNetMessageHandler = new();
 
@@ -19,18 +18,13 @@
 			_domSLNetMessageHandler.OnInstancesChanged += DomSLNetMessageHandler_OnInstancesChanged;
 		}
 
-		public IReadOnlyDictionary<DmsElementId, SimulatedElement> Elements => _elements;
+		public IReadOnlyDictionary<int, SimulatedDma> Agents => _agents;
 
-		public SimulatedElement CreateElement(int dmaId, int elementId, string name, string protocolName, string protocolVersion = "1.0.0.1")
+		public SimulatedDma GetOrCreateAgent(int dmaId)
 		{
-			var element = new SimulatedElement(this, dmaId, elementId, name, protocolName, protocolVersion);
-
-			if (!_elements.TryAdd(element.Id, element))
-			{
-				throw new InvalidOperationException($"Element with ID {element.Id} already exists.");
-			}
-
-			return element;
+			return _agents.GetOrAdd(
+				dmaId,
+				id => new SimulatedDma(this, id));
 		}
 
 		public IConnection CreateConnection()
@@ -71,7 +65,7 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(GetLiteElementInfo msg)
 		{
-			IEnumerable<SimulatedElement> elements = _elements.Values;
+			var elements = Agents.Values.SelectMany(x => x.Elements.Values);
 
 			if (!String.IsNullOrEmpty(msg.ProtocolName))
 			{
@@ -86,9 +80,8 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(GetElementByIDMessage msg)
 		{
-			var id = new DmsElementId(msg.DataMinerID, msg.ElementID);
-
-			if (_elements.TryGetValue(id, out var element))
+			if (Agents.TryGetValue(msg.DataMinerID, out var dma) &&
+				dma.Elements.TryGetValue(msg.ElementID, out var element))
 			{
 				yield return element.ToElementInfo();
 			}
@@ -96,9 +89,8 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(GetPartialTableMessage msg)
 		{
-			var id = new DmsElementId(msg.DataMinerID, msg.ElementID);
-
-			if (_elements.TryGetValue(id, out var element) &&
+			if (Agents.TryGetValue(msg.DataMinerID, out var dma) &&
+				dma.Elements.TryGetValue(msg.ElementID, out var element) &&
 				element.Tables.TryGetValue(msg.ParameterID, out var table))
 			{
 				yield return new ParameterChangeEventMessage(msg.DataMinerID, msg.ElementID, msg.ParameterID)

@@ -74,8 +74,8 @@
 			.Select(x => x.Endpoint);
 
 		public bool IsConnected =>
-			ConnectedSource != null ||
-			DestinationConnections.Any(c => c.State == EndpointConnectionState.Connected);
+			(ConnectedSource != null && ConnectedSource.IsConnected) ||
+			DestinationConnections.Any(c => c.IsConnected);
 
 		public bool IsPendingConnected =>
 			PendingConnectedSource != null ||
