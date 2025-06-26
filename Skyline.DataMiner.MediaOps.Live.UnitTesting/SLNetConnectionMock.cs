@@ -182,7 +182,7 @@
 				throw new ArgumentNullException(nameof(msg));
 			}
 
-			return HandleMessage(msg).Single();
+			return HandleMessage(msg).SingleOrDefault();
 		}
 
 		/// <inheritdoc/>
