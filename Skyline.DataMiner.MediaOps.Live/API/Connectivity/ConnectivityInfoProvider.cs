@@ -614,6 +614,7 @@
 			{
 				var endpointIdsToRetrieve = endpointIds
 					.Where(id => !_endpoints.ContainsKey(id))
+					.Distinct()
 					.ToList();
 
 				if (endpointIdsToRetrieve.Count > 0)
@@ -621,6 +622,7 @@
 					Debug.WriteLine($"Loading endpoints: {String.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
 					var endpoints = Api.Endpoints.Read(endpointIdsToRetrieve);
 					Debug.WriteLine($"Loaded {endpoints.Count} endpoints");
+
 					UpdateEndpoints(endpoints.Values);
 				}
 			}
@@ -632,6 +634,7 @@
 			{
 				var vsgIdsToRetrieve = vsgIds
 					.Where(id => !_virtualSignalGroups.ContainsKey(id))
+					.Distinct()
 					.ToList();
 
 				if (vsgIdsToRetrieve.Count > 0)
@@ -639,6 +642,7 @@
 					Debug.WriteLine($"Loading VSGs: {String.Join(", ", vsgIdsToRetrieve.Select(x => x.ID))}");
 					var virtualSignalGroups = Api.VirtualSignalGroups.Read(vsgIdsToRetrieve);
 					Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs");
+
 					UpdateVirtualSignalGroups(virtualSignalGroups.Values);
 
 					var endpoints = virtualSignalGroups.Values
@@ -660,8 +664,12 @@
 
 				foreach (var action in pendingConnectionActions)
 				{
+					_pendingConnectionActions.Add(action.Destination, action);
 					_pendingConnectionActionsMapping.Add(action);
 				}
+
+				var endpointIds = pendingConnectionActions.SelectMany(x => x.GetEndpoints());
+				EnsureEndpointsAreLoaded(endpointIds);
 			}
 		}
 

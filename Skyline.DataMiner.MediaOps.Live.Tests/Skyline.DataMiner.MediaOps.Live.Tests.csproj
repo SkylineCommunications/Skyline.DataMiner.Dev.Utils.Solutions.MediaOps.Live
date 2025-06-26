@@ -5,7 +5,6 @@
 		<RootNamespace>Skyline.DataMiner.MediaOps.Live.Tests</RootNamespace>
 		<LangVersion>latest</LangVersion>
 		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
 		<UseVSTest>true</UseVSTest>
 	</PropertyGroup>
 

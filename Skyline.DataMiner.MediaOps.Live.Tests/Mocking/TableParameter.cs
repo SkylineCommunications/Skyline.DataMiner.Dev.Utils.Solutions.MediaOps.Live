@@ -51,13 +51,17 @@
 
 			for (int c = 0; c < columnCount; c++)
 			{
-				var columnValues = new object?[rowList.Count];
+				var columnValues = new object[rowList.Count];
 
 				for (int r = 0; r < rowList.Count; r++)
 				{
 					var row = rowList[r];
+					var value = c < row.Length ? row[c] : null;
 
-					columnValues[r] = c < row.Length ? row[c] : null;
+					var cellData = new object[7];
+					cellData[0] = value;
+
+					columnValues[r] = cellData;
 				}
 
 				columns[c] = columnValues;
