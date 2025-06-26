@@ -76,8 +76,8 @@
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			receivedEvents.Count.ShouldBe(2); // No new event, as the connection already exists
 
-			simulation.CreateTestPendingConnection(audioSource2, audioDestination1);
-			simulation.CreateTestPendingConnection(videoSource2, videoDestination1);
+			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination1);
+			simulation.CreateTestPendingConnectionAction(videoSource2, videoDestination1);
 			receivedEvents.Count.ShouldBe(4);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.ShouldBe([source2, destination1], ignoreOrder: true);
@@ -163,7 +163,8 @@
 			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
 
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
-			simulation.CreateTestPendingConnection(audioSource2, audioDestination2);
+			simulation.CreateTestPendingConnectionAction(audioSource1, audioDestination1);
+			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -218,7 +219,7 @@
 			var audioDestination3 = api.Endpoints.Read("Audio Destination 3");
 
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
-			simulation.CreateTestPendingConnection(audioSource2, audioDestination2);
+			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination2);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -347,8 +348,8 @@
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			simulation.CreateTestConnection(audioSource1, audioDestination2);
 			simulation.CreateTestConnection(videoSource2, videoDestination2);
-			simulation.CreateTestPendingConnection(videoSource3, videoDestination1);
-			simulation.CreateTestPendingConnection(audioSource3, audioDestination1);
+			simulation.CreateTestPendingConnectionAction(videoSource3, videoDestination1);
+			simulation.CreateTestPendingConnectionAction(audioSource3, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -440,8 +441,8 @@
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			simulation.CreateTestConnection(audioSource1, audioDestination2);
 			simulation.CreateTestConnection(videoSource2, videoDestination2);
-			simulation.CreateTestPendingConnection(videoSource3, videoDestination1);
-			simulation.CreateTestPendingConnection(audioSource3, audioDestination1);
+			simulation.CreateTestPendingConnectionAction(videoSource3, videoDestination1);
+			simulation.CreateTestPendingConnectionAction(audioSource3, audioDestination1);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 

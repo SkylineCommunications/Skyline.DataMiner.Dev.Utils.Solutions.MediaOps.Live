@@ -36,6 +36,16 @@
 			_rows[key] = row;
 		}
 
+		public void DeleteRow(string key)
+		{
+			if (String.IsNullOrEmpty(key))
+			{
+				throw new ArgumentException($"'{nameof(key)}' cannot be null or empty.", nameof(key));
+			}
+
+			_rows.TryRemove(key, out _);
+		}
+
 		internal ParameterValue ToParameterValue()
 		{
 			var rowList = _rows.Values.ToList();

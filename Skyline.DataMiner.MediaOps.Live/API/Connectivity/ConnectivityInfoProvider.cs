@@ -180,14 +180,28 @@
 					}
 
 					if (pendingAction.Action == PendingConnectionAction.PendingActionType.Connect &&
-						pendingAction.PendingSource.HasValue)
+						pendingAction.PendingSource.HasValue &&
+						_endpoints.TryGetValue(pendingAction.PendingSource.Value, out var pendingSource))
 					{
 						if (pendingAction.Destination == endpoint)
 						{
-							_endpoints.TryGetValue(pendingAction.PendingSource.Value, out pendingConnectedSource);
+							if (pendingSource == connectedSource?.Endpoint)
+							{
+								// If the pending source is the same as the connected source, we can ignore this pending action
+								continue;
+							}
+
+							pendingConnectedSource = pendingSource;
 						}
 						else if (pendingAction.PendingSource == endpoint)
 						{
+							if (destinationStates.TryGetValue(destination, out var existingState) &&
+								existingState == EndpointConnectionState.Connected)
+							{
+								// If already fully connected, we can ignore this pending action
+								continue;
+							}
+
 							destinationStates[destination] = EndpointConnectionState.Connecting;
 						}
 					}

@@ -23,6 +23,9 @@
 			Enum.TryParse<PendingActionType>(actionValue, out var action);
 			Action = action;
 
+			var timeValue = Convert.ToDouble(row[3]);
+			Time = DateTime.FromOADate(timeValue);
+
 			var pendingSourceIdValue = Convert.ToString(row[4]);
 			if (!String.IsNullOrWhiteSpace(pendingSourceIdValue) &&
 				Guid.TryParse(pendingSourceIdValue, out var parsedPendingSourceId))
@@ -32,6 +35,8 @@
 		}
 
 		public PendingActionType Action { get; }
+
+		public DateTime Time { get; }
 
 		public ApiObjectReference<Endpoint> Destination { get; }
 

@@ -43,6 +43,8 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
+			ClearTestPendingConnectionAction(destination);
+
 			var connection = Api.Connections.GetByDestination(destination)
 				?? new Connection { Destination = destination };
 
@@ -52,7 +54,7 @@
 			Api.Connections.CreateOrUpdate(connection);
 		}
 
-		public void CreateTestPendingConnection(Endpoint? pendingSource, Endpoint destination)
+		public void CreateTestPendingConnectionAction(Endpoint? pendingSource, Endpoint destination)
 		{
 			if (destination is null)
 			{
@@ -75,6 +77,21 @@
 			};
 
 			pendingActionsTable.SetRow(rowKey, row);
+		}
+
+		public void ClearTestPendingConnectionAction(Endpoint destination)
+		{
+			if (destination is null)
+			{
+				throw new ArgumentNullException(nameof(destination));
+			}
+
+			var mediationElement = MediationElement.GetMediationElements(Api, [destination])[destination];
+
+			var pendingActionsTable = Dms.Elements[mediationElement.Id].Tables[3000];
+
+			var rowKey = Convert.ToString(destination.ID);
+			pendingActionsTable.DeleteRow(rowKey);
 		}
 
 		private void Initialize(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false)
