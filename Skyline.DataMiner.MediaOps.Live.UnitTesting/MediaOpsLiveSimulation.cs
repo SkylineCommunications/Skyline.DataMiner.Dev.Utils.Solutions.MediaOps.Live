@@ -23,14 +23,14 @@
 		private readonly SimulatedDms _dms;
 		private readonly IConnection _connection;
 
-		public MediaOpsLiveSimulation(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false)
+		public MediaOpsLiveSimulation(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false, bool createElements = true)
 		{
 			_dms = new SimulatedDms();
 			_connection = Dms.CreateConnection();
 
 			Api = new MediaOpsLiveApi(_connection);
 
-			Initialize(installDomModules, createEndpoints, createVsgs, createConnections);
+			Initialize(installDomModules, createEndpoints, createVsgs, createConnections, createElements);
 		}
 
 		public SimulatedDms Dms => _dms;
@@ -104,7 +104,7 @@
 			pendingActionsTable.DeleteRow(rowKey);
 		}
 
-		private void Initialize(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false, bool createElements = true)
+		private void Initialize(bool installDomModules, bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
 		{
 			CreateMediationElement();
 
