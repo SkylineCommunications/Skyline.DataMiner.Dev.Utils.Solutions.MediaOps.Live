@@ -13,7 +13,7 @@
 	/// <summary>
 	/// A mock implementation of <see cref="IConnection"/> used for testing purposes.
 	/// </summary>
-	public class SLNetConnectionMock : IConnection
+	public sealed class SLNetConnectionMock : IConnection
 	{
 		private readonly ConcurrentDictionary<string, SubscriptionSet> _subscriptions = new ConcurrentDictionary<string, SubscriptionSet>();
 
