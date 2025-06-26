@@ -323,14 +323,14 @@
 				{
 					var mediationElement = group.Key;
 
-					var requests = new List<InterApp.Messages.PendingConnectionAction>();
+					var requests = new List<Mediation.InterApp.Messages.PendingConnectionAction>();
 
 					foreach (var connection in group)
 					{
-						var request = new InterApp.Messages.PendingConnectionAction
+						var request = new Mediation.InterApp.Messages.PendingConnectionAction
 						{
 							Time = now,
-							Destination = new InterApp.Messages.EndpointInfo
+							Destination = new Mediation.InterApp.Messages.EndpointInfo
 							{
 								ID = connection.Destination.ID,
 								Name = connection.Destination.Name,
@@ -340,15 +340,15 @@
 						switch (action)
 						{
 							case ScriptAction.Connect:
-								request.Action = InterApp.Messages.ConnectionAction.Connect;
-								request.PendingSource = new InterApp.Messages.EndpointInfo
+								request.Action = Mediation.InterApp.Messages.ConnectionAction.Connect;
+								request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo
 								{
 									ID = connection.Source.ID,
 									Name = connection.Source.Name,
 								};
 								break;
 							case ScriptAction.Disconnect:
-								request.Action = InterApp.Messages.ConnectionAction.Disconnect;
+								request.Action = Mediation.InterApp.Messages.ConnectionAction.Disconnect;
 								break;
 							default:
 								throw new InvalidOperationException($"Invalid action: {action}");
@@ -359,7 +359,7 @@
 
 					var commands = InterAppCallFactory.CreateNew();
 
-					var message = new InterApp.Messages.NotifyPendingConnectionActionMessage { Actions = requests };
+					var message = new Mediation.InterApp.Messages.NotifyPendingConnectionActionMessage { Actions = requests };
 					commands.Messages.Add(message);
 
 					commands.Send(
@@ -367,7 +367,7 @@
 						mediationElement.DmaId,
 						mediationElement.ElementId,
 						9000000,
-						[typeof(InterApp.Messages.NotifyPendingConnectionActionMessage)]);
+						[typeof(Mediation.InterApp.Messages.NotifyPendingConnectionActionMessage)]);
 				}
 			}
 		}

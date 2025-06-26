@@ -1,4 +1,4 @@
-﻿namespace InterApp.Messages
+﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages
 {
 	using System;
 

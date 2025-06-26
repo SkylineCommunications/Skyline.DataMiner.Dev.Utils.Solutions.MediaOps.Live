@@ -13,7 +13,7 @@
 
 	public class MediationElement
 	{
-		public MediationElement(IDmsElement dmsElement)
+		internal MediationElement(IDmsElement dmsElement)
 		{
 			DmsElement = dmsElement ?? throw new ArgumentNullException(nameof(dmsElement));
 		}
