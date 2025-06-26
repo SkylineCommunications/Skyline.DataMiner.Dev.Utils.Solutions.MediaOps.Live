@@ -153,7 +153,7 @@
 
 				if (message.IndexColumnID >= array.Length)
 				{
-					throw new InvalidOperationException("Couldn find key of row");
+					throw new InvalidOperationException("Couldn't find key of row");
 				}
 
 				var key = Convert.ToString(array[message.IndexColumnID]);

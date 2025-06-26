@@ -3,9 +3,9 @@
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
 
-	internal class Subscription
+	internal class SubscriptionSet
 	{
-		public Subscription(string setId)
+		public SubscriptionSet(string setId)
 		{
 			SetId = setId;
 		}

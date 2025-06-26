@@ -15,7 +15,7 @@
 	/// </summary>
 	public class SLNetConnectionMock : IConnection
 	{
-		private readonly ConcurrentDictionary<string, Subscription> _subscriptions = new ConcurrentDictionary<string, Subscription>();
+		private readonly ConcurrentDictionary<string, SubscriptionSet> _subscriptions = new ConcurrentDictionary<string, SubscriptionSet>();
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="SLNetConnectionMock"/> class.
@@ -56,13 +56,46 @@
 				if (moduleMatch &&
 					(created.Count > 0 || updated.Count > 0 || deleted.Count > 0))
 				{
-					var eventWithSetIds = EventWithSetIDs.Wrap(new[] { subscription.SetId }, e);
+					var eventWithSetIds = EventWithSetIDs.Wrap([subscription.SetId], e);
 
-					OnNewMessage?.Invoke(
-						this,
-						new NewMessageEventArgs(eventWithSetIds));
+					InvokeOnNewMessageEvent(eventWithSetIds);
 				}
 			}
+		}
+
+		internal void NotifyTableUpdate(ParameterTableUpdateEventMessage e)
+		{
+			foreach (var subscription in _subscriptions.Values)
+			{
+				var isFilterMatch = false;
+
+				foreach (var filter in subscription.Filters)
+				{
+					switch (filter)
+					{
+						case SubscriptionFilterParameter filterParameter:
+							isFilterMatch = filterParameter.ToTypeObject() == typeof(ParameterTableUpdateEventMessage)
+								&& filterParameter.DmaID == e.DataMinerID
+								&& filterParameter.ElementID == e.ElementID
+								&& filterParameter.ParameterID == e.ParameterID;
+							break;
+					}
+				}
+
+				if (isFilterMatch)
+				{
+					var eventWithSetIds = EventWithSetIDs.Wrap([subscription.SetId], e);
+
+					InvokeOnNewMessageEvent(eventWithSetIds);
+				}
+			}
+		}
+
+		private void InvokeOnNewMessageEvent(DMSMessage message)
+		{
+			OnNewMessage?.Invoke(
+				this,
+				new NewMessageEventArgs(message));
 		}
 
 		#region IConnection implementation
@@ -155,7 +188,7 @@
 		/// <inheritdoc/>
 		public CreateSubscriptionResponseMessage Subscribe(params SubscriptionFilter[] filters)
 		{
-			var subscription = _subscriptions.GetOrAdd(String.Empty, x => new Subscription(x));
+			var subscription = _subscriptions.GetOrAdd(String.Empty, x => new SubscriptionSet(x));
 
 			foreach (var filter in filters)
 			{
@@ -177,7 +210,7 @@
 		/// <inheritdoc/>
 		public void AddSubscription(string setID, params SubscriptionFilter[] newFilters)
 		{
-			var subscription = _subscriptions.GetOrAdd(setID, x => new Subscription(x));
+			var subscription = _subscriptions.GetOrAdd(setID, x => new SubscriptionSet(x));
 
 			foreach (var filter in newFilters)
 			{
@@ -188,7 +221,7 @@
 		/// <inheritdoc/>
 		public void RemoveSubscription(string setID, params SubscriptionFilter[] deletedFilters)
 		{
-			var subscription = _subscriptions.GetOrAdd(setID, x => new Subscription(x));
+			var subscription = _subscriptions.GetOrAdd(setID, x => new SubscriptionSet(x));
 
 			foreach (var filter in deletedFilters)
 			{

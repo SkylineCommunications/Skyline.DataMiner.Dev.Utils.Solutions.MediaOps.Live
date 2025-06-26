@@ -35,6 +35,14 @@
 			return connection;
 		}
 
+		internal void NotifyTableUpdate(ParameterTableUpdateEventMessage e)
+		{
+			foreach (var connection in _connections)
+			{
+				connection.NotifyTableUpdate(e);
+			}
+		}
+
 		internal bool TryHandleMessage(DMSMessage message, out IEnumerable<DMSMessage> responses)
 		{
 			if (_domSLNetMessageHandler.TryHandleMessage(message, out var response))

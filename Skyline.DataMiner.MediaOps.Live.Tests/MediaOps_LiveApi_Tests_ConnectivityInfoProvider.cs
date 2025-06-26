@@ -84,13 +84,13 @@
 
 			simulation.CreateTestConnection(audioSource2, audioDestination1);
 			simulation.CreateTestConnection(videoSource2, videoDestination1);
-			receivedEvents.Count.ShouldBe(6);
+			receivedEvents.Count.ShouldBe(8); // 4 new events: 2 to clear the pending actions + 2 for the new connections
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.ShouldBe([source1, source2, destination1], ignoreOrder: true);
 
 			simulation.CreateTestConnection(null, audioDestination1);
 			simulation.CreateTestConnection(null, videoDestination1);
-			receivedEvents.Count.ShouldBe(8);
+			receivedEvents.Count.ShouldBe(10);
 			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedState == ConnectionState.Disconnected);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.ShouldBe([source2, destination1], ignoreOrder: true);

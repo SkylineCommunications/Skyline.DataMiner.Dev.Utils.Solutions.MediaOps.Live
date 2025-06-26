@@ -12,12 +12,12 @@
 		public TableParameter(SimulatedElement element, int id)
 		{
 			Element = element;
-			Id = id;
+			TableId = id;
 		}
 
 		public SimulatedElement Element { get; }
 
-		public int Id { get; }
+		public int TableId { get; }
 
 		public IReadOnlyDictionary<string, object[]> Rows => _rows;
 
@@ -34,6 +34,13 @@
 			}
 
 			_rows[key] = row;
+
+			// send subscription event
+			var e = new ParameterTableUpdateEventMessage(Element.DmaId, Element.ElementId, TableId)
+			{
+				NewValue = ToParameterValue(row),
+			};
+			Element.Dma.Dms.NotifyTableUpdate(e);
 		}
 
 		public void DeleteRow(string key)
@@ -43,12 +50,21 @@
 				throw new ArgumentException($"'{nameof(key)}' cannot be null or empty.", nameof(key));
 			}
 
-			_rows.TryRemove(key, out _);
+			if (_rows.TryRemove(key, out _))
+			{
+				// send subscription event
+				var e = new ParameterTableUpdateEventMessage(Element.DmaId, Element.ElementId, TableId)
+				{
+					DeletedRows = [key],
+				};
+				Element.Dma.Dms.NotifyTableUpdate(e);
+			}
 		}
 
 		internal ParameterValue ToParameterValue()
 		{
 			var rowList = _rows.Values.ToList();
+
 			var columnCount = rowList.Count > 0 ? rowList.Max(x => x.Length) : 0;
 
 			if (columnCount == 0)
@@ -66,10 +82,9 @@
 				for (int r = 0; r < rowList.Count; r++)
 				{
 					var row = rowList[r];
-					var value = c < row.Length ? row[c] : null;
 
 					var cellData = new object[7];
-					cellData[0] = value;
+					cellData[0] = c < row.Length ? row[c] : null;
 
 					columnValues[r] = cellData;
 				}
@@ -78,6 +93,29 @@
 			}
 
 			return ParameterValue.Compose(columns);
+		}
+
+		private ParameterValue ToParameterValue(object[] row)
+		{
+			var columnCount = row.Length;
+
+			if (columnCount == 0)
+			{
+				// Create at least one column that represents the keys.
+				columnCount = 1;
+			}
+
+			var cells = new object[columnCount];
+
+			for (int c = 0; c < columnCount; c++)
+			{
+				var cellData = new object[7];
+				cellData[0] = c < row.Length ? row[c] : null;
+
+				cells[c] = cellData;
+			}
+
+			return ParameterValue.Compose(new[] { cells });
 		}
 	}
 }
