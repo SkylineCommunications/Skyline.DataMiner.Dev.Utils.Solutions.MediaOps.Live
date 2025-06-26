@@ -74,7 +74,7 @@
 					switch (filter)
 					{
 						case SubscriptionFilterParameter filterParameter:
-							isFilterMatch = filterParameter.ToTypeObject() == typeof(ParameterTableUpdateEventMessage)
+							isFilterMatch |= filterParameter.ToTypeObject() == typeof(ParameterTableUpdateEventMessage)
 								&& filterParameter.DmaID == e.DataMinerID
 								&& filterParameter.ElementID == e.ElementID
 								&& filterParameter.ParameterID == e.ParameterID;
