@@ -160,7 +160,7 @@
 				return responses.ToArray();
 			}
 
-			return [];
+			throw new NotSupportedException($"Unsupported message type: {msg.GetType()}");
 		}
 
 		/// <inheritdoc/>

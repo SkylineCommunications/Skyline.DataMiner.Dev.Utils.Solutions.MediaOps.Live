@@ -138,7 +138,7 @@
 				Dms.GetOrCreateAgent(123)
 					.CreateElement(i, $"MediaOps Simulator {i}", "Skyline MediaOps Simulator");
 
-				var videoSource1 = new Endpoint
+				var videoSource1 = new Endpoint(Tools.GuidFromString($"Video Source {i}"))
 				{
 					Role = Role.Source,
 					Name = $"Video Source {i}",
@@ -146,7 +146,7 @@
 					Element = $"123/{i}",
 					Identifier = $"Key-{i}",
 				};
-				var audioSource1 = new Endpoint
+				var audioSource1 = new Endpoint(Tools.GuidFromString($"Audio Source {i}"))
 				{
 					Role = Role.Source,
 					Name = $"Audio Source {i}",
@@ -154,7 +154,7 @@
 					Element = $"123/{i}",
 					Identifier = $"Key-{i}",
 				};
-				var videoDestination1 = new Endpoint
+				var videoDestination1 = new Endpoint(Tools.GuidFromString($"Video Destination {i}"))
 				{
 					Role = Role.Destination,
 					Name = $"Video Destination {i}",
@@ -162,7 +162,7 @@
 					Element = $"123/{i}",
 					Identifier = $"Key-{i}",
 				};
-				var audioDestination1 = new Endpoint
+				var audioDestination1 = new Endpoint(Tools.GuidFromString($"Audio Destination {i}"))
 				{
 					Role = Role.Destination,
 					Name = $"Audio Destination {i}",
@@ -174,7 +174,7 @@
 
 				if (createVsgs)
 				{
-					var source1 = new VirtualSignalGroup
+					var source1 = new VirtualSignalGroup(Tools.GuidFromString($"Source {i}"))
 					{
 						Role = Role.Source,
 						Name = $"Source {i}",
@@ -189,7 +189,7 @@
 							new LevelEndpoint(audioLevel, audioSource1),
 						],
 					};
-					var destination1 = new VirtualSignalGroup
+					var destination1 = new VirtualSignalGroup(Tools.GuidFromString($"Destination {i}"))
 					{
 						Role = Role.Destination,
 						Name = $"Destination {i}",

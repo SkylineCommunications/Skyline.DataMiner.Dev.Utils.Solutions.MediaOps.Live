@@ -63,6 +63,10 @@
 					responses = HandleMessage(msg);
 					return true;
 
+				case GetElementByNameMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
 				case GetPartialTableMessage msg:
 					responses = HandleMessage(msg);
 					return true;
@@ -92,6 +96,17 @@
 		{
 			if (Agents.TryGetValue(msg.DataMinerID, out var dma) &&
 				dma.Elements.TryGetValue(msg.ElementID, out var element))
+			{
+				yield return element.ToElementInfo();
+			}
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(GetElementByNameMessage msg)
+		{
+			var elements = Agents.Values.SelectMany(x => x.Elements.Values);
+			var element = elements.FirstOrDefault(x => String.Equals(x.Name, msg.ElementName));
+
+			if (element != null)
 			{
 				yield return element.ToElementInfo();
 			}
