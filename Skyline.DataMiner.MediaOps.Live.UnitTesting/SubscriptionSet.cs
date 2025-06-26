@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tests.Mocking
+﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
 {
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;

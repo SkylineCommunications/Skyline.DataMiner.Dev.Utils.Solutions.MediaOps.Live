@@ -1,7 +1,8 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tests.Mocking
+﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
 {
 	using System;
 	using System.Collections.Concurrent;
+	using System.Collections.Generic;
 
 	public sealed class SimulatedDma
 	{

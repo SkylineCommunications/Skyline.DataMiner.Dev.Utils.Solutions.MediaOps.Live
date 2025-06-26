@@ -3,7 +3,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Tests.Mocking;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_Validation

@@ -11,22 +11,22 @@
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 	using Skyline.DataMiner.Net.Messages;
 
-	internal class MediationElement
+	public class MediationElement
 	{
 		public MediationElement(IDmsElement dmsElement)
 		{
 			DmsElement = dmsElement ?? throw new ArgumentNullException(nameof(dmsElement));
 		}
 
-		internal IDmsElement DmsElement { get; }
+		public IDmsElement DmsElement { get; }
 
-		internal DmsElementId Id => DmsElement.DmsElementId;
+		public DmsElementId Id => DmsElement.DmsElementId;
 
-		internal int DmaId => DmsElement.AgentId;
+		public int DmaId => DmsElement.AgentId;
 
-		internal int ElementId => DmsElement.Id;
+		public int ElementId => DmsElement.Id;
 
-		internal string Name => DmsElement.Name;
+		public string Name => DmsElement.Name;
 
 		public IEnumerable<PendingConnectionAction> GetPendingConnectionActions()
 		{

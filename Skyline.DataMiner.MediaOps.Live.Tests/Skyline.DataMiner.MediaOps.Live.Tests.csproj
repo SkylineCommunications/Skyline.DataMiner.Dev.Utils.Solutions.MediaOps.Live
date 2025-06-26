@@ -24,6 +24,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live.UnitTesting\Skyline.DataMiner.MediaOps.Live.UnitTesting.csproj" />
 		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live\Skyline.DataMiner.MediaOps.Live.csproj" />
 	</ItemGroup>
 
