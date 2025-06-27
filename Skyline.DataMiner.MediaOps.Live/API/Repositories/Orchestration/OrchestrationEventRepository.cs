@@ -142,6 +142,7 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
+				_slidingWindowScheduler.DeleteEvents(job.OrchestrationEvents);
 				DeleteEvents(job.RemovedIds, performanceTracker);
 
 				job.ValidateEventsBeforeSaving();

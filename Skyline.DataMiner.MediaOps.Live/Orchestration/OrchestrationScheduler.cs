@@ -139,7 +139,7 @@
 				{
 					case SlcOrchestrationIds.Enums.EventState.Cancelled:
 					case SlcOrchestrationIds.Enums.EventState.Draft:
-						DeleteEventTasks(groupedByStateEvent);
+						DeleteEventTasks(groupedByStateEvent.Where(e => e.ReservationInstance != null));
 						continue;
 
 					case SlcOrchestrationIds.Enums.EventState.Confirmed:
@@ -222,6 +222,16 @@
 		private void DeleteEventTasksForEvents(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents)
 		{
 			OrchestrationSchedulerTask taskForTimeStamp = FindExistingTaskForTimeStamp(timestamp);
+
+			if (taskForTimeStamp == null)
+			{
+				foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
+				{
+					orchestrationEvent.ReservationInstance = null;
+				}
+
+				return;
+			}
 
 			taskForTimeStamp.OrchestrationEventIds.RemoveAll(eventId => orchestrationEvents.Any(e => e.ID == eventId));
 
