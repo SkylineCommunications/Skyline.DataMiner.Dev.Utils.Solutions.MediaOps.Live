@@ -42,7 +42,7 @@
 			{
 				NewValue = ToParameterValue(row),
 			};
-			Element.Dma.Dms.NotifyTableUpdate(e);
+			Element.Dma.NotifySubscriptions(e);
 		}
 
 		public void DeleteRow(string key)
@@ -59,7 +59,7 @@
 				{
 					DeletedRows = [key],
 				};
-				Element.Dma.Dms.NotifyTableUpdate(e);
+				Element.Dma.NotifySubscriptions(e);
 			}
 		}
 

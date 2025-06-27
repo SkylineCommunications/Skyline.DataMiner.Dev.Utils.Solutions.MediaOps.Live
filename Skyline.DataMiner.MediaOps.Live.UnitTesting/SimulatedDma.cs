@@ -4,6 +4,8 @@
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 
+	using Skyline.DataMiner.Net.Messages;
+
 	public sealed class SimulatedDma
 	{
 		private readonly ConcurrentDictionary<int, SimulatedElement> _elements = new();
@@ -30,6 +32,11 @@
 			}
 
 			return element;
+		}
+
+		internal void NotifySubscriptions(ParameterTableUpdateEventMessage e)
+		{
+			Dms.NotifySubscriptions(e);
 		}
 	}
 }

@@ -17,7 +17,7 @@
 
 		public SimulatedDms()
 		{
-			_domSLNetMessageHandler.OnInstancesChanged += DomSLNetMessageHandler_OnInstancesChanged;
+			_domSLNetMessageHandler.OnInstancesChanged += (s, e) => NotifySubscriptions(e);
 		}
 
 		public IReadOnlyDictionary<int, SimulatedDma> Agents => _agents;
@@ -37,16 +37,26 @@
 			return connection;
 		}
 
-		internal void NotifyTableUpdate(ParameterTableUpdateEventMessage e)
+		internal void NotifySubscriptions(EventMessage eventMessage)
 		{
+			if (eventMessage is null)
+			{
+				throw new ArgumentNullException(nameof(eventMessage));
+			}
+
 			foreach (var connection in _connections)
 			{
-				connection.NotifyTableUpdate(e);
+				connection.NotifySubscriptions(eventMessage);
 			}
 		}
 
 		internal bool TryHandleMessage(DMSMessage message, out IEnumerable<DMSMessage> responses)
 		{
+			if (message is null)
+			{
+				throw new ArgumentNullException(nameof(message));
+			}
+
 			if (_domSLNetMessageHandler.TryHandleMessage(message, out var response))
 			{
 				responses = [response];
@@ -122,14 +132,6 @@
 				{
 					NewValue = table.ToParameterValue(),
 				};
-			}
-		}
-
-		private void DomSLNetMessageHandler_OnInstancesChanged(object sender, DomInstancesChangedEventMessage e)
-		{
-			foreach (var connection in _connections)
-			{
-				connection.NotifyDomInstancesChanged(e);
 			}
 		}
 	}

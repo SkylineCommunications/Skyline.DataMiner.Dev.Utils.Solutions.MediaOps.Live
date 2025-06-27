@@ -28,7 +28,22 @@
 
 		internal SimulatedDms Dms { get; }
 
-		internal void NotifyDomInstancesChanged(DomInstancesChangedEventMessage e)
+		internal void NotifySubscriptions(EventMessage eventMessage)
+		{
+			switch (eventMessage)
+			{
+				case DomInstancesChangedEventMessage domInstancesChangedEvent:
+					NotifyDomInstancesChanged(domInstancesChangedEvent);
+					break;
+				case ParameterTableUpdateEventMessage parameterTableUpdateEvent:
+					NotifyTableUpdate(parameterTableUpdateEvent);
+					break;
+				default:
+					throw new NotSupportedException($"Unsupported event message type: {eventMessage.GetType()}");
+			}
+		}
+
+		private void NotifyDomInstancesChanged(DomInstancesChangedEventMessage e)
 		{
 			foreach (var subscription in _subscriptions.Values)
 			{
@@ -56,14 +71,12 @@
 				if (moduleMatch &&
 					(created.Count > 0 || updated.Count > 0 || deleted.Count > 0))
 				{
-					var eventWithSetIds = EventWithSetIDs.Wrap([subscription.SetId], e);
-
-					InvokeOnNewMessageEvent(eventWithSetIds);
+					InvokeOnNewMessageEvent(subscription.SetId, e);
 				}
 			}
 		}
 
-		internal void NotifyTableUpdate(ParameterTableUpdateEventMessage e)
+		private void NotifyTableUpdate(ParameterTableUpdateEventMessage e)
 		{
 			foreach (var subscription in _subscriptions.Values)
 			{
@@ -84,18 +97,18 @@
 
 				if (isFilterMatch)
 				{
-					var eventWithSetIds = EventWithSetIDs.Wrap([subscription.SetId], e);
-
-					InvokeOnNewMessageEvent(eventWithSetIds);
+					InvokeOnNewMessageEvent(subscription.SetId, e);
 				}
 			}
 		}
 
-		private void InvokeOnNewMessageEvent(DMSMessage message)
+		private void InvokeOnNewMessageEvent(string subscriptionSetId, EventMessage eventMessage)
 		{
+			var eventWithSetIds = EventWithSetIDs.Wrap([subscriptionSetId], eventMessage);
+
 			OnNewMessage?.Invoke(
 				this,
-				new NewMessageEventArgs(message));
+				new NewMessageEventArgs(eventWithSetIds));
 		}
 
 		#region IConnection implementation
