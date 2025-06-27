@@ -1,18 +1,20 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
+
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_Generic
 	{
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_IsInstalled()
 		{
-			var api = new MediaOpsLiveApiMock(installDomModules: false);
+			var simulation = new MediaOpsLiveSimulation(installDomModules: false);
 
-			Assert.IsFalse(api.IsInstalled());
+			Assert.IsFalse(simulation.Api.IsInstalled());
 
-			api = new MediaOpsLiveApiMock(installDomModules: true);
+			simulation = new MediaOpsLiveSimulation(installDomModules: true);
 
-			Assert.IsTrue(api.IsInstalled());
+			Assert.IsTrue(simulation.Api.IsInstalled());
 		}
 	}
 }

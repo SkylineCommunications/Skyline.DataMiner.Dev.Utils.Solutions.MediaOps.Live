@@ -62,15 +62,6 @@
 					DomDefinitionIds = { SlcConnectivityManagementIds.Definitions.Endpoint },
 				});
 
-			sectionDefinition.AddOrReplaceFieldDescriptor(
-				new DomInstanceFieldDescriptor(SlcConnectivityManagementIds.ModuleId)
-				{
-					FieldType = typeof(Guid),
-					ID = SlcConnectivityManagementIds.Sections.ConnectionInfo.PendingConnectedSource,
-					Name = "Pending Connected Source",
-					IsOptional = true,
-					DomDefinitionIds = { SlcConnectivityManagementIds.Definitions.Endpoint },
-				});
 			return sectionDefinition;
 		}
 	}

@@ -5,42 +5,56 @@
 	using System.Diagnostics;
 	using System.Linq;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.MediaOps.Live.Mediation;
+	using Skyline.DataMiner.MediaOps.Live.Subscriptions;
 
-	public class ConnectivityInfoProvider : IDisposable
+	public sealed class ConnectivityInfoProvider : IDisposable
 	{
 		private readonly object _lock = new();
 
 		private readonly Dictionary<ApiObjectReference<Endpoint>, Endpoint> _endpoints = new();
 		private readonly Dictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> _virtualSignalGroups = new();
 		private readonly Dictionary<ApiObjectReference<Connection>, Connection> _connections = new();
+		private readonly Dictionary<ApiObjectReference<Endpoint>, PendingConnectionAction> _pendingConnectionActions = new();
 
 		private readonly VirtualSignalGroupEndpointsMapping _virtualSignalGroupEndpointsMapping = new();
 		private readonly ConnectionEndpointsMapping _connectionEndpointsMapping = new();
+		private readonly PendingConnectionActionMapping _pendingConnectionActionsMapping = new();
 
+		private readonly ICollection<TableSubscription> _pendingConnectionActionsSubscriptions = [];
 		private RepositorySubscription<Endpoint> _subscriptionEndpoints;
 		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
 		private RepositorySubscription<Connection> _subscriptionConnections;
+
 		private bool _isSubscribed;
 
 		public ConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
+			Dms = api.Connection.GetDms();
 
 			if (subscribe)
 			{
 				Subscribe();
+			}
+			else
+			{
+				LoadPendingConnectionActions();
 			}
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
 
 		public MediaOpsLiveApi Api { get; }
+
+		public IDms Dms { get; }
 
 		public bool IsConnected(Endpoint endpoint)
 		{
@@ -53,12 +67,11 @@
 			{
 				EnsureEndpointsAreLoaded([endpoint]);
 
-				return _connectionEndpointsMapping.GetConnections(endpoint)
-					.Any(c => c.IsConnected);
+				return _connectionEndpointsMapping.GetConnections(endpoint).Any(c => c.IsConnected);
 			}
 		}
 
-		public ConnectionStatus IsConnected(VirtualSignalGroup virtualSignalGroup)
+		public ConnectionState IsConnected(VirtualSignalGroup virtualSignalGroup)
 		{
 			if (virtualSignalGroup is null)
 			{
@@ -83,10 +96,10 @@
 
 					// Early exit optimization: if both true, partial state confirmed
 					if (anyConnected && anyDisconnected)
-						return ConnectionStatus.Partial;
+						return ConnectionState.Partial;
 				}
 
-				return anyConnected ? ConnectionStatus.Connected : ConnectionStatus.Disconnected;
+				return anyConnected ? ConnectionState.Connected : ConnectionState.Disconnected;
 			}
 		}
 
@@ -105,7 +118,7 @@
 			}
 		}
 
-		public IDictionary<VirtualSignalGroup, ConnectionStatus> IsConnected(ICollection<VirtualSignalGroup> virtualSignalGroups)
+		public IDictionary<VirtualSignalGroup, ConnectionState> IsConnected(ICollection<VirtualSignalGroup> virtualSignalGroups)
 		{
 			if (virtualSignalGroups is null)
 			{
@@ -131,48 +144,77 @@
 			{
 				EnsureEndpointsAreLoaded([endpoint]);
 
-				Endpoint connectedSource = null;
-				Endpoint pendingConnectedSource = null;
-				var connectedDestinations = new HashSet<Endpoint>();
-				var pendingConnectedDestinations = new HashSet<Endpoint>();
+				var connectedSource = (EndpointConnection)null;
+				var pendingConnectedSource = (Endpoint)null;
+				var destinationStates = new Dictionary<Endpoint, EndpointConnectionState>();
 
 				var connections = _connectionEndpointsMapping.GetConnections(endpoint);
 
-				foreach (var connection in connections)
+				foreach (var connection in connections.Where(x => x.ConnectedSource.HasValue))
 				{
-					if (connection.ConnectedSource == endpoint &&
-						_endpoints.TryGetValue(connection.Destination, out var destination))
+					if (connection.ConnectedSource.HasValue &&
+						_endpoints.TryGetValue(connection.Destination, out var destination) &&
+						_endpoints.TryGetValue(connection.ConnectedSource.Value, out var connectedSourceEndpoint))
 					{
-						connectedDestinations.Add(destination);
-					}
+						var isDisconnecting = _pendingConnectionActionsMapping.IsDisconnecting(connection.Destination);
+						var state = isDisconnecting ? EndpointConnectionState.Disconnecting : EndpointConnectionState.Connected;
 
-					if (connection.PendingConnectedSource == endpoint &&
-						_endpoints.TryGetValue(connection.Destination, out var pendingDestination))
-					{
-						pendingConnectedDestinations.Add(pendingDestination);
-					}
-
-					if (connection.Destination == endpoint)
-					{
-						if (connection.ConnectedSource.HasValue)
+						if (connection.Destination == endpoint)
 						{
-							_endpoints.TryGetValue(connection.ConnectedSource.Value, out connectedSource);
+							connectedSource = new EndpointConnection(connectedSourceEndpoint, state);
 						}
-
-						if (connection.PendingConnectedSource.HasValue)
+						else if (connection.ConnectedSource == endpoint)
 						{
-							_endpoints.TryGetValue(connection.PendingConnectedSource.Value, out pendingConnectedSource);
+							destinationStates[destination] = state;
 						}
 					}
 				}
+
+				var pendingActions = _pendingConnectionActionsMapping.GetPendingConnectionActions(endpoint);
+
+				foreach (var pendingAction in pendingActions)
+				{
+					if (!_endpoints.TryGetValue(pendingAction.Destination, out var destination))
+					{
+						continue;
+					}
+
+					if (pendingAction.Action == PendingConnectionAction.PendingActionType.Connect &&
+						pendingAction.PendingSource.HasValue &&
+						_endpoints.TryGetValue(pendingAction.PendingSource.Value, out var pendingSource))
+					{
+						if (pendingAction.Destination == endpoint)
+						{
+							if (pendingSource == connectedSource?.Endpoint)
+							{
+								// If the pending source is the same as the connected source, we can ignore this pending action
+								continue;
+							}
+
+							pendingConnectedSource = pendingSource;
+						}
+						else if (pendingAction.PendingSource == endpoint)
+						{
+							if (destinationStates.TryGetValue(destination, out var existingState) &&
+								existingState == EndpointConnectionState.Connected)
+							{
+								// If already fully connected, we can ignore this pending action
+								continue;
+							}
+
+							destinationStates[destination] = EndpointConnectionState.Connecting;
+						}
+					}
+				}
+
+				var destinationConnections = destinationStates.Select(x => new EndpointConnection(x.Key, x.Value)).ToList();
 
 				return new EndpointConnectivity(
 					endpoint,
 					_virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint),
 					connectedSource,
 					pendingConnectedSource,
-					connectedDestinations,
-					pendingConnectedDestinations);
+					destinationConnections);
 			}
 		}
 
@@ -226,7 +268,7 @@
 
 					if (connectivity.ConnectedSource != null)
 					{
-						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.ConnectedSource);
+						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.ConnectedSource.Endpoint);
 						connectedSources.UnionWith(virtualSignalGroups);
 					}
 
@@ -236,13 +278,13 @@
 						pendingConnectedSources.UnionWith(virtualSignalGroups);
 					}
 
-					if (connectivity.ConnectedDestinations.Count > 0)
+					if (connectivity.ConnectedDestinations.Any())
 					{
 						var virtualSignalGroups = connectivity.ConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
 						connectedDestinations.UnionWith(virtualSignalGroups);
 					}
 
-					if (connectivity.PendingConnectedDestinations.Count > 0)
+					if (connectivity.PendingConnectedDestinations.Any())
 					{
 						var virtualSignalGroups = connectivity.PendingConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
 						pendingConnectedDestinations.UnionWith(virtualSignalGroups);
@@ -306,6 +348,14 @@
 				_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
 				_subscriptionConnections.Changed += Connections_Changed;
 
+				foreach (var mediationElement in MediationElement.GetAllMediationElements(Dms))
+				{
+					var tableSubscription = new TableSubscription(Api.Connection, mediationElement.DmsElement, 3000);
+					tableSubscription.OnChanged += PendingConnectionActions_OnChanged;
+
+					_pendingConnectionActionsSubscriptions.Add(tableSubscription);
+				}
+
 				_isSubscribed = true;
 			}
 		}
@@ -324,13 +374,16 @@
 				_subscriptionConnections.Changed -= Connections_Changed;
 
 				_subscriptionEndpoints.Dispose();
-				_subscriptionEndpoints = null;
-
 				_subscriptionVirtualSignalGroups.Dispose();
-				_subscriptionVirtualSignalGroups = null;
-
 				_subscriptionConnections.Dispose();
-				_subscriptionConnections = null;
+
+				foreach (var tableSubscription in _pendingConnectionActionsSubscriptions)
+				{
+					tableSubscription.OnChanged -= PendingConnectionActions_OnChanged;
+					tableSubscription.Dispose();
+				}
+
+				_pendingConnectionActionsSubscriptions.Clear();
 
 				_isSubscribed = false;
 			}
@@ -445,31 +498,63 @@
 
 				UpdateConnections(e.Created.Concat(e.Updated), e.Deleted);
 
+				EnsureEndpointsAreLoaded(impactedEndpoints);
+				RaiseConnectionsUpdated(impactedEndpoints);
+			}
+		}
+
+		private void PendingConnectionActions_OnChanged(object sender, TableValueChange e)
+		{
+			lock (_lock)
+			{
+				var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
+
+				foreach (var key in e.DeletedRows)
+				{
+					var destinationIdValue = key;
+					Guid.TryParse(destinationIdValue, out var destinationId);
+
+					if (_pendingConnectionActions.TryGetValue(destinationId, out var pendingAction))
+					{
+						impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
+						_pendingConnectionActions.Remove(pendingAction.Destination);
+						_pendingConnectionActionsMapping.Remove(pendingAction);
+					}
+				}
+
+				foreach (var row in e.UpdatedRows.Values)
+				{
+					var pendingAction = new PendingConnectionAction(row);
+
+					impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
+
+					if (_pendingConnectionActions.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
+					{
+						// Cannot use mapping.AddOrUpdate because PendingConnectionAction doesn't implement IEquatable
+						_pendingConnectionActionsMapping.Remove(existingPendingConnectionAction);
+					}
+
+					_pendingConnectionActions[pendingAction.Destination] = pendingAction;
+					_pendingConnectionActionsMapping.Add(pendingAction);
+				}
+
 				if (impactedEndpoints.Count > 0)
 				{
-					var impactedVirtualSignalGroups = impactedEndpoints
-						.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x))
-						.Distinct()
-						.ToList();
-
-					var eventArgs = new ConnectionsUpdatedEvent(
-						impactedEndpoints.Select(GetConnectivity).ToList(),
-						impactedVirtualSignalGroups.Select(GetConnectivity).ToList());
-
-					ConnectionsUpdated?.Invoke(this, eventArgs);
+					EnsureEndpointsAreLoaded(impactedEndpoints);
+					RaiseConnectionsUpdated(impactedEndpoints);
 				}
 			}
 		}
 
 		private ICollection<ApiObjectReference<Endpoint>> GetImpactedEndpointsForChangedConnections(ApiObjectsChangedEvent<Connection> change)
 		{
-			var impactedEndpoints = new List<ApiObjectReference<Endpoint>>();
+			var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
 
 			foreach (var connection in change.Created.Concat(change.Updated))
 			{
 				if (!_connections.TryGetValue(connection.ID, out var existing))
 				{
-					impactedEndpoints.AddRange(connection.GetEndpoints());
+					impactedEndpoints.UnionWith(connection.GetEndpoints());
 					continue;
 				}
 
@@ -484,15 +569,6 @@
 						impactedEndpoints.Add(connection.ConnectedSource.Value);
 				}
 
-				if (connection.PendingConnectedSource != existing.PendingConnectedSource)
-				{
-					hasChangeDetected = true;
-					if (existing.PendingConnectedSource.HasValue)
-						impactedEndpoints.Add(existing.PendingConnectedSource.Value);
-					if (connection.PendingConnectedSource.HasValue)
-						impactedEndpoints.Add(connection.PendingConnectedSource.Value);
-				}
-
 				if (hasChangeDetected)
 				{
 					impactedEndpoints.Add(connection.Destination);
@@ -501,13 +577,31 @@
 
 			foreach (var connection in change.Deleted)
 			{
-				impactedEndpoints.AddRange(connection.GetEndpoints());
+				impactedEndpoints.UnionWith(connection.GetEndpoints());
 			}
 
-			return impactedEndpoints
-				.Where(x => x != ApiObjectReference<Endpoint>.Empty)
+			impactedEndpoints.RemoveWhere(x => x == ApiObjectReference<Endpoint>.Empty);
+
+			return impactedEndpoints;
+		}
+
+		private void RaiseConnectionsUpdated(ICollection<ApiObjectReference<Endpoint>> impactedEndpoints)
+		{
+			if (impactedEndpoints.Count <= 0)
+			{
+				return;
+			}
+
+			var impactedVirtualSignalGroups = impactedEndpoints
+				.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x))
 				.Distinct()
 				.ToList();
+
+			var eventArgs = new ConnectionsUpdatedEvent(
+				impactedEndpoints.Select(GetConnectivity).ToList(),
+				impactedVirtualSignalGroups.Select(GetConnectivity).ToList());
+
+			ConnectionsUpdated?.Invoke(this, eventArgs);
 		}
 
 		private void LoadExtraDataForEndpoints(IEnumerable<Endpoint> endpoints)
@@ -534,6 +628,7 @@
 			{
 				var endpointIdsToRetrieve = endpointIds
 					.Where(id => !_endpoints.ContainsKey(id))
+					.Distinct()
 					.ToList();
 
 				if (endpointIdsToRetrieve.Count > 0)
@@ -541,6 +636,7 @@
 					Debug.WriteLine($"Loading endpoints: {String.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
 					var endpoints = Api.Endpoints.Read(endpointIdsToRetrieve);
 					Debug.WriteLine($"Loaded {endpoints.Count} endpoints");
+
 					UpdateEndpoints(endpoints.Values);
 				}
 			}
@@ -552,6 +648,7 @@
 			{
 				var vsgIdsToRetrieve = vsgIds
 					.Where(id => !_virtualSignalGroups.ContainsKey(id))
+					.Distinct()
 					.ToList();
 
 				if (vsgIdsToRetrieve.Count > 0)
@@ -559,6 +656,7 @@
 					Debug.WriteLine($"Loading VSGs: {String.Join(", ", vsgIdsToRetrieve.Select(x => x.ID))}");
 					var virtualSignalGroups = Api.VirtualSignalGroups.Read(vsgIdsToRetrieve);
 					Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs");
+
 					UpdateVirtualSignalGroups(virtualSignalGroups.Values);
 
 					var endpoints = virtualSignalGroups.Values
@@ -566,6 +664,26 @@
 						.Select(endpoint => endpoint.Endpoint);
 					EnsureEndpointsAreLoaded(endpoints);
 				}
+			}
+		}
+
+		private void LoadPendingConnectionActions()
+		{
+			lock (_lock)
+			{
+				var pendingConnectionActions = MediationElement.GetAllMediationElements(Dms)
+					.AsParallel()
+					.SelectMany(x => x.GetPendingConnectionActions())
+					.ToList();
+
+				foreach (var action in pendingConnectionActions)
+				{
+					_pendingConnectionActions.Add(action.Destination, action);
+					_pendingConnectionActionsMapping.Add(action);
+				}
+
+				var endpointIds = pendingConnectionActions.SelectMany(x => x.GetEndpoints());
+				EnsureEndpointsAreLoaded(endpointIds);
 			}
 		}
 

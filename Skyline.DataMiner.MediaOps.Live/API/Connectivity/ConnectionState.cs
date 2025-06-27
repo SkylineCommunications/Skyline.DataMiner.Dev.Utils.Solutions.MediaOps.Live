@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
-	public enum ConnectionStatus
+	public enum ConnectionState
 	{
 		/// <summary>
 		/// None of the endpoints are connected.
