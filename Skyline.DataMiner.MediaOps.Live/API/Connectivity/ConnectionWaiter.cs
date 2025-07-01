@@ -112,5 +112,98 @@
 			}
 		}
 
+		public static bool WaitUntilDisconnected(ConnectivityInfoProvider connectivityInfoProvider, VirtualSignalGroup destination, TimeSpan timeout)
+		{
+			if (connectivityInfoProvider == null)
+			{
+				throw new ArgumentNullException(nameof(connectivityInfoProvider));
+			}
+
+			if (destination == null)
+			{
+				throw new ArgumentNullException(nameof(destination));
+			}
+
+			var tsc = new TaskCompletionSource<bool>();
+
+			EventHandler<ConnectionsUpdatedEvent> connectionEventHandler = (s, e) =>
+			{
+				foreach (var connectivity in e.VirtualSignalGroups)
+				{
+					if (connectivity.VirtualSignalGroup == destination &&
+						!connectivity.IsConnected)
+					{
+						tsc.TrySetResult(true);
+						return;
+					}
+				}
+			};
+
+			connectivityInfoProvider.Subscribe();
+			connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
+
+			try
+			{
+				var currentConnectivity = connectivityInfoProvider.GetConnectivity(destination);
+
+				if (!currentConnectivity.IsConnected)
+				{
+					tsc.TrySetResult(true);
+				}
+
+				return tsc.Task.Wait(timeout);
+			}
+			finally
+			{
+				connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
+			}
+		}
+
+		public static bool WaitUntilDisconnected(ConnectivityInfoProvider connectivityInfoProvider, Endpoint destination, TimeSpan timeout)
+		{
+			if (connectivityInfoProvider == null)
+			{
+				throw new ArgumentNullException(nameof(connectivityInfoProvider));
+			}
+
+			if (destination == null)
+			{
+				throw new ArgumentNullException(nameof(destination));
+			}
+
+			var tsc = new TaskCompletionSource<bool>();
+
+			EventHandler<ConnectionsUpdatedEvent> connectionEventHandler = (s, e) =>
+			{
+				foreach (var connectivity in e.Endpoints)
+				{
+					if (connectivity.Endpoint == destination &&
+						!connectivity.IsConnected)
+					{
+						tsc.TrySetResult(true);
+						return;
+					}
+				}
+			};
+
+			connectivityInfoProvider.Subscribe();
+			connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
+
+			try
+			{
+				var currentConnectivity = connectivityInfoProvider.GetConnectivity(destination);
+
+				if (!currentConnectivity.IsConnected)
+				{
+					tsc.TrySetResult(true);
+				}
+
+				return tsc.Task.Wait(timeout);
+			}
+			finally
+			{
+				connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
+			}
+		}
 	}
 }
