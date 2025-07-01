@@ -3,6 +3,8 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.Net;
 
 	/// <summary>
 	///     This object groups the orchestration event configurations belonging to the same job.
@@ -53,12 +55,28 @@
 			// To be implemented
 		}
 
-		internal void ValidateEventsBeforeSaving()
+		internal void ValidateEventsBeforeSaving(IConnection connection)
 		{
 			AssignJobReferencesBeforeSaving(JobId, OrchestrationEvents.ToList());
 			IEnumerable<OrchestrationEvent> events = OrchestrationEvents.ToList();
 			OrchestrationJob.ValidateEventInfo(events.ToList());
 			ValidateConfigurationsBeforeSaving(OrchestrationEvents);
+			ValidateOrchestrationScriptInformation(connection, OrchestrationEvents);
+		}
+
+		internal virtual void ValidateOrchestrationScriptInformation(IConnection connection, List<OrchestrationEventConfiguration> orchestrationEvents)
+		{
+			foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
+			{
+				if (orchestrationEvent.EventState == SlcOrchestrationIds.Enums.EventState.Confirmed && orchestrationEvent.HasScripts())
+				{
+					OrchestrationJob.ValidateOrchestrationScriptInput(
+						connection,
+						orchestrationEvent.GlobalOrchestrationScript,
+						orchestrationEvent.GlobalOrchestrationScriptArguments.ToList(),
+						orchestrationEvent.Profile.Values.ToList());
+				}
+			}
 		}
 
 		internal static void AssignJobReferencesBeforeSaving(string jobId, IList<OrchestrationEventConfiguration> orchestrationEvents)

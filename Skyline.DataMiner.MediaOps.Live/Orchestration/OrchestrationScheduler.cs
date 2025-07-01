@@ -40,8 +40,8 @@
 
 		private HashSet<OrchestrationSchedulerTask> LoadInternalTaskList()
 		{
-			HashSet<OrchestrationSchedulerTask> list = new HashSet<OrchestrationSchedulerTask>();
-			GetInfoMessage getSchedulerTaskInfoMessage = new GetInfoMessage(InfoType.SchedulerTasks);
+			HashSet<OrchestrationSchedulerTask> list = [];
+			GetInfoMessage getSchedulerTaskInfoMessage = new(InfoType.SchedulerTasks);
 
 			AsyncProgress progress = _connection.Async.Launch(getSchedulerTaskInfoMessage);
 
@@ -84,8 +84,7 @@
 				AutomationScriptInstanceInfo automationScriptInfo = (AutomationScriptInstanceInfo)eventOrchestrationTask.ScriptInstance.ParameterIdToValue[0];
 
 				List<Guid> eventGuidsInput = JsonConvert.DeserializeObject<List<Guid>>(automationScriptInfo.Value);
-				OrchestrationSchedulerTask existingTask =
-					new OrchestrationSchedulerTask(DateTime.SpecifyKind(task.StartTime, DateTimeKind.Local), eventGuidsInput, new ScheduledTaskId(task.HandlingDMA, task.Id));
+				OrchestrationSchedulerTask existingTask = new(DateTime.SpecifyKind(task.StartTime, DateTimeKind.Local), eventGuidsInput, new ScheduledTaskId(task.HandlingDMA, task.Id));
 
 				list.Add(existingTask);
 			}
@@ -215,7 +214,7 @@
 
 			if (taskUpdated)
 			{
-				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData()); 
+				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData());
 			}
 		}
 

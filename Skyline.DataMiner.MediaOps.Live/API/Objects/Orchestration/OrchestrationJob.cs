@@ -5,6 +5,8 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Messages;
 
 	/// <summary>
 	/// This object groups the orchestration events belonging to the same job.
@@ -115,10 +117,51 @@
 			}
 		}
 
-		internal void ValidateEventsBeforeSaving()
+		internal void ValidateEventsBeforeSaving(IConnection connection)
 		{
 			AssignJobReferencesBeforeSaving(JobId, OrchestrationEvents);
 			ValidateEventInfo(OrchestrationEvents);
+			ValidateOrchestrationScriptInformation(connection, OrchestrationEvents);
+		}
+
+		internal void ValidateOrchestrationScriptInformation(IConnection connection, List<OrchestrationEvent> orchestrationEvents)
+		{
+			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
+			{
+				if (orchestrationEvent.EventState == SlcOrchestrationIds.Enums.EventState.Confirmed && !String.IsNullOrEmpty(orchestrationEvent.GlobalOrchestrationScript))
+				{
+					ValidateOrchestrationScriptInput(
+						connection,
+						orchestrationEvent.GlobalOrchestrationScript,
+						orchestrationEvent.GlobalOrchestrationScriptArguments.ToList(),
+						orchestrationEvent.Profile.Values.ToList());
+				}
+			}
+		}
+
+		internal static void ValidateOrchestrationScriptInput(IConnection connection, string scriptName, List<OrchestrationScriptArgument> arguments, List<OrchestrationProfileValue> profileValues)
+		{
+			GetScriptInfoResponseMessage scriptInfoResponse = (GetScriptInfoResponseMessage)connection.HandleSingleResponseMessage(new GetScriptInfoMessage(scriptName));
+
+			if (scriptInfoResponse?.Parameters == null || !scriptInfoResponse.Parameters.Any())
+			{
+				return;
+			}
+
+			foreach (AutomationParameterInfo automationParameterInfo in scriptInfoResponse.Parameters)
+			{
+				if (arguments.Any(arg => arg.Name == automationParameterInfo.Description))
+				{
+					continue;
+				}
+
+				if (profileValues.Any(value => value.Name == automationParameterInfo.Description))
+				{
+					continue;
+				}
+
+				throw new InvalidOperationException($"Script input missing for confirmed event. Script: {scriptName}. Parameter: {automationParameterInfo.Description}");
+			}
 		}
 
 		internal static void ValidateEventInfo(IList<OrchestrationEvent> orchestrationEvents)

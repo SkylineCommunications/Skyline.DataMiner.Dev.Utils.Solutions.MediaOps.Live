@@ -372,7 +372,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			AfterLoad();
 		}
 
-		public EndpointInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.Endpoint, new DomInstanceId(id))
+		public EndpointInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.Endpoint, id)
 		{
 			InitializeProperties();
 			AfterLoad();
@@ -472,7 +472,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			AfterLoad();
 		}
 
-		public VirtualSignalGroupInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup, new DomInstanceId(id))
+		public VirtualSignalGroupInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup, id)
 		{
 			InitializeProperties();
 			AfterLoad();
@@ -563,7 +563,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			AfterLoad();
 		}
 
-		public TransportTypeInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.TransportType, new DomInstanceId(id))
+		public TransportTypeInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.TransportType, id)
 		{
 			InitializeProperties();
 			AfterLoad();

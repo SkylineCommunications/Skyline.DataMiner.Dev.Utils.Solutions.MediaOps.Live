@@ -16,6 +16,12 @@
 			private set;
 		}
 
+		public OrchestrationProfile Profile
+		{
+			get;
+			set;
+		}
+
 		protected override void AfterLoad()
 		{
 			if (String.IsNullOrEmpty(OrchestrationScriptArguments))
@@ -26,12 +32,25 @@
 			{
 				OrchestrationScriptArgumentsList = JsonConvert.DeserializeObject<List<OrchestrationScriptArgument>>(OrchestrationScriptArguments);
 			}
+
+			if (String.IsNullOrEmpty(OrchestrationProfile))
+			{
+				Profile = new OrchestrationProfile();
+			}
+			else
+			{
+				Profile = JsonConvert.DeserializeObject<OrchestrationProfile>(OrchestrationProfile);
+			}
 		}
 
 		protected override void BeforeToSection()
 		{
 			OrchestrationScriptArguments = OrchestrationScriptArgumentsList != null && OrchestrationScriptArgumentsList.Any()
 				? JsonConvert.SerializeObject(OrchestrationScriptArgumentsList)
+				: null;
+
+			OrchestrationProfile = Profile != null
+				? JsonConvert.SerializeObject(Profile)
 				: null;
 		}
 	}

@@ -68,6 +68,19 @@
 			}
 		}
 
+		public new OrchestrationProfile Profile
+		{
+			get
+			{
+				return base.Profile;
+			}
+
+			set
+			{
+				base.Profile = value;
+			}
+		}
+
 		internal bool HasScripts()
 		{
 			bool global = !String.IsNullOrEmpty(GlobalOrchestrationScript);

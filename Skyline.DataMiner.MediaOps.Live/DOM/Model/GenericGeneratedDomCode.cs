@@ -7,10 +7,9 @@
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 {
 	using System;
-	using System.Collections.Generic;
 	using System.Linq;
-
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.ManagerStore;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Sections;
 
@@ -20,23 +19,23 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 	/// </summary>
 	public abstract class DomInstanceBase : IEquatable<DomInstanceBase>
 	{
-		protected DomInstanceBase(DomDefinitionId id)
-		{
-			if (id == null)
-				throw new ArgumentNullException("id");
-			domInstance = new DomInstance { DomDefinitionId = id };
-		}
-
-		protected DomInstanceBase(DomDefinitionId definitionId, DomInstanceId instanceId)
+		protected DomInstanceBase(DomDefinitionId definitionId)
 		{
 			if (definitionId == null)
 				throw new ArgumentNullException("definitionId");
-			if (instanceId == null)
-				throw new ArgumentNullException("instanceId");
+			domInstance = new DomInstance { DomDefinitionId = definitionId };
+		}
 
-			domInstance = new DomInstance()
+		protected DomInstanceBase(DomDefinitionId definitionId, Guid id)
+		{
+			if (definitionId == null)
+				throw new ArgumentNullException("definitionId");
+			if (id == Guid.Empty)
+				throw new ArgumentException("The id cannot be an empty guid", nameof(id));
+			domInstance = new DomInstance
 			{
-				ID = instanceId,
+				ID = new DomInstanceId(id)
+				{ ModuleId = definitionId.ModuleId },
 				DomDefinitionId = definitionId
 			};
 		}
@@ -104,6 +103,58 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 		}
 
 		protected DomInstance domInstance { get; set; }
+
+		/// <summary>
+		/// Gets the datetime when the DOM Instance was created in UTC.
+		/// </summary>
+		public DateTime? CreatedAt
+		{
+			get
+			{
+				var createdAt = ((ITrackCreatedAt)domInstance).CreatedAt;
+				if (createdAt == null)
+					return null;
+				else
+					return createdAt.ToUniversalTime();
+			}
+		}
+
+		/// <summary>
+		/// Gets the user that created the DOM Instance.
+		/// </summary>
+		public string CreatedBy
+		{
+			get
+			{
+				return ((ITrackCreatedBy)domInstance).CreatedBy;
+			}
+		}
+
+		/// <summary>
+		/// Gets the datetime when the DOM Instance was last modified in UTC.
+		/// </summary>
+		public DateTime? LastModified
+		{
+			get
+			{
+				var lastModified = ((ITrackLastModified)domInstance).LastModified;
+				if (lastModified == null)
+					return null;
+				else
+					return lastModified.ToUniversalTime();
+			}
+		}
+
+		/// <summary>
+		/// Gets the user that last modified the DOM Instance.
+		/// </summary>
+		public string LastModifiedBy
+		{
+			get
+			{
+				return ((ITrackLastModifiedBy)domInstance).LastModifiedBy;
+			}
+		}
 
 		public static implicit operator DomInstance(DomInstanceBase instance)
 		{
@@ -230,7 +281,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 {
 	using System;
 	using System.Linq;
-
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
 

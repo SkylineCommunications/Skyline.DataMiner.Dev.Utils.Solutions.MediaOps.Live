@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 
 	/// <summary>
 	/// Contains a node level configuration for event orchestration.
@@ -92,6 +93,19 @@
 			{
 				DomSection.OrchestrationScriptArgumentsList.Clear();
 				DomSection.OrchestrationScriptArgumentsList.AddRange(value);
+			}
+		}
+
+		internal OrchestrationProfile Profile
+		{
+			get
+			{
+				return DomSection.Profile;
+			}
+
+			set
+			{
+				DomSection.Profile = value;
 			}
 		}
 	}

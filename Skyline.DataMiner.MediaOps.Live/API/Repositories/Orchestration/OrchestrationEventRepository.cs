@@ -122,7 +122,7 @@
 			{
 				DeleteEvents(job.RemovedIds, performanceTracker);
 
-				job.ValidateEventsBeforeSaving();
+				job.ValidateEventsBeforeSaving(_api.Connection);
 
 				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
 
@@ -145,7 +145,7 @@
 				_slidingWindowScheduler.DeleteEvents(job.OrchestrationEvents);
 				DeleteEvents(job.RemovedIds, performanceTracker);
 
-				job.ValidateEventsBeforeSaving();
+				job.ValidateEventsBeforeSaving(_api.Connection);
 				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
 				CreateOrUpdateEvents(job.OrchestrationEvents, performanceTracker);
 			}
