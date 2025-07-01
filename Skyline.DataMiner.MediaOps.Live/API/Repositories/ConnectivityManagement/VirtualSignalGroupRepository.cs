@@ -61,7 +61,7 @@
 				instance.Validate().ThrowIfInvalid();
 			}
 
-			CheckDuplicatesBeforeSave(instances);
+			// CheckDuplicatesBeforeSave(instances);
 		}
 
 		protected override void ValidateBeforeDelete(ICollection<VirtualSignalGroup> instances)
