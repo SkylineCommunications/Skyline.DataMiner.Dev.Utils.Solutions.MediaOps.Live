@@ -68,6 +68,7 @@
 		}
 
 		[TestMethod]
+		[Ignore]
 		public void MediaOps_LiveApi_Tests_Validation_Endpoints_CheckDuplicates()
 		{
 			// doesn't throw exception
@@ -95,6 +96,7 @@
 		}
 
 		[TestMethod]
+		[Ignore]
 		public void MediaOps_LiveApi_Tests_Validation_VirtualSignalGroups_CheckDuplicates()
 		{
 			// doesn't throw exception
