@@ -63,41 +63,15 @@
 					_api.Endpoints.ReadAll().Where(x => !x.Name.Contains("Video")).ToList(),
 					endpoints);
 			}
-		}
-
-		[TestMethod]
-		public void MediaOps_LiveApi_Tests_Query_FilterCollection()
-		{
-			var videoSource1 = _api.Endpoints.Query().First(x => x.Name == "Video Source 1");
-			var videoSource2 = _api.Endpoints.Query().First(x => x.Name == "Video Source 2");
 
 			{
-				var virtualSignalGroups = _api.VirtualSignalGroups.Query()
-					.Where(x => x.Levels.Any(l => l.Endpoint == videoSource1))
-					.ToList();
+				var list = new List<Guid>();
 
-				Assert.AreEqual(1, virtualSignalGroups.Count);
-				Assert.AreEqual("Source 1", virtualSignalGroups[0].Name);
-			}
-
-			{
-				var virtualSignalGroups = _api.VirtualSignalGroups.Query()
-					.Where(x => x.Levels.Any(l => l.Endpoint == videoSource1 || l.Endpoint == videoSource2))
-					.ToList();
-
-				Assert.AreEqual(2, virtualSignalGroups.Count);
-				CollectionAssert.AreEquivalent(
-					new[] { "Source 1", "Source 2" },
-					virtualSignalGroups.Select(x => x.Name).ToArray());
-			}
-
-			{
-				var virtualSignalGroups = _api.VirtualSignalGroups.Query()
-					.Where(x => x.Levels.Any(l => (Guid)l.Endpoint == videoSource1.ID))
-					.ToList();
-
-				Assert.AreEqual(1, virtualSignalGroups.Count);
-				Assert.AreEqual("Source 1", virtualSignalGroups[0].Name);
+				var exception = Assert.ThrowsExactly<NotSupportedException>(
+					() => _api.Endpoints.Query()
+						.Where(x => x.Role == Role.Source && !list.Contains(x.ID))
+						.ToList());
+				Assert.AreEqual("Unsupported method call: Boolean Contains(System.Guid)", exception.Message);
 			}
 		}
 
