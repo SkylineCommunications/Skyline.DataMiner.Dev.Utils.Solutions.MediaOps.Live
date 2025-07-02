@@ -32,43 +32,18 @@
 				throw new ArgumentNullException(nameof(source));
 			}
 
-			if (destination == null)
+			if (destination is null)
 			{
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var tsc = new TaskCompletionSource<bool>();
-
-			EventHandler<ConnectionsUpdatedEvent> connectionEventHandler = (s, e) =>
-			{
-				foreach (var connectivity in e.VirtualSignalGroups)
-				{
-					if (connectivity.VirtualSignalGroup == destination &&
-						connectivity.ConnectedSources.Contains(source))
-					{
-						tsc.TrySetResult(true);
-						return;
-					}
-				}
-			};
-
-			_connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
-
-			try
-			{
-				var currentConnectivity = _connectivityInfoProvider.GetConnectivity(destination);
-
-				if (currentConnectivity.ConnectedSources.Contains(source))
-				{
-					tsc.TrySetResult(true);
-				}
-
-				return tsc.Task.Wait(timeout);
-			}
-			finally
-			{
-				_connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
-			}
+			return WaitForCondition(
+				destination,
+				d => _connectivityInfoProvider.GetConnectivity(d).ConnectedSources.Contains(source),
+				(e, d) => e.VirtualSignalGroups.Any(connectivity =>
+					connectivity.VirtualSignalGroup == d &&
+					connectivity.ConnectedSources.Contains(source)),
+				timeout);
 		}
 
 		public bool WaitUntilConnected(Endpoint source, Endpoint destination, TimeSpan timeout)
@@ -78,115 +53,69 @@
 				throw new ArgumentNullException(nameof(source));
 			}
 
-			if (destination == null)
+			if (destination is null)
 			{
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var tsc = new TaskCompletionSource<bool>();
-
-			EventHandler<ConnectionsUpdatedEvent> connectionEventHandler = (s, e) =>
-			{
-				foreach (var connectivity in e.Endpoints)
-				{
-					if (connectivity.Endpoint == destination &&
-						connectivity.ConnectedSource?.Endpoint == source)
-					{
-						tsc.TrySetResult(true);
-						return;
-					}
-				}
-			};
-
-			_connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
-
-			try
-			{
-				var currentConnectivity = _connectivityInfoProvider.GetConnectivity(destination);
-
-				if (currentConnectivity.ConnectedSource?.Endpoint == source)
-				{
-					tsc.TrySetResult(true);
-				}
-
-				return tsc.Task.Wait(timeout);
-			}
-			finally
-			{
-				_connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
-			}
+			return WaitForCondition(
+				destination,
+				d => _connectivityInfoProvider.GetConnectivity(d).ConnectedSource?.Endpoint == source,
+				(e, d) => e.Endpoints.Any(connectivity =>
+					connectivity.Endpoint == d &&
+					connectivity.ConnectedSource?.Endpoint == source),
+				timeout);
 		}
 
 		public bool WaitUntilDisconnected(VirtualSignalGroup destination, TimeSpan timeout)
 		{
-			if (destination == null)
+			if (destination is null)
 			{
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var tsc = new TaskCompletionSource<bool>();
-
-			EventHandler<ConnectionsUpdatedEvent> connectionEventHandler = (s, e) =>
-			{
-				foreach (var connectivity in e.VirtualSignalGroups)
-				{
-					if (connectivity.VirtualSignalGroup == destination &&
-						!connectivity.IsConnected)
-					{
-						tsc.TrySetResult(true);
-						return;
-					}
-				}
-			};
-
-			_connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
-
-			try
-			{
-				var currentConnectivity = _connectivityInfoProvider.GetConnectivity(destination);
-
-				if (!currentConnectivity.IsConnected)
-				{
-					tsc.TrySetResult(true);
-				}
-
-				return tsc.Task.Wait(timeout);
-			}
-			finally
-			{
-				_connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
-			}
+			return WaitForCondition(
+				destination,
+				d => !_connectivityInfoProvider.GetConnectivity(d).IsConnected,
+				(e, d) => e.VirtualSignalGroups.Any(connectivity =>
+					connectivity.VirtualSignalGroup == d &&
+					!connectivity.IsConnected),
+				timeout);
 		}
 
 		public bool WaitUntilDisconnected(Endpoint destination, TimeSpan timeout)
 		{
-			if (destination == null)
+			if (destination is null)
 			{
 				throw new ArgumentNullException(nameof(destination));
 			}
 
+			return WaitForCondition(
+				destination,
+				d => !_connectivityInfoProvider.GetConnectivity(d).IsConnected,
+				(e, d) => e.Endpoints.Any(connectivity =>
+					connectivity.Endpoint == d &&
+					!connectivity.IsConnected),
+				timeout);
+		}
+
+		private bool WaitForCondition<T>(T target, Func<T, bool> currentStateCheck, Func<ConnectionsUpdatedEvent, T, bool> eventStateCheck, TimeSpan timeout)
+		{
 			var tsc = new TaskCompletionSource<bool>();
 
-			EventHandler<ConnectionsUpdatedEvent> connectionEventHandler = (s, e) =>
+			void ConnectionEventHandler(object s, ConnectionsUpdatedEvent e)
 			{
-				foreach (var connectivity in e.Endpoints)
+				if (eventStateCheck(e, target))
 				{
-					if (connectivity.Endpoint == destination &&
-						!connectivity.IsConnected)
-					{
-						tsc.TrySetResult(true);
-						return;
-					}
+					tsc.TrySetResult(true);
 				}
-			};
+			}
 
-			_connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
+			_connectivityInfoProvider.ConnectionsUpdated += ConnectionEventHandler;
 
 			try
 			{
-				var currentConnectivity = _connectivityInfoProvider.GetConnectivity(destination);
-
-				if (!currentConnectivity.IsConnected)
+				if (currentStateCheck(target))
 				{
 					tsc.TrySetResult(true);
 				}
@@ -195,7 +124,7 @@
 			}
 			finally
 			{
-				_connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
+				_connectivityInfoProvider.ConnectionsUpdated -= ConnectionEventHandler;
 			}
 		}
 	}
