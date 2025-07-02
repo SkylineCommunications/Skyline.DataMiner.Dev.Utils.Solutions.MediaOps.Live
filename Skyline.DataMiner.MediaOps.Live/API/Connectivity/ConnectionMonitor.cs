@@ -4,6 +4,7 @@
 	using System.Linq;
 	using System.Threading.Tasks;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class ConnectionMonitor
@@ -25,87 +26,24 @@
 			_connectivityInfoProvider = connectivityInfoProvider;
 		}
 
-		public bool WaitUntilConnected(VirtualSignalGroup source, VirtualSignalGroup destination, TimeSpan timeout)
+		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
 		{
-			if (source == null)
+			if (source == ApiObjectReference<Endpoint>.Empty)
 			{
-				throw new ArgumentNullException(nameof(source));
+				throw new ArgumentException("Source cannot be empty.", nameof(source));
 			}
 
-			if (destination is null)
+			if (destination == ApiObjectReference<Endpoint>.Empty)
 			{
-				throw new ArgumentNullException(nameof(destination));
+				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
-			return WaitForCondition(
-				destination,
-				d => _connectivityInfoProvider.GetConnectivity(d).ConnectedSources.Contains(source),
-				(e, d) => e.VirtualSignalGroups.Any(connectivity =>
-					connectivity.VirtualSignalGroup == d &&
-					connectivity.ConnectedSources.Contains(source)),
-				timeout);
-		}
-
-		public bool WaitUntilConnected(Endpoint source, Endpoint destination, TimeSpan timeout)
-		{
-			if (source == null)
-			{
-				throw new ArgumentNullException(nameof(source));
-			}
-
-			if (destination is null)
-			{
-				throw new ArgumentNullException(nameof(destination));
-			}
-
-			return WaitForCondition(
-				destination,
-				d => _connectivityInfoProvider.GetConnectivity(d).ConnectedSource?.Endpoint == source,
-				(e, d) => e.Endpoints.Any(connectivity =>
-					connectivity.Endpoint == d &&
-					connectivity.ConnectedSource?.Endpoint == source),
-				timeout);
-		}
-
-		public bool WaitUntilDisconnected(VirtualSignalGroup destination, TimeSpan timeout)
-		{
-			if (destination is null)
-			{
-				throw new ArgumentNullException(nameof(destination));
-			}
-
-			return WaitForCondition(
-				destination,
-				d => !_connectivityInfoProvider.GetConnectivity(d).IsConnected,
-				(e, d) => e.VirtualSignalGroups.Any(connectivity =>
-					connectivity.VirtualSignalGroup == d &&
-					!connectivity.IsConnected),
-				timeout);
-		}
-
-		public bool WaitUntilDisconnected(Endpoint destination, TimeSpan timeout)
-		{
-			if (destination is null)
-			{
-				throw new ArgumentNullException(nameof(destination));
-			}
-
-			return WaitForCondition(
-				destination,
-				d => !_connectivityInfoProvider.GetConnectivity(d).IsConnected,
-				(e, d) => e.Endpoints.Any(connectivity =>
-					connectivity.Endpoint == d &&
-					!connectivity.IsConnected),
-				timeout);
-		}
-
-		private bool WaitForCondition<T>(T target, Func<T, bool> currentStateCheck, Func<ConnectionsUpdatedEvent, T, bool> eventStateCheck, TimeSpan timeout)
-		{
 			var tsc = new TaskCompletionSource<bool>();
 
 			void ConnectionEventHandler(object s, ConnectionsUpdatedEvent e)
 			{
-				if (eventStateCheck(e, target))
+				if (e.Endpoints.Any(connectivity => connectivity.Endpoint == destination &&
+													connectivity.ConnectedSource?.Endpoint == source))
 				{
 					tsc.TrySetResult(true);
 				}
@@ -115,7 +53,41 @@
 
 			try
 			{
-				if (currentStateCheck(target))
+				if (_connectivityInfoProvider.GetConnectivity(destination).ConnectedSource?.Endpoint == source)
+				{
+					tsc.TrySetResult(true);
+				}
+
+				return tsc.Task.Wait(timeout);
+			}
+			finally
+			{
+				_connectivityInfoProvider.ConnectionsUpdated -= ConnectionEventHandler;
+			}
+		}
+
+		public bool WaitUntilDisconnected(ApiObjectReference<Endpoint> destination, TimeSpan timeout)
+		{
+			if (destination == ApiObjectReference<Endpoint>.Empty)
+			{
+				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
+			}
+
+			var tsc = new TaskCompletionSource<bool>();
+
+			void ConnectionEventHandler(object s, ConnectionsUpdatedEvent e)
+			{
+				if (e.Endpoints.Any(connectivity => connectivity.Endpoint == destination && !connectivity.IsConnected))
+				{
+					tsc.TrySetResult(true);
+				}
+			}
+
+			_connectivityInfoProvider.ConnectionsUpdated += ConnectionEventHandler;
+
+			try
+			{
+				if (!_connectivityInfoProvider.GetConnectivity(destination).IsConnected)
 				{
 					tsc.TrySetResult(true);
 				}
