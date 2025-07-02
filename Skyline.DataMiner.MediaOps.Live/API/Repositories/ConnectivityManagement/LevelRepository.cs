@@ -77,15 +77,16 @@
 		private void CheckDuplicatesBeforeSave(ICollection<Level> instances)
 		{
 			FilterElement<DomInstance> CreateFilter(Level l) =>
-				DomInstanceExposers.Id.NotEqual(l.ID)
-				.AND(
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Name).Equal(l.Name)
-					.OR(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number).Equal(l.Number)));
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.Id.NotEqual(l.ID),
+					new ORFilterElement<DomInstance>(
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Name).Equal(l.Name),
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number).Equal(l.Number)));
 
 			var count = FilterQueryExecutor.CountFilteredItems(
 				instances,
 				x => CreateFilter(x),
-				x => Helper.DomInstances.Count(x));
+				x => Count(x));
 
 			if (count > 0)
 			{
@@ -96,7 +97,9 @@
 		private void CheckIfStillInUse(ICollection<Level> instances)
 		{
 			FilterElement<DomInstance> CreateFilter(Level l) =>
-				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level).Equal(l.ID);
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level).Equal(l.ID));
 
 			var count = FilterQueryExecutor.CountFilteredItems(
 				instances,

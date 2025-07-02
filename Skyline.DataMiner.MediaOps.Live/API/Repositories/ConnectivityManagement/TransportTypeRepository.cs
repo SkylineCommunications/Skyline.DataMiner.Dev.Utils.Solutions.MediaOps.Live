@@ -89,13 +89,14 @@
 		private void CheckDuplicatesBeforeSave(ICollection<TransportType> instances)
 		{
 			FilterElement<DomInstance> CreateFilter(TransportType tt) =>
-				DomInstanceExposers.Id.NotEqual(tt.ID)
-				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name).Equal(tt.Name));
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.Id.NotEqual(tt.ID),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name).Equal(tt.Name));
 
 			var count = FilterQueryExecutor.CountFilteredItems(
 				instances,
 				x => CreateFilter(x),
-				x => Helper.DomInstances.Count(x));
+				x => Count(x));
 
 			if (count > 0)
 			{
@@ -107,8 +108,12 @@
 		{
 			FilterElement<DomInstance> CreateFilter(TransportType tt) =>
 				new ORFilterElement<DomInstance>(
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.TransportType).Equal(tt.ID),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType).Equal(tt.ID));
+					new ANDFilterElement<DomInstance>(
+						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Level.Id),
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.TransportType).Equal(tt.ID)),
+					new ANDFilterElement<DomInstance>(
+						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType).Equal(tt.ID)));
 
 			var count = FilterQueryExecutor.CountFilteredItems(
 				instances,

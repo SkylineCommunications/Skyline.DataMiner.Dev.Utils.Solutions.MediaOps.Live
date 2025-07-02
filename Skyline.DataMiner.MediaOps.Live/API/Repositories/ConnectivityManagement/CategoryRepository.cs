@@ -73,13 +73,14 @@
 		private void CheckDuplicatesBeforeSave(ICollection<Category> instances)
 		{
 			FilterElement<DomInstance> CreateFilter(Category c) =>
-				DomInstanceExposers.Id.NotEqual(c.ID)
-				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.CategoryInfo.Name).Equal(c.Name));
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.Id.NotEqual(c.ID),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.CategoryInfo.Name).Equal(c.Name));
 
 			var count = FilterQueryExecutor.CountFilteredItems(
 				instances,
 				x => CreateFilter(x),
-				x => Helper.DomInstances.Count(x));
+				x => Count(x));
 
 			if (count > 0)
 			{
@@ -90,7 +91,9 @@
 		private void CheckIfStillInUse(ICollection<Category> instances)
 		{
 			FilterElement<DomInstance> CreateFilter(Category c) =>
-				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Categories).Equal(c.ID);
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Categories).Equal(c.ID));
 
 			var count = FilterQueryExecutor.CountFilteredItems(
 				instances,
