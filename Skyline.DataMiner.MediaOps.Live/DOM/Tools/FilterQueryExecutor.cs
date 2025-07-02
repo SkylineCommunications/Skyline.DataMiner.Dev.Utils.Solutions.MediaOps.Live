@@ -56,7 +56,10 @@
 
 			if (splitted.Count >= 10)
 			{
-				return splitted.AsParallel().Sum(filterCountResolver);
+				return splitted
+					.AsParallel()
+					.WithDegreeOfParallelism(4)
+					.Sum(filterCountResolver);
 			}
 
 			return splitted.Sum(filterCountResolver);
