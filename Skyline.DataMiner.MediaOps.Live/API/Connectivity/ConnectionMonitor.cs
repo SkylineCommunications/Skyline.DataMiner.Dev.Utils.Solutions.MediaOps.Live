@@ -6,15 +6,27 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	public static class ConnectionWaiter
+	public class ConnectionMonitor
 	{
-		public static bool WaitUntilConnected(ConnectivityInfoProvider connectivityInfoProvider, VirtualSignalGroup source, VirtualSignalGroup destination, TimeSpan timeout)
+		private readonly ConnectivityInfoProvider _connectivityInfoProvider;
+
+		public ConnectionMonitor(ConnectivityInfoProvider connectivityInfoProvider)
 		{
 			if (connectivityInfoProvider == null)
 			{
 				throw new ArgumentNullException(nameof(connectivityInfoProvider));
 			}
 
+			if (!connectivityInfoProvider.IsSubscribed)
+			{
+				throw new InvalidOperationException("ConnectivityInfoProvider must be subscribed before using ConnectionMonitor.");
+			}
+
+			_connectivityInfoProvider = connectivityInfoProvider;
+		}
+
+		public bool WaitUntilConnected(VirtualSignalGroup source, VirtualSignalGroup destination, TimeSpan timeout)
+		{
 			if (source == null)
 			{
 				throw new ArgumentNullException(nameof(source));
@@ -40,12 +52,11 @@
 				}
 			};
 
-			connectivityInfoProvider.Subscribe();
-			connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
+			_connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
 
 			try
 			{
-				var currentConnectivity = connectivityInfoProvider.GetConnectivity(destination);
+				var currentConnectivity = _connectivityInfoProvider.GetConnectivity(destination);
 
 				if (currentConnectivity.ConnectedSources.Contains(source))
 				{
@@ -56,17 +67,12 @@
 			}
 			finally
 			{
-				connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
+				_connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
 			}
 		}
 
-		public static bool WaitUntilConnected(ConnectivityInfoProvider connectivityInfoProvider, Endpoint source, Endpoint destination, TimeSpan timeout)
+		public bool WaitUntilConnected(Endpoint source, Endpoint destination, TimeSpan timeout)
 		{
-			if (connectivityInfoProvider == null)
-			{
-				throw new ArgumentNullException(nameof(connectivityInfoProvider));
-			}
-
 			if (source == null)
 			{
 				throw new ArgumentNullException(nameof(source));
@@ -92,12 +98,11 @@
 				}
 			};
 
-			connectivityInfoProvider.Subscribe();
-			connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
+			_connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
 
 			try
 			{
-				var currentConnectivity = connectivityInfoProvider.GetConnectivity(destination);
+				var currentConnectivity = _connectivityInfoProvider.GetConnectivity(destination);
 
 				if (currentConnectivity.ConnectedSource?.Endpoint == source)
 				{
@@ -108,17 +113,12 @@
 			}
 			finally
 			{
-				connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
+				_connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
 			}
 		}
 
-		public static bool WaitUntilDisconnected(ConnectivityInfoProvider connectivityInfoProvider, VirtualSignalGroup destination, TimeSpan timeout)
+		public bool WaitUntilDisconnected(VirtualSignalGroup destination, TimeSpan timeout)
 		{
-			if (connectivityInfoProvider == null)
-			{
-				throw new ArgumentNullException(nameof(connectivityInfoProvider));
-			}
-
 			if (destination == null)
 			{
 				throw new ArgumentNullException(nameof(destination));
@@ -139,12 +139,11 @@
 				}
 			};
 
-			connectivityInfoProvider.Subscribe();
-			connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
+			_connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
 
 			try
 			{
-				var currentConnectivity = connectivityInfoProvider.GetConnectivity(destination);
+				var currentConnectivity = _connectivityInfoProvider.GetConnectivity(destination);
 
 				if (!currentConnectivity.IsConnected)
 				{
@@ -155,17 +154,12 @@
 			}
 			finally
 			{
-				connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
+				_connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
 			}
 		}
 
-		public static bool WaitUntilDisconnected(ConnectivityInfoProvider connectivityInfoProvider, Endpoint destination, TimeSpan timeout)
+		public bool WaitUntilDisconnected(Endpoint destination, TimeSpan timeout)
 		{
-			if (connectivityInfoProvider == null)
-			{
-				throw new ArgumentNullException(nameof(connectivityInfoProvider));
-			}
-
 			if (destination == null)
 			{
 				throw new ArgumentNullException(nameof(destination));
@@ -186,12 +180,11 @@
 				}
 			};
 
-			connectivityInfoProvider.Subscribe();
-			connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
+			_connectivityInfoProvider.ConnectionsUpdated += connectionEventHandler;
 
 			try
 			{
-				var currentConnectivity = connectivityInfoProvider.GetConnectivity(destination);
+				var currentConnectivity = _connectivityInfoProvider.GetConnectivity(destination);
 
 				if (!currentConnectivity.IsConnected)
 				{
@@ -202,7 +195,7 @@
 			}
 			finally
 			{
-				connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
+				_connectivityInfoProvider.ConnectionsUpdated -= connectionEventHandler;
 			}
 		}
 	}

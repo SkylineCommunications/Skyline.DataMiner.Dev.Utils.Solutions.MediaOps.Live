@@ -1,5 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
+	using System.Diagnostics;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
@@ -20,10 +22,12 @@
 			var source1 = api.VirtualSignalGroups.Read("Source 1");
 			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
 
-			using (var connectivity = new ConnectivityInfoProvider(api))
+			using (var connectivity = new ConnectivityInfoProvider(api, subscribe: true))
 			{
+				var monitor = new ConnectionMonitor(connectivity);
+
 				var waitTask = Task.Run(() =>
-					ConnectionWaiter.WaitUntilConnected(connectivity, source1, destination1, TimeSpan.FromMinutes(1)));
+					monitor.WaitUntilConnected(source1, destination1, TimeSpan.FromMinutes(1)));
 
 				Thread.Sleep(200);
 				Assert.IsFalse(waitTask.IsCompleted);
@@ -47,10 +51,12 @@
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
 			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
 
-			using (var connectivity = new ConnectivityInfoProvider(api))
+			using (var connectivity = new ConnectivityInfoProvider(api, subscribe: true))
 			{
+				var monitor = new ConnectionMonitor(connectivity);
+
 				var waitTask = Task.Run(() =>
-					ConnectionWaiter.WaitUntilConnected(connectivity, videoSource1, videoDestination1, TimeSpan.FromMinutes(1)));
+					monitor.WaitUntilConnected(videoSource1, videoDestination1, TimeSpan.FromMinutes(1)));
 
 				Thread.Sleep(200);
 				Assert.IsFalse(waitTask.IsCompleted);
@@ -61,6 +67,30 @@
 
 				Assert.IsTrue(waitTask.IsCompleted);
 				Assert.IsTrue(waitTask.Result);
+			}
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectionWaiter_WaitUntilConnected_Timeout()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+
+			var timeout = TimeSpan.FromMilliseconds(200);
+
+			using (var connectivity = new ConnectivityInfoProvider(api, subscribe: true))
+			{
+				var monitor = new ConnectionMonitor(connectivity);
+
+				var stopwatch = Stopwatch.StartNew();
+				var connected = monitor.WaitUntilConnected(videoSource1, videoDestination1, timeout);
+				stopwatch.Stop();
+
+				Assert.IsFalse(connected);
+				Assert.IsTrue(stopwatch.Elapsed >= timeout, "Elapsed time should be more than the timeout.");
 			}
 		}
 
@@ -81,10 +111,12 @@
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
 
-			using (var connectivity = new ConnectivityInfoProvider(api))
+			using (var connectivity = new ConnectivityInfoProvider(api, subscribe: true))
 			{
+				var monitor = new ConnectionMonitor(connectivity);
+
 				var waitTask = Task.Run(() =>
-					ConnectionWaiter.WaitUntilDisconnected(connectivity, destination1, TimeSpan.FromMinutes(1)));
+					monitor.WaitUntilDisconnected(destination1, TimeSpan.FromMinutes(1)));
 
 				Thread.Sleep(200);
 				Assert.IsFalse(waitTask.IsCompleted);
@@ -110,10 +142,12 @@
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 
-			using (var connectivity = new ConnectivityInfoProvider(api))
+			using (var connectivity = new ConnectivityInfoProvider(api, subscribe: true))
 			{
+				var monitor = new ConnectionMonitor(connectivity);
+
 				var waitTask = Task.Run(() =>
-					ConnectionWaiter.WaitUntilDisconnected(connectivity, videoDestination1, TimeSpan.FromMinutes(1)));
+					monitor.WaitUntilDisconnected(videoDestination1, TimeSpan.FromMinutes(1)));
 
 				Thread.Sleep(200);
 				Assert.IsFalse(waitTask.IsCompleted);
@@ -124,6 +158,32 @@
 
 				Assert.IsTrue(waitTask.IsCompleted);
 				Assert.IsTrue(waitTask.Result);
+			}
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectionWaiter_WaitUntilDisconnected_Timeout()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var videoSource1 = api.Endpoints.Read("Video Source 1");
+			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+
+			simulation.CreateTestConnection(videoSource1, videoDestination1);
+
+			var timeout = TimeSpan.FromMilliseconds(200);
+
+			using (var connectivity = new ConnectivityInfoProvider(api, subscribe: true))
+			{
+				var monitor = new ConnectionMonitor(connectivity);
+
+				var stopwatch = Stopwatch.StartNew();
+				var connected = monitor.WaitUntilDisconnected(videoDestination1, timeout);
+				stopwatch.Stop();
+
+				Assert.IsFalse(connected);
+				Assert.IsTrue(stopwatch.Elapsed >= timeout, "Elapsed time should be more than the timeout.");
 			}
 		}
 	}
