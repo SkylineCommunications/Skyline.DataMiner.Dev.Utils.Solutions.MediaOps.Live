@@ -429,10 +429,7 @@
 				foreach (var takeContext in takeContexts)
 				{
 					var task = Task.Run(
-						() => connectionsMonitor.WaitUntilConnected(
-							takeContext.Source,
-							takeContext.Destination,
-							_timeout));
+						() => WaitUntilConnected(takeContext, connectionsMonitor, performanceTracker));
 
 					tasks.Add(task);
 				}
@@ -447,21 +444,34 @@
 			}
 		}
 
+		private bool WaitUntilConnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
+			{
+				performanceTracker.AddMetadata("Source", takeContext.Source.Name);
+				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
+
+				return connectionMonitor.WaitUntilConnected(
+					takeContext.Source,
+					takeContext.Destination,
+					_timeout);
+			}
+		}
+
 		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
 			{
-				var connectionsMonitor = new ConnectionMonitor(connectivityInfoProvider);
+				var connectionMonitor = new ConnectionMonitor(connectivityInfoProvider);
 
 				var tasks = new List<Task<bool>>();
 
 				foreach (var takeContext in takeContexts)
 				{
 					var task = Task.Run(
-						() => connectionsMonitor.WaitUntilDisconnected(
-							takeContext.Destination,
-							_timeout));
+						() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker));
 
 					tasks.Add(task);
 				}
@@ -473,6 +483,19 @@
 				{
 					throw new TimeoutException($"Failed to disconnect {failedCount} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
 				}
+			}
+		}
+
+		private bool WaitUntilDisconnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
+			{
+				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
+
+				return connectionMonitor.WaitUntilDisconnected(
+					takeContext.Destination,
+					_timeout);
 			}
 		}
 	}
