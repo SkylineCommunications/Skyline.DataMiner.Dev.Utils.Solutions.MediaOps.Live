@@ -6,10 +6,10 @@
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
 	[TestClass]
-	public sealed class MediaOps_LiveApi_Tests_ConnectionWaiter
+	public sealed class MediaOps_LiveApi_Tests_ConnectionMonitor
 	{
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_ConnectionWaiter_WaitUntilConnected_VirtualSignalGroup()
+		public void MediaOps_LiveApi_Tests_ConnectionMonitor_WaitUntilConnected_VirtualSignalGroup()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
@@ -43,7 +43,7 @@
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_ConnectionWaiter_WaitUntilConnected_Endpoint()
+		public void MediaOps_LiveApi_Tests_ConnectionMonitor_WaitUntilConnected_Endpoint()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
@@ -71,7 +71,7 @@
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_ConnectionWaiter_WaitUntilConnected_Timeout()
+		public void MediaOps_LiveApi_Tests_ConnectionMonitor_WaitUntilConnected_Timeout()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
@@ -95,7 +95,7 @@
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_ConnectionWaiter_WaitUntilDisconnected_VirtualSignalGroup()
+		public void MediaOps_LiveApi_Tests_ConnectionMonitor_WaitUntilDisconnected_VirtualSignalGroup()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
@@ -132,7 +132,7 @@
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_ConnectionWaiter_WaitUntilDisconnected_Endpoint()
+		public void MediaOps_LiveApi_Tests_ConnectionMonitor_WaitUntilDisconnected_Endpoint()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
@@ -162,7 +162,7 @@
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_ConnectionWaiter_WaitUntilDisconnected_Timeout()
+		public void MediaOps_LiveApi_Tests_ConnectionMonitor_WaitUntilDisconnected_Timeout()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
