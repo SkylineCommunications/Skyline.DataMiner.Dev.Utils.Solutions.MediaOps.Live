@@ -50,6 +50,8 @@
 			}
 		}
 
+		public bool HasEngine => _engine != null;
+
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }

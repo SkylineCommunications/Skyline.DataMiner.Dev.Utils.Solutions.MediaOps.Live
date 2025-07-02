@@ -54,6 +54,50 @@
 			}
 		}
 
+		internal static void Execute(IEngine engine, string scriptName, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
+		{
+			if (engine is null)
+			{
+				throw new ArgumentNullException(nameof(engine));
+			}
+
+			if (String.IsNullOrEmpty(scriptName))
+			{
+				throw new ArgumentException($"'{nameof(scriptName)}' cannot be null or empty.", nameof(scriptName));
+			}
+
+			if (request is null)
+			{
+				throw new ArgumentNullException(nameof(request));
+			}
+
+			if (performanceTracker is null)
+			{
+				throw new ArgumentNullException(nameof(performanceTracker));
+			}
+
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				var inputData = JsonConvert.SerializeObject(request);
+				performanceTracker.AddMetadata("Script", scriptName);
+				performanceTracker.AddMetadata("Input Data", inputData);
+
+				var subScript = engine.PrepareSubScript(scriptName);
+				subScript.Synchronous = true;
+				subScript.ExtendedErrorInfo = true;
+
+				subScript.SelectScriptParam("Action", Convert.ToString(request.Action));
+				subScript.SelectScriptParam("Input Data", inputData);
+
+				subScript.StartScript();
+
+				if (subScript.HadError)
+				{
+					throw new InvalidOperationException(String.Join(@"\r\n", subScript.GetErrorMessages()));
+				}
+			}
+		}
+
 		internal static string FindScriptForElement(IEngine engine, IDmsElement element)
 		{
 			if (engine is null)

@@ -405,7 +405,14 @@
 							throw new InvalidOperationException($"Invalid action: {action}");
 					}
 
-					ConnectionHandlerScript.Execute(_api.Connection, script, request, performanceTracker);
+					if (_api.HasEngine)
+					{
+						ConnectionHandlerScript.Execute(_api.Engine, script, request, performanceTracker);
+					}
+					else
+					{
+						ConnectionHandlerScript.Execute(_api.Connection, script, request, performanceTracker);
+					}
 				}
 			}
 		}
