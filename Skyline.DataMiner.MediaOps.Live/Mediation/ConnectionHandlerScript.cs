@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Linq;
 
 	using Newtonsoft.Json;
@@ -8,15 +9,17 @@
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
+	using Skyline.DataMiner.MediaOps.Live.Tools;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
 	internal static class ConnectionHandlerScript
 	{
-		internal static void Execute(IEngine engine, string scriptName, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
+		internal static void Execute(IConnection connection, string scriptName, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
 		{
-			if (engine is null)
+			if (connection is null)
 			{
-				throw new ArgumentNullException(nameof(engine));
+				throw new ArgumentNullException(nameof(connection));
 			}
 
 			if (String.IsNullOrEmpty(scriptName))
@@ -41,19 +44,13 @@
 				performanceTracker.AddMetadata("Script", scriptName);
 				performanceTracker.AddMetadata("Input Data", inputData);
 
-				var subScript = engine.PrepareSubScript(scriptName);
-				subScript.Synchronous = true;
-				subScript.ExtendedErrorInfo = true;
-
-				subScript.SelectScriptParam("Action", Convert.ToString(request.Action));
-				subScript.SelectScriptParam("Input Data", inputData);
-
-				subScript.StartScript();
-
-				if (subScript.HadError)
+				var parameters = new Dictionary<string, string>
 				{
-					throw new InvalidOperationException(String.Join(@"\r\n", subScript.GetErrorMessages()));
-				}
+					{ "Action", Convert.ToString(request.Action) },
+					{ "Input Data", inputData },
+				};
+
+				AutomationHelper.ExecuteAutomationScript(connection, scriptName, parameters);
 			}
 		}
 
