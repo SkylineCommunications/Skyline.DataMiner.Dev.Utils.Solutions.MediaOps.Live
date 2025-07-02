@@ -28,7 +28,7 @@
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
 
-		public void ConfigureWait(bool waitForCompletion, TimeSpan timeout)
+		public void ConfigureWaitForCompletion(bool waitForCompletion, TimeSpan timeout)
 		{
 			if (timeout < TimeSpan.Zero)
 			{
