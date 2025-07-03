@@ -168,6 +168,15 @@
 					IsOptional = true,
 				});
 
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
+					ID = SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationProfile,
+					Name = "Orchestration Profile",
+					IsOptional = true,
+				});
+
 			return sectionDefinition;
 		}
 
