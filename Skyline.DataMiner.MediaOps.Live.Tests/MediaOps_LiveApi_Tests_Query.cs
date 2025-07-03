@@ -63,7 +63,18 @@
 					_api.Endpoints.ReadAll().Where(x => !x.Name.Contains("Video")).ToList(),
 					endpoints);
 			}
+
+			{
+				var list = new List<Guid>();
+
+				var exception = Assert.ThrowsExactly<NotSupportedException>(
+					() => _api.Endpoints.Query()
+						.Where(x => x.Role == Role.Source && !list.Contains(x.ID))
+						.ToList());
+				Assert.AreEqual("Unsupported method call: Boolean Contains(System.Guid)", exception.Message);
+			}
 		}
+
 
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Query_FilterCollection()

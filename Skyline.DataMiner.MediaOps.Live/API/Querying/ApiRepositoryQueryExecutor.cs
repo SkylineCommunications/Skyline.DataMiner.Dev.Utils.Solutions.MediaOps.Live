@@ -200,7 +200,7 @@
 
 		private void AddFilter(Expression expression, bool invertFilter = false)
 		{
-			var filter = ExpressionToFilterVisitor<T>.GetFilter(expression, _provider.Repository);
+			var filter = ExpressionToFilterConverter<T>.Convert(expression, _provider.Repository);
 
 			if (filter == null)
 			{
