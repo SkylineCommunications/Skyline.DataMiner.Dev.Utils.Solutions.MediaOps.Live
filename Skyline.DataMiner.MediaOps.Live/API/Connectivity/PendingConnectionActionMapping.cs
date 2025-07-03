@@ -10,7 +10,8 @@
 
 	internal sealed class PendingConnectionActionMapping
 	{
-		private readonly ManyToManyMapping<PendingConnectionAction, ApiObjectReference<Endpoint>> _mapping = new();
+		private readonly ManyToManyMapping<PendingConnectionAction, ApiObjectReference<Endpoint>> _mapping =
+			new(PropertyComparer<PendingConnectionAction>.Create(x => x.Destination));
 
 		public int PendingConnectionActionCount => _mapping.Forward.Count;
 

@@ -7,10 +7,18 @@
 	{
 		#region Private Fields
 
-		private readonly Dictionary<Ta, ICollection<Tb>> _forwardMapping = new Dictionary<Ta, ICollection<Tb>>();
-		private readonly Dictionary<Tb, ICollection<Ta>> _reverseMapping = new Dictionary<Tb, ICollection<Ta>>();
+		private readonly Dictionary<Ta, ICollection<Tb>> _forwardMapping;
+		private readonly Dictionary<Tb, ICollection<Ta>> _reverseMapping;
 
 		#endregion
+
+		public ManyToManyMapping(
+			IEqualityComparer<Ta> forwardComparer = null,
+			IEqualityComparer<Tb> reverseComparer = null)
+		{
+			_forwardMapping = new Dictionary<Ta, ICollection<Tb>>(forwardComparer);
+			_reverseMapping = new Dictionary<Tb, ICollection<Ta>>(reverseComparer);
+		}
 
 		#region Public Properties
 

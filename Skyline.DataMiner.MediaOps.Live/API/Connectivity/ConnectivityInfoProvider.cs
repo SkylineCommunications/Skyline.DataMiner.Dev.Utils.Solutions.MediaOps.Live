@@ -528,14 +528,8 @@
 
 					impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
 
-					if (_pendingConnectionActions.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
-					{
-						// Cannot use mapping.AddOrUpdate because PendingConnectionAction doesn't implement IEquatable
-						_pendingConnectionActionsMapping.Remove(existingPendingConnectionAction);
-					}
-
 					_pendingConnectionActions[pendingAction.Destination] = pendingAction;
-					_pendingConnectionActionsMapping.Add(pendingAction);
+					_pendingConnectionActionsMapping.AddOrUpdate(pendingAction);
 				}
 
 				if (impactedEndpoints.Count > 0)
