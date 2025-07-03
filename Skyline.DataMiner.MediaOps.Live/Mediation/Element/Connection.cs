@@ -6,9 +6,9 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	public sealed class Connection2
+	public sealed class Connection
 	{
-		internal Connection2(object[] row)
+		internal Connection(object[] row)
 		{
 			if (row is null)
 			{

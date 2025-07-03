@@ -28,7 +28,7 @@
 
 		public string Name => DmsElement.Name;
 
-		public IEnumerable<Connection2> GetConnections()
+		public IEnumerable<Connection> GetConnections()
 		{
 			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
 			{
@@ -39,7 +39,7 @@
 
 			foreach (var row in table.Values)
 			{
-				yield return new Connection2(row);
+				yield return new Connection(row);
 			}
 		}
 

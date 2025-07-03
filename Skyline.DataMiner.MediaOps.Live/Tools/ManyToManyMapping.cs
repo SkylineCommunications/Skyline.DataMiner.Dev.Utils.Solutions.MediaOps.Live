@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 
 	internal class ManyToManyMapping<Ta, Tb>
 	{
@@ -57,7 +56,7 @@
 
 			if (!_forwardMapping.TryGetValue(a, out var listA))
 			{
-				listA = new List<Tb>() { b };
+				listA = new HashSet<Tb>(_reverseComparer) { b };
 				_forwardMapping.Add(a, listA);
 			}
 			else
@@ -69,7 +68,7 @@
 
 			if (!_reverseMapping.TryGetValue(b, out var listB))
 			{
-				listB = new List<Ta>() { a };
+				listB = new HashSet<Ta>(_forwardComparer) { a };
 				_reverseMapping.Add(b, listB);
 			}
 			else
