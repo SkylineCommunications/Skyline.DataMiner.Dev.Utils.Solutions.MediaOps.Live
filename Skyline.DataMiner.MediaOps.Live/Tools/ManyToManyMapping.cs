@@ -2,11 +2,14 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	internal class ManyToManyMapping<Ta, Tb>
 	{
 		#region Private Fields
 
+		private readonly IEqualityComparer<Ta> _forwardComparer;
+		private readonly IEqualityComparer<Tb> _reverseComparer;
 		private readonly Dictionary<Ta, ICollection<Tb>> _forwardMapping;
 		private readonly Dictionary<Tb, ICollection<Ta>> _reverseMapping;
 
@@ -16,6 +19,9 @@
 			IEqualityComparer<Ta> forwardComparer = null,
 			IEqualityComparer<Tb> reverseComparer = null)
 		{
+			_forwardComparer = forwardComparer ?? EqualityComparer<Ta>.Default;
+			_reverseComparer = reverseComparer ?? EqualityComparer<Tb>.Default;
+
 			_forwardMapping = new Dictionary<Ta, ICollection<Tb>>(forwardComparer);
 			_reverseMapping = new Dictionary<Tb, ICollection<Ta>>(reverseComparer);
 		}

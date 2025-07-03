@@ -21,6 +21,7 @@
 
 		private readonly Dictionary<ApiObjectReference<Endpoint>, Endpoint> _endpoints = new();
 		private readonly Dictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> _virtualSignalGroups = new();
+
 		private readonly Dictionary<ApiObjectReference<Endpoint>, Connection2> _connections = new();
 		private readonly Dictionary<ApiObjectReference<Endpoint>, PendingConnectionAction> _pendingConnectionActions = new();
 
@@ -490,6 +491,11 @@
 				{
 					var connection = new Connection2(row);
 
+					if (_connections.TryGetValue(connection.Destination, out var existingConnection))
+					{
+						impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
+					}
+
 					impactedEndpoints.UnionWith(connection.GetEndpoints());
 
 					_connections[connection.Destination] = connection;
@@ -526,6 +532,11 @@
 				foreach (var row in e.UpdatedRows.Values)
 				{
 					var pendingAction = new PendingConnectionAction(row);
+
+					if (_pendingConnectionActions.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
+					{
+						impactedEndpoints.UnionWith(existingPendingConnectionAction.GetEndpoints());
+					}
 
 					impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
 
@@ -632,7 +643,7 @@
 				foreach (var connection in connections)
 				{
 					_connections[connection.Destination] = connection;
-					_connectionEndpointsMapping.Add(connection);
+					_connectionEndpointsMapping.AddOrUpdate(connection);
 
 					endpointIds.UnionWith(connection.GetEndpoints());
 				}
@@ -640,7 +651,7 @@
 				foreach (var action in pendingConnectionActions)
 				{
 					_pendingConnectionActions[action.Destination] = action;
-					_pendingConnectionActionsMapping.Add(action);
+					_pendingConnectionActionsMapping.AddOrUpdate(action);
 
 					endpointIds.UnionWith(action.GetEndpoints());
 				}
