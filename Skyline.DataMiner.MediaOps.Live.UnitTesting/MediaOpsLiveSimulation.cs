@@ -46,6 +46,25 @@
 
 			ClearTestPendingConnectionAction(destination);
 
+			var mediationElement = MediationElement.GetMediationElement(Api, destination);
+
+			var connectionsTable = Dms
+				.Agents[mediationElement.DmaId]
+				.Elements[mediationElement.ElementId]
+				.Tables[5000];
+
+			var rowKey = Convert.ToString(destination.ID);
+			var row = new object[]
+			{
+				rowKey,
+				destination.Name,
+				source?.ID.ToString() ?? String.Empty,
+				source?.Name ?? String.Empty,
+			};
+
+			connectionsTable.SetRow(rowKey, row);
+
+			// TODO: remove this code
 			var connection = Api.Connections.GetByDestination(destination)
 				?? new Connection { Destination = destination };
 
@@ -65,7 +84,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = MediationElement.GetMediationElements(Api, [destination])[destination];
+			var mediationElement = MediationElement.GetMediationElement(Api, destination);
 
 			var pendingActionsTable = Dms
 				.Agents[mediationElement.DmaId]
@@ -93,7 +112,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = MediationElement.GetMediationElements(Api, [destination])[destination];
+			var mediationElement = MediationElement.GetMediationElement(Api, destination);
 
 			var pendingActionsTable = Dms
 				.Agents[mediationElement.DmaId]
@@ -237,7 +256,8 @@
 			var element = Dms.GetOrCreateAgent(123)
 				.CreateElement(1000, "MediaOps Mediation 1", "Skyline MediaOps Mediation");
 
-			element.CreateTable(3000);
+			element.CreateTable(3000); // Pending Connection Actions
+			element.CreateTable(5000); // Connections
 		}
 
 		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)

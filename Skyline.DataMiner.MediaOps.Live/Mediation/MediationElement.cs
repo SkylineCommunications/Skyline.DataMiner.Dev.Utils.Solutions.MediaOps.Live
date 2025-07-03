@@ -153,5 +153,42 @@
 
 			return result;
 		}
+
+		public static MediationElement GetMediationElement(MediaOpsLiveApi api, EndpointInfo endpoint)
+		{
+			if (api is null)
+			{
+				throw new ArgumentNullException(nameof(api));
+			}
+
+			if (endpoint is null)
+			{
+				throw new ArgumentNullException(nameof(endpoint));
+			}
+
+			var mediationElements = GetMediationElements(api, [endpoint]);
+
+			if (mediationElements.Count != 1)
+			{
+				throw new InvalidOperationException($"Expected exactly one mediation element for endpoint '{endpoint.Name}', but found {mediationElements.Count}.");
+			}
+
+			return mediationElements[endpoint];
+		}
+
+		public static MediationElement GetMediationElement(MediaOpsLiveApi api, Endpoint endpoint)
+		{
+			if (api is null)
+			{
+				throw new ArgumentNullException(nameof(api));
+			}
+
+			if (endpoint is null)
+			{
+				throw new ArgumentNullException(nameof(endpoint));
+			}
+
+			return GetMediationElement(api, EndpointInfo.Create(endpoint));
+		}
 	}
 }
