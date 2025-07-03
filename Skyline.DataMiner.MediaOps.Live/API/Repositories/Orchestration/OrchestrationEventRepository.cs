@@ -204,8 +204,8 @@
 
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsInTimeRange(DateTime start, DateTime end)
 		{
-			DateTime localStart = start.ToLocalTime();
-			DateTime localEnd = end.ToLocalTime();
+			DateTime localStart = start.ToUniversalTime();
+			DateTime localEnd = end.ToUniversalTime();
 
 			if (localStart > localEnd)
 			{
@@ -221,7 +221,7 @@
 
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsAfterTime(DateTime time)
 		{
-			DateTime localStart = time.ToLocalTime();
+			DateTime localStart = time.ToUniversalTime();
 
 			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).GreaterThanOrEqual(localStart));
@@ -231,7 +231,7 @@
 
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsBeforeTime(DateTime time)
 		{
-			DateTime localEnd = time.ToLocalTime();
+			DateTime localEnd = time.ToUniversalTime();
 
 			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).LessThanOrEqual(localEnd));
