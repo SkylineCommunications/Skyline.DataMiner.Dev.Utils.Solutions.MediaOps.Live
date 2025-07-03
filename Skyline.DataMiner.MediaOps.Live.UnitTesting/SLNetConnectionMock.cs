@@ -116,6 +116,11 @@
 		{
 			foreach (var filter in filters)
 			{
+				if (filter.Options.HasFlag(SubscriptionFilterOptions.SkipInitialEvents))
+				{
+					continue;
+				}
+
 				switch (filter)
 				{
 					case SubscriptionFilterParameter filterParameter:
