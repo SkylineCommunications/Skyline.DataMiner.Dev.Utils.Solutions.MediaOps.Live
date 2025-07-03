@@ -41,15 +41,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				public static FieldDescriptorID Level { get; } = new FieldDescriptorID(new Guid("764c6435-04c7-448d-a2ec-0a4ea43b4b7d"));
 			}
 
-			public static class ConnectionInfo
-			{
-				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("41c79ebb-f6c0-4601-a891-335770a9eed8"))
-				{ ModuleId = "(slc)connectivity_management" };
-				public static FieldDescriptorID Destination { get; } = new FieldDescriptorID(new Guid("83e65e2f-dbdc-410b-bb76-b38d1cc03935"));
-				public static FieldDescriptorID IsConnected { get; } = new FieldDescriptorID(new Guid("72f8694c-abda-4a18-b5ee-029c9cb5c945"));
-				public static FieldDescriptorID ConnectedSource { get; } = new FieldDescriptorID(new Guid("811b70b7-c5db-429c-9c1e-af7b0f39ffba"));
-			}
-
 			public static class VirtualSignalGroupInfo
 			{
 				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("a7d8863e-82d4-4bf3-a4c5-f34b1fb7eac0"))
@@ -103,8 +94,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public static class Definitions
 		{
 			public static DomDefinitionId Level { get; } = new DomDefinitionId(new Guid("3a016709-8fe1-4ad6-aa1d-56873492b80b"))
-			{ ModuleId = "(slc)connectivity_management" };
-			public static DomDefinitionId Connection { get; } = new DomDefinitionId(new Guid("bd002264-444c-4429-ac4a-6ff69c3939a7"))
 			{ ModuleId = "(slc)connectivity_management" };
 			public static DomDefinitionId Category { get; } = new DomDefinitionId(new Guid("9319d52c-7605-4aab-a340-bd54d140a0ba"))
 			{ ModuleId = "(slc)connectivity_management" };
@@ -205,80 +194,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			else
 			{
 				LevelInfo = new LevelInfoSection(_levelInfo);
-			}
-		}
-	}
-
-	/// <summary>
-	/// Represents a wrapper class for accessing a ConnectionInstance DOM instance.
-	/// The <see cref="ConnectionInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
-	/// </summary>
-	public partial class ConnectionInstance : DomInstanceBase
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ConnectionInstance"/> class. Creates an empty <see cref="ConnectionInstance"/> instance with default settings.
-		/// </summary>
-		public ConnectionInstance() : base(SlcConnectivityManagementIds.Definitions.Connection)
-		{
-			InitializeProperties();
-			AfterLoad();
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ConnectionInstance"/> class using the specified <paramref name="domInstance"/> for initializing the object.
-		/// </summary>
-		/// <param name="domInstance">The <see cref="DomInstance"/> object that provides data for initializing the <see cref="ConnectionInstance"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public ConnectionInstance(DomInstance domInstance) : base(domInstance)
-		{
-			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.Connection))
-				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.Connection)}'", nameof(domInstance));
-			InitializeProperties();
-			AfterLoad();
-		}
-
-		/// <summary>
-		/// Gets or sets the ConnectionInfo section of the DOM Instance.
-		/// </summary>
-		public ConnectionInfoSection ConnectionInfo { get; set; }
-
-		public static explicit operator ConnectionInstance(DomInstance instance)
-		{
-			return new ConnectionInstance(instance);
-		}
-
-		/// <inheritdoc />
-		protected override DomInstance InternalToInstance()
-		{
-			domInstance.Sections.Clear();
-			domInstance.Sections.Add(ConnectionInfo.ToSection());
-			return domInstance;
-		}
-
-		/// <inheritdoc />
-		public override void Save(DomHelper helper)
-		{
-			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
-			var instance = ToInstance();
-			if (exist == null)
-			{
-				domInstance = helper.DomInstances.Create(instance);
-			}
-			else
-			{
-				domInstance = helper.DomInstances.Update(instance);
-			}
-		}
-
-		protected sealed override void InitializeProperties()
-		{
-			var _connectionInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.ConnectionInfo.Id));
-			if (_connectionInfo is null)
-			{
-				ConnectionInfo = new ConnectionInfoSection();
-			}
-			else
-			{
-				ConnectionInfo = new ConnectionInfoSection(_connectionInfo);
 			}
 		}
 	}
@@ -875,167 +790,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				throw new InvalidOperationException("'Endpoint' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level) == null)
 				throw new InvalidOperationException("'Level' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			return section;
-		}
-	}
-
-	/// <summary>
-	/// Represents a wrapper class for accessing a ConnectionInfoSection section.
-	/// The <see cref="ConnectionInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
-	/// </summary>
-	public partial class ConnectionInfoSection : DomSectionBase
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ConnectionInfoSection"/> class. Creates an empty <see cref="ConnectionInfoSection"/> object with default settings.
-		/// </summary>
-		public ConnectionInfoSection() : base(SlcConnectivityManagementIds.Sections.ConnectionInfo.Id)
-		{
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="ConnectionInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
-		/// </summary>
-		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="ConnectionInfoSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public ConnectionInfoSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.ConnectionInfo.Id)
-		{
-		}
-
-		/// <summary>
-		/// Gets or sets the Destination field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public Guid? Destination
-		{
-			get
-			{
-				var wrapper = section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination);
-				if (wrapper != null)
-				{
-					return (Guid?)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination, (Guid)value);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the IsConnected field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public Boolean? IsConnected
-		{
-			get
-			{
-				var wrapper = section.GetValue<Boolean>(SlcConnectivityManagementIds.Sections.ConnectionInfo.IsConnected);
-				if (wrapper != null)
-				{
-					return (Boolean?)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.ConnectionInfo.IsConnected);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.ConnectionInfo.IsConnected, (Boolean)value);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the ConnectedSource field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public Guid? ConnectedSource
-		{
-			get
-			{
-				var wrapper = section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource);
-				if (wrapper != null)
-				{
-					return (Guid?)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource, (Guid)value);
-				}
-			}
-		}
-
-		/// <inheritdoc />
-		protected override Section InternalToSection()
-		{
-			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination) == null)
-				throw new InvalidOperationException("'Destination' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			if (section.GetValue<Boolean>(SlcConnectivityManagementIds.Sections.ConnectionInfo.IsConnected) == null)
-				throw new InvalidOperationException("'IsConnected' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
 		}
 	}

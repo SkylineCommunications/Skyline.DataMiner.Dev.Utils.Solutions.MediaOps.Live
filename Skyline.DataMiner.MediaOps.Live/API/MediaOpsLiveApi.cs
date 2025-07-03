@@ -30,7 +30,6 @@
 			Levels = new LevelRepository(SlcConnectivityManagementHelper, connection);
 			Categories = new CategoryRepository(SlcConnectivityManagementHelper, connection);
 			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper, connection);
-			Connections = new ConnectionRepository(SlcConnectivityManagementHelper, connection);
 
 			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
 		}
@@ -65,8 +64,6 @@
 		public CategoryRepository Categories { get; }
 
 		public TransportTypeRepository TransportTypes { get; }
-
-		public ConnectionRepository Connections { get; }
 
 		public OrchestrationEventRepository Orchestration { get; }
 

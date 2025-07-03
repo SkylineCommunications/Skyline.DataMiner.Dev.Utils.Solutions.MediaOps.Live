@@ -493,45 +493,6 @@
 			}
 		}
 
-		private ICollection<ApiObjectReference<Endpoint>> GetImpactedEndpointsForChangedConnections(ApiObjectsChangedEvent<Connection> change)
-		{
-			var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
-
-			foreach (var connection in change.Created.Concat(change.Updated))
-			{
-				if (!_connections.TryGetValue(connection.ID, out var existing))
-				{
-					impactedEndpoints.UnionWith(connection.GetEndpoints());
-					continue;
-				}
-
-				bool hasChangeDetected = false;
-
-				if (connection.ConnectedSource != existing.ConnectedSource)
-				{
-					hasChangeDetected = true;
-					if (existing.ConnectedSource.HasValue)
-						impactedEndpoints.Add(existing.ConnectedSource.Value);
-					if (connection.ConnectedSource.HasValue)
-						impactedEndpoints.Add(connection.ConnectedSource.Value);
-				}
-
-				if (hasChangeDetected)
-				{
-					impactedEndpoints.Add(connection.Destination);
-				}
-			}
-
-			foreach (var connection in change.Deleted)
-			{
-				impactedEndpoints.UnionWith(connection.GetEndpoints());
-			}
-
-			impactedEndpoints.RemoveWhere(x => x == ApiObjectReference<Endpoint>.Empty);
-
-			return impactedEndpoints;
-		}
-
 		private void RaiseConnectionsUpdated(ICollection<ApiObjectReference<Endpoint>> impactedEndpoints)
 		{
 			if (impactedEndpoints.Count <= 0)

@@ -14,7 +14,6 @@
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
-	using Skyline.DataMiner.Utils.DOM.Extensions;
 
 	using SLDataGateway.API.Types.Querying;
 
@@ -104,30 +103,6 @@
 				multicasts,
 				mc => CreateFilter(mc),
 				f => Read(f));
-		}
-
-		public override void Delete(Endpoint instance)
-		{
-			if (instance == null)
-			{
-				throw new ArgumentNullException(nameof(instance));
-			}
-
-			CleanupLinkedConnections(new[] { instance });
-
-			base.Delete(instance);
-		}
-
-		public override void Delete(IEnumerable<Endpoint> instances)
-		{
-			if (instances == null)
-			{
-				throw new ArgumentNullException(nameof(instances));
-			}
-
-			CleanupLinkedConnections(instances);
-
-			base.Delete(instances);
 		}
 
 		protected internal override Endpoint CreateInstance(DomInstance domInstance)
@@ -254,12 +229,7 @@
 				new ORFilterElement<DomInstance>(
 					new ANDFilterElement<DomInstance>(
 						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
-						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint).Equal(e.ID)),
-					new ANDFilterElement<DomInstance>(
-						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Connection.Id),
-						new ORFilterElement<DomInstance>(
-							DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination).Equal(e.ID),
-							DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource).Equal(e.ID))));
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint).Equal(e.ID)));
 
 			var count = FilterQueryExecutor.CountFilteredItems(
 				instances,
@@ -273,27 +243,6 @@
 					: "Cannot delete one or more endpoints because they are still in use.";
 
 				throw new InvalidOperationException(message);
-			}
-		}
-
-		private void CleanupLinkedConnections(IEnumerable<Endpoint> instances)
-		{
-			FilterElement<DomInstance> CreateFilter(Endpoint e) =>
-				new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Connection.Id),
-					new ORFilterElement<DomInstance>(
-						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination).Equal(e.ID),
-						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource).Equal(e.ID)));
-
-			var connectionInstances = FilterQueryExecutor.RetrieveFilteredItems(
-					instances,
-					x => CreateFilter(x),
-					x => Helper.DomInstances.Read(x))
-				.ToList();
-
-			if (connectionInstances.Count > 0)
-			{
-				Helper.DomInstances.DeleteInBatches(connectionInstances);
 			}
 		}
 	}
