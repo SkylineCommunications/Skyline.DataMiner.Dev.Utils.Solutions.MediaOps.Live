@@ -27,14 +27,14 @@
 
 		protected SlcConnectivityManagementHelper Helper => Api.SlcConnectivityManagementHelper;
 
-		public void RegisterConnection(ConnectionInfo connectionInfo)
+		public void RegisterConnection(ConnectionInfo connection)
 		{
-			if (connectionInfo == null)
+			if (connection == null)
 			{
-				throw new ArgumentNullException(nameof(connectionInfo));
+				throw new ArgumentNullException(nameof(connection));
 			}
 
-			RegisterConnections([connectionInfo]);
+			RegisterConnections([connection]);
 		}
 
 		public void RegisterConnections(ICollection<ConnectionInfo> connections)
@@ -70,23 +70,13 @@
 					var request = new InterApp.Messages.ConnectionChange
 					{
 						Time = now,
-						Destination = new InterApp.Messages.EndpointInfo
-						{
-							ID = connection.DestinationEndpoint.ID,
-							Name = connection.DestinationEndpoint.Name,
-						},
+						Destination = new InterApp.Messages.EndpointInfo(connection.DestinationEndpoint),
 						IsConnected = connection.IsConnected,
 					};
 
 					if (connection.SourceEndpoint != null)
 					{
-						request.IsConnected = true;
-
-						request.ConnectedSource = new InterApp.Messages.EndpointInfo
-						{
-							ID = connection.SourceEndpoint.ID,
-							Name = connection.SourceEndpoint.Name,
-						};
+						request.ConnectedSource = new InterApp.Messages.EndpointInfo(connection.SourceEndpoint);
 					}
 
 					requests.Add(request);

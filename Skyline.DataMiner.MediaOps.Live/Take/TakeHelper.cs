@@ -335,22 +335,14 @@
 						var request = new Mediation.InterApp.Messages.PendingConnectionAction
 						{
 							Time = now,
-							Destination = new Mediation.InterApp.Messages.EndpointInfo
-							{
-								ID = connection.Destination.ID,
-								Name = connection.Destination.Name,
-							},
+							Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
 						};
 
 						switch (action)
 						{
 							case ScriptAction.Connect:
 								request.Action = Mediation.InterApp.Messages.ConnectionAction.Connect;
-								request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo
-								{
-									ID = connection.Source.ID,
-									Name = connection.Source.Name,
-								};
+								request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(connection.Source);
 								break;
 							case ScriptAction.Disconnect:
 								request.Action = Mediation.InterApp.Messages.ConnectionAction.Disconnect;
