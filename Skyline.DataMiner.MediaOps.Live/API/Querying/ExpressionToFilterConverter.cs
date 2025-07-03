@@ -111,6 +111,15 @@
 				return _repository.CreateFilter(memberInfo.Name, Comparer.Contains, value);
 			}
 
+			// Handle .Where(x => x.Levels.Any(l => l.Endpoint == videoSource1))
+			if (node.Method.DeclaringType == typeof(System.Linq.Enumerable) &&
+				node.Method.Name == nameof(System.Linq.Enumerable.Any) &&
+				node.Arguments.Count == 2 &&
+				ExpressionTools.TryGetMember(node.Arguments[0], out var collectionMemberInfo))
+			{
+				return ConvertInternal(node.Arguments[1]);
+			}
+
 			throw new NotSupportedException($"Unsupported method call: {node.Method}");
 		}
 
