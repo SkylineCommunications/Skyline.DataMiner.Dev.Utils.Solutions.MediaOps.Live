@@ -36,11 +36,11 @@
 		internal OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper, api.Connection)
 		{
 			_configurationHelper = new ConfigurationRepository(helper, api.Connection);
+			_api = api;
 			_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(
-				api.Connection,
+				this,
 				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
 				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future));
-			_api = api;
 		}
 
 		/// <summary>
@@ -200,6 +200,43 @@
 			}
 
 			eventExecutionHelper.ExecuteEventsNow(eventIds);
+		}
+
+		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsInTimeRange(DateTime start, DateTime end)
+		{
+			DateTime localStart = start.ToLocalTime();
+			DateTime localEnd = end.ToLocalTime();
+
+			if (localStart > localEnd)
+			{
+				throw new ArgumentException("End time of range filter can not be lower than start time");
+			}
+
+			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).GreaterThanOrEqual(localStart))
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).LessThanOrEqual(localEnd));
+
+			return Read(filter);
+		}
+
+		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsAfterTime(DateTime time)
+		{
+			DateTime localStart = time.ToLocalTime();
+
+			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).GreaterThanOrEqual(localStart));
+
+			return Read(filter);
+		}
+
+		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsBeforeTime(DateTime time)
+		{
+			DateTime localEnd = time.ToLocalTime();
+
+			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).LessThanOrEqual(localEnd));
+
+			return Read(filter);
 		}
 
 		/// <summary>

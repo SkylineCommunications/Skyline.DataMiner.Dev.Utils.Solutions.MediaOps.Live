@@ -6,8 +6,7 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Async;
 	using Skyline.DataMiner.Net.Exceptions;
@@ -16,20 +15,19 @@
 	internal class OrchestrationSlidingWindowScheduler
 	{
 		private readonly OrchestrationScheduler _scheduler;
-		private readonly SlcOrchestrationHelper _orchestrationHelper;
+		private readonly OrchestrationEventRepository _repository;
 		private readonly OrchestrationCleanup _orchestrationCleanup;
 
-		internal OrchestrationSlidingWindowScheduler(IConnection connection, TimeSpan timeSpanFuture) : this (connection, TimeSpan.FromMinutes(0), timeSpanFuture)
+		internal OrchestrationSlidingWindowScheduler(OrchestrationEventRepository repository, TimeSpan timeSpanFuture) : this (repository, TimeSpan.FromMinutes(0), timeSpanFuture)
 		{
 		}
 
-		internal OrchestrationSlidingWindowScheduler(IConnection connection, TimeSpan timeSpanPast, TimeSpan timeSpanFuture)
+		internal OrchestrationSlidingWindowScheduler(OrchestrationEventRepository repository, TimeSpan timeSpanPast, TimeSpan timeSpanFuture)
 		{
-			_orchestrationCleanup = new OrchestrationCleanup(connection);
-			_scheduler = new OrchestrationScheduler(connection);
-			_orchestrationHelper = new SlcOrchestrationHelper(connection);
+			_orchestrationCleanup = new OrchestrationCleanup(repository);
+			_scheduler = new OrchestrationScheduler(repository.Connection);
+			_repository = repository;
 
-			Connection = connection;
 			TimeSpanPast = timeSpanPast;
 			TimeSpanFuture = timeSpanFuture;
 			WindowBaseTime = DateTimeOffset.UtcNow;
@@ -48,8 +46,9 @@
 
 		private void CreateOrUpdateAllEventsInWindow()
 		{
-			IEnumerable<OrchestrationEventInstance> eventInstancesInWindow = _orchestrationHelper.GetOrchestrationEventsInTimeRange(WindowBaseTime.UtcDateTime, WindowEndTime.UtcDateTime);
-			_scheduler.CreateOrUpdateEventScheduling(eventInstancesInWindow.Select(instance => new OrchestrationEvent(instance)));
+			List<OrchestrationEvent> orchestrationEvents = _repository.GetOrchestrationEventsInTimeRange(WindowBaseTime.UtcDateTime, WindowEndTime.UtcDateTime).ToList();
+			_scheduler.CreateOrUpdateEventScheduling(orchestrationEvents);
+			_repository.CreateOrUpdate(orchestrationEvents);
 		}
 
 		public void ScheduleEvents(IEnumerable<OrchestrationEvent> events)

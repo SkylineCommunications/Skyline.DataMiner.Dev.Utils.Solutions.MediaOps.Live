@@ -5,10 +5,8 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -18,16 +16,16 @@
 	public class OrchestrationCleanup
 	{
 		private readonly OrchestrationScheduler _scheduler;
-		private readonly SlcOrchestrationHelper _orchestrationHelper;
+		private readonly OrchestrationEventRepository _repository;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationCleanup"/> class.
 		/// </summary>
-		/// <param name="connection">DataMiner user connection.</param>
-		public OrchestrationCleanup(IConnection connection)
+		/// <param name="repository">Repository object needed for DOM updates.</param>
+		public OrchestrationCleanup(OrchestrationEventRepository repository)
 		{
-			_scheduler = new OrchestrationScheduler(connection);
-			_orchestrationHelper = new SlcOrchestrationHelper(connection);
+			_scheduler = new OrchestrationScheduler(repository.Connection);
+			_repository = repository;
 		}
 
 		/// <summary>
@@ -45,9 +43,11 @@
 			IEnumerable<Guid> eventsFromTasksToRemove = tasksToRemove.SelectMany(task => task.OrchestrationEventIds);
 
 			ORFilterElement<DomInstance> filter = new ORFilterElement<DomInstance>(eventsFromTasksToRemove.Select(id => FilterElementFactory.Create(DomInstanceExposers.Id, Comparer.Equals, id)).ToArray());
-			IEnumerable<OrchestrationEventInstance> pastEvents = _orchestrationHelper.GetOrchestrationEvents(filter);
+			List<OrchestrationEvent> pastEvents = _repository.Read(filter).ToList();
 
-			_scheduler.DeleteEventTasks(pastEvents.Select(instance => new OrchestrationEvent(instance)));
+			_scheduler.DeleteEventTasks(pastEvents);
+
+			_repository.CreateOrUpdate(pastEvents);
 		}
 	}
 }
