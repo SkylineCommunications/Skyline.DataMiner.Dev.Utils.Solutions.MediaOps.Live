@@ -124,7 +124,7 @@
 				ExpressionType.LessThanOrEqual => Comparer.LTE,
 				ExpressionType.GreaterThan => Comparer.GT,
 				ExpressionType.GreaterThanOrEqual => Comparer.GTE,
-				_ => throw new InvalidOperationException($"Unknown comparison: {type}")
+				_ => throw new NotSupportedException($"Unknown comparison: {type}")
 			};
 		}
 	}
