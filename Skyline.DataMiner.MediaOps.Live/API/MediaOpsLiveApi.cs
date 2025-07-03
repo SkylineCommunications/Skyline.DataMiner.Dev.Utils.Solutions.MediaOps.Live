@@ -16,6 +16,8 @@
 
 	public class MediaOpsLiveApi
 	{
+		private IEngine _engine;
+
 		public MediaOpsLiveApi(IConnection connection)
 		{
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -33,14 +35,22 @@
 			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
 		}
 
-		public MediaOpsLiveApi(IEngine engine) : this(engine?.GetUserConnection())
-		{
-			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
-		}
-
 		protected internal IConnection Connection { get; }
 
-		protected internal IEngine Engine { get; }
+		protected internal IEngine Engine
+		{
+			get
+			{
+				if (_engine == null)
+				{
+					throw new InvalidOperationException("Engine is not set. Please call SetEngine before accessing the Engine property.");
+				}
+
+				return _engine;
+			}
+		}
+
+		public bool HasEngine => _engine != null;
 
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
@@ -60,11 +70,19 @@
 
 		public OrchestrationEventRepository Orchestration { get; }
 
+		public void SetEngine(IEngine engine)
+		{
+			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
+		}
+
 		public bool IsInstalled()
 		{
 			var moduleSettingsHelper = new ModuleSettingsHelper(Connection.HandleMessages);
 
-			var filter = ModuleSettingsExposers.ModuleId.Equal(SlcConnectivityManagementIds.ModuleId).OR(ModuleSettingsExposers.ModuleId.Equal(SlcOrchestrationIds.ModuleId));
+			var filter = new ORFilterElement<ModuleSettings>(
+				ModuleSettingsExposers.ModuleId.Equal(SlcConnectivityManagementIds.ModuleId),
+				ModuleSettingsExposers.ModuleId.Equal(SlcOrchestrationIds.ModuleId));
+
 			var count = moduleSettingsHelper.ModuleSettings.Count(filter);
 
 			if (count == 0)

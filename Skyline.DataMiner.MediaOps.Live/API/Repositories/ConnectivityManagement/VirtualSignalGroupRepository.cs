@@ -114,13 +114,14 @@
 		private void CheckDuplicatesBeforeSave(ICollection<VirtualSignalGroup> instances)
 		{
 			FilterElement<DomInstance> CreateFilter(VirtualSignalGroup vsg) =>
-				DomInstanceExposers.Id.NotEqual(vsg.ID)
-				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Name).Equal(vsg.Name));
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.Id.NotEqual(vsg.ID),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Name).Equal(vsg.Name));
 
 			var count = FilterQueryExecutor.CountFilteredItems(
 				instances,
 				x => CreateFilter(x),
-				x => Helper.DomInstances.Count(x));
+				x => Count(x));
 
 			if (count > 0)
 			{

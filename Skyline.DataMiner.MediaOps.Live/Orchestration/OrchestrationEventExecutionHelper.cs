@@ -184,7 +184,7 @@
 					requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings));
 				}
 
-				takeHelper.Take(_api.Engine, requests, performanceTracker.Collector);
+				takeHelper.Take(requests, performanceTracker.Collector);
 			}
 		}
 

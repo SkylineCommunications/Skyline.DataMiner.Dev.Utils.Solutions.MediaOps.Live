@@ -3,12 +3,13 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Threading.Tasks;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
@@ -19,18 +20,27 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 
+		private bool _waitForCompletion = false;
+		private TimeSpan _timeout;
+
 		public TakeHelper(MediaOpsLiveApi api)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
 
-		public void Take(IEngine engine, ICollection<ConnectionRequest> connectionRequests, PerformanceCollector performanceCollector)
+		public void ConfigureWaitForCompletion(bool waitForCompletion, TimeSpan timeout)
 		{
-			if (engine == null)
+			if (timeout < TimeSpan.Zero)
 			{
-				throw new ArgumentNullException(nameof(engine));
+				throw new ArgumentException("Timeout cannot be negative.", nameof(timeout));
 			}
 
+			_waitForCompletion = waitForCompletion;
+			_timeout = timeout;
+		}
+
+		public void Take(ICollection<ConnectionRequest> connectionRequests, PerformanceCollector performanceCollector)
+		{
 			if (connectionRequests == null)
 			{
 				throw new ArgumentNullException(nameof(connectionRequests));
@@ -43,17 +53,12 @@
 
 			using (var performanceTracker = new PerformanceTracker(performanceCollector))
 			{
-				TakeInternal(engine, connectionRequests, performanceTracker);
+				TakeInternal(connectionRequests, performanceTracker);
 			}
 		}
 
-		public void Take(IEngine engine, ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceCollector performanceCollector)
+		public void Take(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceCollector performanceCollector)
 		{
-			if (engine == null)
-			{
-				throw new ArgumentNullException(nameof(engine));
-			}
-
 			if (vsgConnectionRequests == null)
 			{
 				throw new ArgumentNullException(nameof(vsgConnectionRequests));
@@ -114,11 +119,11 @@
 					}
 				}
 
-				TakeInternal(engine, connectionRequests, performanceTracker);
+				TakeInternal(connectionRequests, performanceTracker);
 			}
 		}
 
-		private void TakeInternal(IEngine engine, ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker)
+		private void TakeInternal(ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -126,20 +131,20 @@
 					.Select(x => new ConnectionOperationContext(x))
 					.ToList();
 
-				PrepareData(engine, takeContexts, performanceTracker);
+				PrepareData(takeContexts, performanceTracker);
 
-				NotifyPendingConnectionActions(engine, ScriptAction.Connect, takeContexts, performanceTracker);
-				ExecuteConnectionHandlerScripts(engine, ScriptAction.Connect, takeContexts, performanceTracker);
+				NotifyPendingConnectionActions(ScriptAction.Connect, takeContexts, performanceTracker);
+				ExecuteConnectionHandlerScripts(ScriptAction.Connect, takeContexts, performanceTracker);
+
+				if (_waitForCompletion)
+				{
+					WaitUntilAllConnected(takeContexts, performanceTracker);
+				}
 			}
 		}
 
-		public void Disconnect(IEngine engine, ICollection<DisconnectRequest> disconnectRequests, PerformanceCollector performanceCollector)
+		public void Disconnect(ICollection<DisconnectRequest> disconnectRequests, PerformanceCollector performanceCollector)
 		{
-			if (engine == null)
-			{
-				throw new ArgumentNullException(nameof(engine));
-			}
-
 			if (disconnectRequests == null)
 			{
 				throw new ArgumentNullException(nameof(disconnectRequests));
@@ -152,17 +157,12 @@
 
 			using (var performanceTracker = new PerformanceTracker(performanceCollector))
 			{
-				DisconnectInternal(engine, disconnectRequests, performanceTracker);
+				DisconnectInternal(disconnectRequests, performanceTracker);
 			}
 		}
 
-		public void Disconnect(IEngine engine, ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceCollector performanceCollector)
+		public void Disconnect(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceCollector performanceCollector)
 		{
-			if (engine == null)
-			{
-				throw new ArgumentNullException(nameof(engine));
-			}
-
 			if (vsgDisconnectRequests == null)
 			{
 				throw new ArgumentNullException(nameof(vsgDisconnectRequests));
@@ -208,11 +208,11 @@
 					}
 				}
 
-				DisconnectInternal(engine, disconnectRequests, performanceTracker);
+				DisconnectInternal(disconnectRequests, performanceTracker);
 			}
 		}
 
-		private void DisconnectInternal(IEngine engine, ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
+		private void DisconnectInternal(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -220,18 +220,23 @@
 					.Select(x => new ConnectionOperationContext(x))
 					.ToList();
 
-				PrepareData(engine, takeContexts, performanceTracker);
+				PrepareData(takeContexts, performanceTracker);
 
-				NotifyPendingConnectionActions(engine, ScriptAction.Disconnect, takeContexts, performanceTracker);
-				ExecuteConnectionHandlerScripts(engine, ScriptAction.Disconnect, takeContexts, performanceTracker);
+				NotifyPendingConnectionActions(ScriptAction.Disconnect, takeContexts, performanceTracker);
+				ExecuteConnectionHandlerScripts(ScriptAction.Disconnect, takeContexts, performanceTracker);
+
+				if (_waitForCompletion)
+				{
+					WaitUntilAllDisconnected(takeContexts, performanceTracker);
+				}
 			}
 		}
 
-		private void PrepareData(IEngine engine, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void PrepareData(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var dms = engine.GetDms();
+				var dms = _api.Connection.GetDms();
 
 				GetDestinationElements(dms, takeContexts, performanceTracker);
 				GetMediationElements(dms, takeContexts, performanceTracker);
@@ -313,7 +318,7 @@
 			}
 		}
 
-		private void NotifyPendingConnectionActions(IEngine engine, ScriptAction action, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void NotifyPendingConnectionActions(ScriptAction action, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -363,7 +368,7 @@
 					commands.Messages.Add(message);
 
 					commands.Send(
-						engine.GetUserConnection(),
+						_api.Connection,
 						mediationElement.DmaId,
 						mediationElement.ElementId,
 						9000000,
@@ -372,7 +377,7 @@
 			}
 		}
 
-		private void ExecuteConnectionHandlerScripts(IEngine engine, ScriptAction action, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void ExecuteConnectionHandlerScripts(ScriptAction action, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -400,8 +405,97 @@
 							throw new InvalidOperationException($"Invalid action: {action}");
 					}
 
-					ConnectionHandlerScript.Execute(engine, script, request, performanceTracker);
+					if (_api.HasEngine)
+					{
+						ConnectionHandlerScript.Execute(_api.Engine, script, request, performanceTracker);
+					}
+					else
+					{
+						ConnectionHandlerScript.Execute(_api.Connection, script, request, performanceTracker);
+					}
 				}
+			}
+		}
+
+		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
+			{
+				var connectionsMonitor = new ConnectionMonitor(connectivityInfoProvider);
+
+				var tasks = new List<Task<bool>>();
+
+				foreach (var takeContext in takeContexts)
+				{
+					var task = Task.Run(
+						() => WaitUntilConnected(takeContext, connectionsMonitor, performanceTracker));
+
+					tasks.Add(task);
+				}
+
+				var results = Task.WhenAll(tasks).Result;
+				var failedCount = results.Count(x => !x);
+
+				if (failedCount > 0)
+				{
+					throw new TimeoutException($"Failed to connect {failedCount} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
+				}
+			}
+		}
+
+		private bool WaitUntilConnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
+			{
+				performanceTracker.AddMetadata("Source", takeContext.Source.Name);
+				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
+
+				return connectionMonitor.WaitUntilConnected(
+					takeContext.Source,
+					takeContext.Destination,
+					_timeout);
+			}
+		}
+
+		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
+			{
+				var connectionMonitor = new ConnectionMonitor(connectivityInfoProvider);
+
+				var tasks = new List<Task<bool>>();
+
+				foreach (var takeContext in takeContexts)
+				{
+					var task = Task.Run(
+						() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker));
+
+					tasks.Add(task);
+				}
+
+				var results = Task.WhenAll(tasks).Result;
+				var failedCount = results.Count(x => !x);
+
+				if (failedCount > 0)
+				{
+					throw new TimeoutException($"Failed to disconnect {failedCount} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
+				}
+			}
+		}
+
+		private bool WaitUntilDisconnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
+			{
+				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
+
+				return connectionMonitor.WaitUntilDisconnected(
+					takeContext.Destination,
+					_timeout);
 			}
 		}
 	}

@@ -233,13 +233,14 @@
 		private void CheckDuplicatesBeforeSave(ICollection<Endpoint> instances)
 		{
 			FilterElement<DomInstance> CreateFilter(Endpoint e) =>
-				DomInstanceExposers.Id.NotEqual(e.ID)
-				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Name).Equal(e.Name));
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.Id.NotEqual(e.ID),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Name).Equal(e.Name));
 
 			var count = FilterQueryExecutor.CountFilteredItems(
 				instances,
 				x => CreateFilter(x),
-				x => Helper.DomInstances.Count(x));
+				x => Count(x));
 
 			if (count > 0)
 			{
@@ -251,9 +252,14 @@
 		{
 			FilterElement<DomInstance> CreateFilter(Endpoint e) =>
 				new ORFilterElement<DomInstance>(
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint).Equal(e.ID),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination).Equal(e.ID),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource).Equal(e.ID));
+					new ANDFilterElement<DomInstance>(
+						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint).Equal(e.ID)),
+					new ANDFilterElement<DomInstance>(
+						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Connection.Id),
+						new ORFilterElement<DomInstance>(
+							DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination).Equal(e.ID),
+							DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.ConnectedSource).Equal(e.ID))));
 
 			var count = FilterQueryExecutor.CountFilteredItems(
 				instances,
