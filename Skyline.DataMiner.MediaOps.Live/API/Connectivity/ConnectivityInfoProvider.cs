@@ -33,8 +33,6 @@
 		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
 		private RepositorySubscription<Connection> _subscriptionConnections;
 
-		private bool _isSubscribed;
-
 		public ConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
@@ -55,6 +53,8 @@
 		public MediaOpsLiveApi Api { get; }
 
 		public IDms Dms { get; }
+
+		public bool IsSubscribed { get; private set; }
 
 		public bool IsConnected(Endpoint endpoint)
 		{
@@ -335,7 +335,7 @@
 		{
 			lock (_lock)
 			{
-				if (_isSubscribed)
+				if (IsSubscribed)
 				{
 					return;
 				}
@@ -356,7 +356,7 @@
 					_pendingConnectionActionsSubscriptions.Add(tableSubscription);
 				}
 
-				_isSubscribed = true;
+				IsSubscribed = true;
 			}
 		}
 
@@ -364,7 +364,7 @@
 		{
 			lock (_lock)
 			{
-				if (!_isSubscribed)
+				if (!IsSubscribed)
 				{
 					return;
 				}
@@ -385,7 +385,7 @@
 
 				_pendingConnectionActionsSubscriptions.Clear();
 
-				_isSubscribed = false;
+				IsSubscribed = false;
 			}
 		}
 

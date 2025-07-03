@@ -52,8 +52,7 @@
 			var source2 = api.VirtualSignalGroups.Read("Source 2");
 			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
 
-			using var connectivity = new ConnectivityInfoProvider(api);
-			connectivity.Subscribe();
+			using var connectivity = new ConnectivityInfoProvider(api, subscribe: true);
 
 			var receivedEvents = new List<ConnectionsUpdatedEvent>();
 			connectivity.ConnectionsUpdated += (sender, e) => receivedEvents.Add(e);
@@ -191,7 +190,7 @@
 			audioSource1Connectivity.IsConnected.ShouldBeTrue();
 			audioSource1Connectivity.IsPendingConnected.ShouldBeFalse();
 			audioSource1Connectivity.IsDisconnecting.ShouldBeFalse();
-			audioSource1Connectivity.DestinationConnections.ShouldBe([new (audioDestination1, EndpointConnectionState.Connected)]);
+			audioSource1Connectivity.DestinationConnections.ShouldBe([new(audioDestination1, EndpointConnectionState.Connected)]);
 			audioSource1Connectivity.VirtualSignalGroups.ShouldBe([source1]);
 
 			var audioDestination1Connectivity = connectivity.GetConnectivity(audioDestination1);
