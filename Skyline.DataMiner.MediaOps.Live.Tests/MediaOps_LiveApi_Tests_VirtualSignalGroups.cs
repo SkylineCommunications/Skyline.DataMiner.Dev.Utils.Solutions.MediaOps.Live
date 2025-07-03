@@ -1,6 +1,5 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
@@ -9,15 +8,15 @@
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_VirtualSignalGroups
 	{
-		private static readonly MediaOpsLiveApi _api = new MediaOpsLiveApiMock();
-
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_VirtualSignalGroups_GetByEndpoints()
 		{
-			var videoSource1 = _api.Endpoints.Query().First(x => x.Name == "Video Source 1");
-			var videoSource2 = _api.Endpoints.Query().First(x => x.Name == "Video Source 2");
+			var api = new MediaOpsLiveApiMock();
 
-			var vsgs = _api.VirtualSignalGroups.GetByEndpoints([videoSource1, videoSource2]).ToList();
+			var videoSource1 = api.Endpoints.Query().First(x => x.Name == "Video Source 1");
+			var videoSource2 = api.Endpoints.Query().First(x => x.Name == "Video Source 2");
+
+			var vsgs = api.VirtualSignalGroups.GetByEndpoints([videoSource1, videoSource2]).ToList();
 
 			Assert.AreEqual(2, vsgs.Count);
 			CollectionAssert.AreEquivalent(
@@ -28,10 +27,12 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_VirtualSignalGroups_GetByEndpointIds()
 		{
-			var videoSource1 = _api.Endpoints.Query().First(x => x.Name == "Video Source 1");
-			var videoSource2 = _api.Endpoints.Query().First(x => x.Name == "Video Source 2");
+			var api = new MediaOpsLiveApiMock();
 
-			var vsgs = _api.VirtualSignalGroups.GetByEndpointIds([videoSource1.ID, videoSource2.ID]).ToList();
+			var videoSource1 = api.Endpoints.Query().First(x => x.Name == "Video Source 1");
+			var videoSource2 = api.Endpoints.Query().First(x => x.Name == "Video Source 2");
+
+			var vsgs = api.VirtualSignalGroups.GetByEndpointIds([videoSource1.ID, videoSource2.ID]).ToList();
 
 			Assert.AreEqual(2, vsgs.Count);
 			CollectionAssert.AreEquivalent(
@@ -42,28 +43,32 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_VirtualSignalGroups_AssignEndpoint()
 		{
-			var vsg = _api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			var api = new MediaOpsLiveApiMock();
 
-			var videoLevel = _api.Levels.Query().First(x => x.Name == "Video");
-			var videoSource1 = _api.Endpoints.Query().First(x => x.Name == "Video Source 1");
+			var vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+
+			var videoLevel = api.Levels.Query().First(x => x.Name == "Video");
+			var videoSource1 = api.Endpoints.Query().First(x => x.Name == "Video Source 1");
 
 			vsg.Levels.Remove(vsg.Levels.FirstOrDefault(x => x.Level == videoLevel));
-			_api.VirtualSignalGroups.Update(vsg);
-			vsg = _api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			api.VirtualSignalGroups.Update(vsg);
+			vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
 			Assert.AreEqual(1, vsg.Levels.Count);
 
 			vsg.Levels.Add(new LevelEndpoint(videoLevel, videoSource1));
-			_api.VirtualSignalGroups.Update(vsg);
-			vsg = _api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			api.VirtualSignalGroups.Update(vsg);
+			vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
 			Assert.AreEqual(2, vsg.Levels.Count);
 		}
 
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_VirtualSignalGroups_JoinEndpoints()
 		{
+			var api = new MediaOpsLiveApiMock();
+
 			// act
-			var result = _api.VirtualSignalGroups.ReadAllPaged()
-				.JoinEndpoints(_api.Endpoints)
+			var result = api.VirtualSignalGroups.ReadAllPaged()
+				.JoinEndpoints(api.Endpoints)
 				.Flatten()
 				.ToList();
 
