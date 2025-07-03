@@ -11,9 +11,9 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Mediation;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
 	public class TakeHelper
@@ -390,15 +390,15 @@
 					switch (action)
 					{
 						case ScriptAction.Connect:
-							request = new CreateConnectionsRequest
+							request = new Mediation.Data.CreateConnectionsRequest
 							{
-								Connections = group.Select(x => ConnectionInfo.Create(x.Source, x.Destination)).ToArray(),
+								Connections = group.Select(x => new Mediation.Data.ConnectionInfo(x.Source, x.Destination)).ToArray(),
 							};
 							break;
 						case ScriptAction.Disconnect:
-							request = new DisconnectDestinationsRequest
+							request = new Mediation.Data.DisconnectDestinationsRequest
 							{
-								Destinations = group.Select(x => EndpointInfo.Create(x.Destination)).ToArray(),
+								Destinations = group.Select(x => new Mediation.Data.EndpointInfo(x.Destination)).ToArray(),
 							};
 							break;
 						default:

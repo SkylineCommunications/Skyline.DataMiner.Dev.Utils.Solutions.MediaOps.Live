@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
+﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
 {
 	using System;
 	using System.Collections.Generic;
@@ -15,12 +15,12 @@
 				throw new ArgumentNullException(nameof(row));
 			}
 
-			var destinationIdValue = Convert.ToString(row[0]);
-			Guid.TryParse(destinationIdValue, out var destinationId);
+			Guid.TryParse(Convert.ToString(row[0]), out var destinationId);
 			Destination = destinationId;
 
-			var actionValue = Convert.ToString(row[2]);
-			Enum.TryParse<PendingActionType>(actionValue, out var action);
+			DestinationName = Convert.ToString(row[1]);
+
+			Enum.TryParse<PendingActionType>(Convert.ToString(row[2]), out var action);
 			Action = action;
 
 			var timeValue = Convert.ToDouble(row[3]);
@@ -32,6 +32,12 @@
 			{
 				PendingSource = parsedPendingSourceId;
 			}
+
+			var pendingSourceNameValue = Convert.ToString(row[5]);
+			if (!String.IsNullOrWhiteSpace(pendingSourceNameValue))
+			{
+				PendingSourceName = pendingSourceNameValue;
+			}
 		}
 
 		public PendingActionType Action { get; }
@@ -40,7 +46,11 @@
 
 		public ApiObjectReference<Endpoint> Destination { get; }
 
+		public string DestinationName { get; }
+
 		public ApiObjectReference<Endpoint>? PendingSource { get; }
+
+		public string PendingSourceName { get; }
 
 		public IEnumerable<ApiObjectReference<Endpoint>> GetEndpoints()
 		{

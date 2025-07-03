@@ -4,7 +4,6 @@
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
@@ -12,10 +11,9 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
-	using Skyline.DataMiner.MediaOps.Live.Mediation;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.Net;
 
-	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Connection;
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
 	public class MediaOpsLiveSimulation
@@ -58,20 +56,12 @@
 			{
 				rowKey,
 				destination.Name,
+				source != null ? 1 : 0, // IsConnected
 				source?.ID.ToString() ?? String.Empty,
 				source?.Name ?? String.Empty,
 			};
 
 			connectionsTable.SetRow(rowKey, row);
-
-			// TODO: remove this code
-			var connection = Api.Connections.GetByDestination(destination)
-				?? new Connection { Destination = destination };
-
-			connection.ConnectedSource = source;
-			connection.IsConnected = source != null;
-
-			Api.Connections.CreateOrUpdate(connection);
 		}
 
 		public void CreateTestPendingConnectionAction(
@@ -228,19 +218,8 @@
 
 					if (createConnections)
 					{
-						var connection1 = new Connection
-						{
-							Destination = videoDestination1,
-							ConnectedSource = videoSource1,
-							IsConnected = true,
-						};
-						var connection2 = new Connection
-						{
-							Destination = audioDestination1,
-							ConnectedSource = audioSource1,
-							IsConnected = true,
-						};
-						Api.Connections.CreateOrUpdate([connection1, connection2]);
+						CreateTestConnection(videoSource1, videoDestination1);
+						CreateTestConnection(audioSource1, audioDestination1);
 					}
 				}
 			}

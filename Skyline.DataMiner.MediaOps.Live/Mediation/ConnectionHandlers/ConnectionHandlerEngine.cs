@@ -8,9 +8,7 @@
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
-	using Skyline.DataMiner.Utils.DOM.Extensions;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
@@ -39,86 +37,27 @@
 			RegisterConnections([connectionInfo]);
 		}
 
-		public void RegisterConnections(ICollection<ConnectionInfo> connectionInfos)
+		public void RegisterConnections(ICollection<ConnectionInfo> connections)
 		{
-			if (connectionInfos == null)
+			if (connections == null)
 			{
-				throw new ArgumentNullException(nameof(connectionInfos));
+				throw new ArgumentNullException(nameof(connections));
 			}
 
-			UpdateDomConnections(connectionInfos);
-			NotifyPendingConnectionActions(connectionInfos);
+			Engine.GenerateInformation($"Registering {connections.Count} connections...");
+
+			NotifyConnectionChanges(connections);
 		}
 
-		private void UpdateDomConnections(ICollection<ConnectionInfo> connectionInfos)
-		{
-			lock (_lock)
-			{
-				var destinationEndpointIds = connectionInfos.Select(x => x.DestinationEndpoint.ID).ToList();
-				var connectionsByDestination = Helper.GetConnectionsForDestinations(destinationEndpointIds);
-
-				var updatedConnections = new List<ConnectionInstance>();
-
-				foreach (var connectionInfo in connectionInfos)
-				{
-					var hasChanges = false;
-
-					if (!connectionsByDestination.TryGetValue(connectionInfo.DestinationEndpoint.ID, out var connection))
-					{
-						connection = CreateNewConnection(connectionInfo.DestinationEndpoint.ID);
-						connectionsByDestination.Add(connectionInfo.DestinationEndpoint.ID, connection);
-						hasChanges = true;
-					}
-
-					hasChanges |= ApplyConnectionUpdate(connection, connectionInfo.SourceEndpoint?.ID);
-
-					if (hasChanges)
-					{
-						updatedConnections.Add(connection);
-					}
-				}
-
-				if (updatedConnections.Count > 0)
-				{
-					Engine.GenerateInformation($"Updating {updatedConnections.Count} connections...");
-					Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
-				}
-			}
-		}
-
-		private static ConnectionInstance CreateNewConnection(Guid destinationEndpointId)
-		{
-			return new ConnectionInstance
-			{
-				ConnectionInfo = new ConnectionInfoSection
-				{
-					Destination = destinationEndpointId,
-					IsConnected = false,
-				},
-			};
-		}
-
-		private static bool ApplyConnectionUpdate(ConnectionInstance connection, Guid? sourceEndpointId)
-		{
-			var wasConnected = connection.ConnectionInfo.IsConnected;
-			var previousSource = connection.ConnectionInfo.ConnectedSource;
-
-			connection.ConnectionInfo.IsConnected = sourceEndpointId != null;
-			connection.ConnectionInfo.ConnectedSource = sourceEndpointId;
-
-			return wasConnected != connection.ConnectionInfo.IsConnected ||
-				   previousSource != connection.ConnectionInfo.ConnectedSource;
-		}
-
-		private void NotifyPendingConnectionActions(ICollection<ConnectionInfo> connectionInfos)
+		private void NotifyConnectionChanges(ICollection<ConnectionInfo> connections)
 		{
 			var now = DateTimeOffset.Now;
 
 			var mediationElementMap = MediationElement.GetMediationElements(
 				Api,
-				connectionInfos.Select(x => x.DestinationEndpoint));
+				connections.Select(x => x.DestinationEndpoint));
 
-			foreach (var group in connectionInfos
+			foreach (var group in connections
 				.Where(x => mediationElementMap.ContainsKey(x.DestinationEndpoint))
 				.GroupBy(x => mediationElementMap[x.DestinationEndpoint]))
 			{
@@ -136,10 +75,13 @@
 							ID = connection.DestinationEndpoint.ID,
 							Name = connection.DestinationEndpoint.Name,
 						},
+						IsConnected = connection.IsConnected,
 					};
 
 					if (connection.SourceEndpoint != null)
 					{
+						request.IsConnected = true;
+
 						request.ConnectedSource = new InterApp.Messages.EndpointInfo
 						{
 							ID = connection.SourceEndpoint.ID,

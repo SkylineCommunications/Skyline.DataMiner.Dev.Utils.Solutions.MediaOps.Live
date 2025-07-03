@@ -9,5 +9,7 @@
 		public EndpointInfo Destination { get; set; }
 
 		public EndpointInfo ConnectedSource { get; set; }
+
+		public bool IsConnected { get; set; }
 	}
 }

@@ -12,7 +12,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.Mediation;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Subscriptions;
 
 	public sealed class ConnectivityInfoProvider : IDisposable
@@ -21,7 +21,7 @@
 
 		private readonly Dictionary<ApiObjectReference<Endpoint>, Endpoint> _endpoints = new();
 		private readonly Dictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> _virtualSignalGroups = new();
-		private readonly Dictionary<ApiObjectReference<Connection>, Connection> _connections = new();
+		private readonly Dictionary<ApiObjectReference<Endpoint>, Connection2> _connections = new();
 		private readonly Dictionary<ApiObjectReference<Endpoint>, PendingConnectionAction> _pendingConnectionActions = new();
 
 		private readonly VirtualSignalGroupEndpointsMapping _virtualSignalGroupEndpointsMapping = new();
@@ -31,7 +31,6 @@
 		private readonly ICollection<TableSubscription> _pendingConnectionActionsSubscriptions = [];
 		private RepositorySubscription<Endpoint> _subscriptionEndpoints;
 		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
-		private RepositorySubscription<Connection> _subscriptionConnections;
 
 		public ConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
@@ -42,10 +41,9 @@
 			{
 				Subscribe();
 			}
-			else
-			{
-				LoadPendingConnectionActions();
-			}
+
+			LoadConnections();
+			LoadPendingConnectionActions();
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
@@ -342,11 +340,9 @@
 
 				_subscriptionEndpoints = Api.Endpoints.Subscribe();
 				_subscriptionVirtualSignalGroups = Api.VirtualSignalGroups.Subscribe();
-				_subscriptionConnections = Api.Connections.Subscribe();
 
 				_subscriptionEndpoints.Changed += Endpoints_Changed;
 				_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
-				_subscriptionConnections.Changed += Connections_Changed;
 
 				foreach (var mediationElement in MediationElement.GetAllMediationElements(Dms))
 				{
@@ -371,11 +367,9 @@
 
 				_subscriptionEndpoints.Changed -= Endpoints_Changed;
 				_subscriptionVirtualSignalGroups.Changed -= VirtualSignalGroups_Changed;
-				_subscriptionConnections.Changed -= Connections_Changed;
 
 				_subscriptionEndpoints.Dispose();
 				_subscriptionVirtualSignalGroups.Dispose();
-				_subscriptionConnections.Dispose();
 
 				foreach (var tableSubscription in _pendingConnectionActionsSubscriptions)
 				{
@@ -446,34 +440,6 @@
 			}
 		}
 
-		public void UpdateConnections(IEnumerable<Connection> updated, IEnumerable<Connection> deleted = null)
-		{
-			lock (_lock)
-			{
-				if (updated != null)
-				{
-					foreach (var item in updated)
-					{
-						_connections[item.ID] = item;
-						_connectionEndpointsMapping.AddOrUpdate(item);
-					}
-
-					// Ensure that endpoints for the updated connections are loaded
-					var endpoints = updated.SelectMany(x => x.GetEndpoints());
-					EnsureEndpointsAreLoaded(endpoints);
-				}
-
-				if (deleted != null)
-				{
-					foreach (var item in deleted)
-					{
-						_connections.Remove(item);
-						_connectionEndpointsMapping.Remove(item);
-					}
-				}
-			}
-		}
-
 		private void Endpoints_Changed(object sender, ApiObjectsChangedEvent<Endpoint> e)
 		{
 			lock (_lock)
@@ -487,19 +453,6 @@
 			lock (_lock)
 			{
 				UpdateVirtualSignalGroups(e.Created.Concat(e.Updated), e.Deleted);
-			}
-		}
-
-		private void Connections_Changed(object sender, ApiObjectsChangedEvent<Connection> e)
-		{
-			lock (_lock)
-			{
-				var impactedEndpoints = GetImpactedEndpointsForChangedConnections(e);
-
-				UpdateConnections(e.Created.Concat(e.Updated), e.Deleted);
-
-				EnsureEndpointsAreLoaded(impactedEndpoints);
-				RaiseConnectionsUpdated(impactedEndpoints);
 			}
 		}
 
@@ -608,11 +561,6 @@
 				var virtualSignalGroups = Api.VirtualSignalGroups.GetByEndpointIds(endpointIds).ToList();
 				Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {String.Join(", ", virtualSignalGroups.Select(x => x.ID))}");
 				UpdateVirtualSignalGroups(virtualSignalGroups);
-
-				Debug.WriteLine($"Loading connections with endpoints: {String.Join(", ", endpointIds)}");
-				var connections = Api.Connections.GetByEndpointIds(endpointIds).ToList();
-				Debug.WriteLine($"Loaded {connections.Count} connections: {String.Join(", ", connections.Select(x => x.ID))}");
-				UpdateConnections(connections);
 			}
 		}
 
@@ -658,6 +606,26 @@
 						.Select(endpoint => endpoint.Endpoint);
 					EnsureEndpointsAreLoaded(endpoints);
 				}
+			}
+		}
+
+		private void LoadConnections()
+		{
+			lock (_lock)
+			{
+				var connections = MediationElement.GetAllMediationElements(Dms)
+					.AsParallel()
+					.SelectMany(x => x.GetConnections())
+					.ToList();
+
+				foreach (var connection in connections)
+				{
+					_connections.Add(connection.Destination, connection);
+					_connectionEndpointsMapping.Add(connection);
+				}
+
+				var endpointIds = connections.SelectMany(x => x.GetEndpoints());
+				EnsureEndpointsAreLoaded(endpointIds);
 			}
 		}
 

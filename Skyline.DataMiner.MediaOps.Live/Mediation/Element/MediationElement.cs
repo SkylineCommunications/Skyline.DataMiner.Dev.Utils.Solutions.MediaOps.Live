@@ -1,12 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation
+﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 	using Skyline.DataMiner.Net.Messages;
@@ -27,6 +27,21 @@
 		public int ElementId => DmsElement.Id;
 
 		public string Name => DmsElement.Name;
+
+		public IEnumerable<Connection2> GetConnections()
+		{
+			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			{
+				yield break;
+			}
+
+			var table = DmsElement.GetTable(5000).GetData();
+
+			foreach (var row in table.Values)
+			{
+				yield return new Connection2(row);
+			}
+		}
 
 		public IEnumerable<PendingConnectionAction> GetPendingConnectionActions()
 		{
@@ -54,7 +69,7 @@
 
 			var script = scriptColumn.GetValue(destinationElement.DmsElementId.Value, KeyType.PrimaryKey);
 
-			if (String.IsNullOrEmpty(script))
+			if (string.IsNullOrEmpty(script))
 			{
 				throw new InvalidOperationException($"No connection handler script found for element '{destinationElement.Name}' in mediation element '{Name}'.");
 			}
@@ -141,7 +156,7 @@
 				throw new ArgumentNullException(nameof(endpoints));
 			}
 
-			var endpointInfoMap = endpoints.ToDictionary(EndpointInfo.Create);
+			var endpointInfoMap = endpoints.ToDictionary(x => new EndpointInfo(x));
 			var mediationElementMap = GetMediationElements(api, endpointInfoMap.Keys);
 
 			var result = new Dictionary<Endpoint, MediationElement>();
@@ -188,7 +203,7 @@
 				throw new ArgumentNullException(nameof(endpoint));
 			}
 
-			return GetMediationElement(api, EndpointInfo.Create(endpoint));
+			return GetMediationElement(api, new EndpointInfo(endpoint));
 		}
 	}
 }

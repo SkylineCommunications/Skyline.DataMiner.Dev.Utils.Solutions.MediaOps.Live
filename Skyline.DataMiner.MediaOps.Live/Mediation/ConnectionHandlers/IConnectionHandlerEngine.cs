@@ -4,7 +4,6 @@
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 
 	public interface IConnectionHandlerEngine
 	{
