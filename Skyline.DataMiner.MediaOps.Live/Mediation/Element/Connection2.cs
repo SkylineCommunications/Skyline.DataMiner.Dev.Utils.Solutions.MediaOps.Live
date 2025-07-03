@@ -20,7 +20,7 @@
 
 			DestinationName = Convert.ToString(row[1]);
 
-			IsConnected = Convert.ToBoolean(row[2]);
+			IsConnected = Convert.ToInt32(row[2]) == 1;
 
 			var connectedSourceIdValue = Convert.ToString(row[3]);
 			if (!String.IsNullOrWhiteSpace(connectedSourceIdValue) &&
@@ -57,6 +57,21 @@
 			{
 				yield return ConnectedSource.Value;
 			}
+		}
+
+		public override string ToString()
+		{
+			if (IsConnected)
+			{
+				if (!String.IsNullOrWhiteSpace(ConnectedSourceName))
+				{
+					return $"{DestinationName} => {ConnectedSourceName} [Connected]";
+				}
+
+				return $"{DestinationName} [Connected]";
+			}
+
+			return $"{DestinationName} [Disconnected]";
 		}
 	}
 }

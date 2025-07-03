@@ -28,7 +28,9 @@
 		private readonly ConnectionEndpointsMapping _connectionEndpointsMapping = new();
 		private readonly PendingConnectionActionMapping _pendingConnectionActionsMapping = new();
 
+		private readonly ICollection<TableSubscription> _connectionsSubscriptions = [];
 		private readonly ICollection<TableSubscription> _pendingConnectionActionsSubscriptions = [];
+
 		private RepositorySubscription<Endpoint> _subscriptionEndpoints;
 		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
 
@@ -42,8 +44,7 @@
 				Subscribe();
 			}
 
-			LoadConnections();
-			LoadPendingConnectionActions();
+			LoadDataFromMediationElements();
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
@@ -177,7 +178,7 @@
 						continue;
 					}
 
-					if (pendingAction.Action == PendingConnectionAction.PendingActionType.Connect &&
+					if (pendingAction.Action == PendingConnectionActionType.Connect &&
 						pendingAction.PendingSource.HasValue &&
 						_endpoints.TryGetValue(pendingAction.PendingSource.Value, out var pendingSource))
 					{
@@ -346,10 +347,13 @@
 
 				foreach (var mediationElement in MediationElement.GetAllMediationElements(Dms))
 				{
-					var tableSubscription = new TableSubscription(Api.Connection, mediationElement.DmsElement, 3000);
-					tableSubscription.OnChanged += PendingConnectionActions_OnChanged;
+					var pendingConnectionActionsTableSubscription = new TableSubscription(Api.Connection, mediationElement.DmsElement, 3000);
+					pendingConnectionActionsTableSubscription.OnChanged += PendingConnectionActions_OnChanged;
+					_pendingConnectionActionsSubscriptions.Add(pendingConnectionActionsTableSubscription);
 
-					_pendingConnectionActionsSubscriptions.Add(tableSubscription);
+					var connectionsTableSubscription = new TableSubscription(Api.Connection, mediationElement.DmsElement, 5000);
+					connectionsTableSubscription.OnChanged += Connections_OnChanged;
+					_connectionsSubscriptions.Add(connectionsTableSubscription);
 				}
 
 				IsSubscribed = true;
@@ -377,6 +381,13 @@
 					tableSubscription.Dispose();
 				}
 
+				foreach (var tableSubscription in _connectionsSubscriptions)
+				{
+					tableSubscription.OnChanged -= Connections_OnChanged;
+					tableSubscription.Dispose();
+				}
+
+				_connectionsSubscriptions.Clear();
 				_pendingConnectionActionsSubscriptions.Clear();
 
 				IsSubscribed = false;
@@ -456,6 +467,43 @@
 			}
 		}
 
+		private void Connections_OnChanged(object sender, TableValueChange e)
+		{
+			lock (_lock)
+			{
+				var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
+
+				foreach (var key in e.DeletedRows)
+				{
+					var destinationIdValue = key;
+					Guid.TryParse(destinationIdValue, out var destinationId);
+
+					if (_connections.TryGetValue(destinationId, out var existingConnection))
+					{
+						impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
+						_connections.Remove(existingConnection.Destination);
+						_connectionEndpointsMapping.Remove(existingConnection);
+					}
+				}
+
+				foreach (var row in e.UpdatedRows.Values)
+				{
+					var connection = new Connection2(row);
+
+					impactedEndpoints.UnionWith(connection.GetEndpoints());
+
+					_connections[connection.Destination] = connection;
+					_connectionEndpointsMapping.AddOrUpdate(connection);
+				}
+
+				if (impactedEndpoints.Count > 0)
+				{
+					EnsureEndpointsAreLoaded(impactedEndpoints);
+					RaiseConnectionsUpdated(impactedEndpoints);
+				}
+			}
+		}
+
 		private void PendingConnectionActions_OnChanged(object sender, TableValueChange e)
 		{
 			lock (_lock)
@@ -467,11 +515,11 @@
 					var destinationIdValue = key;
 					Guid.TryParse(destinationIdValue, out var destinationId);
 
-					if (_pendingConnectionActions.TryGetValue(destinationId, out var pendingAction))
+					if (_pendingConnectionActions.TryGetValue(destinationId, out var existingPendingAction))
 					{
-						impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
-						_pendingConnectionActions.Remove(pendingAction.Destination);
-						_pendingConnectionActionsMapping.Remove(pendingAction);
+						impactedEndpoints.UnionWith(existingPendingAction.GetEndpoints());
+						_pendingConnectionActions.Remove(existingPendingAction.Destination);
+						_pendingConnectionActionsMapping.Remove(existingPendingAction);
 					}
 				}
 
@@ -570,42 +618,33 @@
 			}
 		}
 
-		private void LoadConnections()
+		private void LoadDataFromMediationElements()
 		{
 			lock (_lock)
 			{
-				var connections = MediationElement.GetAllMediationElements(Dms)
-					.AsParallel()
-					.SelectMany(x => x.GetConnections())
-					.ToList();
+				var mediationElements = MediationElement.GetAllMediationElements(Dms).ToList();
+
+				var connections = mediationElements.AsParallel().SelectMany(x => x.GetConnections()).ToList();
+				var pendingConnectionActions = mediationElements.AsParallel().SelectMany(x => x.GetPendingConnectionActions()).ToList();
+
+				var endpointIds = new HashSet<ApiObjectReference<Endpoint>>();
 
 				foreach (var connection in connections)
 				{
-					_connections.Add(connection.Destination, connection);
+					_connections[connection.Destination] = connection;
 					_connectionEndpointsMapping.Add(connection);
+
+					endpointIds.UnionWith(connection.GetEndpoints());
 				}
-
-				var endpointIds = connections.SelectMany(x => x.GetEndpoints());
-				EnsureEndpointsAreLoaded(endpointIds);
-			}
-		}
-
-		private void LoadPendingConnectionActions()
-		{
-			lock (_lock)
-			{
-				var pendingConnectionActions = MediationElement.GetAllMediationElements(Dms)
-					.AsParallel()
-					.SelectMany(x => x.GetPendingConnectionActions())
-					.ToList();
 
 				foreach (var action in pendingConnectionActions)
 				{
-					_pendingConnectionActions.Add(action.Destination, action);
+					_pendingConnectionActions[action.Destination] = action;
 					_pendingConnectionActionsMapping.Add(action);
+
+					endpointIds.UnionWith(action.GetEndpoints());
 				}
 
-				var endpointIds = pendingConnectionActions.SelectMany(x => x.GetEndpoints());
 				EnsureEndpointsAreLoaded(endpointIds);
 			}
 		}

@@ -41,7 +41,7 @@
 		{
 			var actions = GetPendingConnectionActions(destination);
 
-			return actions.Any(x => x.Action == PendingConnectionAction.PendingActionType.Connect &&
+			return actions.Any(x => x.Action == PendingConnectionActionType.Connect &&
 				x.Destination == destination &&
 				x.PendingSource == source);
 		}
@@ -50,7 +50,7 @@
 		{
 			var actions = GetPendingConnectionActions(destination);
 
-			return actions.Any(x => x.Action == PendingConnectionAction.PendingActionType.Disconnect &&
+			return actions.Any(x => x.Action == PendingConnectionActionType.Disconnect &&
 				x.Destination == destination);
 		}
 

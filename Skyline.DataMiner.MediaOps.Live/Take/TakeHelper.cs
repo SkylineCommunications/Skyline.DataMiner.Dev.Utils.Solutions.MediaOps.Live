@@ -382,15 +382,19 @@
 					switch (action)
 					{
 						case ScriptAction.Connect:
-							request = new Mediation.Data.CreateConnectionsRequest
+							request = new CreateConnectionsRequest
 							{
-								Connections = group.Select(x => new Mediation.Data.ConnectionInfo(x.Source, x.Destination)).ToArray(),
+								Connections = group
+									.Select(x => new Mediation.Data.ConnectionInfo(x.Source, x.Destination))
+									.ToArray(),
 							};
 							break;
 						case ScriptAction.Disconnect:
-							request = new Mediation.Data.DisconnectDestinationsRequest
+							request = new DisconnectDestinationsRequest
 							{
-								Destinations = group.Select(x => new Mediation.Data.EndpointInfo(x.Destination)).ToArray(),
+								Destinations = group
+									.Select(x => new Mediation.Data.EndpointInfo(x.Destination))
+									.ToArray(),
 							};
 							break;
 						default:

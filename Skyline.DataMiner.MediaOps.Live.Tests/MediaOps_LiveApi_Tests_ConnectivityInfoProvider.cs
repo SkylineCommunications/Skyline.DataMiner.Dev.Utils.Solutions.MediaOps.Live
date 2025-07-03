@@ -94,8 +94,8 @@
 				.ShouldBe([source1, source2, destination1], ignoreOrder: true);
 
 			// Start disconnecting the connections
-			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination1, PendingConnectionAction.PendingActionType.Disconnect);
-			simulation.CreateTestPendingConnectionAction(videoSource2, videoDestination1, PendingConnectionAction.PendingActionType.Disconnect);
+			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination1, PendingConnectionActionType.Disconnect);
+			simulation.CreateTestPendingConnectionAction(videoSource2, videoDestination1, PendingConnectionActionType.Disconnect);
 			receivedEvents.Count.ShouldBe(10); // 2 new events
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.ShouldBe([source2, destination1], ignoreOrder: true);
@@ -183,7 +183,7 @@
 			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination2); // pending connection
 
 			simulation.CreateTestConnection(audioSource3, audioDestination3);
-			simulation.CreateTestPendingConnectionAction(audioSource3, audioDestination3, PendingConnectionAction.PendingActionType.Disconnect); // pending disconnect
+			simulation.CreateTestPendingConnectionAction(audioSource3, audioDestination3, PendingConnectionActionType.Disconnect); // pending disconnect
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 
@@ -386,7 +386,7 @@
 			simulation.CreateTestConnection(videoSource4, videoDestination4);
 			simulation.CreateTestPendingConnectionAction(videoSource3, videoDestination1);
 			simulation.CreateTestPendingConnectionAction(audioSource3, audioDestination1);
-			simulation.CreateTestPendingConnectionAction(videoSource4, videoDestination4, PendingConnectionAction.PendingActionType.Disconnect);
+			simulation.CreateTestPendingConnectionAction(videoSource4, videoDestination4, PendingConnectionActionType.Disconnect);
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 

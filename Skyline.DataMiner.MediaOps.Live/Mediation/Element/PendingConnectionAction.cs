@@ -20,7 +20,7 @@
 
 			DestinationName = Convert.ToString(row[1]);
 
-			Enum.TryParse<PendingActionType>(Convert.ToString(row[2]), out var action);
+			Enum.TryParse<PendingConnectionActionType>(Convert.ToString(row[2]), out var action);
 			Action = action;
 
 			var timeValue = Convert.ToDouble(row[3]);
@@ -40,7 +40,7 @@
 			}
 		}
 
-		public PendingActionType Action { get; }
+		public PendingConnectionActionType Action { get; }
 
 		public DateTime Time { get; }
 
@@ -65,10 +65,9 @@
 			}
 		}
 
-		public enum PendingActionType
+		public override string ToString()
 		{
-			Connect,
-			Disconnect,
+			return $"{DestinationName} ({Action})";
 		}
 	}
 }

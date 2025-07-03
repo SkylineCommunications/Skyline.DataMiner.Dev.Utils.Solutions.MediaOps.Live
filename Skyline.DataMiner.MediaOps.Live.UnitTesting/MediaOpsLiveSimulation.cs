@@ -67,7 +67,7 @@
 		public void CreateTestPendingConnectionAction(
 			Endpoint pendingSource,
 			Endpoint destination,
-			PendingConnectionAction.PendingActionType action = PendingConnectionAction.PendingActionType.Connect)
+			PendingConnectionActionType action = PendingConnectionActionType.Connect)
 		{
 			if (destination is null)
 			{
