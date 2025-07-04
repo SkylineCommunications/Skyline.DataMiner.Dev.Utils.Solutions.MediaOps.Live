@@ -282,7 +282,7 @@
 
 		private OrchestrationSchedulerTask FindExistingTaskForTimeStamp(DateTimeOffset timestamp)
 		{
-			return _internalTaskList.Value.FirstOrDefault(task => task.DateTime.ToUniversalTime() == timestamp.ToUniversalTime());
+			return _internalTaskList.Value.FirstOrDefault(task => task.DateTime == timestamp);
 		}
 
 		private OrchestrationSchedulerTask FindExistingTaskByTaskId(ScheduledTaskId taskId)

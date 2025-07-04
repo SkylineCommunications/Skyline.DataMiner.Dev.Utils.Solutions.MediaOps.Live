@@ -35,12 +35,49 @@
 		/// <returns>true if equal, otherwise false.</returns>
 		public bool Equals(ScheduledTaskId obj)
 		{
-			if (obj == null)
+			if (obj is null)
 			{
 				return false;
 			}
 
 			return DmaId == obj.DmaId && TaskId == obj.TaskId;
+		}
+
+		/// <summary>
+		/// Operator for comparison.
+		/// </summary>
+		/// <param name="left">Left id.</param>
+		/// <param name="right">Right id.</param>
+		/// <returns>True when both object create the same ID.</returns>
+		public static bool operator ==(ScheduledTaskId left, ScheduledTaskId right)
+		{
+			if (left is null)
+			{
+				return right is null;
+			}
+
+			return left.Equals(right);
+		}
+
+
+		/// <summary>
+		/// Operator for comparison.
+		/// </summary>
+		/// <param name="left">Left id.</param>
+		/// <param name="right">Right id.</param>
+		/// <returns>True when both object do not create the same ID.</returns>
+		public static bool operator !=(ScheduledTaskId left, ScheduledTaskId right)
+		{
+			return !(left == right);
+		}
+
+		/// <summary>
+		/// Generates a string showing the combine task ID.
+		/// </summary>
+		/// <returns>A string representation of the task ID.</returns>
+		public override string ToString()
+		{
+			return $"{DmaId}/{TaskId}";
 		}
 	}
 }
