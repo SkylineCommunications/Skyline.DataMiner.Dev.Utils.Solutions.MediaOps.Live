@@ -442,6 +442,8 @@
 		{
 			lock (_lock)
 			{
+				Debug.WriteLine($"Endpoints changed: {e}");
+
 				UpdateEndpoints(e.Created.Concat(e.Updated), e.Deleted);
 			}
 		}
@@ -450,6 +452,8 @@
 		{
 			lock (_lock)
 			{
+				Debug.WriteLine($"Virtual Signal Groups changed: {e}");
+
 				UpdateVirtualSignalGroups(e.Created.Concat(e.Updated), e.Deleted);
 			}
 		}
@@ -458,6 +462,8 @@
 		{
 			lock (_lock)
 			{
+				Debug.WriteLine($"Connections changed: {e}");
+
 				var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
 
 				foreach (var destinationId in e.DeletedConnections)
@@ -491,6 +497,8 @@
 		{
 			lock (_lock)
 			{
+				Debug.WriteLine($"Pending connection actions changed: {e}");
+
 				var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
 
 				foreach (var destinationId in e.DeletedPendingActions)

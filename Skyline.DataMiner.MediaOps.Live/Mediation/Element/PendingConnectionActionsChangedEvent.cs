@@ -22,5 +22,10 @@
 		/// The IDs correspond to the destination endpoint IDs.
 		/// </summary>
 		public ICollection<Guid> DeletedPendingActions { get; }
+
+		public override string ToString()
+		{
+			return $"{nameof(PendingConnectionActionsChangedEvent)}: {UpdatedPendingActions.Count} updated, {DeletedPendingActions.Count} deleted";
+		}
 	}
 }

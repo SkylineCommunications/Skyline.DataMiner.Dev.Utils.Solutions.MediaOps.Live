@@ -22,5 +22,10 @@
 		/// The IDs correspond to the destination endpoint IDs.
 		/// </summary>
 		public ICollection<Guid> DeletedConnections { get; }
+
+		public override string ToString()
+		{
+			return $"{nameof(ConnectionsChangedEvent)}: {UpdatedConnections.Count} updated, {DeletedConnections.Count} deleted";
+		}
 	}
 }
