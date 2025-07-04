@@ -44,7 +44,13 @@
 
 		private void CleanupTasks(IEnumerable<OrchestrationSchedulerTask> tasksToRemove)
 		{
-			IEnumerable<Guid> eventsFromTasksToRemove = tasksToRemove.SelectMany(task => task.OrchestrationEventIds);
+			IEnumerable<OrchestrationSchedulerTask> orchestrationSchedulerTasksToRemove = tasksToRemove.ToList();
+			if (!orchestrationSchedulerTasksToRemove.Any())
+			{
+				return;
+			}
+
+			IEnumerable<Guid> eventsFromTasksToRemove = orchestrationSchedulerTasksToRemove.SelectMany(task => task.OrchestrationEventIds);
 
 			ORFilterElement<DomInstance> filter = new ORFilterElement<DomInstance>(eventsFromTasksToRemove.Select(id => FilterElementFactory.Create(DomInstanceExposers.Id, Comparer.Equals, id)).ToArray());
 			List<OrchestrationEvent> pastEvents = _repository.Read(filter).ToList();
