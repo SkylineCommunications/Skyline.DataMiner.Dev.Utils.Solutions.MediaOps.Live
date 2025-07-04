@@ -54,7 +54,7 @@
 		/// </summary>
 		public void SyncCurrentSlidingWindow()
 		{
-			_slidingWindowScheduler.SyncSchedulerWithWindow();
+			_slidingWindowScheduler.SyncSchedulerWithWindow(_api.Engine);
 		}
 
 		/// <summary>
@@ -124,7 +124,7 @@
 
 				job.ValidateEventsBeforeSaving(_api.Connection);
 
-				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
+				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents, _api.Engine);
 
 				SaveEventConfigurations(job.OrchestrationEvents, performanceTracker);
 			}
@@ -146,7 +146,7 @@
 				DeleteEvents(job.RemovedIds, performanceTracker);
 
 				job.ValidateEventsBeforeSaving(_api.Connection);
-				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
+				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents, _api.Engine);
 				CreateOrUpdateEvents(job.OrchestrationEvents, performanceTracker);
 			}
 		}

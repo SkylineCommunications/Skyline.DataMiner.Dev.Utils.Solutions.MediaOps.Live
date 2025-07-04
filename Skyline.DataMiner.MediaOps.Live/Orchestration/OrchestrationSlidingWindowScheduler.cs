@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
@@ -33,10 +34,12 @@
 			WindowBaseTime = DateTimeOffset.UtcNow;
 		}
 
-		public void SyncSchedulerWithWindow()
+		public void SyncSchedulerWithWindow(IEngine engine)
 		{
+			engine.GenerateInformation("Window Remove");
 			RemoveEventsBeforeWindow();
-			CreateOrUpdateAllEventsInWindow();
+			engine.GenerateInformation("Window Create");
+			CreateOrUpdateAllEventsInWindow(engine);
 		}
 
 		private void RemoveEventsBeforeWindow()
@@ -44,17 +47,17 @@
 			_orchestrationCleanup.CleanupSchedulerTasksBeforeTime(WindowStartTime);
 		}
 
-		private void CreateOrUpdateAllEventsInWindow()
+		private void CreateOrUpdateAllEventsInWindow(IEngine engine)
 		{
 			List<OrchestrationEvent> orchestrationEvents = _repository.GetOrchestrationEventsInTimeRange(WindowBaseTime.UtcDateTime, WindowEndTime.UtcDateTime).ToList();
-			_scheduler.CreateOrUpdateEventScheduling(orchestrationEvents);
+			_scheduler.CreateOrUpdateEventScheduling(orchestrationEvents, engine);
 			_repository.CreateOrUpdate(orchestrationEvents);
 		}
 
-		public void ScheduleEvents(IEnumerable<OrchestrationEvent> events)
+		public void ScheduleEvents(IEnumerable<OrchestrationEvent> events, IEngine engine)
 		{
 			IEnumerable<OrchestrationEvent> eventsInWindow = events.Where(e => e.EventTime > WindowBaseTime && e.EventTime <= WindowEndTime);
-			_scheduler.CreateOrUpdateEventScheduling(eventsInWindow);
+			_scheduler.CreateOrUpdateEventScheduling(eventsInWindow, engine);
 		}
 
 		public void DeleteEvents(IEnumerable<OrchestrationEvent> events)

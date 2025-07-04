@@ -6,6 +6,7 @@
 
 	using Newtonsoft.Json;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
@@ -127,7 +128,7 @@
 		/// Triggers the creation or update of the scheduled task that is linked to the events.
 		/// </summary>
 		/// <param name="events">The list of events for which the scheduled task needs to be updated.</param>
-		public void CreateOrUpdateEventScheduling(IEnumerable<OrchestrationEvent> events)
+		public void CreateOrUpdateEventScheduling(IEnumerable<OrchestrationEvent> events, IEngine engine)
 		{
 			List<OrchestrationEvent> orchestrationEvents = events.ToList();
 			IEnumerable<IGrouping<SlcOrchestrationIds.Enums.EventState?, OrchestrationEvent>> groupedByState = orchestrationEvents.GroupBy(e => e.EventState);
@@ -142,7 +143,7 @@
 						continue;
 
 					case SlcOrchestrationIds.Enums.EventState.Confirmed:
-						CreateOrUpdateEventTasks(groupedByStateEvent);
+						CreateOrUpdateEventTasks(groupedByStateEvent, engine);
 						continue;
 				}
 			}
@@ -162,7 +163,7 @@
 			}
 		}
 
-		private void CreateOrUpdateEventTasks(IEnumerable<OrchestrationEvent> orchestrationEvents)
+		private void CreateOrUpdateEventTasks(IEnumerable<OrchestrationEvent> orchestrationEvents, IEngine engine)
 		{
 			IEnumerable<IGrouping<DateTimeOffset?, OrchestrationEvent>> groupedByTimeEvents = orchestrationEvents.GroupBy(e => e.EventTime).OrderBy(g => g.Key);
 
@@ -170,14 +171,17 @@
 			{
 				if (groupedByTimeEvent.Key.HasValue)
 				{
-					CreateOrUpdateEventTasksForTimeStamp(groupedByTimeEvent.Key.Value, groupedByTimeEvent.ToList());
+					CreateOrUpdateEventTasksForTimeStamp(groupedByTimeEvent.Key.Value, groupedByTimeEvent.ToList(), engine);
 				}
 			}
 		}
 
-		private void CreateOrUpdateEventTasksForTimeStamp(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents)
+		private void CreateOrUpdateEventTasksForTimeStamp(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents, IEngine engine)
 		{
+			engine.GenerateInformation($"Task list {JsonConvert.SerializeObject(_internalTaskList)}");
+			engine.GenerateInformation($"Timestamp {timestamp}");
 			OrchestrationSchedulerTask taskForTimeStamp = FindExistingTaskForTimeStamp(timestamp);
+			engine.GenerateInformation($"Task for timestamp {JsonConvert.SerializeObject(taskForTimeStamp)}");
 			bool taskUpdated = false;
 
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
@@ -190,9 +194,11 @@
 				// Create new task for timestamp during first iteration if none exist yet
 				if (taskForTimeStamp == null)
 				{
+					engine.GenerateInformation("Delete because null");
 					DeleteEventTaskForEvent(orchestrationEvent);
 					taskForTimeStamp = new OrchestrationSchedulerTask(timestamp, new List<Guid> { orchestrationEvent.ID });
 					IDma dma = SelectRandomDma();
+					engine.GenerateInformation("Create because null");
 					int newTaskId = dma.Scheduler.CreateTask(taskForTimeStamp.GenerateSchedulerTaskData());
 					taskForTimeStamp.ScheduledTaskId = new ScheduledTaskId(dma.Id, newTaskId);
 					orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
@@ -203,9 +209,11 @@
 				// Event already added to correct task
 				if (orchestrationEvent.ReservationInstance == taskForTimeStamp.ScheduledTaskId)
 				{
+					engine.GenerateInformation("Same");
 					continue;
 				}
 
+				engine.GenerateInformation("Normal delete");
 				DeleteEventTaskForEvent(orchestrationEvent);
 				taskForTimeStamp.OrchestrationEventIds.Add(orchestrationEvent.ID);
 				orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
