@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Linq;
+	using System.Threading;
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
@@ -40,6 +41,9 @@
 
 			var tsc = new TaskCompletionSource<bool>();
 
+			using var cts = new CancellationTokenSource(timeout);
+			cts.Token.Register(() => tsc.TrySetResult(false));
+
 			void ConnectionEventHandler(object s, ConnectionsUpdatedEvent e)
 			{
 				if (e.Endpoints.Any(connectivity => connectivity.Endpoint == destination &&
@@ -58,7 +62,7 @@
 					tsc.TrySetResult(true);
 				}
 
-				return tsc.Task.Wait(timeout);
+				return tsc.Task.Result;
 			}
 			finally
 			{
@@ -74,6 +78,9 @@
 			}
 
 			var tsc = new TaskCompletionSource<bool>();
+
+			using var cts = new CancellationTokenSource(timeout);
+			cts.Token.Register(() => tsc.TrySetResult(false));
 
 			void ConnectionEventHandler(object s, ConnectionsUpdatedEvent e)
 			{
@@ -92,7 +99,7 @@
 					tsc.TrySetResult(true);
 				}
 
-				return tsc.Task.Wait(timeout);
+				return tsc.Task.Result;
 			}
 			finally
 			{
