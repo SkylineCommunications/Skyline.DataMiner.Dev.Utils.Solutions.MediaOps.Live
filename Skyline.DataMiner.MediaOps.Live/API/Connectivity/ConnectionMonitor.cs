@@ -1,30 +1,23 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
 	using System;
-	using System.Linq;
+	using System.Collections.Generic;
 	using System.Threading;
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	public class ConnectionMonitor
+	public sealed class ConnectionMonitor : IDisposable
 	{
-		private readonly ConnectivityInfoProvider _connectivityInfoProvider;
+		private readonly MediaOpsLiveApi _api;
+		private readonly LiteConnectivityInfoProvider _connectivityInfoProvider;
 
-		public ConnectionMonitor(ConnectivityInfoProvider connectivityInfoProvider)
+		public ConnectionMonitor(MediaOpsLiveApi api)
 		{
-			if (connectivityInfoProvider == null)
-			{
-				throw new ArgumentNullException(nameof(connectivityInfoProvider));
-			}
+			_api = api ?? throw new ArgumentNullException(nameof(api));
 
-			if (!connectivityInfoProvider.IsSubscribed)
-			{
-				throw new InvalidOperationException("ConnectivityInfoProvider must be subscribed before using ConnectionMonitor.");
-			}
-
-			_connectivityInfoProvider = connectivityInfoProvider;
+			_connectivityInfoProvider = new LiteConnectivityInfoProvider(api, subscribe: true);
 		}
 
 		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
@@ -44,20 +37,20 @@
 			using var cts = new CancellationTokenSource(timeout);
 			cts.Token.Register(() => tsc.TrySetResult(false));
 
-			void ConnectionEventHandler(object s, ConnectionsUpdatedEvent e)
+			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> e)
 			{
-				if (e.Endpoints.Any(connectivity => connectivity.Endpoint == destination &&
-													connectivity.ConnectedSource?.Endpoint == source))
+				if ((e.Contains(source) || e.Contains(destination)) &&
+					_connectivityInfoProvider.IsConnected(source, destination))
 				{
 					tsc.TrySetResult(true);
 				}
 			}
 
-			_connectivityInfoProvider.ConnectionsUpdated += ConnectionEventHandler;
+			_connectivityInfoProvider.ConnectionsChanged += ConnectionEventHandler;
 
 			try
 			{
-				if (_connectivityInfoProvider.GetConnectivity(destination).ConnectedSource?.Endpoint == source)
+				if (_connectivityInfoProvider.IsConnected(source, destination))
 				{
 					tsc.TrySetResult(true);
 				}
@@ -66,7 +59,7 @@
 			}
 			finally
 			{
-				_connectivityInfoProvider.ConnectionsUpdated -= ConnectionEventHandler;
+				_connectivityInfoProvider.ConnectionsChanged -= ConnectionEventHandler;
 			}
 		}
 
@@ -82,19 +75,19 @@
 			using var cts = new CancellationTokenSource(timeout);
 			cts.Token.Register(() => tsc.TrySetResult(false));
 
-			void ConnectionEventHandler(object s, ConnectionsUpdatedEvent e)
+			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> e)
 			{
-				if (e.Endpoints.Any(connectivity => connectivity.Endpoint == destination && !connectivity.IsConnected))
+				if (e.Contains(destination) && !_connectivityInfoProvider.IsConnected(destination))
 				{
 					tsc.TrySetResult(true);
 				}
 			}
 
-			_connectivityInfoProvider.ConnectionsUpdated += ConnectionEventHandler;
+			_connectivityInfoProvider.ConnectionsChanged += ConnectionEventHandler;
 
 			try
 			{
-				if (!_connectivityInfoProvider.GetConnectivity(destination).IsConnected)
+				if (!_connectivityInfoProvider.IsConnected(destination))
 				{
 					tsc.TrySetResult(true);
 				}
@@ -103,8 +96,13 @@
 			}
 			finally
 			{
-				_connectivityInfoProvider.ConnectionsUpdated -= ConnectionEventHandler;
+				_connectivityInfoProvider.ConnectionsChanged -= ConnectionEventHandler;
 			}
+		}
+
+		public void Dispose()
+		{
+			_connectivityInfoProvider?.Dispose();
 		}
 	}
 }

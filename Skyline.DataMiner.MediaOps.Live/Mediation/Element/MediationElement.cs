@@ -50,12 +50,10 @@
 					return;
 				}
 
-				var connection = _api.Connection;
-
-				_pendingConnectionActionsSubscription = new TableSubscription(connection, DmsElement, 3000);
+				_pendingConnectionActionsSubscription = new TableSubscription(_api.Connection, DmsElement, 3000);
 				_pendingConnectionActionsSubscription.OnChanged += PendingConnectionActions_OnChanged;
 
-				_connectionsSubscription = new TableSubscription(connection, DmsElement, 5000);
+				_connectionsSubscription = new TableSubscription(_api.Connection, DmsElement, 5000);
 				_connectionsSubscription.OnChanged += Connections_OnChanged;
 
 				_isSubscribed = true;

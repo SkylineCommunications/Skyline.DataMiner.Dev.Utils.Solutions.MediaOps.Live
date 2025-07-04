@@ -416,10 +416,8 @@
 		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
+			using (var connectionsMonitor = new ConnectionMonitor(_api))
 			{
-				var connectionsMonitor = new ConnectionMonitor(connectivityInfoProvider);
-
 				var tasks = new List<Task<bool>>();
 
 				foreach (var takeContext in takeContexts)
@@ -443,7 +441,6 @@
 		private bool WaitUntilConnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
 			{
 				performanceTracker.AddMetadata("Source", takeContext.Source.Name);
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
@@ -458,10 +455,8 @@
 		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
+			using (var connectionMonitor = new ConnectionMonitor(_api))
 			{
-				var connectionMonitor = new ConnectionMonitor(connectivityInfoProvider);
-
 				var tasks = new List<Task<bool>>();
 
 				foreach (var takeContext in takeContexts)
@@ -485,7 +480,6 @@
 		private bool WaitUntilDisconnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
 			{
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
 
