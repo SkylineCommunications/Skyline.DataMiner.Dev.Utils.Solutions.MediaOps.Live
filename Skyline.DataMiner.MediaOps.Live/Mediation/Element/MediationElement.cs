@@ -9,12 +9,21 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
+	using Skyline.DataMiner.MediaOps.Live.Subscriptions;
 	using Skyline.DataMiner.Net.Messages;
 
-	public class MediationElement
+	public sealed class MediationElement : IDisposable
 	{
-		internal MediationElement(IDmsElement dmsElement)
+		private readonly object _lock = new object();
+		private readonly MediaOpsLiveApi _api;
+
+		private bool _isSubscribed;
+		private TableSubscription _connectionsSubscription;
+		private TableSubscription _pendingConnectionActionsSubscription;
+
+		internal MediationElement(MediaOpsLiveApi api, IDmsElement dmsElement)
 		{
+			_api = api ?? throw new ArgumentNullException(nameof(api));
 			DmsElement = dmsElement ?? throw new ArgumentNullException(nameof(dmsElement));
 		}
 
@@ -28,18 +37,55 @@
 
 		public string Name => DmsElement.Name;
 
-		public IEnumerable<Connection> GetConnections()
+		public event EventHandler<PendingConnectionActionsChangedEvent> PendingConnectionActionsChanged;
+
+		public event EventHandler<ConnectionsChangedEvent> ConnectionsChanged;
+
+		public void Subscribe()
 		{
-			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			lock (_lock)
 			{
-				yield break;
+				if (_isSubscribed)
+				{
+					return;
+				}
+
+				var connection = _api.Connection;
+
+				_pendingConnectionActionsSubscription = new TableSubscription(connection, DmsElement, 3000);
+				_pendingConnectionActionsSubscription.OnChanged += PendingConnectionActions_OnChanged;
+
+				_connectionsSubscription = new TableSubscription(connection, DmsElement, 5000);
+				_connectionsSubscription.OnChanged += Connections_OnChanged;
+
+				_isSubscribed = true;
 			}
+		}
 
-			var table = DmsElement.GetTable(5000).GetData();
-
-			foreach (var row in table.Values)
+		public void Unsubscribe()
+		{
+			lock (_lock)
 			{
-				yield return new Connection(row);
+				if (!_isSubscribed)
+				{
+					return;
+				}
+
+				if (_pendingConnectionActionsSubscription != null)
+				{
+					_pendingConnectionActionsSubscription.OnChanged -= PendingConnectionActions_OnChanged;
+					_pendingConnectionActionsSubscription.Dispose();
+					_pendingConnectionActionsSubscription = null;
+				}
+
+				if (_connectionsSubscription != null)
+				{
+					_connectionsSubscription.OnChanged -= Connections_OnChanged;
+					_connectionsSubscription.Dispose();
+					_connectionsSubscription = null;
+				}
+
+				_isSubscribed = false;
 			}
 		}
 
@@ -47,15 +93,22 @@
 		{
 			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
 			{
-				yield break;
+				return [];
 			}
 
 			var table = DmsElement.GetTable(3000).GetData();
+			return table.Values.Select(x => new PendingConnectionAction(x));
+		}
 
-			foreach (var row in table.Values)
+		public IEnumerable<Connection> GetConnections()
+		{
+			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
 			{
-				yield return new PendingConnectionAction(row);
+				return [];
 			}
+
+			var table = DmsElement.GetTable(5000).GetData();
+			return table.Values.Select(x => new Connection(x));
 		}
 
 		public string GetConnectionHandlerScriptName(IDmsElement destinationElement)
@@ -77,26 +130,33 @@
 			return script;
 		}
 
-		public static IEnumerable<MediationElement> GetAllMediationElements(IDms dms)
+		public void Dispose()
 		{
-			if (dms is null)
+			Unsubscribe();
+		}
+
+		public static IEnumerable<MediationElement> GetAllMediationElements(MediaOpsLiveApi api)
+		{
+			if (api is null)
 			{
-				throw new ArgumentNullException(nameof(dms));
+				throw new ArgumentNullException(nameof(api));
 			}
+
+			var dms = api.Connection.GetDms();
 
 			var request = new GetLiteElementInfo
 			{
 				ProtocolName = Constants.MediationProtocolName,
 			};
 
-			var responses = dms.Communication.SendMessage(request);
+			var responses = api.Connection.HandleMessage(request);
 
 			foreach (var liteElementInfo in responses.OfType<LiteElementInfoEvent>())
 			{
 				var elementId = new DmsElementId(liteElementInfo.DataMinerID, liteElementInfo.ElementID);
 				var dmsElement = dms.GetElementReference(elementId);
 
-				yield return new MediationElement(dmsElement);
+				yield return new MediationElement(api, dmsElement);
 			}
 		}
 
@@ -123,7 +183,7 @@
 				})
 				.ToDictionary(x => x.endpoint, x => x.element);
 
-			var allMediationElements = GetAllMediationElements(dms)
+			var allMediationElements = GetAllMediationElements(api)
 				.ToDictionary(e => e.DmsElement.Host.Id);
 
 			var result = new Dictionary<EndpointInfo, MediationElement>();
@@ -204,6 +264,24 @@
 			}
 
 			return GetMediationElement(api, new EndpointInfo(endpoint));
+		}
+
+		private void PendingConnectionActions_OnChanged(object sender, TableValueChange e)
+		{
+			var updatedActions = e.UpdatedRows.Values.Select(row => new PendingConnectionAction(row));
+			var deletedActionKeys = e.DeletedRows.Select(key => Guid.Parse(key));
+
+			var eventArgs = new PendingConnectionActionsChangedEvent(updatedActions, deletedActionKeys);
+			PendingConnectionActionsChanged?.Invoke(this, eventArgs);
+		}
+
+		private void Connections_OnChanged(object sender, TableValueChange e)
+		{
+			var updatedConnections = e.UpdatedRows.Values.Select(row => new Connection(row));
+			var deletedConnectionKeys = e.DeletedRows.Select(key => Guid.Parse(key));
+
+			var eventArgs = new ConnectionsChangedEvent(updatedConnections, deletedConnectionKeys);
+			ConnectionsChanged?.Invoke(this, eventArgs);
 		}
 	}
 }

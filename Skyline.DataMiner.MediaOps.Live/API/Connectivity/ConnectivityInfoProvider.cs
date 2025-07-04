@@ -13,7 +13,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
-	using Skyline.DataMiner.MediaOps.Live.Subscriptions;
 
 	public sealed class ConnectivityInfoProvider : IDisposable
 	{
@@ -28,8 +27,7 @@
 		private readonly ConnectionEndpointsMapping _connectionEndpointsMapping = new();
 		private readonly PendingConnectionActionMapping _pendingConnectionActionsMapping = new();
 
-		private readonly ICollection<TableSubscription> _connectionsSubscriptions = [];
-		private readonly ICollection<TableSubscription> _pendingConnectionActionsSubscriptions = [];
+		private readonly ICollection<MediationElement> _mediationElements = [];
 
 		private RepositorySubscription<Endpoint> _subscriptionEndpoints;
 		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
@@ -37,7 +35,8 @@
 		public ConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
-			Dms = api.Connection.GetDms();
+
+			_mediationElements = MediationElement.GetAllMediationElements(api).ToList();
 
 			if (subscribe)
 			{
@@ -345,15 +344,11 @@
 				_subscriptionEndpoints.Changed += Endpoints_Changed;
 				_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
 
-				foreach (var mediationElement in MediationElement.GetAllMediationElements(Dms))
+				foreach (var mediationElement in _mediationElements)
 				{
-					var pendingConnectionActionsTableSubscription = new TableSubscription(Api.Connection, mediationElement.DmsElement, 3000);
-					pendingConnectionActionsTableSubscription.OnChanged += PendingConnectionActions_OnChanged;
-					_pendingConnectionActionsSubscriptions.Add(pendingConnectionActionsTableSubscription);
-
-					var connectionsTableSubscription = new TableSubscription(Api.Connection, mediationElement.DmsElement, 5000);
-					connectionsTableSubscription.OnChanged += Connections_OnChanged;
-					_connectionsSubscriptions.Add(connectionsTableSubscription);
+					mediationElement.PendingConnectionActionsChanged += PendingConnectionActions_OnChanged;
+					mediationElement.ConnectionsChanged += Connections_OnChanged;
+					mediationElement.Subscribe();
 				}
 
 				IsSubscribed = true;
@@ -375,20 +370,12 @@
 				_subscriptionEndpoints.Dispose();
 				_subscriptionVirtualSignalGroups.Dispose();
 
-				foreach (var tableSubscription in _pendingConnectionActionsSubscriptions)
+				foreach (var mediationElement in _mediationElements)
 				{
-					tableSubscription.OnChanged -= PendingConnectionActions_OnChanged;
-					tableSubscription.Dispose();
+					mediationElement.Unsubscribe();
+					mediationElement.PendingConnectionActionsChanged -= PendingConnectionActions_OnChanged;
+					mediationElement.ConnectionsChanged -= Connections_OnChanged;
 				}
-
-				foreach (var tableSubscription in _connectionsSubscriptions)
-				{
-					tableSubscription.OnChanged -= Connections_OnChanged;
-					tableSubscription.Dispose();
-				}
-
-				_connectionsSubscriptions.Clear();
-				_pendingConnectionActionsSubscriptions.Clear();
 
 				IsSubscribed = false;
 			}
@@ -467,16 +454,15 @@
 			}
 		}
 
-		private void Connections_OnChanged(object sender, TableValueChange e)
+		private void Connections_OnChanged(object sender, ConnectionsChangedEvent e)
 		{
 			lock (_lock)
 			{
 				var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
 
-				foreach (var key in e.DeletedRows)
+				foreach (var destinationId in e.DeletedConnections)
 				{
-					if (Guid.TryParse(key, out var destinationId) &&
-						_connectionsByDestination.TryGetValue(destinationId, out var existingConnection))
+					if (_connectionsByDestination.TryGetValue(destinationId, out var existingConnection))
 					{
 						impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
 						_connectionsByDestination.Remove(existingConnection.Destination);
@@ -484,10 +470,8 @@
 					}
 				}
 
-				foreach (var row in e.UpdatedRows.Values)
+				foreach (var connection in e.UpdatedConnections)
 				{
-					var connection = new Connection(row);
-
 					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
 					{
 						impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
@@ -503,17 +487,14 @@
 			}
 		}
 
-		private void PendingConnectionActions_OnChanged(object sender, TableValueChange e)
+		private void PendingConnectionActions_OnChanged(object sender, PendingConnectionActionsChangedEvent e)
 		{
 			lock (_lock)
 			{
 				var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
 
-				foreach (var key in e.DeletedRows)
+				foreach (var destinationId in e.DeletedPendingActions)
 				{
-					var destinationIdValue = key;
-					Guid.TryParse(destinationIdValue, out var destinationId);
-
 					if (_pendingActionsByDestination.TryGetValue(destinationId, out var existingPendingAction))
 					{
 						impactedEndpoints.UnionWith(existingPendingAction.GetEndpoints());
@@ -522,10 +503,8 @@
 					}
 				}
 
-				foreach (var row in e.UpdatedRows.Values)
+				foreach (var pendingAction in e.UpdatedPendingActions)
 				{
-					var pendingAction = new PendingConnectionAction(row);
-
 					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
 					{
 						impactedEndpoints.UnionWith(existingPendingConnectionAction.GetEndpoints());
@@ -622,10 +601,8 @@
 		{
 			lock (_lock)
 			{
-				var mediationElements = MediationElement.GetAllMediationElements(Dms).ToList();
-
-				var connections = mediationElements.AsParallel().SelectMany(x => x.GetConnections()).ToList();
-				var pendingConnectionActions = mediationElements.AsParallel().SelectMany(x => x.GetPendingConnectionActions()).ToList();
+				var connections = _mediationElements.AsParallel().SelectMany(x => x.GetConnections()).ToList();
+				var pendingConnectionActions = _mediationElements.AsParallel().SelectMany(x => x.GetPendingConnectionActions()).ToList();
 
 				var endpointIds = new HashSet<ApiObjectReference<Endpoint>>();
 

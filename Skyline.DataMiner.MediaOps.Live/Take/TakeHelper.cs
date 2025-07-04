@@ -239,7 +239,7 @@
 				var dms = _api.Connection.GetDms();
 
 				GetDestinationElements(dms, takeContexts, performanceTracker);
-				GetMediationElements(dms, takeContexts, performanceTracker);
+				GetMediationElements(takeContexts, performanceTracker);
 				FindConnectionHandlerScripts(takeContexts, performanceTracker);
 			}
 		}
@@ -273,11 +273,11 @@
 			}
 		}
 
-		private void GetMediationElements(IDms dms, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void GetMediationElements(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var allMediationElements = MediationElement.GetAllMediationElements(dms).ToList();
+				var allMediationElements = MediationElement.GetAllMediationElements(_api).ToList();
 
 				foreach (var group in takeContexts.GroupBy(x => x.DestinationElement.Host))
 				{
