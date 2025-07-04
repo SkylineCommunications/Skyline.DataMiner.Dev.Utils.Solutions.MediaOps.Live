@@ -25,7 +25,7 @@
 
 		protected SlcConnectivityManagementHelper Helper => Api.SlcConnectivityManagementHelper;
 
-		public void RegisterConnection(ConnectionInfo connection)
+		public void RegisterConnection(ConnectionUpdate connection)
 		{
 			if (connection == null)
 			{
@@ -35,7 +35,7 @@
 			RegisterConnections([connection]);
 		}
 
-		public void RegisterConnections(ICollection<ConnectionInfo> connections)
+		public void RegisterConnections(ICollection<ConnectionUpdate> connections)
 		{
 			if (connections == null)
 			{
@@ -47,7 +47,7 @@
 			NotifyConnectionChanges(connections);
 		}
 
-		private void NotifyConnectionChanges(ICollection<ConnectionInfo> connections)
+		private void NotifyConnectionChanges(ICollection<ConnectionUpdate> connections)
 		{
 			var now = DateTimeOffset.Now;
 

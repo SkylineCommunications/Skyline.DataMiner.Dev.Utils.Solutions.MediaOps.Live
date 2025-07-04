@@ -42,8 +42,10 @@
 			{
 				Subscribe();
 			}
-
-			LoadDataFromMediationElements();
+			else
+			{
+				LoadDataFromMediationElements();
+			}
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;

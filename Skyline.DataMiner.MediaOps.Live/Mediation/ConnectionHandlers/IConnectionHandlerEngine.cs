@@ -11,8 +11,8 @@
 
 		MediaOpsLiveApi Api { get; }
 
-		void RegisterConnection(ConnectionInfo connection);
+		void RegisterConnection(ConnectionUpdate connection);
 
-		void RegisterConnections(ICollection<ConnectionInfo> connections);
+		void RegisterConnections(ICollection<ConnectionUpdate> connections);
 	}
 }

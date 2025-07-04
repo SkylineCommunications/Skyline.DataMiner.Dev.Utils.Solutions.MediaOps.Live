@@ -4,17 +4,32 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	public class ConnectionInfo
+	public class ConnectionUpdate
 	{
-		public ConnectionInfo(Endpoint destination, Endpoint source)
+		public ConnectionUpdate(Endpoint source, Endpoint destination)
 		{
+			if (source != null && !source.IsSource)
+			{
+				throw new ArgumentException("The source endpoint must be a source.", nameof(source));
+			}
+
+			if (!destination.IsDestination)
+			{
+				throw new ArgumentException("The destination endpoint must be a destination.", nameof(destination));
+			}
+
 			DestinationEndpoint = destination ?? throw new ArgumentNullException(nameof(destination));
 			SourceEndpoint = source;
 			IsConnected = source != null;
 		}
 
-		public ConnectionInfo(Endpoint destination, bool isConnected)
+		public ConnectionUpdate(Endpoint destination, bool isConnected)
 		{
+			if (!destination.IsDestination)
+			{
+				throw new ArgumentException("The endpoint must be a destination.", nameof(destination));
+			}
+
 			DestinationEndpoint = destination ?? throw new ArgumentNullException(nameof(destination));
 			SourceEndpoint = null;
 			IsConnected = isConnected;

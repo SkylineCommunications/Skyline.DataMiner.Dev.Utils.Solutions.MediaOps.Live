@@ -30,8 +30,10 @@
 			{
 				Subscribe();
 			}
-
-			LoadDataFromMediationElements();
+			else
+			{
+				LoadDataFromMediationElements();
+			}
 		}
 
 		public event EventHandler<ICollection<ApiObjectReference<Endpoint>>> ConnectionsChanged;
