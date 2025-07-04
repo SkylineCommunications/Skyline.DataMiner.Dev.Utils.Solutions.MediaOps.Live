@@ -4,6 +4,9 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Newtonsoft.Json;
+
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -32,9 +35,10 @@
 		/// Cleanup all past scheduler orchestration tasks and remove the task reference from events.
 		/// </summary>
 		/// <param name="time">The reference time.</param>
-		public void CleanupSchedulerTasksBeforeTime(DateTimeOffset time)
+		public void CleanupSchedulerTasksBeforeTime(DateTimeOffset time, IEngine engine)
 		{
 			IEnumerable<OrchestrationSchedulerTask> tasksToRemove = _scheduler.GetEventTasksBeforeTime(time);
+			engine.GenerateInformation($"Tasks to remove {JsonConvert.SerializeObject(tasksToRemove)}");
 			CleanupTasks(tasksToRemove);
 		}
 

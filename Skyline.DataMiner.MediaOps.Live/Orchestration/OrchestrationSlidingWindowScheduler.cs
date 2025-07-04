@@ -37,14 +37,15 @@
 		public void SyncSchedulerWithWindow(IEngine engine)
 		{
 			engine.GenerateInformation("Window Remove");
-			RemoveEventsBeforeWindow();
+			RemoveEventsBeforeWindow(engine);
 			engine.GenerateInformation("Window Create");
 			CreateOrUpdateAllEventsInWindow(engine);
 		}
 
-		private void RemoveEventsBeforeWindow()
+		private void RemoveEventsBeforeWindow(IEngine engine)
 		{
-			_orchestrationCleanup.CleanupSchedulerTasksBeforeTime(WindowStartTime);
+			engine.GenerateInformation($"Window start time: {WindowStartTime.ToString()}");
+			_orchestrationCleanup.CleanupSchedulerTasksBeforeTime(WindowStartTime, engine);
 		}
 
 		private void CreateOrUpdateAllEventsInWindow(IEngine engine)

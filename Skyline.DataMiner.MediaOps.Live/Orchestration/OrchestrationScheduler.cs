@@ -100,7 +100,7 @@
 		/// <returns>A collection of tasks scheduled before the give time.</returns>
 		public IEnumerable<OrchestrationSchedulerTask> GetEventTasksBeforeTime(DateTimeOffset time)
 		{
-			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime < time.ToUniversalTime());
+			return _internalTaskList.Value.Where(task => task.DateTime < time);
 		}
 
 		/// <summary>
@@ -110,7 +110,7 @@
 		/// <returns>A collection of tasks scheduled after the give time.</returns>
 		public IEnumerable<OrchestrationSchedulerTask> GetEventTasksAfterTime(DateTimeOffset time)
 		{
-			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime > time.ToUniversalTime());
+			return _internalTaskList.Value.Where(task => task.DateTime > time);
 		}
 
 		/// <summary>
@@ -121,7 +121,7 @@
 		/// <returns>A collection of task in given time range.</returns>
 		public IEnumerable<OrchestrationSchedulerTask> GetEventTasksInTimeRange(DateTimeOffset from, DateTimeOffset to)
 		{
-			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime <= to.ToUniversalTime() && task.DateTime.UtcDateTime >= from.ToUniversalTime());
+			return _internalTaskList.Value.Where(task => task.DateTime <= to && task.DateTime >= from);
 		}
 
 		/// <summary>
