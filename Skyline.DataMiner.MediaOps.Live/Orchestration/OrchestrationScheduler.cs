@@ -6,6 +6,7 @@
 
 	using Newtonsoft.Json;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
@@ -24,22 +25,25 @@
 		private readonly IConnection _connection;
 
 		private readonly Lazy<HashSet<OrchestrationSchedulerTask>> _internalTaskList;
+		private readonly IEngine _engine;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationScheduler"/> class.
 		/// </summary>
 		/// <param name="connection">DataMiner user connection.</param>
 		/// <exception cref="ArgumentNullException">Connection cannot be null.</exception>
-		public OrchestrationScheduler(IConnection connection)
+		public OrchestrationScheduler(IConnection connection, IEngine engine)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			_dms = connection.GetDms();
 
 			_internalTaskList = new Lazy<HashSet<OrchestrationSchedulerTask>>(LoadInternalTaskList);
+			_engine = engine;
 		}
 
 		private HashSet<OrchestrationSchedulerTask> LoadInternalTaskList()
 		{
+			_engine.GenerateInformation("Load tasks");
 			HashSet<OrchestrationSchedulerTask> list = [];
 			GetInfoMessage getSchedulerTaskInfoMessage = new(InfoType.SchedulerTasks);
 
@@ -89,6 +93,7 @@
 				list.Add(existingTask);
 			}
 
+			_engine.GenerateInformation("Tasks Loaded");
 			return list;
 		}
 
@@ -190,9 +195,11 @@
 				// Create new task for timestamp during first iteration if none exist yet
 				if (taskForTimeStamp == null)
 				{
+					_engine.GenerateInformation("Delete because null");
 					DeleteEventTaskForEvent(orchestrationEvent);
 					taskForTimeStamp = new OrchestrationSchedulerTask(timestamp, new List<Guid> { orchestrationEvent.ID });
 					IDma dma = SelectRandomDma();
+					_engine.GenerateInformation("Create because null");
 					int newTaskId = dma.Scheduler.CreateTask(taskForTimeStamp.GenerateSchedulerTaskData());
 					taskForTimeStamp.ScheduledTaskId = new ScheduledTaskId(dma.Id, newTaskId);
 					orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
@@ -200,12 +207,16 @@
 					continue;
 				}
 
+				_engine.GenerateInformation(JsonConvert.SerializeObject(orchestrationEvent.ReservationInstance));
+				_engine.GenerateInformation(JsonConvert.SerializeObject(taskForTimeStamp.ScheduledTaskId));
 				// Event already added to correct task
 				if (orchestrationEvent.ReservationInstance == taskForTimeStamp.ScheduledTaskId)
 				{
+					_engine.GenerateInformation("Same");
 					continue;
 				}
 
+				_engine.GenerateInformation("Normal delete");
 				DeleteEventTaskForEvent(orchestrationEvent);
 				taskForTimeStamp.OrchestrationEventIds.Add(orchestrationEvent.ID);
 				orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
@@ -222,26 +233,19 @@
 		{
 			OrchestrationSchedulerTask taskForTimeStamp = FindExistingTaskForTimeStamp(timestamp);
 
-			if (taskForTimeStamp == null)
+			if (taskForTimeStamp != null)
 			{
-				foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
+				taskForTimeStamp.OrchestrationEventIds.RemoveAll(eventId => orchestrationEvents.Any(e => e.ID == eventId));
+
+				if (!taskForTimeStamp.OrchestrationEventIds.Any())
 				{
-					orchestrationEvent.ReservationInstance = null;
+					_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.DeleteTask(taskForTimeStamp.ScheduledTaskId.TaskId);
+					_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(taskForTimeStamp.ScheduledTaskId));
 				}
-
-				return;
-			}
-
-			taskForTimeStamp.OrchestrationEventIds.RemoveAll(eventId => orchestrationEvents.Any(e => e.ID == eventId));
-
-			if (!taskForTimeStamp.OrchestrationEventIds.Any())
-			{
-				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.DeleteTask(taskForTimeStamp.ScheduledTaskId.TaskId);
-				_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(taskForTimeStamp.ScheduledTaskId));
-			}
-			else
-			{
-				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData());
+				else
+				{
+					_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData());
+				}
 			}
 
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
@@ -259,16 +263,19 @@
 
 			OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.ReservationInstance);
 
-			task.OrchestrationEventIds.Remove(orchestrationEvent.ID);
+			if (task != null)
+			{
+				task.OrchestrationEventIds.Remove(orchestrationEvent.ID);
 
-			if (!task.OrchestrationEventIds.Any())
-			{
-				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.DeleteTask(task.ScheduledTaskId.TaskId);
-				_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(task.ScheduledTaskId));
-			}
-			else
-			{
-				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.UpdateTask(task.GenerateSchedulerTaskData());
+				if (!task.OrchestrationEventIds.Any())
+				{
+					_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.DeleteTask(task.ScheduledTaskId.TaskId);
+					_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(task.ScheduledTaskId));
+				}
+				else
+				{
+					_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.UpdateTask(task.GenerateSchedulerTaskData());
+				}
 			}
 
 			orchestrationEvent.ReservationInstance = null;

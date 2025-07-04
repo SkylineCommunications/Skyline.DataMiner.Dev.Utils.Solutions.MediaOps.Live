@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -22,9 +23,9 @@
 		/// Initializes a new instance of the <see cref="OrchestrationCleanup"/> class.
 		/// </summary>
 		/// <param name="repository">Repository object needed for DOM updates.</param>
-		public OrchestrationCleanup(OrchestrationEventRepository repository)
+		public OrchestrationCleanup(OrchestrationEventRepository repository, IEngine engine)
 		{
-			_scheduler = new OrchestrationScheduler(repository.Connection);
+			_scheduler = new OrchestrationScheduler(repository.Connection, engine);
 			_repository = repository;
 		}
 

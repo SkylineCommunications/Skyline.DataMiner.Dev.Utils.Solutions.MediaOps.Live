@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
@@ -17,15 +18,16 @@
 		private readonly OrchestrationScheduler _scheduler;
 		private readonly OrchestrationEventRepository _repository;
 		private readonly OrchestrationCleanup _orchestrationCleanup;
+		private readonly IEngine _engine;
 
-		internal OrchestrationSlidingWindowScheduler(OrchestrationEventRepository repository, TimeSpan timeSpanFuture) : this (repository, TimeSpan.FromMinutes(0), timeSpanFuture)
+		internal OrchestrationSlidingWindowScheduler(OrchestrationEventRepository repository, TimeSpan timeSpanFuture, IEngine engine) : this (repository, TimeSpan.FromMinutes(0), timeSpanFuture, engine)
 		{
 		}
 
-		internal OrchestrationSlidingWindowScheduler(OrchestrationEventRepository repository, TimeSpan timeSpanPast, TimeSpan timeSpanFuture)
+		internal OrchestrationSlidingWindowScheduler(OrchestrationEventRepository repository, TimeSpan timeSpanPast, TimeSpan timeSpanFuture, IEngine engine)
 		{
-			_orchestrationCleanup = new OrchestrationCleanup(repository);
-			_scheduler = new OrchestrationScheduler(repository.Connection);
+			_orchestrationCleanup = new OrchestrationCleanup(repository, engine);
+			_scheduler = new OrchestrationScheduler(repository.Connection, engine);
 			_repository = repository;
 
 			TimeSpanPast = timeSpanPast;
@@ -35,7 +37,9 @@
 
 		public void SyncSchedulerWithWindow()
 		{
+			_engine.GenerateInformation("Window Remove");
 			RemoveEventsBeforeWindow();
+			_engine.GenerateInformation("Window Create");
 			CreateOrUpdateAllEventsInWindow();
 		}
 

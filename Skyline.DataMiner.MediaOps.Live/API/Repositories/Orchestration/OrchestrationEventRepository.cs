@@ -40,7 +40,8 @@
 			_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(
 				this,
 				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
-				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future));
+				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future),
+				api.Engine);
 		}
 
 		/// <summary>
