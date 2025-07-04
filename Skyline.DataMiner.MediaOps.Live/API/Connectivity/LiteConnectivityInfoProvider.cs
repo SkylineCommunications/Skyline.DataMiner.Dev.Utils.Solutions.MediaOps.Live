@@ -12,7 +12,6 @@
 	{
 		private readonly object _lock = new();
 
-		private readonly MediaOpsLiveApi _api;
 		private readonly ICollection<MediationElement> _mediationElements;
 
 		private readonly Dictionary<ApiObjectReference<Endpoint>, Connection> _connectionsByDestination = new();

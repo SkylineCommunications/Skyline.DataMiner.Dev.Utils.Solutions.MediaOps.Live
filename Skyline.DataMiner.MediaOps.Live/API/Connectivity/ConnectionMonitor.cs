@@ -10,13 +10,10 @@
 
 	public sealed class ConnectionMonitor : IDisposable
 	{
-		private readonly MediaOpsLiveApi _api;
 		private readonly LiteConnectivityInfoProvider _connectivityInfoProvider;
 
 		public ConnectionMonitor(MediaOpsLiveApi api)
 		{
-			_api = api ?? throw new ArgumentNullException(nameof(api));
-
 			_connectivityInfoProvider = new LiteConnectivityInfoProvider(api, subscribe: true);
 		}
 
