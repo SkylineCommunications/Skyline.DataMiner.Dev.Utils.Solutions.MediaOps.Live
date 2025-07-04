@@ -12,8 +12,6 @@
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
-		private readonly object _lock = new object();
-
 		public ConnectionHandlerEngine(IEngine engine)
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
