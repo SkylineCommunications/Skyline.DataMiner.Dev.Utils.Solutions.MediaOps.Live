@@ -12,6 +12,7 @@
 
 	public sealed class ConnectionMonitor : IDisposable
 	{
+		private readonly MediaOpsLiveApi _api;
 		private readonly ICollection<MediationElement> _mediationElements;
 		private readonly ICollection<ConnectionSubscription> _subscriptions = new List<ConnectionSubscription>();
 
@@ -22,6 +23,7 @@
 				throw new ArgumentNullException(nameof(api));
 			}
 
+			_api = api;
 			_mediationElements = MediationElement.GetAllMediationElements(api).ToList();
 
 			foreach (var element in _mediationElements)
@@ -159,6 +161,11 @@
 
 		private void Connections_OnChanged(object sender, ConnectionsChangedEvent e)
 		{
+			if (_api.HasEngine)
+			{
+				_api.Engine.Log("Event received: " + e);
+			}
+
 			ConnectionsChanged?.Invoke(sender, e);
 		}
 	}
