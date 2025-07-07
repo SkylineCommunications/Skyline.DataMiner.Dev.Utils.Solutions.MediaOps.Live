@@ -33,7 +33,7 @@
 				_subscription = new TableSubscription(
 					_api.Connection,
 					_mediationElement.DmsElement,
-					5000,
+					MediationElement.ConnectionsTableId,
 					skipInitialEvents: skipInitialEvents);
 				_subscription.OnChanged += HandleChange;
 			}

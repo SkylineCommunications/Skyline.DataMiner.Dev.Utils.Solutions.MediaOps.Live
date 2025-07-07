@@ -13,7 +13,10 @@
 
 	public sealed class MediationElement
 	{
-		private readonly object _lock = new object();
+		public static readonly int ConnectionHandlerScriptsTableId = 1000;
+		public static readonly int PendingConnectionActionsTableId = 3000;
+		public static readonly int ConnectionsTableId = 5000;
+
 		private readonly MediaOpsLiveApi _api;
 
 		internal MediationElement(MediaOpsLiveApi api, IDmsElement dmsElement)
@@ -49,7 +52,7 @@
 				return [];
 			}
 
-			var tableData = DmsElement.GetTable(3000).GetData();
+			var tableData = DmsElement.GetTable(PendingConnectionActionsTableId).GetData();
 			return tableData.Values.Select(x => new PendingConnectionAction(x));
 		}
 
@@ -60,7 +63,7 @@
 				return [];
 			}
 
-			var tableData = DmsElement.GetTable(5000).GetData();
+			var tableData = DmsElement.GetTable(ConnectionsTableId).GetData();
 			return tableData.Values.Select(x => new Connection(x));
 		}
 
@@ -72,7 +75,7 @@
 				return false;
 			}
 
-			var table = DmsElement.GetTable(5000);
+			var table = DmsElement.GetTable(ConnectionsTableId);
 			var rowKey = Convert.ToString(destinationEndpointId);
 
 			if (table.RowExists(rowKey))
@@ -101,7 +104,7 @@
 				throw new ArgumentNullException(nameof(destinationElement));
 			}
 
-			var scriptColumn = DmsElement.GetTable(1000).GetColumn<string>(1003);
+			var scriptColumn = DmsElement.GetTable(ConnectionHandlerScriptsTableId).GetColumn<string>(1003);
 
 			var script = scriptColumn.GetValue(destinationElement.DmsElementId.Value, KeyType.PrimaryKey);
 

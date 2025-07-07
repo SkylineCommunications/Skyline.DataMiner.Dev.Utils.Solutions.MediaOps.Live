@@ -49,7 +49,7 @@
 			var connectionsTable = Dms
 				.Agents[mediationElement.DmaId]
 				.Elements[mediationElement.ElementId]
-				.Tables[5000];
+				.Tables[MediationElement.ConnectionsTableId];
 
 			var rowKey = Convert.ToString(destination.ID);
 			var row = new object[]
@@ -79,7 +79,7 @@
 			var pendingActionsTable = Dms
 				.Agents[mediationElement.DmaId]
 				.Elements[mediationElement.ElementId]
-				.Tables[3000];
+				.Tables[MediationElement.PendingConnectionActionsTableId];
 
 			var rowKey = Convert.ToString(destination.ID);
 			var row = new object[]
@@ -107,7 +107,7 @@
 			var pendingActionsTable = Dms
 				.Agents[mediationElement.DmaId]
 				.Elements[mediationElement.ElementId]
-				.Tables[3000];
+				.Tables[MediationElement.PendingConnectionActionsTableId];
 
 			var rowKey = Convert.ToString(destination.ID);
 			pendingActionsTable.DeleteRow(rowKey);
@@ -235,8 +235,9 @@
 			var element = Dms.GetOrCreateAgent(123)
 				.CreateElement(1000, "MediaOps Mediation 1", "Skyline MediaOps Mediation");
 
-			element.CreateTable(3000); // Pending Connection Actions
-			element.CreateTable(5000); // Connections
+			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
+			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
+			element.CreateTable(MediationElement.ConnectionsTableId);
 		}
 
 		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)
