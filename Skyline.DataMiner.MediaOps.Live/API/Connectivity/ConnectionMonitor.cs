@@ -102,11 +102,8 @@
 
 			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
 			{
-				if (e.DeletedConnections.Contains(destination))
-				{
-					tsc.TrySetResult(true);
-				}
-				else if (e.UpdatedConnections.Any(x => x.Destination == destination && !x.IsConnected))
+				if (e.DeletedConnections.Contains(destination) ||
+					e.UpdatedConnections.Any(x => x.Destination == destination && !x.IsConnected))
 				{
 					tsc.TrySetResult(true);
 				}
