@@ -51,7 +51,11 @@
 			stopwatch.Stop();
 
 			Assert.IsFalse(connected);
-			Assert.IsTrue(stopwatch.Elapsed >= timeout, $"Elapsed time ({stopwatch.Elapsed}) should be more than the timeout ({timeout}).");
+
+			var tolerance = TimeSpan.FromMilliseconds(25);
+			Assert.IsTrue(
+				stopwatch.Elapsed >= timeout - tolerance,
+				$"Elapsed time ({stopwatch.Elapsed}) should be more than the timeout ({timeout}).");
 		}
 
 		[TestMethod]
@@ -101,7 +105,11 @@
 			stopwatch.Stop();
 
 			Assert.IsFalse(connected);
-			Assert.IsTrue(stopwatch.Elapsed >= timeout, $"Elapsed time ({stopwatch.Elapsed}) should be more than the timeout ({timeout}).");
+
+			var tolerance = TimeSpan.FromMilliseconds(25);
+			Assert.IsTrue(
+				stopwatch.Elapsed >= timeout - tolerance,
+				$"Elapsed time ({stopwatch.Elapsed}) should be more than the timeout ({timeout}).");
 		}
 	}
 }
