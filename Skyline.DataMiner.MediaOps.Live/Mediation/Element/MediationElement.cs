@@ -68,7 +68,7 @@
 				}
 
 				_pendingConnectionActionsSubscription = new TableSubscription(_api.Connection, DmsElement, 3000, skipInitialEvents: skipInitialEvents);
-				_pendingConnectionActionsSubscription.OnChanged += PendingConnectionActions_OnChanged; 
+				_pendingConnectionActionsSubscription.OnChanged += PendingConnectionActions_OnChanged;
 			}
 		}
 
@@ -82,7 +82,7 @@
 				}
 
 				_connectionsSubscription = new TableSubscription(_api.Connection, DmsElement, 5000, skipInitialEvents: skipInitialEvents);
-				_connectionsSubscription.OnChanged += Connections_OnChanged; 
+				_connectionsSubscription.OnChanged += Connections_OnChanged;
 			}
 		}
 
@@ -276,14 +276,9 @@
 			var endpointInfoMap = endpoints.ToDictionary(x => new EndpointInfo(x));
 			var mediationElementMap = GetMediationElements(api, endpointInfoMap.Keys);
 
-			var result = new Dictionary<Endpoint, MediationElement>();
-
-			foreach (var endpointInfo in endpointInfoMap.Keys)
-			{
-				result[endpointInfoMap[endpointInfo]] = mediationElementMap[endpointInfo];
-			}
-
-			return result;
+			return endpointInfoMap.ToDictionary(
+				kvp => kvp.Value,
+				kvp => mediationElementMap[kvp.Key]);
 		}
 
 		public static MediationElement GetMediationElement(MediaOpsLiveApi api, EndpointInfo endpoint)
