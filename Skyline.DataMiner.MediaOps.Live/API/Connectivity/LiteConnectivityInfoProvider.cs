@@ -30,10 +30,8 @@
 			{
 				Subscribe();
 			}
-			else
-			{
-				LoadDataFromMediationElements();
-			}
+
+			LoadDataFromMediationElements();
 		}
 
 		public event EventHandler<ICollection<ApiObjectReference<Endpoint>>> ConnectionsChanged;
@@ -73,7 +71,7 @@
 				{
 					mediationElement.PendingConnectionActionsChanged += PendingConnectionActions_OnChanged;
 					mediationElement.ConnectionsChanged += Connections_OnChanged;
-					mediationElement.Subscribe();
+					mediationElement.Subscribe(skipInitialEvents: true);
 				}
 
 				IsSubscribed = true;
@@ -179,8 +177,8 @@
 		{
 			lock (_lock)
 			{
-				var connections = _mediationElements.AsParallel().SelectMany(x => x.GetConnections()).ToList();
-				var pendingConnectionActions = _mediationElements.AsParallel().SelectMany(x => x.GetPendingConnectionActions()).ToList();
+				var connections = _mediationElements.SelectMany(x => x.GetConnections()).ToList();
+				var pendingConnectionActions = _mediationElements.SelectMany(x => x.GetPendingConnectionActions()).ToList();
 
 				foreach (var connection in connections)
 				{

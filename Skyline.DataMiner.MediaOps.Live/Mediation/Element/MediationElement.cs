@@ -41,7 +41,7 @@
 
 		public event EventHandler<ConnectionsChangedEvent> ConnectionsChanged;
 
-		public void Subscribe()
+		public void Subscribe(bool skipInitialEvents)
 		{
 			lock (_lock)
 			{
@@ -50,10 +50,10 @@
 					return;
 				}
 
-				_pendingConnectionActionsSubscription = new TableSubscription(_api.Connection, DmsElement, 3000);
+				_pendingConnectionActionsSubscription = new TableSubscription(_api.Connection, DmsElement, 3000, skipInitialEvents: skipInitialEvents);
 				_pendingConnectionActionsSubscription.OnChanged += PendingConnectionActions_OnChanged;
 
-				_connectionsSubscription = new TableSubscription(_api.Connection, DmsElement, 5000);
+				_connectionsSubscription = new TableSubscription(_api.Connection, DmsElement, 5000, skipInitialEvents: skipInitialEvents);
 				_connectionsSubscription.OnChanged += Connections_OnChanged;
 
 				_isSubscribed = true;
@@ -94,8 +94,8 @@
 				return [];
 			}
 
-			var table = DmsElement.GetTable(3000).GetData();
-			return table.Values.Select(x => new PendingConnectionAction(x));
+			var tableData = DmsElement.GetTable(3000).GetData();
+			return tableData.Values.Select(x => new PendingConnectionAction(x));
 		}
 
 		public IEnumerable<Connection> GetConnections()
@@ -105,8 +105,41 @@
 				return [];
 			}
 
-			var table = DmsElement.GetTable(5000).GetData();
-			return table.Values.Select(x => new Connection(x));
+			var tableData = DmsElement.GetTable(5000).GetData();
+			return tableData.Values.Select(x => new Connection(x));
+		}
+
+		public bool TryGetConnection(Guid destinationEndpointId, out Connection connection)
+		{
+			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			{
+				connection = null;
+				return false;
+			}
+
+			var table = DmsElement.GetTable(5000);
+			var rowKey = Convert.ToString(destinationEndpointId);
+
+			if (table.RowExists(rowKey))
+			{
+				try
+				{
+					var row = table.GetRow(rowKey);
+
+					if (row != null)
+					{
+						connection = new Connection(row);
+						return true;
+					}
+				}
+				catch (KeyNotFoundInTableException)
+				{
+					// ignore
+				}
+			}
+
+			connection = null;
+			return false;
 		}
 
 		public string GetConnectionHandlerScriptName(IDmsElement destinationElement)
