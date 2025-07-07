@@ -12,13 +12,15 @@
 	{
 		private readonly object _lock = new();
 
-		private readonly ICollection<MediationElement> _mediationElements;
-
 		private readonly Dictionary<ApiObjectReference<Endpoint>, Connection> _connectionsByDestination = new();
 		private readonly Dictionary<ApiObjectReference<Endpoint>, PendingConnectionAction> _pendingActionsByDestination = new();
 
 		private readonly ConnectionEndpointsMapping _connectionEndpointsMapping = new();
 		private readonly PendingConnectionActionMapping _pendingConnectionActionsMapping = new();
+
+		private readonly ICollection<MediationElement> _mediationElements = [];
+		private readonly ICollection<ConnectionSubscription> _connectionSubscriptions = [];
+		private readonly ICollection<PendingConnectionActionSubscription> _pendingActionSubscriptions = [];
 
 		public LiteConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
@@ -67,11 +69,17 @@
 					return;
 				}
 
-				foreach (var mediationElement in _mediationElements)
+				foreach (var element in _mediationElements)
 				{
-					mediationElement.PendingConnectionActionsChanged += PendingConnectionActions_OnChanged;
-					mediationElement.ConnectionsChanged += Connections_OnChanged;
-					mediationElement.Subscribe(skipInitialEvents: true);
+					var connectionSubscription = element.CreateConnectionSubscription();
+					connectionSubscription.Changed += Connections_OnChanged;
+					connectionSubscription.Subscribe();
+					_connectionSubscriptions.Add(connectionSubscription);
+
+					var pendingActionSubscription = element.CreatePendingActionSubscription();
+					pendingActionSubscription.Changed += PendingConnectionActions_OnChanged;
+					pendingActionSubscription.Subscribe();
+					_pendingActionSubscriptions.Add(pendingActionSubscription);
 				}
 
 				IsSubscribed = true;
@@ -87,12 +95,20 @@
 					return;
 				}
 
-				foreach (var mediationElement in _mediationElements)
+				foreach (var subscription in _connectionSubscriptions)
 				{
-					mediationElement.Unsubscribe();
-					mediationElement.PendingConnectionActionsChanged -= PendingConnectionActions_OnChanged;
-					mediationElement.ConnectionsChanged -= Connections_OnChanged;
+					subscription.Unsubscribe();
+					subscription.Changed -= Connections_OnChanged;
 				}
+
+				foreach (var subscription in _pendingActionSubscriptions)
+				{
+					subscription.Unsubscribe();
+					subscription.Changed -= PendingConnectionActions_OnChanged;
+				}
+
+				_connectionSubscriptions.Clear();
+				_pendingActionSubscriptions.Clear();
 
 				IsSubscribed = false;
 			}

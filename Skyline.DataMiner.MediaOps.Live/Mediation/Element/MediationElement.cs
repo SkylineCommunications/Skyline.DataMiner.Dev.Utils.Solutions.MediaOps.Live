@@ -9,16 +9,12 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
-	using Skyline.DataMiner.MediaOps.Live.Subscriptions;
 	using Skyline.DataMiner.Net.Messages;
 
-	public sealed class MediationElement : IDisposable
+	public sealed class MediationElement
 	{
 		private readonly object _lock = new object();
 		private readonly MediaOpsLiveApi _api;
-
-		private TableSubscription _connectionsSubscription;
-		private TableSubscription _pendingConnectionActionsSubscription;
 
 		internal MediationElement(MediaOpsLiveApi api, IDmsElement dmsElement)
 		{
@@ -36,84 +32,14 @@
 
 		public string Name => DmsElement.Name;
 
-		public event EventHandler<PendingConnectionActionsChangedEvent> PendingConnectionActionsChanged;
-
-		public event EventHandler<ConnectionsChangedEvent> ConnectionsChanged;
-
-		public void Subscribe(bool skipInitialEvents)
+		public ConnectionSubscription CreateConnectionSubscription()
 		{
-			lock (_lock)
-			{
-				SubscribeToPendingConnectionActions(skipInitialEvents);
-				SubscribeToConnections(skipInitialEvents);
-			}
+			return new ConnectionSubscription(_api, this);
 		}
 
-		public void Unsubscribe()
+		public PendingConnectionActionSubscription CreatePendingActionSubscription()
 		{
-			lock (_lock)
-			{
-				UnsubscribeFromPendingConnectionActions();
-				UnsubscribeFromConnections();
-			}
-		}
-
-		public void SubscribeToPendingConnectionActions(bool skipInitialEvents)
-		{
-			lock (_lock)
-			{
-				if (_pendingConnectionActionsSubscription != null)
-				{
-					return;
-				}
-
-				_pendingConnectionActionsSubscription = new TableSubscription(_api.Connection, DmsElement, 3000, skipInitialEvents: skipInitialEvents);
-				_pendingConnectionActionsSubscription.OnChanged += PendingConnectionActions_OnChanged;
-			}
-		}
-
-		public void SubscribeToConnections(bool skipInitialEvents)
-		{
-			lock (_lock)
-			{
-				if (_connectionsSubscription != null)
-				{
-					return;
-				}
-
-				_connectionsSubscription = new TableSubscription(_api.Connection, DmsElement, 5000, skipInitialEvents: skipInitialEvents);
-				_connectionsSubscription.OnChanged += Connections_OnChanged;
-			}
-		}
-
-		public void UnsubscribeFromPendingConnectionActions()
-		{
-			lock (_lock)
-			{
-				if (_pendingConnectionActionsSubscription == null)
-				{
-					return;
-				}
-
-				_pendingConnectionActionsSubscription.OnChanged -= PendingConnectionActions_OnChanged;
-				_pendingConnectionActionsSubscription.Dispose();
-				_pendingConnectionActionsSubscription = null;
-			}
-		}
-
-		public void UnsubscribeFromConnections()
-		{
-			lock (_lock)
-			{
-				if (_connectionsSubscription == null)
-				{
-					return;
-				}
-
-				_connectionsSubscription.OnChanged -= Connections_OnChanged;
-				_connectionsSubscription.Dispose();
-				_connectionsSubscription = null;
-			}
+			return new PendingConnectionActionSubscription(_api, this);
 		}
 
 		public IEnumerable<PendingConnectionAction> GetPendingConnectionActions()
@@ -185,11 +111,6 @@
 			}
 
 			return script;
-		}
-
-		public void Dispose()
-		{
-			Unsubscribe();
 		}
 
 		public static IEnumerable<MediationElement> GetAllMediationElements(MediaOpsLiveApi api)
@@ -316,24 +237,6 @@
 			}
 
 			return GetMediationElement(api, new EndpointInfo(endpoint));
-		}
-
-		private void PendingConnectionActions_OnChanged(object sender, TableValueChange e)
-		{
-			var updatedActions = e.UpdatedRows.Values.Select(row => new PendingConnectionAction(row));
-			var deletedActionKeys = e.DeletedRows.Select(key => Guid.Parse(key));
-
-			var eventArgs = new PendingConnectionActionsChangedEvent(updatedActions, deletedActionKeys);
-			PendingConnectionActionsChanged?.Invoke(this, eventArgs);
-		}
-
-		private void Connections_OnChanged(object sender, TableValueChange e)
-		{
-			var updatedConnections = e.UpdatedRows.Values.Select(row => new Connection(row));
-			var deletedConnectionKeys = e.DeletedRows.Select(key => Guid.Parse(key));
-
-			var eventArgs = new ConnectionsChangedEvent(updatedConnections, deletedConnectionKeys);
-			ConnectionsChanged?.Invoke(this, eventArgs);
 		}
 	}
 }

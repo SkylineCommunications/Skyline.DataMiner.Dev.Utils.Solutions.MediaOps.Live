@@ -13,6 +13,7 @@
 	public sealed class ConnectionMonitor : IDisposable
 	{
 		private readonly ICollection<MediationElement> _mediationElements;
+		private readonly ICollection<ConnectionSubscription> _subscriptions = new List<ConnectionSubscription>();
 
 		public ConnectionMonitor(MediaOpsLiveApi api)
 		{
@@ -25,8 +26,11 @@
 
 			foreach (var element in _mediationElements)
 			{
-				element.ConnectionsChanged += Connections_OnChanged;
-				element.SubscribeToConnections(skipInitialEvents: true);
+				var connectionSubscription = element.CreateConnectionSubscription();
+				_subscriptions.Add(connectionSubscription);
+
+				connectionSubscription.Changed += Connections_OnChanged;
+				connectionSubscription.Subscribe();
 			}
 		}
 
@@ -127,10 +131,12 @@
 
 		public void Dispose()
 		{
-			foreach (var mediationElement in _mediationElements)
+			foreach (var subscription in _subscriptions)
 			{
-				mediationElement.Dispose();
+				subscription.Dispose();
 			}
+
+			_subscriptions.Clear();
 		}
 
 		private bool IsConnected(ApiObjectReference<Endpoint> destination)
