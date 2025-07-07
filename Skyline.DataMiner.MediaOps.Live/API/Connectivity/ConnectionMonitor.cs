@@ -25,8 +25,8 @@
 
 			foreach (var element in _mediationElements)
 			{
-				element.Subscribe(skipInitialEvents: true);
 				element.ConnectionsChanged += Connections_OnChanged;
+				element.SubscribeToConnections(skipInitialEvents: true);
 			}
 		}
 

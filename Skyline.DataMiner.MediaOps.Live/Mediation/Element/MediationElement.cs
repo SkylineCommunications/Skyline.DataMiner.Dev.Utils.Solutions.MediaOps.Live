@@ -17,7 +17,6 @@
 		private readonly object _lock = new object();
 		private readonly MediaOpsLiveApi _api;
 
-		private bool _isSubscribed;
 		private TableSubscription _connectionsSubscription;
 		private TableSubscription _pendingConnectionActionsSubscription;
 
@@ -45,18 +44,8 @@
 		{
 			lock (_lock)
 			{
-				if (_isSubscribed)
-				{
-					return;
-				}
-
-				_pendingConnectionActionsSubscription = new TableSubscription(_api.Connection, DmsElement, 3000, skipInitialEvents: skipInitialEvents);
-				_pendingConnectionActionsSubscription.OnChanged += PendingConnectionActions_OnChanged;
-
-				_connectionsSubscription = new TableSubscription(_api.Connection, DmsElement, 5000, skipInitialEvents: skipInitialEvents);
-				_connectionsSubscription.OnChanged += Connections_OnChanged;
-
-				_isSubscribed = true;
+				SubscribeToPendingConnectionActions(skipInitialEvents);
+				SubscribeToConnections(skipInitialEvents);
 			}
 		}
 
@@ -64,26 +53,66 @@
 		{
 			lock (_lock)
 			{
-				if (!_isSubscribed)
+				UnsubscribeFromPendingConnectionActions();
+				UnsubscribeFromConnections();
+			}
+		}
+
+		public void SubscribeToPendingConnectionActions(bool skipInitialEvents)
+		{
+			lock (_lock)
+			{
+				if (_pendingConnectionActionsSubscription != null)
 				{
 					return;
 				}
 
-				if (_pendingConnectionActionsSubscription != null)
-				{
-					_pendingConnectionActionsSubscription.OnChanged -= PendingConnectionActions_OnChanged;
-					_pendingConnectionActionsSubscription.Dispose();
-					_pendingConnectionActionsSubscription = null;
-				}
+				_pendingConnectionActionsSubscription = new TableSubscription(_api.Connection, DmsElement, 3000, skipInitialEvents: skipInitialEvents);
+				_pendingConnectionActionsSubscription.OnChanged += PendingConnectionActions_OnChanged; 
+			}
+		}
 
+		public void SubscribeToConnections(bool skipInitialEvents)
+		{
+			lock (_lock)
+			{
 				if (_connectionsSubscription != null)
 				{
-					_connectionsSubscription.OnChanged -= Connections_OnChanged;
-					_connectionsSubscription.Dispose();
-					_connectionsSubscription = null;
+					return;
 				}
 
-				_isSubscribed = false;
+				_connectionsSubscription = new TableSubscription(_api.Connection, DmsElement, 5000, skipInitialEvents: skipInitialEvents);
+				_connectionsSubscription.OnChanged += Connections_OnChanged; 
+			}
+		}
+
+		public void UnsubscribeFromPendingConnectionActions()
+		{
+			lock (_lock)
+			{
+				if (_pendingConnectionActionsSubscription == null)
+				{
+					return;
+				}
+
+				_pendingConnectionActionsSubscription.OnChanged -= PendingConnectionActions_OnChanged;
+				_pendingConnectionActionsSubscription.Dispose();
+				_pendingConnectionActionsSubscription = null;
+			}
+		}
+
+		public void UnsubscribeFromConnections()
+		{
+			lock (_lock)
+			{
+				if (_connectionsSubscription == null)
+				{
+					return;
+				}
+
+				_connectionsSubscription.OnChanged -= Connections_OnChanged;
+				_connectionsSubscription.Dispose();
+				_connectionsSubscription = null;
 			}
 		}
 
@@ -126,11 +155,8 @@
 				{
 					var row = table.GetRow(rowKey);
 
-					if (row != null)
-					{
-						connection = new Connection(row);
-						return true;
-					}
+					connection = new Connection(row);
+					return true;
 				}
 				catch (KeyNotFoundInTableException)
 				{
