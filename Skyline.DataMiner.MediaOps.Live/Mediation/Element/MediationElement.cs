@@ -78,19 +78,19 @@
 			var table = DmsElement.GetTable(ConnectionsTableId);
 			var rowKey = Convert.ToString(destinationEndpointId);
 
-			if (table.RowExists(rowKey))
+			try
 			{
-				try
+				if (table.RowExists(rowKey))
 				{
 					var row = table.GetRow(rowKey);
 
 					connection = new Connection(row);
 					return true;
 				}
-				catch (KeyNotFoundInTableException)
-				{
-					// ignore
-				}
+			}
+			catch
+			{
+				// ignore
 			}
 
 			connection = null;

@@ -157,9 +157,11 @@
 							dma.Elements.TryGetValue(ids[1], out var element) &&
 							element.Tables.TryGetValue(ids[2], out var table))
 						{
+							var index = table.Rows.Keys.ToList().IndexOf(key);
+
 							yield return new SetDataMinerInfoResponseMessage
 							{
-								RawData = table.Rows.Keys.ToList().IndexOf(key) + 1,
+								RawData = index + 1,
 							};
 						}
 						else
