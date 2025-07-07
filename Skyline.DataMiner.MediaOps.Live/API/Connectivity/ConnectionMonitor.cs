@@ -53,7 +53,7 @@
 				return true;
 			}
 
-			var tsc = new TaskCompletionSource<bool>();
+			var tsc = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 			using var cts = new CancellationTokenSource(timeout);
 			cts.Token.Register(() => tsc.TrySetResult(false));
@@ -75,7 +75,7 @@
 					tsc.TrySetResult(true);
 				}
 
-				return tsc.Task.Result;
+				return tsc.Task.GetAwaiter().GetResult();
 			}
 			finally
 			{
@@ -95,7 +95,7 @@
 				return true;
 			}
 
-			var tsc = new TaskCompletionSource<bool>();
+			var tsc = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 			using var cts = new CancellationTokenSource(timeout);
 			cts.Token.Register(() => tsc.TrySetResult(false));
@@ -118,7 +118,7 @@
 					tsc.TrySetResult(true);
 				}
 
-				return tsc.Task.Result;
+				return tsc.Task.GetAwaiter().GetResult();
 			}
 			finally
 			{
