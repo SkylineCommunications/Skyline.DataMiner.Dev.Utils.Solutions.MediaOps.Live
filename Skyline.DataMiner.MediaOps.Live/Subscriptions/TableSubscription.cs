@@ -31,6 +31,7 @@
 				: SubscriptionFilterOptions.None;
 
 			_subscriptionSetId = $"TableSubscription_{_element.DmsElementId.Value}_{_tableId}";
+
 			_subscriptionFilters =
 			[
 				new SubscriptionFilterParameter(typeof(ParameterTableUpdateEventMessage), _element.AgentId, _element.Id, _tableId, rowKey)

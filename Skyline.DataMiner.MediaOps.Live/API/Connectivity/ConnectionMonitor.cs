@@ -52,7 +52,7 @@
 			var tsc = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 			using var cts = new CancellationTokenSource(timeout);
-			cts.Token.Register(() => tsc.TrySetResult(false));
+			using var tokenRegistration = cts.Token.Register(() => tsc.TrySetResult(false));
 
 			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
 			{
@@ -62,10 +62,10 @@
 				}
 			}
 
-			ConnectionsChanged += ConnectionEventHandler;
-
 			try
 			{
+				ConnectionsChanged += ConnectionEventHandler;
+
 				Task.Run(() =>
 				{
 					if (IsConnected(source, destination))
@@ -92,7 +92,7 @@
 			var tsc = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 			using var cts = new CancellationTokenSource(timeout);
-			cts.Token.Register(() => tsc.TrySetResult(false));
+			using var tokenRegistration = cts.Token.Register(() => tsc.TrySetResult(false));
 
 			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
 			{
@@ -103,10 +103,10 @@
 				}
 			}
 
-			ConnectionsChanged += ConnectionEventHandler;
-
 			try
 			{
+				ConnectionsChanged += ConnectionEventHandler;
+
 				Task.Run(() =>
 				{
 					if (!IsConnected(destination))

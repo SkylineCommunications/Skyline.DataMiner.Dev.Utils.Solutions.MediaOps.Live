@@ -422,8 +422,9 @@
 
 				foreach (var takeContext in takeContexts)
 				{
-					var task = Task.Run(
-						() => WaitUntilConnected(takeContext, connectionsMonitor, performanceTracker));
+					var task = Task.Factory.StartNew(
+						() => WaitUntilConnected(takeContext, connectionsMonitor, performanceTracker),
+						TaskCreationOptions.LongRunning);
 
 					tasks.Add(task);
 				}
@@ -461,8 +462,9 @@
 
 				foreach (var takeContext in takeContexts)
 				{
-					var task = Task.Run(
-						() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker));
+					var task = Task.Factory.StartNew(
+						() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker),
+						TaskCreationOptions.LongRunning);
 
 					tasks.Add(task);
 				}
