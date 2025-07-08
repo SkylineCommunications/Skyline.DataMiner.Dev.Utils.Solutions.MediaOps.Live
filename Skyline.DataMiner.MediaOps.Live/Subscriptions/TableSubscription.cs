@@ -18,7 +18,7 @@
 
 		private readonly TableCache _cache;
 
-		public TableSubscription(IConnection connection, IDmsElement element, int tableId, string rowKey = null, bool skipInitialEvents = true)
+		public TableSubscription(IConnection connection, IDmsElement element, int tableId, bool skipInitialEvents = true)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			_element = element ?? throw new ArgumentNullException(nameof(element));
@@ -34,11 +34,11 @@
 
 			_subscriptionFilters =
 			[
-				new SubscriptionFilterParameter(typeof(ParameterTableUpdateEventMessage), _element.AgentId, _element.Id, _tableId, rowKey)
+				new SubscriptionFilterParameter(typeof(ParameterTableUpdateEventMessage), _element.AgentId, _element.Id, _tableId)
 				{
 					Options = subscriptionFilterOptions,
 				},
-				new SubscriptionFilterParameter(typeof(ParameterChangeEventMessage), _element.AgentId, _element.Id, _tableId, rowKey)
+				new SubscriptionFilterParameter(typeof(ParameterChangeEventMessage), _element.AgentId, _element.Id, _tableId)
 				{
 					Filters = ["forceFullTable=true"],
 					Options = subscriptionFilterOptions,

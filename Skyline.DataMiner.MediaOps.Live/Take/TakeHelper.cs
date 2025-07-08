@@ -418,18 +418,11 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			using (var connectionsMonitor = new ConnectionMonitor(_api))
 			{
-				var tasks = new List<Task<bool>>();
+				var tasks = takeContexts.Select(takeContext =>
+					Task.Run(() => WaitUntilConnected(takeContext, connectionsMonitor, performanceTracker)))
+					.ToArray();
 
-				foreach (var takeContext in takeContexts)
-				{
-					var task = Task.Factory.StartNew(
-						() => WaitUntilConnected(takeContext, connectionsMonitor, performanceTracker),
-						TaskCreationOptions.LongRunning);
-
-					tasks.Add(task);
-				}
-
-				var results = Task.WhenAll(tasks).Result;
+				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
 				var failedCount = results.Count(x => !x);
 
 				if (failedCount > 0)
@@ -458,18 +451,11 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			using (var connectionMonitor = new ConnectionMonitor(_api))
 			{
-				var tasks = new List<Task<bool>>();
+				var tasks = takeContexts.Select(takeContext =>
+					Task.Run(() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker)))
+					.ToArray();
 
-				foreach (var takeContext in takeContexts)
-				{
-					var task = Task.Factory.StartNew(
-						() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker),
-						TaskCreationOptions.LongRunning);
-
-					tasks.Add(task);
-				}
-
-				var results = Task.WhenAll(tasks).Result;
+				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
 				var failedCount = results.Count(x => !x);
 
 				if (failedCount > 0)

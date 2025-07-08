@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
 	using System;
+	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Threading;
@@ -14,7 +15,9 @@
 	public sealed class ConnectionMonitor : IDisposable
 	{
 		private readonly ICollection<MediationElement> _mediationElements;
-		private readonly ICollection<ConnectionSubscription> _subscriptions = new List<ConnectionSubscription>();
+		private readonly ICollection<ConnectionSubscription> _subscriptions = [];
+
+		private readonly ConcurrentDictionary<ApiObjectReference<Endpoint>, Connection> _cache = new();
 
 		public ConnectionMonitor(MediaOpsLiveApi api)
 		{
@@ -136,6 +139,11 @@
 
 		private bool IsConnected(ApiObjectReference<Endpoint> destination)
 		{
+			if (_cache.TryGetValue(destination, out var cachedConnection))
+			{
+				return cachedConnection.IsConnected;
+			}
+
 			return _mediationElements
 				.Any(element =>
 				{
@@ -146,6 +154,11 @@
 
 		private bool IsConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
 		{
+			if (_cache.TryGetValue(destination, out var cachedConnection))
+			{
+				return cachedConnection.IsConnected && cachedConnection.ConnectedSource == source;
+			}
+
 			return _mediationElements
 				.Any(element =>
 				{
@@ -157,6 +170,16 @@
 
 		private void Connections_OnChanged(object sender, ConnectionsChangedEvent e)
 		{
+			foreach (var item in e.DeletedConnections)
+			{
+				_cache.TryRemove(item, out var _);
+			}
+
+			foreach (var item in e.UpdatedConnections)
+			{
+				_cache[item.Destination] = item;
+			}
+
 			ConnectionsChanged?.Invoke(sender, e);
 		}
 	}

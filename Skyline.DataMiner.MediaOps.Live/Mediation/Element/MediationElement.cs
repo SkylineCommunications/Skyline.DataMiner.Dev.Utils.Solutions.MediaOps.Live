@@ -80,10 +80,10 @@
 
 			try
 			{
-				if (table.RowExists(rowKey))
-				{
-					var row = table.GetRow(rowKey);
+				var row = table.GetRow(rowKey);
 
+				if (row != null)
+				{
 					connection = new Connection(row);
 					return true;
 				}
