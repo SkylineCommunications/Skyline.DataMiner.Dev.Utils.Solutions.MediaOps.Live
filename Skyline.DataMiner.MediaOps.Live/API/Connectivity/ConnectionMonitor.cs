@@ -9,6 +9,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.Net.SLDataGateway.Helpers;
 
 	public sealed class ConnectionMonitor : IDisposable
 	{
@@ -48,11 +49,6 @@
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
-			if (IsConnected(source, destination))
-			{
-				return true;
-			}
-
 			var tsc = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 			using var cts = new CancellationTokenSource(timeout);
@@ -70,10 +66,13 @@
 
 			try
 			{
-				if (IsConnected(source, destination))
+				Task.Run(() =>
 				{
-					tsc.TrySetResult(true);
-				}
+					if (IsConnected(source, destination))
+					{
+						tsc.TrySetResult(true);
+					}
+				}).Forget();
 
 				return tsc.Task.GetAwaiter().GetResult();
 			}
@@ -88,11 +87,6 @@
 			if (destination == ApiObjectReference<Endpoint>.Empty)
 			{
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
-			}
-
-			if (!IsConnected(destination))
-			{
-				return true;
 			}
 
 			var tsc = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -113,10 +107,13 @@
 
 			try
 			{
-				if (!IsConnected(destination))
+				Task.Run(() =>
 				{
-					tsc.TrySetResult(true);
-				}
+					if (!IsConnected(destination))
+					{
+						tsc.TrySetResult(true);
+					}
+				}).Forget();
 
 				return tsc.Task.GetAwaiter().GetResult();
 			}
