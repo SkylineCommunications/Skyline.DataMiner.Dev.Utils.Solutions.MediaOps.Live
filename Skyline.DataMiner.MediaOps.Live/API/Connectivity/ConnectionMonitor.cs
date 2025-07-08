@@ -10,7 +10,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
-	using Skyline.DataMiner.Net.SLDataGateway.Helpers;
 
 	public sealed class ConnectionMonitor : IDisposable
 	{
@@ -69,19 +68,17 @@
 			{
 				ConnectionsChanged += ConnectionEventHandler;
 
-				Task.Run(() =>
+				if (IsConnected(source, destination))
 				{
-					if (IsConnected(source, destination))
-					{
-						tsc.TrySetResult(true);
-					}
-				}).Forget();
+					tsc.TrySetResult(true);
+				}
 
 				return tsc.Task.GetAwaiter().GetResult();
 			}
 			finally
 			{
 				ConnectionsChanged -= ConnectionEventHandler;
+				cts.Cancel();
 			}
 		}
 
@@ -110,13 +107,10 @@
 			{
 				ConnectionsChanged += ConnectionEventHandler;
 
-				Task.Run(() =>
+				if (!IsConnected(destination))
 				{
-					if (!IsConnected(destination))
-					{
-						tsc.TrySetResult(true);
-					}
-				}).Forget();
+					tsc.TrySetResult(true);
+				}
 
 				return tsc.Task.GetAwaiter().GetResult();
 			}

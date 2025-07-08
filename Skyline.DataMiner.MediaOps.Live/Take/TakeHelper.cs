@@ -420,7 +420,9 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				var tasks = takeContexts.Select(takeContext =>
-					Task.Run(() => WaitUntilConnected(takeContext, connectionMonitor, performanceTracker)))
+					Task.Factory.StartNew(
+						() => WaitUntilConnected(takeContext, connectionMonitor, performanceTracker),
+						TaskCreationOptions.LongRunning))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
@@ -452,7 +454,9 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				var tasks = takeContexts.Select(takeContext =>
-					Task.Run(() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker)))
+					Task.Factory.StartNew(
+						() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker),
+						TaskCreationOptions.LongRunning))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
