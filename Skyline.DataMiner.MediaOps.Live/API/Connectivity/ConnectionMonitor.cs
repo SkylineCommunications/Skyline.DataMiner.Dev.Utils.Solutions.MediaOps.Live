@@ -127,6 +127,7 @@
 		{
 			foreach (var subscription in _subscriptions)
 			{
+				subscription.Changed -= Connections_OnChanged;
 				subscription.Dispose();
 			}
 
