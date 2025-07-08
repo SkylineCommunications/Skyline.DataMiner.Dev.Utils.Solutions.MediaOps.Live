@@ -12,6 +12,11 @@
 	/// </summary>
 	internal sealed class TableCache
 	{
+		private sealed class NoChange
+		{
+			public static readonly object Value = new NoChange();
+		}
+
 		private readonly object _lock = new object();
 		private readonly IDmsElement _element;
 		private readonly int _tableId;
@@ -115,7 +120,11 @@
 
 				for (int i = 0; i < newValues.Length; i++)
 				{
-					if (newValues[i] == null || Equals(newValues[i], cachedRow[i]))
+					// Empty value means that the value is not changed.
+					if (Equals(newValues[i], NoChange.Value))
+						continue;
+
+					if (Equals(newValues[i], cachedRow[i]))
 						continue;
 
 					cachedRow[i] = newValues[i];
@@ -131,7 +140,7 @@
 			return hasChanges;
 		}
 
-		private static IDictionary<string, object[]> BuildDictionary(ParameterTableUpdateEventMessage message)
+		private IDictionary<string, object[]> BuildDictionary(ParameterTableUpdateEventMessage message)
 		{
 			var result = new Dictionary<string, object[]>();
 
@@ -143,7 +152,7 @@
 			foreach (var updatedRow in message.UpdatedRows)
 			{
 				var array = updatedRow.ArrayValue
-					.Select(pv => pv.CellValue.InteropValue)
+					.Select(pv => pv.IsEmpty ? NoChange.Value : pv.CellValue.InteropValue)
 					.ToArray();
 
 				if (array.Length == 0)
@@ -163,7 +172,7 @@
 			return result;
 		}
 
-		private static IDictionary<string, object[]> BuildDictionary(ParameterChangeEventMessage message, int keyColumnIndex = 0)
+		private IDictionary<string, object[]> BuildDictionary(ParameterChangeEventMessage message, int keyColumnIndex = 0)
 		{
 			var result = new Dictionary<string, object[]>();
 
@@ -200,7 +209,10 @@
 
 				foreach (ParameterValue cell in column.ArrayValue)
 				{
-					result[keyMap[rowNumber]][columnNumber] = cell.CellValue.ValueType == ParameterValueType.Empty ? null : cell.CellValue.InteropValue;
+					var cellValue = cell.IsEmpty ? NoChange.Value : cell.CellValue.InteropValue;
+
+					result[keyMap[rowNumber]][columnNumber] = cell.CellValue.InteropValue;
+
 					rowNumber++;
 				}
 
