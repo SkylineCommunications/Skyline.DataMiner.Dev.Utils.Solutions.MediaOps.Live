@@ -17,10 +17,10 @@
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
 			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
 
-			using var monitor = new ConnectionMonitor(api);
+			using var monitor = new ConnectionMonitor(api, videoDestination1);
 
 			var waitTask = Task.Run(() =>
-				monitor.WaitUntilConnected(videoSource1, videoDestination1, TimeSpan.FromMinutes(1)));
+				monitor.WaitUntilConnected(videoSource1, TimeSpan.FromMinutes(1)));
 
 			Thread.Sleep(200);
 			Assert.IsFalse(waitTask.IsCompleted);
@@ -44,10 +44,10 @@
 
 			var timeout = TimeSpan.FromMilliseconds(200);
 
-			using var monitor = new ConnectionMonitor(api);
+			using var monitor = new ConnectionMonitor(api, videoDestination1);
 
 			var stopwatch = Stopwatch.StartNew();
-			var connected = monitor.WaitUntilConnected(videoSource1, videoDestination1, timeout);
+			var connected = monitor.WaitUntilConnected(videoSource1, timeout);
 			stopwatch.Stop();
 
 			Assert.IsFalse(connected);
@@ -69,10 +69,10 @@
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 
-			using var monitor = new ConnectionMonitor(api);
+			using var monitor = new ConnectionMonitor(api, videoDestination1);
 
 			var waitTask = Task.Run(() =>
-					monitor.WaitUntilDisconnected(videoDestination1, TimeSpan.FromMinutes(1)));
+					monitor.WaitUntilDisconnected(TimeSpan.FromMinutes(1)));
 
 			Thread.Sleep(200);
 			Assert.IsFalse(waitTask.IsCompleted);
@@ -98,10 +98,10 @@
 
 			var timeout = TimeSpan.FromMilliseconds(200);
 
-			using var monitor = new ConnectionMonitor(api);
+			using var monitor = new ConnectionMonitor(api, videoDestination1);
 
 			var stopwatch = Stopwatch.StartNew();
-			var connected = monitor.WaitUntilDisconnected(videoDestination1, timeout);
+			var connected = monitor.WaitUntilDisconnected(timeout);
 			stopwatch.Stop();
 
 			Assert.IsFalse(connected);

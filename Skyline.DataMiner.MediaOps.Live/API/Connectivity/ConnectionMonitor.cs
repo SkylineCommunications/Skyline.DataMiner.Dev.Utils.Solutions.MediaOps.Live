@@ -9,44 +9,42 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.MediaOps.Live.Subscriptions;
 	using Skyline.DataMiner.Net.SLDataGateway.Helpers;
 
 	public sealed class ConnectionMonitor : IDisposable
 	{
+		private readonly ApiObjectReference<Endpoint> _destination;
 		private readonly ICollection<MediationElement> _mediationElements;
-		private readonly ICollection<ConnectionSubscription> _subscriptions = new List<ConnectionSubscription>();
+		private readonly ICollection<TableSubscription> _subscriptions = new List<TableSubscription>();
 
-		public ConnectionMonitor(MediaOpsLiveApi api)
+		public ConnectionMonitor(MediaOpsLiveApi api, ApiObjectReference<Endpoint> destination)
 		{
 			if (api is null)
 			{
 				throw new ArgumentNullException(nameof(api));
 			}
 
+			_destination = destination;
+
 			_mediationElements = MediationElement.GetAllMediationElements(api).ToList();
 
 			foreach (var element in _mediationElements)
 			{
-				var connectionSubscription = element.CreateConnectionSubscription();
-				_subscriptions.Add(connectionSubscription);
+				var subscription = new TableSubscription(api.Connection, element.DmsElement, 5000, Convert.ToString(destination.ID));
+				_subscriptions.Add(subscription);
 
-				connectionSubscription.Changed += Connections_OnChanged;
-				connectionSubscription.Subscribe();
+				subscription.OnChanged += OnChanged;
 			}
 		}
 
 		private event EventHandler<ConnectionsChangedEvent> ConnectionsChanged;
 
-		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
+		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, TimeSpan timeout)
 		{
 			if (source == ApiObjectReference<Endpoint>.Empty)
 			{
 				throw new ArgumentException("Source cannot be empty.", nameof(source));
-			}
-
-			if (destination == ApiObjectReference<Endpoint>.Empty)
-			{
-				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
 			var tsc = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -56,7 +54,7 @@
 
 			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
 			{
-				if (e.UpdatedConnections.Any(x => x.Destination == destination && x.IsConnected && x.ConnectedSource == source))
+				if (e.UpdatedConnections.Any(x => x.Destination == _destination && x.IsConnected && x.ConnectedSource == source))
 				{
 					tsc.TrySetResult(true);
 				}
@@ -68,7 +66,7 @@
 			{
 				Task.Run(() =>
 				{
-					if (IsConnected(source, destination))
+					if (IsConnected(source, _destination))
 					{
 						tsc.TrySetResult(true);
 					}
@@ -82,13 +80,8 @@
 			}
 		}
 
-		public bool WaitUntilDisconnected(ApiObjectReference<Endpoint> destination, TimeSpan timeout)
+		public bool WaitUntilDisconnected(TimeSpan timeout)
 		{
-			if (destination == ApiObjectReference<Endpoint>.Empty)
-			{
-				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
-			}
-
 			var tsc = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 			using var cts = new CancellationTokenSource(timeout);
@@ -96,8 +89,8 @@
 
 			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
 			{
-				if (e.DeletedConnections.Contains(destination) ||
-					e.UpdatedConnections.Any(x => x.Destination == destination && !x.IsConnected))
+				if (e.DeletedConnections.Contains(_destination) ||
+					e.UpdatedConnections.Any(x => x.Destination == _destination && !x.IsConnected))
 				{
 					tsc.TrySetResult(true);
 				}
@@ -109,7 +102,7 @@
 			{
 				Task.Run(() =>
 				{
-					if (!IsConnected(destination))
+					if (!IsConnected(_destination))
 					{
 						tsc.TrySetResult(true);
 					}
@@ -127,7 +120,7 @@
 		{
 			foreach (var subscription in _subscriptions)
 			{
-				subscription.Changed -= Connections_OnChanged;
+				subscription.OnChanged -= OnChanged;
 				subscription.Dispose();
 			}
 
@@ -155,9 +148,13 @@
 				});
 		}
 
-		private void Connections_OnChanged(object sender, ConnectionsChangedEvent e)
+		private void OnChanged(object sender, TableValueChange e)
 		{
-			ConnectionsChanged?.Invoke(sender, e);
+			var e2 = new ConnectionsChangedEvent(
+				e.UpdatedRows.Values.Select(r => new Connection(r)),
+				e.DeletedRows.Select(id => Guid.Parse(id)));
+
+			ConnectionsChanged?.Invoke(sender, e2);
 		}
 	}
 }

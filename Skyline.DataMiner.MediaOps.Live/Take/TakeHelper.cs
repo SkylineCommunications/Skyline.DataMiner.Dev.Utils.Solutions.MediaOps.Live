@@ -416,14 +416,13 @@
 		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectionsMonitor = new ConnectionMonitor(_api))
 			{
 				var tasks = new List<Task<bool>>();
 
 				foreach (var takeContext in takeContexts)
 				{
 					var task = Task.Run(
-						() => WaitUntilConnected(takeContext, connectionsMonitor, performanceTracker));
+						() => WaitUntilConnected(takeContext, performanceTracker));
 
 					tasks.Add(task);
 				}
@@ -438,16 +437,16 @@
 			}
 		}
 
-		private bool WaitUntilConnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		private bool WaitUntilConnected(ConnectionOperationContext takeContext, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var connectionMonitor = new ConnectionMonitor(_api, takeContext.Destination))
 			{
 				performanceTracker.AddMetadata("Source", takeContext.Source.Name);
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
 
 				return connectionMonitor.WaitUntilConnected(
 					takeContext.Source,
-					takeContext.Destination,
 					_timeout);
 			}
 		}
@@ -455,14 +454,13 @@
 		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectionMonitor = new ConnectionMonitor(_api))
 			{
 				var tasks = new List<Task<bool>>();
 
 				foreach (var takeContext in takeContexts)
 				{
 					var task = Task.Run(
-						() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker));
+						() => WaitUntilDisconnected(takeContext, performanceTracker));
 
 					tasks.Add(task);
 				}
@@ -477,14 +475,14 @@
 			}
 		}
 
-		private bool WaitUntilDisconnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		private bool WaitUntilDisconnected(ConnectionOperationContext takeContext, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var connectionMonitor = new ConnectionMonitor(_api, takeContext.Destination))
 			{
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
 
 				return connectionMonitor.WaitUntilDisconnected(
-					takeContext.Destination,
 					_timeout);
 			}
 		}
