@@ -10,7 +10,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 
 	public sealed class ConnectionMonitor : IDisposable
 	{
@@ -33,14 +32,14 @@
 				var connectionSubscription = element.CreateConnectionSubscription();
 				_subscriptions.Add(connectionSubscription);
 
-				connectionSubscription.Changed += Connections_OnChanged;
+				connectionSubscription.Changed += OnConnectionsChanged;
 				connectionSubscription.Subscribe();
 			}
 		}
 
 		private event EventHandler<ConnectionsChangedEvent> ConnectionsChanged;
 
-		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
+		public async Task<bool> WaitUntilConnectedAsync(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
 		{
 			if (source == ApiObjectReference<Endpoint>.Empty)
 			{
@@ -69,25 +68,35 @@
 			{
 				ConnectionsChanged += ConnectionEventHandler;
 
-				Task.Run(() =>
+				_ = Task.Run(() =>
+				{
+					try
 					{
 						if (IsConnected(source, destination))
 						{
 							tsc.TrySetResult(true);
 						}
-					})
-					.FireAndForget(x => tsc.TrySetException(x));
+					}
+					catch (Exception ex)
+					{
+						tsc.TrySetException(ex);
+					}
+				});
 
-				return tsc.Task.GetAwaiter().GetResult();
+				return await tsc.Task;
 			}
 			finally
 			{
 				ConnectionsChanged -= ConnectionEventHandler;
-				cts.Cancel();
 			}
 		}
 
-		public bool WaitUntilDisconnected(ApiObjectReference<Endpoint> destination, TimeSpan timeout)
+		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
+		{
+			return WaitUntilConnectedAsync(source, destination, timeout).GetAwaiter().GetResult();
+		}
+
+		public async Task<bool> WaitUntilDisconnectedAsync(ApiObjectReference<Endpoint> destination, TimeSpan timeout)
 		{
 			if (destination == ApiObjectReference<Endpoint>.Empty)
 			{
@@ -112,16 +121,22 @@
 			{
 				ConnectionsChanged += ConnectionEventHandler;
 
-				Task.Run(() =>
+				_ = Task.Run(() =>
+				{
+					try
 					{
 						if (!IsConnected(destination))
 						{
 							tsc.TrySetResult(true);
 						}
-					})
-					.FireAndForget(x => tsc.TrySetException(x));
+					}
+					catch (Exception ex)
+					{
+						tsc.TrySetException(ex);
+					}
+				});
 
-				return tsc.Task.GetAwaiter().GetResult();
+				return await tsc.Task;
 			}
 			finally
 			{
@@ -129,11 +144,16 @@
 			}
 		}
 
+		public bool WaitUntilDisconnected(ApiObjectReference<Endpoint> destination, TimeSpan timeout)
+		{
+			return WaitUntilDisconnectedAsync(destination, timeout).GetAwaiter().GetResult();
+		}
+
 		public void Dispose()
 		{
 			foreach (var subscription in _subscriptions)
 			{
-				subscription.Changed -= Connections_OnChanged;
+				subscription.Changed -= OnConnectionsChanged;
 				subscription.Dispose();
 			}
 
@@ -171,7 +191,7 @@
 				});
 		}
 
-		private void Connections_OnChanged(object sender, ConnectionsChangedEvent e)
+		private void OnConnectionsChanged(object sender, ConnectionsChangedEvent e)
 		{
 			foreach (var item in e.DeletedConnections)
 			{

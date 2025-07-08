@@ -419,10 +419,8 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var tasks = takeContexts.Select(takeContext =>
-					Task.Factory.StartNew(
-						() => WaitUntilConnected(takeContext, connectionMonitor, performanceTracker),
-						TaskCreationOptions.LongRunning))
+				var tasks = takeContexts
+					.Select(takeContext => WaitUntilConnectedAsync(takeContext, connectionMonitor, performanceTracker))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
@@ -435,14 +433,14 @@
 			}
 		}
 
-		private bool WaitUntilConnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		private async Task<bool> WaitUntilConnectedAsync(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				performanceTracker.AddMetadata("Source", takeContext.Source.Name);
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
 
-				return connectionMonitor.WaitUntilConnected(
+				return await connectionMonitor.WaitUntilConnectedAsync(
 					takeContext.Source,
 					takeContext.Destination,
 					_timeout);
@@ -453,10 +451,8 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var tasks = takeContexts.Select(takeContext =>
-					Task.Factory.StartNew(
-						() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker),
-						TaskCreationOptions.LongRunning))
+				var tasks = takeContexts
+					.Select(takeContext => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
@@ -469,13 +465,13 @@
 			}
 		}
 
-		private bool WaitUntilDisconnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		private async Task<bool> WaitUntilDisconnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
 
-				return connectionMonitor.WaitUntilDisconnected(
+				return await connectionMonitor.WaitUntilDisconnectedAsync(
 					takeContext.Destination,
 					_timeout);
 			}
