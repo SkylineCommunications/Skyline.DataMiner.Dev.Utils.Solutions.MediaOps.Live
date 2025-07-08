@@ -115,7 +115,7 @@
 
 		private void ProcessConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
-			using (new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
 				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = eventConfigurations
@@ -160,8 +160,8 @@
 
 				List<VsgDisconnectRequest> requests = [];
 
-				HashSet<Guid> allInvolvedVsgIds = new HashSet<Guid>();
-				HashSet<int> allInvolvedLevelNumbers = new HashSet<int>();
+				HashSet<Guid> allInvolvedVsgIds = [];
+				HashSet<int> allInvolvedLevelNumbers = [];
 				foreach (Connection connection in disconnects)
 				{
 					allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
@@ -212,8 +212,8 @@
 
 				List<VsgConnectionRequest> requests = [];
 
-				HashSet<Guid> allInvolvedVsgIds = new HashSet<Guid>();
-				HashSet<int> allInvolvedLevelNumbers = new HashSet<int>();
+				HashSet<Guid> allInvolvedVsgIds = [];
+				HashSet<int> allInvolvedLevelNumbers = [];
 				foreach (Connection connection in connections)
 				{
 					allInvolvedVsgIds.Add(connection.SourceVsg.Value.ID);
