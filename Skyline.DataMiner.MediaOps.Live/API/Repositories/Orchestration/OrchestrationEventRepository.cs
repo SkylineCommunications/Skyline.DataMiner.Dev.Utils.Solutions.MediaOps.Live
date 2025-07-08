@@ -191,15 +191,46 @@
 		/// <param name="orchestrationIds">The IDs of the events to execute.</param>
 		public void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds)
 		{
-			var eventExecutionHelper = new OrchestrationEventExecutionHelper(_api);
+			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
+			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-ExecuteEventsNow", performanceLogFilename);
 
-			IEnumerable<Guid> eventIds = orchestrationIds.ToList();
-			if (!eventIds.Any())
+			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
+			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				return;
-			}
+				var eventExecutionHelper = new OrchestrationEventExecutionHelper(_api);
 
-			eventExecutionHelper.ExecuteEventsNow(eventIds);
+				IEnumerable<Guid> eventIds = orchestrationIds.ToList();
+				if (!eventIds.Any())
+				{
+					return;
+				}
+
+				eventExecutionHelper.ExecuteEventsNow(eventIds, performanceTracker);
+			}
+		}
+
+		/// <summary>
+		///     Start execution for an event, based on ID.
+		/// </summary>
+		/// <param name="orchestrationEvents">The events to execute.</param>
+		public void ExecuteEventsNow(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents)
+		{
+			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
+			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-ExecuteEventsNow", performanceLogFilename);
+
+			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
+			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
+			{
+				var eventExecutionHelper = new OrchestrationEventExecutionHelper(_api);
+
+				IEnumerable<OrchestrationEventConfiguration> events = orchestrationEvents.ToList();
+				if (!events.Any())
+				{
+					return;
+				}
+
+				eventExecutionHelper.ExecuteEventsNow(events, performanceTracker);
+			}
 		}
 
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsInTimeRange(DateTime start, DateTime end)

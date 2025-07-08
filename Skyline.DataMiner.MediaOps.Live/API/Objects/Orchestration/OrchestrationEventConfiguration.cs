@@ -81,6 +81,36 @@
 			}
 		}
 
+		internal bool IsStartEvent
+		{
+			get
+			{
+				var startingEvents = new List<SlcOrchestrationIds.Enums.EventType>
+				{
+					SlcOrchestrationIds.Enums.EventType.Start,
+					SlcOrchestrationIds.Enums.EventType.Prerollstart,
+					SlcOrchestrationIds.Enums.EventType.Prerollstop,
+				};
+
+				return startingEvents.Contains(EventType);
+			}
+		}
+
+		internal bool IsStopEvent
+		{
+			get
+			{
+				var stoppingEvents = new List<SlcOrchestrationIds.Enums.EventType>
+				{
+					SlcOrchestrationIds.Enums.EventType.Stop,
+					SlcOrchestrationIds.Enums.EventType.Postrollstart,
+					SlcOrchestrationIds.Enums.EventType.Postrollstop,
+				};
+
+				return stoppingEvents.Contains(EventType);
+			}
+		}
+
 		internal bool HasScripts()
 		{
 			bool global = !String.IsNullOrEmpty(GlobalOrchestrationScript);
