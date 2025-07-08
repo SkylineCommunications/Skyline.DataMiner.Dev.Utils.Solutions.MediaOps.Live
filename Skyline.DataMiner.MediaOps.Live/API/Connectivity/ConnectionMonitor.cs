@@ -27,17 +27,13 @@
 
 			_mediationElements = MediationElement.GetAllMediationElements(api).ToList();
 
-			foreach (var element in _mediationElements)
+			if (_subscriptions.Count == 0)
 			{
-				var connectionSubscription = element.CreateConnectionSubscription();
-				_subscriptions.Add(connectionSubscription);
-
-				connectionSubscription.Changed += Connections_OnChanged;
-				connectionSubscription.Subscribe();
+				Subscribe(); 
 			}
 		}
 
-		private event EventHandler<ConnectionsChangedEvent> ConnectionsChanged;
+		private static event EventHandler<ConnectionsChangedEvent> ConnectionsChanged;
 
 		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
 		{
@@ -122,6 +118,8 @@
 
 		public void Dispose()
 		{
+			return;
+
 			foreach (var subscription in _subscriptions)
 			{
 				subscription.Changed -= Connections_OnChanged;
@@ -129,6 +127,18 @@
 			}
 
 			_subscriptions.Clear();
+		}
+
+		private void Subscribe()
+		{
+			foreach (var element in _mediationElements)
+			{
+				var connectionSubscription = element.CreateConnectionSubscription();
+				_subscriptions.Add(connectionSubscription);
+
+				connectionSubscription.Changed += Connections_OnChanged;
+				connectionSubscription.Subscribe();
+			}
 		}
 
 		private bool IsConnected(ApiObjectReference<Endpoint> destination)
