@@ -76,7 +76,7 @@
 							tsc.TrySetResult(true);
 						}
 					})
-					.FireAndForget();
+					.FireAndForget(x => tsc.TrySetException(x));
 
 				return tsc.Task.GetAwaiter().GetResult();
 			}
@@ -119,7 +119,7 @@
 							tsc.TrySetResult(true);
 						}
 					})
-					.FireAndForget();
+					.FireAndForget(x => tsc.TrySetException(x));
 
 				return tsc.Task.GetAwaiter().GetResult();
 			}
