@@ -5,7 +5,6 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Threading;
-	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -39,7 +38,7 @@
 
 		private event EventHandler<ConnectionsChangedEvent> ConnectionsChanged;
 
-		public async Task<bool> WaitUntilConnectedAsync(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
+		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
 		{
 			if (source == ApiObjectReference<Endpoint>.Empty)
 			{
@@ -51,16 +50,13 @@
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
-			var tsc = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-			using var cts = new CancellationTokenSource(timeout);
-			using var tokenRegistration = cts.Token.Register(() => tsc.TrySetResult(false));
+			using var mre = new ManualResetEventSlim(false);
 
 			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
 			{
 				if (e.UpdatedConnections.Any(x => x.Destination == destination && x.IsConnected && x.ConnectedSource == source))
 				{
-					tsc.TrySetResult(true);
+					mre.Set();
 				}
 			}
 
@@ -68,75 +64,12 @@
 			{
 				ConnectionsChanged += ConnectionEventHandler;
 
-				_ = Task.Run(() =>
+				if (IsConnected(source, destination))
 				{
-					try
-					{
-						if (IsConnected(source, destination))
-						{
-							tsc.TrySetResult(true);
-						}
-					}
-					catch (Exception ex)
-					{
-						tsc.TrySetException(ex);
-					}
-				});
-
-				return await tsc.Task;
-			}
-			finally
-			{
-				ConnectionsChanged -= ConnectionEventHandler;
-			}
-		}
-
-		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
-		{
-			return WaitUntilConnectedAsync(source, destination, timeout).GetAwaiter().GetResult();
-		}
-
-		public async Task<bool> WaitUntilDisconnectedAsync(ApiObjectReference<Endpoint> destination, TimeSpan timeout)
-		{
-			if (destination == ApiObjectReference<Endpoint>.Empty)
-			{
-				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
-			}
-
-			var tsc = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-
-			using var cts = new CancellationTokenSource(timeout);
-			using var tokenRegistration = cts.Token.Register(() => tsc.TrySetResult(false));
-
-			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
-			{
-				if (e.DeletedConnections.Contains(destination) ||
-					e.UpdatedConnections.Any(x => x.Destination == destination && !x.IsConnected))
-				{
-					tsc.TrySetResult(true);
+					mre.Set();
 				}
-			}
 
-			try
-			{
-				ConnectionsChanged += ConnectionEventHandler;
-
-				_ = Task.Run(() =>
-				{
-					try
-					{
-						if (!IsConnected(destination))
-						{
-							tsc.TrySetResult(true);
-						}
-					}
-					catch (Exception ex)
-					{
-						tsc.TrySetException(ex);
-					}
-				});
-
-				return await tsc.Task;
+				return mre.Wait(timeout);
 			}
 			finally
 			{
@@ -146,7 +79,37 @@
 
 		public bool WaitUntilDisconnected(ApiObjectReference<Endpoint> destination, TimeSpan timeout)
 		{
-			return WaitUntilDisconnectedAsync(destination, timeout).GetAwaiter().GetResult();
+			if (destination == ApiObjectReference<Endpoint>.Empty)
+			{
+				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
+			}
+
+			using var mre = new ManualResetEventSlim(false);
+
+			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
+			{
+				if (e.DeletedConnections.Contains(destination) ||
+					e.UpdatedConnections.Any(x => x.Destination == destination && !x.IsConnected))
+				{
+					mre.Set();
+				}
+			}
+
+			try
+			{
+				ConnectionsChanged += ConnectionEventHandler;
+
+				if (!IsConnected(destination))
+				{
+					mre.Set();
+				}
+
+				return mre.Wait(timeout);
+			}
+			finally
+			{
+				ConnectionsChanged -= ConnectionEventHandler;
+			}
 		}
 
 		public void Dispose()
@@ -167,12 +130,22 @@
 				return cachedConnection.IsConnected;
 			}
 
-			return _mediationElements
-				.Any(element =>
+			foreach (var element in _mediationElements)
+			{
+				if (!element.TryGetConnection(destination, out var connection))
 				{
-					return element.TryGetConnection(destination, out var connection) &&
-						connection.IsConnected;
-				});
+					continue;
+				}
+
+				_cache[destination] = connection;
+
+				if (connection.IsConnected)
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		private bool IsConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
@@ -182,13 +155,22 @@
 				return cachedConnection.IsConnected && cachedConnection.ConnectedSource == source;
 			}
 
-			return _mediationElements
-				.Any(element =>
+			foreach (var element in _mediationElements)
+			{
+				if (!element.TryGetConnection(destination, out var connection))
 				{
-					return element.TryGetConnection(destination, out var connection) &&
-						connection.IsConnected &&
-						connection.ConnectedSource == source;
-				});
+					continue;
+				}
+
+				_cache[destination] = connection;
+
+				if (connection.IsConnected && connection.ConnectedSource == source)
+				{
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		private void OnConnectionsChanged(object sender, ConnectionsChangedEvent e)
