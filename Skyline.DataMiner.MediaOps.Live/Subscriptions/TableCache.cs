@@ -211,7 +211,7 @@
 				{
 					var cellValue = cell.IsEmpty ? NoChange.Value : cell.CellValue.InteropValue;
 
-					result[keyMap[rowNumber]][columnNumber] = cell.CellValue.InteropValue;
+					result[keyMap[rowNumber]][columnNumber] = cellValue;
 
 					rowNumber++;
 				}
