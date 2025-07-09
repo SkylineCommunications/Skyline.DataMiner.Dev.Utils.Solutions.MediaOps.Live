@@ -181,7 +181,7 @@
 				return result;
 			}
 
-			ParameterValue[] columns = message.NewValue.ArrayValue;
+			var columns = message.NewValue.ArrayValue;
 
 			if (keyColumnIndex >= columns.Length)
 			{
@@ -189,34 +189,30 @@
 			}
 
 			// Dictionary used as a mapping from index to key.
-			string[] keyMap = new string[columns[keyColumnIndex].ArrayValue.Length];
+			var keyColumn = columns[keyColumnIndex].ArrayValue;
+			var keyMap = new string[keyColumn.Length];
 
-			int rowNumber = 0;
-
-			foreach (ParameterValue keyCell in columns[keyColumnIndex].ArrayValue)
+			for (int rowIndex = 0; rowIndex < keyColumn.Length; rowIndex++)
 			{
-				string primaryKey = Convert.ToString(keyCell.CellValue.InteropValue);
+				var keyCell = keyColumn[rowIndex];
+				var primaryKey = keyCell.CellValue.StringValue;
 
 				result[primaryKey] = new object[columns.Length];
-				keyMap[rowNumber] = primaryKey;
-				rowNumber++;
+				keyMap[rowIndex] = primaryKey;
 			}
 
-			int columnNumber = 0;
-			foreach (ParameterValue column in columns)
+			// Fill the result dictionary with values from the columns.
+			for (int columnIndex = 0; columnIndex < columns.Length; columnIndex++)
 			{
-				rowNumber = 0;
+				var column = columns[columnIndex];
 
-				foreach (ParameterValue cell in column.ArrayValue)
+				for (int rowIndex = 0; rowIndex < column.ArrayValue.Length; rowIndex++)
 				{
+					var cell = column.ArrayValue[rowIndex];
 					var cellValue = cell.IsEmpty ? NoChange.Value : cell.CellValue.InteropValue;
 
-					result[keyMap[rowNumber]][columnNumber] = cellValue;
-
-					rowNumber++;
+					result[keyMap[rowIndex]][columnIndex] = cellValue;
 				}
-
-				columnNumber++;
 			}
 
 			return result;
