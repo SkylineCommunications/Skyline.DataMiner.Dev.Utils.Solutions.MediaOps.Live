@@ -8,7 +8,6 @@
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
@@ -51,8 +50,7 @@
 		{
 			var now = DateTimeOffset.Now;
 
-			var mediationElementMap = MediationElement.GetMediationElements(
-				Api,
+			var mediationElementMap = Api.MediationElements.GetMediationElements(
 				connections.Select(x => x.DestinationEndpoint));
 
 			foreach (var group in connections

@@ -44,7 +44,7 @@
 
 			ClearTestPendingConnectionAction(destination);
 
-			var mediationElement = MediationElement.GetMediationElement(Api, destination);
+			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
 			var connectionsTable = Dms
 				.Agents[mediationElement.DmaId]
@@ -74,7 +74,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = MediationElement.GetMediationElement(Api, destination);
+			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
 			var pendingActionsTable = Dms
 				.Agents[mediationElement.DmaId]
@@ -102,7 +102,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = MediationElement.GetMediationElement(Api, destination);
+			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
 			var pendingActionsTable = Dms
 				.Agents[mediationElement.DmaId]

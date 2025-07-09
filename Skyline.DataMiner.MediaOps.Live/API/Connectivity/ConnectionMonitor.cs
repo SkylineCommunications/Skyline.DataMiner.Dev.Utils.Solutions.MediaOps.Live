@@ -12,21 +12,16 @@
 
 	public sealed class ConnectionMonitor : IDisposable
 	{
-		private readonly ICollection<MediationElement> _mediationElements;
+		private readonly MediaOpsLiveApi _api;
 		private readonly ICollection<ConnectionSubscription> _subscriptions = [];
 
 		private readonly ConcurrentDictionary<ApiObjectReference<Endpoint>, Connection> _cache = new();
 
 		public ConnectionMonitor(MediaOpsLiveApi api)
 		{
-			if (api is null)
-			{
-				throw new ArgumentNullException(nameof(api));
-			}
+			_api = api ?? throw new ArgumentNullException(nameof(api));
 
-			_mediationElements = MediationElement.GetAllMediationElements(api).ToList();
-
-			foreach (var element in _mediationElements)
+			foreach (var element in api.MediationElements.AllElements)
 			{
 				var connectionSubscription = element.CreateConnectionSubscription();
 				_subscriptions.Add(connectionSubscription);
@@ -172,7 +167,7 @@
 				return true;
 			}
 
-			foreach (var element in _mediationElements)
+			foreach (var element in _api.MediationElements.AllElements)
 			{
 				if (element.TryGetConnection(destination, out var foundConnection))
 				{

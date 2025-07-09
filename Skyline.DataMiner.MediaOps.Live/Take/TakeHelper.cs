@@ -13,7 +13,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
 	public class TakeHelper
@@ -279,7 +278,7 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var allMediationElements = MediationElement.GetAllMediationElements(_api).ToList();
+				var allMediationElements = _api.MediationElements.AllElements;
 
 				foreach (var group in takeContexts.GroupBy(x => x.DestinationElement.Host))
 				{

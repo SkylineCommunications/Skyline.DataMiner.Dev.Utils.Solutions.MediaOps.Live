@@ -5,11 +5,7 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
-	using Skyline.DataMiner.Net.Messages;
 
 	public sealed class MediationElement
 	{
@@ -114,132 +110,6 @@
 			}
 
 			return script;
-		}
-
-		public static IEnumerable<MediationElement> GetAllMediationElements(MediaOpsLiveApi api)
-		{
-			if (api is null)
-			{
-				throw new ArgumentNullException(nameof(api));
-			}
-
-			var dms = api.Connection.GetDms();
-
-			var request = new GetLiteElementInfo
-			{
-				ProtocolName = Constants.MediationProtocolName,
-			};
-
-			var responses = api.Connection.HandleMessage(request);
-
-			foreach (var liteElementInfo in responses.OfType<LiteElementInfoEvent>())
-			{
-				var elementId = new DmsElementId(liteElementInfo.DataMinerID, liteElementInfo.ElementID);
-				var dmsElement = dms.GetElementReference(elementId);
-
-				yield return new MediationElement(api, dmsElement);
-			}
-		}
-
-		public static IDictionary<EndpointInfo, MediationElement> GetMediationElements(MediaOpsLiveApi api, IEnumerable<EndpointInfo> endpoints)
-		{
-			if (api is null)
-			{
-				throw new ArgumentNullException(nameof(api));
-			}
-
-			if (endpoints is null)
-			{
-				throw new ArgumentNullException(nameof(endpoints));
-			}
-
-			var dms = api.Connection.GetDms();
-
-			var endpointToElement = endpoints
-				.GroupBy(e => e.Element)
-				.SelectMany(group =>
-				{
-					var element = dms.GetElementReference(new DmsElementId(group.Key));
-					return group.Select(endpoint => new { endpoint, element });
-				})
-				.ToDictionary(x => x.endpoint, x => x.element);
-
-			var allMediationElements = GetAllMediationElements(api)
-				.ToDictionary(e => e.DmsElement.Host.Id);
-
-			var result = new Dictionary<EndpointInfo, MediationElement>();
-
-			foreach (var group in endpointToElement.GroupBy(kvp => kvp.Value.Host.Id))
-			{
-				if (!allMediationElements.TryGetValue(group.Key, out var mediationElement))
-				{
-					throw new InvalidOperationException($"Couldn't find MediaOps mediation element on hosting agent {group.Key}");
-				}
-
-				foreach (var kvp in group)
-				{
-					result[kvp.Key] = mediationElement;
-				}
-			}
-
-			return result;
-		}
-
-		public static IDictionary<Endpoint, MediationElement> GetMediationElements(MediaOpsLiveApi api, IEnumerable<Endpoint> endpoints)
-		{
-			if (api is null)
-			{
-				throw new ArgumentNullException(nameof(api));
-			}
-
-			if (endpoints is null)
-			{
-				throw new ArgumentNullException(nameof(endpoints));
-			}
-
-			var endpointInfoMap = endpoints.ToDictionary(x => new EndpointInfo(x));
-			var mediationElementMap = GetMediationElements(api, endpointInfoMap.Keys);
-
-			return endpointInfoMap.ToDictionary(
-				kvp => kvp.Value,
-				kvp => mediationElementMap[kvp.Key]);
-		}
-
-		public static MediationElement GetMediationElement(MediaOpsLiveApi api, EndpointInfo endpoint)
-		{
-			if (api is null)
-			{
-				throw new ArgumentNullException(nameof(api));
-			}
-
-			if (endpoint is null)
-			{
-				throw new ArgumentNullException(nameof(endpoint));
-			}
-
-			var mediationElements = GetMediationElements(api, [endpoint]);
-
-			if (mediationElements.Count != 1)
-			{
-				throw new InvalidOperationException($"Expected exactly one mediation element for endpoint '{endpoint.Name}', but found {mediationElements.Count}.");
-			}
-
-			return mediationElements[endpoint];
-		}
-
-		public static MediationElement GetMediationElement(MediaOpsLiveApi api, Endpoint endpoint)
-		{
-			if (api is null)
-			{
-				throw new ArgumentNullException(nameof(api));
-			}
-
-			if (endpoint is null)
-			{
-				throw new ArgumentNullException(nameof(endpoint));
-			}
-
-			return GetMediationElement(api, new EndpointInfo(endpoint));
 		}
 	}
 }

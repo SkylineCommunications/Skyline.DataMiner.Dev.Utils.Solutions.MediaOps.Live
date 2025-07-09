@@ -27,7 +27,6 @@
 		private readonly ConnectionEndpointsMapping _connectionEndpointsMapping = new();
 		private readonly PendingConnectionActionMapping _pendingConnectionActionsMapping = new();
 
-		private readonly ICollection<MediationElement> _mediationElements = [];
 		private readonly ICollection<ConnectionSubscription> _connectionSubscriptions = [];
 		private readonly ICollection<PendingConnectionActionSubscription> _pendingActionSubscriptions = [];
 
@@ -37,8 +36,6 @@
 		public ConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
-
-			_mediationElements = MediationElement.GetAllMediationElements(api).ToList();
 
 			if (subscribe)
 			{
@@ -346,7 +343,7 @@
 				_subscriptionEndpoints.Changed += Endpoints_Changed;
 				_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
 
-				foreach (var element in _mediationElements)
+				foreach (var element in Api.MediationElements.AllElements)
 				{
 					var connectionSubscription = element.CreateConnectionSubscription();
 					connectionSubscription.Changed += Connections_OnChanged;
@@ -625,8 +622,10 @@
 		{
 			lock (_lock)
 			{
-				var connections = _mediationElements.SelectMany(x => x.GetConnections()).ToList();
-				var pendingConnectionActions = _mediationElements.SelectMany(x => x.GetPendingConnectionActions()).ToList();
+				var mediationElements = Api.MediationElements.AllElements;
+
+				var connections = mediationElements.SelectMany(x => x.GetConnections()).ToList();
+				var pendingConnectionActions = mediationElements.SelectMany(x => x.GetPendingConnectionActions()).ToList();
 
 				var endpointIds = new HashSet<ApiObjectReference<Endpoint>>();
 
