@@ -50,6 +50,11 @@
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
+			if (TryGetCachedConnection(destination, out var connection) && connection.IsConnected && connection.ConnectedSource == source)
+			{
+				return true;
+			}
+
 			using var mre = new ManualResetEventSlim(false);
 
 			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
@@ -64,6 +69,13 @@
 			{
 				ConnectionsChanged += ConnectionEventHandler;
 
+				if (mre.Wait(250))
+				{
+					// Wait a bit for an event.
+					return true;
+				}
+
+				// Fallback for when we missed the event.
 				if (IsConnected(source, destination))
 				{
 					mre.Set();
@@ -84,6 +96,11 @@
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
+			if (TryGetCachedConnection(destination, out var connection) && !connection.IsConnected)
+			{
+				return true;
+			}
+
 			using var mre = new ManualResetEventSlim(false);
 
 			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
@@ -99,6 +116,13 @@
 			{
 				ConnectionsChanged += ConnectionEventHandler;
 
+				if (mre.Wait(250))
+				{
+					// Wait a bit for an event.
+					return true;
+				}
+
+				// Fallback for when we missed the event.
 				if (!IsConnected(destination))
 				{
 					mre.Set();
@@ -125,51 +149,39 @@
 
 		private bool IsConnected(ApiObjectReference<Endpoint> destination)
 		{
-			if (_cache.TryGetValue(destination, out var cachedConnection))
-			{
-				return cachedConnection.IsConnected;
-			}
-
-			foreach (var element in _mediationElements)
-			{
-				if (!element.TryGetConnection(destination, out var connection))
-				{
-					continue;
-				}
-
-				_cache[destination] = connection;
-
-				if (connection.IsConnected)
-				{
-					return true;
-				}
-			}
-
-			return false;
+			return TryGetConnection(destination, out var connection) &&
+				connection.IsConnected;
 		}
 
 		private bool IsConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
 		{
-			if (_cache.TryGetValue(destination, out var cachedConnection))
+			return TryGetConnection(destination, out var connection) &&
+				connection.IsConnected &&
+				connection.ConnectedSource == source;
+		}
+
+		private bool TryGetCachedConnection(ApiObjectReference<Endpoint> destination, out Connection connection)
+		{
+			return _cache.TryGetValue(destination, out connection) && connection != null;
+		}
+
+		private bool TryGetConnection(ApiObjectReference<Endpoint> destination, out Connection connection)
+		{
+			if (TryGetCachedConnection(destination, out connection))
 			{
-				return cachedConnection.IsConnected && cachedConnection.ConnectedSource == source;
+				return true;
 			}
 
 			foreach (var element in _mediationElements)
 			{
-				if (!element.TryGetConnection(destination, out var connection))
+				if (element.TryGetConnection(destination, out var foundConnection))
 				{
-					continue;
-				}
-
-				_cache[destination] = connection;
-
-				if (connection.IsConnected && connection.ConnectedSource == source)
-				{
+					connection = foundConnection;
 					return true;
 				}
 			}
 
+			connection = null;
 			return false;
 		}
 

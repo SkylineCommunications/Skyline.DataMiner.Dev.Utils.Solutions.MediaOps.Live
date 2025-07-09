@@ -42,7 +42,7 @@
 			var videoSource1 = api.Endpoints.Read("Video Source 1");
 			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
 
-			var timeout = TimeSpan.FromMilliseconds(200);
+			var timeout = TimeSpan.FromMilliseconds(1000);
 
 			using var monitor = new ConnectionMonitor(api);
 
@@ -96,7 +96,7 @@
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 
-			var timeout = TimeSpan.FromMilliseconds(200);
+			var timeout = TimeSpan.FromMilliseconds(1000);
 
 			using var monitor = new ConnectionMonitor(api);
 
