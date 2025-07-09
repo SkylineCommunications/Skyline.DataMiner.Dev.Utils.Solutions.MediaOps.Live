@@ -30,7 +30,7 @@
 				? SubscriptionFilterOptions.SkipInitialEvents
 				: SubscriptionFilterOptions.None;
 
-			_subscriptionSetId = $"TableSubscription_{_element.DmsElementId.Value}_{_tableId}";
+			_subscriptionSetId = $"TableSubscription_{_element.DmsElementId.Value}_{_tableId}_{Guid.NewGuid()}";
 
 			_subscriptionFilters =
 			[
