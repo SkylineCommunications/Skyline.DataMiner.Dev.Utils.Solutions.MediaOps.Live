@@ -86,7 +86,7 @@
 				commands.Messages.Add(message);
 
 				commands.Send(
-					Engine.GetUserConnection(),
+					Api.Connection,
 					mediationElement.DmaId,
 					mediationElement.ElementId,
 					9000000,
