@@ -12,16 +12,14 @@
 
 	public sealed class ConnectionMonitor : IDisposable
 	{
+		private readonly MediaOpsLiveApi _api;
 		private readonly ICollection<ConnectionSubscription> _subscriptions = [];
 
 		private readonly ConcurrentDictionary<ApiObjectReference<Endpoint>, Connection> _cache = new();
 
 		public ConnectionMonitor(MediaOpsLiveApi api)
 		{
-			if (api is null)
-			{
-				throw new ArgumentNullException(nameof(api));
-			}
+			_api = api ?? throw new ArgumentNullException(nameof(api));
 
 			foreach (var element in api.MediationElements.AllElements)
 			{
@@ -73,6 +71,18 @@
 			{
 				ConnectionsChanged += ConnectionEventHandler;
 
+				if (mre.Wait(500))
+				{
+					// Wait a bit for an event.
+					return true;
+				}
+
+				// Fallback for when we missed the event.
+				if (IsConnected(source, destination))
+				{
+					mre.Set();
+				}
+
 				return mre.Wait(timeout);
 			}
 			finally
@@ -114,6 +124,18 @@
 			{
 				ConnectionsChanged += ConnectionEventHandler;
 
+				if (mre.Wait(500))
+				{
+					// Wait a bit for an event.
+					return true;
+				}
+
+				// Fallback for when we missed the event.
+				if (!IsConnected(destination))
+				{
+					mre.Set();
+				}
+
 				return mre.Wait(timeout);
 			}
 			finally
@@ -133,16 +155,49 @@
 			_subscriptions.Clear();
 		}
 
+		private bool IsConnected(ApiObjectReference<Endpoint> destination)
+		{
+			return TryGetConnection(destination, out var connection) &&
+				connection.IsConnected;
+		}
+
+		private bool IsConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
+		{
+			return TryGetConnection(destination, out var connection) &&
+				connection.IsConnected &&
+				connection.ConnectedSource == source;
+		}
+
 		private bool TryGetCachedConnection(ApiObjectReference<Endpoint> destination, out Connection connection)
 		{
 			return _cache.TryGetValue(destination, out connection) && connection != null;
+		}
+
+		private bool TryGetConnection(ApiObjectReference<Endpoint> destination, out Connection connection)
+		{
+			if (TryGetCachedConnection(destination, out connection))
+			{
+				return true;
+			}
+
+			foreach (var element in _api.MediationElements.AllElements)
+			{
+				if (element.TryGetConnection(destination, out var foundConnection))
+				{
+					connection = foundConnection;
+					return true;
+				}
+			}
+
+			connection = null;
+			return false;
 		}
 
 		private void OnConnectionsChanged(object sender, ConnectionsChangedEvent e)
 		{
 			foreach (var item in e.DeletedConnections)
 			{
-				_cache.TryRemove(item, out _);
+				_cache.TryRemove(item, out var _);
 			}
 
 			foreach (var item in e.UpdatedConnections)
