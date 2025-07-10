@@ -7,7 +7,6 @@
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
-	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Async;
 	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
@@ -66,7 +65,7 @@
 		{
 			GetInfoMessage getSchedulerTaskInfoMessage = new GetInfoMessage(InfoType.SchedulerTasks);
 
-			AsyncProgress progress = Connection.Async.Launch(getSchedulerTaskInfoMessage);
+			AsyncProgress progress = _repository.Connection.Async.Launch(getSchedulerTaskInfoMessage);
 
 			AsyncResponseEvent result = progress.WaitForAsyncResponse(5 * 60);
 
@@ -97,7 +96,7 @@
 				return;
 			}
 
-			IDms dms = Connection.GetDms();
+			IDms dms = _repository.Connection.GetDms();
 
 			IDma dma = dms.GetAgents().First();
 
@@ -152,7 +151,5 @@
 		private DateTimeOffset WindowEndTime => WindowBaseTime + TimeSpanFuture;
 
 		private DateTimeOffset WindowStartTime => WindowBaseTime - TimeSpanPast;
-
-		private IConnection Connection { get;  }
 	}
 }
