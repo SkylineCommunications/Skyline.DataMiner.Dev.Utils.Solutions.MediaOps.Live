@@ -49,8 +49,6 @@
 
 		public MediaOpsLiveApi Api { get; }
 
-		public IDms Dms { get; }
-
 		public bool IsSubscribed { get; private set; }
 
 		public bool IsConnected(Endpoint endpoint)
@@ -393,49 +391,47 @@
 			}
 		}
 
-		public void UpdateEndpoints(IEnumerable<Endpoint> updated, IEnumerable<Endpoint> deleted = null)
+		private void LoadData(params IEnumerable<ApiObjectReference<Endpoint>> endpoints)
 		{
 			lock (_lock)
 			{
-				if (updated != null)
+				var endpointIds = new HashSet<ApiObjectReference<Endpoint>>();
+
+				// Extend the endpoint IDs with the endpoints in linked connections and pending actions
+				foreach (var endpoint in endpoints)
 				{
-					foreach (var item in updated)
-					{
-						_endpoints[item.ID] = item;
-					}
+					endpointIds.Add(endpoint);
+
+					var connections = _connectionEndpointsMapping.GetConnections(endpoint);
+					var pendingActions = _pendingConnectionActionsMapping.GetPendingConnectionActions(endpoint);
+
+					endpointIds.UnionWith(connections.SelectMany(x => x.GetEndpoints()));
+					endpointIds.UnionWith(pendingActions.SelectMany(x => x.GetEndpoints()));
 				}
 
-				if (deleted != null)
-				{
-					foreach (var item in deleted)
-					{
-						_endpoints.Remove(item);
-					}
-				}
+				// Load the data for the endpoints
+				LoadEndpoints(endpointIds);
+				LoadVirtualSignalGroupsThatContainEndpoints(endpointIds);
 			}
 		}
 
-		public void UpdateVirtualSignalGroups(IEnumerable<VirtualSignalGroup> updated, IEnumerable<VirtualSignalGroup> deleted = null)
+		private void LoadData(params IEnumerable<ApiObjectReference<VirtualSignalGroup>> virtualSignalGroups)
 		{
 			lock (_lock)
 			{
-				if (updated != null)
+				LoadVirtualSignalGroups(virtualSignalGroups);
+
+				var endpoints = new HashSet<ApiObjectReference<Endpoint>>();
+
+				foreach (var virtualSignalGroupRef in virtualSignalGroups)
 				{
-					foreach (var item in updated)
+					if (_virtualSignalGroups.TryGetValue(virtualSignalGroupRef, out var virtualSignalGroup))
 					{
-						_virtualSignalGroups[item.ID] = item;
-						_virtualSignalGroupEndpointsMapping.AddOrUpdate(item);
+						endpoints.UnionWith(virtualSignalGroup.GetLevelEndpoints().Select(x => x.Endpoint));
 					}
 				}
 
-				if (deleted != null)
-				{
-					foreach (var item in deleted)
-					{
-						_virtualSignalGroups.Remove(item);
-						_virtualSignalGroupEndpointsMapping.Remove(item);
-					}
-				}
+				LoadData(endpoints);
 			}
 		}
 
@@ -548,47 +544,49 @@
 			ConnectionsUpdated?.Invoke(this, eventArgs);
 		}
 
-		private void LoadData(params IEnumerable<ApiObjectReference<Endpoint>> endpoints)
+		private void UpdateEndpoints(IEnumerable<Endpoint> updated, IEnumerable<Endpoint> deleted = null)
 		{
 			lock (_lock)
 			{
-				var endpointIds = new HashSet<ApiObjectReference<Endpoint>>();
-
-				// Extend the endpoint IDs with the endpoints in linked connections and pending actions
-				foreach (var endpoint in endpoints)
+				if (updated != null)
 				{
-					endpointIds.Add(endpoint);
-
-					var connections = _connectionEndpointsMapping.GetConnections(endpoint);
-					var pendingActions = _pendingConnectionActionsMapping.GetPendingConnectionActions(endpoint);
-
-					endpointIds.UnionWith(connections.SelectMany(x => x.GetEndpoints()));
-					endpointIds.UnionWith(pendingActions.SelectMany(x => x.GetEndpoints()));
-				}
-
-				// Load the data for the endpoints
-				LoadEndpoints(endpointIds);
-				LoadVirtualSignalGroupsThatContainEndpoints(endpointIds);
-			}
-		}
-
-		private void LoadData(params IEnumerable<ApiObjectReference<VirtualSignalGroup>> virtualSignalGroups)
-		{
-			lock (_lock)
-			{
-				LoadVirtualSignalGroups(virtualSignalGroups);
-
-				var endpoints = new HashSet<ApiObjectReference<Endpoint>>();
-
-				foreach (var virtualSignalGroupRef in virtualSignalGroups)
-				{
-					if (_virtualSignalGroups.TryGetValue(virtualSignalGroupRef, out var virtualSignalGroup))
+					foreach (var item in updated)
 					{
-						endpoints.UnionWith(virtualSignalGroup.GetLevelEndpoints().Select(x => x.Endpoint));
+						_endpoints[item.ID] = item;
 					}
 				}
 
-				LoadData(endpoints);
+				if (deleted != null)
+				{
+					foreach (var item in deleted)
+					{
+						_endpoints.Remove(item);
+					}
+				}
+			}
+		}
+
+		private void UpdateVirtualSignalGroups(IEnumerable<VirtualSignalGroup> updated, IEnumerable<VirtualSignalGroup> deleted = null)
+		{
+			lock (_lock)
+			{
+				if (updated != null)
+				{
+					foreach (var item in updated)
+					{
+						_virtualSignalGroups[item.ID] = item;
+						_virtualSignalGroupEndpointsMapping.AddOrUpdate(item);
+					}
+				}
+
+				if (deleted != null)
+				{
+					foreach (var item in deleted)
+					{
+						_virtualSignalGroups.Remove(item);
+						_virtualSignalGroupEndpointsMapping.Remove(item);
+					}
+				}
 			}
 		}
 
