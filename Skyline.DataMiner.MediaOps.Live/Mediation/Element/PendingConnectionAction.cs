@@ -6,7 +6,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	public sealed class PendingConnectionAction
+	public sealed class PendingConnectionAction : IEquatable<PendingConnectionAction>
 	{
 		internal PendingConnectionAction(object[] row)
 		{
@@ -65,9 +65,59 @@
 			}
 		}
 
+		public override bool Equals(object obj)
+		{
+			return Equals(obj as PendingConnectionAction);
+		}
+
+		public bool Equals(PendingConnectionAction other)
+		{
+			if (other is null)
+			{
+				return false;
+			}
+
+			if (ReferenceEquals(this, other))
+			{
+				return true;
+			}
+
+			return Action == other.Action &&
+				   Time == other.Time &&
+				   Destination == other.Destination &&
+				   DestinationName == other.DestinationName &&
+				   PendingSource == other.PendingSource &&
+				   PendingSourceName == other.PendingSourceName;
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				var hashCode = 17;
+				hashCode = (hashCode * 23) + Action.GetHashCode();
+				hashCode = (hashCode * 23) + Time.GetHashCode();
+				hashCode = (hashCode * 23) + Destination.GetHashCode();
+				hashCode = (hashCode * 23) + (DestinationName?.GetHashCode() ?? 0);
+				hashCode = (hashCode * 23) + (PendingSource?.GetHashCode() ?? 0);
+				hashCode = (hashCode * 23) + (PendingSourceName?.GetHashCode() ?? 0);
+				return hashCode;
+			}
+		}
+
 		public override string ToString()
 		{
 			return $"{DestinationName} ({Action})";
+		}
+
+		public static bool operator ==(PendingConnectionAction left, PendingConnectionAction right)
+		{
+			return EqualityComparer<PendingConnectionAction>.Default.Equals(left, right);
+		}
+
+		public static bool operator !=(PendingConnectionAction left, PendingConnectionAction right)
+		{
+			return !(left == right);
 		}
 	}
 }

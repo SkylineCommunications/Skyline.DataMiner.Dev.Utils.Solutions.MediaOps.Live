@@ -5,7 +5,6 @@
 	using System.Diagnostics;
 	using System.Linq;
 
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
@@ -477,6 +476,11 @@
 				{
 					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
 					{
+						if (connection == existingConnection)
+						{
+							continue;
+						}
+
 						impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
 					}
 
@@ -511,6 +515,11 @@
 				{
 					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
 					{
+						if (pendingAction == existingPendingConnectionAction)
+						{
+							continue;
+						}
+
 						impactedEndpoints.UnionWith(existingPendingConnectionAction.GetEndpoints());
 					}
 

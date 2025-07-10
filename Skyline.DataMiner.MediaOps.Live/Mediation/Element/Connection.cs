@@ -6,7 +6,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	public sealed class Connection
+	public sealed class Connection : IEquatable<Connection>
 	{
 		internal Connection(object[] row)
 		{
@@ -59,6 +59,44 @@
 			}
 		}
 
+		public override bool Equals(object obj)
+		{
+			return Equals(obj as Connection);
+		}
+
+		public bool Equals(Connection other)
+		{
+			if (other is null)
+			{
+				return false;
+			}
+
+			if (ReferenceEquals(this, other))
+			{
+				return true;
+			}
+
+			return Destination == other.Destination &&
+				   DestinationName == other.DestinationName &&
+				   ConnectedSource == other.ConnectedSource &&
+				   ConnectedSourceName == other.ConnectedSourceName &&
+				   IsConnected == other.IsConnected;
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				var hashCode = 17;
+				hashCode = (hashCode * 23) + Destination.GetHashCode();
+				hashCode = (hashCode * 23) + (DestinationName?.GetHashCode() ?? 0);
+				hashCode = (hashCode * 23) + (ConnectedSource?.GetHashCode() ?? 0);
+				hashCode = (hashCode * 23) + (ConnectedSourceName?.GetHashCode() ?? 0);
+				hashCode = (hashCode * 23) + IsConnected.GetHashCode();
+				return hashCode;
+			}
+		}
+
 		public override string ToString()
 		{
 			if (IsConnected)
@@ -72,6 +110,16 @@
 			}
 
 			return $"{DestinationName} [Disconnected]";
+		}
+
+		public static bool operator ==(Connection left, Connection right)
+		{
+			return EqualityComparer<Connection>.Default.Equals(left, right);
+		}
+
+		public static bool operator !=(Connection left, Connection right)
+		{
+			return !(left == right);
 		}
 	}
 }
