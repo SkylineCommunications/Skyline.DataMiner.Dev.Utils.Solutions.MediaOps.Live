@@ -23,7 +23,7 @@
 
 		public event EventHandler<ConnectionsChangedEvent> Changed;
 
-		public void Subscribe(bool skipInitialEvents = true)
+		public void Subscribe(bool skipInitialEvents = false)
 		{
 			lock (_lock)
 			{

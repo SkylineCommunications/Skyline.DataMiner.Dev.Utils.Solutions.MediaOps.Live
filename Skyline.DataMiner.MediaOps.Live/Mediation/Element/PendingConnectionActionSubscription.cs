@@ -23,7 +23,7 @@
 
 		public event EventHandler<PendingConnectionActionsChangedEvent> Changed;
 
-		public void Subscribe(bool skipInitialEvents = true)
+		public void Subscribe(bool skipInitialEvents = false)
 		{
 			lock (_lock)
 			{

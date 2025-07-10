@@ -45,7 +45,14 @@
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
-			if (TryGetCachedConnection(destination, out var connection) && connection.IsConnected && connection.ConnectedSource == source)
+			bool Condition(Connection connection) =>
+				connection != null &&
+				connection.Destination == destination &&
+				connection.IsConnected &&
+				connection.ConnectedSource == source;
+
+			if (TryGetCachedConnection(destination, out var connection) &&
+				Condition(connection))
 			{
 				return true;
 			}
@@ -54,7 +61,7 @@
 
 			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
 			{
-				if (e.UpdatedConnections.Any(x => x.Destination == destination && x.IsConnected && x.ConnectedSource == source))
+				if (e.UpdatedConnections.Any(Condition))
 				{
 					mre.Set();
 				}
@@ -63,18 +70,6 @@
 			try
 			{
 				ConnectionsChanged += ConnectionEventHandler;
-
-				if (mre.Wait(500))
-				{
-					// Wait a bit for an event.
-					return true;
-				}
-
-				// Fallback for when we missed the event.
-				if (IsConnected(source, destination))
-				{
-					mre.Set();
-				}
 
 				return mre.Wait(timeout);
 			}
@@ -91,7 +86,13 @@
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
-			if (TryGetCachedConnection(destination, out var connection) && !connection.IsConnected)
+			bool Condition(Connection connection) =>
+				connection != null &&
+				connection.Destination == destination &&
+				!connection.IsConnected;
+
+			if (TryGetCachedConnection(destination, out var connection) &&
+				Condition(connection))
 			{
 				return true;
 			}
@@ -101,7 +102,7 @@
 			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
 			{
 				if (e.DeletedConnections.Contains(destination) ||
-					e.UpdatedConnections.Any(x => x.Destination == destination && !x.IsConnected))
+					e.UpdatedConnections.Any(Condition))
 				{
 					mre.Set();
 				}
@@ -110,18 +111,6 @@
 			try
 			{
 				ConnectionsChanged += ConnectionEventHandler;
-
-				if (mre.Wait(500))
-				{
-					// Wait a bit for an event.
-					return true;
-				}
-
-				// Fallback for when we missed the event.
-				if (!IsConnected(destination))
-				{
-					mre.Set();
-				}
 
 				return mre.Wait(timeout);
 			}
@@ -142,49 +131,16 @@
 			_subscriptions.Clear();
 		}
 
-		private bool IsConnected(ApiObjectReference<Endpoint> destination)
-		{
-			return TryGetConnection(destination, out var connection) &&
-				connection.IsConnected;
-		}
-
-		private bool IsConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
-		{
-			return TryGetConnection(destination, out var connection) &&
-				connection.IsConnected &&
-				connection.ConnectedSource == source;
-		}
-
 		private bool TryGetCachedConnection(ApiObjectReference<Endpoint> destination, out Connection connection)
 		{
 			return _cache.TryGetValue(destination, out connection) && connection != null;
-		}
-
-		private bool TryGetConnection(ApiObjectReference<Endpoint> destination, out Connection connection)
-		{
-			if (TryGetCachedConnection(destination, out connection))
-			{
-				return true;
-			}
-
-			foreach (var element in _api.MediationElements.AllElements)
-			{
-				if (element.TryGetConnection(destination, out var foundConnection))
-				{
-					connection = foundConnection;
-					return true;
-				}
-			}
-
-			connection = null;
-			return false;
 		}
 
 		private void OnConnectionsChanged(object sender, ConnectionsChangedEvent e)
 		{
 			foreach (var item in e.DeletedConnections)
 			{
-				_cache.TryRemove(item, out var _);
+				_cache.TryRemove(item, out _);
 			}
 
 			foreach (var item in e.UpdatedConnections)
