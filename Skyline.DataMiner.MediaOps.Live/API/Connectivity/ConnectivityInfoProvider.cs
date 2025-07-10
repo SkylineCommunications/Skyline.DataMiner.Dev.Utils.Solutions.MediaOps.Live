@@ -391,7 +391,7 @@
 			}
 		}
 
-		private void LoadData(params IEnumerable<ApiObjectReference<Endpoint>> endpoints)
+		public void LoadData(params IEnumerable<ApiObjectReference<Endpoint>> endpoints)
 		{
 			lock (_lock)
 			{
@@ -415,7 +415,7 @@
 			}
 		}
 
-		private void LoadData(params IEnumerable<ApiObjectReference<VirtualSignalGroup>> virtualSignalGroups)
+		public void LoadData(params IEnumerable<ApiObjectReference<VirtualSignalGroup>> virtualSignalGroups)
 		{
 			lock (_lock)
 			{
