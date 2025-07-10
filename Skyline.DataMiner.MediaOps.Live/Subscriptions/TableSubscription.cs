@@ -14,11 +14,11 @@
 		private readonly int _tableId;
 
 		private readonly string _subscriptionSetId;
-		private readonly SubscriptionFilter[] _subscriptionFilters;
+		private readonly SubscriptionFilterParameter[] _subscriptionFilters;
 
 		private readonly TableCache _cache;
 
-		public TableSubscription(IConnection connection, IDmsElement element, int tableId)
+		public TableSubscription(IConnection connection, IDmsElement element, int tableId, bool skipInitialEvents = true)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			_element = element ?? throw new ArgumentNullException(nameof(element));
@@ -26,13 +26,22 @@
 
 			_cache = new TableCache(element, tableId);
 
-			_subscriptionSetId = $"TableSubscription_{_element.DmsElementId.Value}_{_tableId}";
+			var subscriptionFilterOptions = skipInitialEvents
+				? SubscriptionFilterOptions.SkipInitialEvents
+				: SubscriptionFilterOptions.None;
+
+			_subscriptionSetId = $"TableSubscription_{_element.DmsElementId.Value}_{_tableId}_{Guid.NewGuid()}";
+
 			_subscriptionFilters =
 			[
-				new SubscriptionFilterParameter(typeof(ParameterTableUpdateEventMessage), _element.AgentId, _element.Id, _tableId),
+				new SubscriptionFilterParameter(typeof(ParameterTableUpdateEventMessage), _element.AgentId, _element.Id, _tableId)
+				{
+					Options = subscriptionFilterOptions,
+				},
 				new SubscriptionFilterParameter(typeof(ParameterChangeEventMessage), _element.AgentId, _element.Id, _tableId)
 				{
 					Filters = ["forceFullTable=true"],
+					Options = subscriptionFilterOptions,
 				},
 			];
 		}

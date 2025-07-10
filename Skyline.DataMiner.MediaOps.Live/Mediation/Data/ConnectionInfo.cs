@@ -1,15 +1,16 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Data
 {
 	using System;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class ConnectionInfo
 	{
-		public EndpointInfo SourceEndpoint { get; set; }
+		public ConnectionInfo()
+		{
+		}
 
-		public EndpointInfo DestinationEndpoint { get; set; }
-
-		public static ConnectionInfo Create(Endpoint source, Endpoint destination)
+		public ConnectionInfo(Endpoint source, Endpoint destination)
 		{
 			if (source == null)
 			{
@@ -31,11 +32,12 @@
 				throw new ArgumentException("Destination endpoint must have role 'Destination'", nameof(destination));
 			}
 
-			return new ConnectionInfo
-			{
-				SourceEndpoint = source != null ? EndpointInfo.Create(source) : null,
-				DestinationEndpoint = EndpointInfo.Create(destination),
-			};
+			SourceEndpoint = source != null ? new EndpointInfo(source) : null;
+			DestinationEndpoint = new EndpointInfo(destination);
 		}
+
+		public EndpointInfo SourceEndpoint { get; set; }
+
+		public EndpointInfo DestinationEndpoint { get; set; }
 	}
 }

@@ -19,5 +19,10 @@
 		public IReadOnlyList<T> Updated { get; }
 
 		public IReadOnlyList<T> Deleted { get; }
+
+		public override string ToString()
+		{
+			return $"{nameof(ApiObjectsChangedEvent<T>)}: {Created.Count} created, {Updated.Count} updated, {Deleted.Count} deleted";
+		}
 	}
 }

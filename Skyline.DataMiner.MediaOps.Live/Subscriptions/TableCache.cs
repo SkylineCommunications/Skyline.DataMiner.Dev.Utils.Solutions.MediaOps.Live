@@ -12,6 +12,11 @@
 	/// </summary>
 	internal sealed class TableCache
 	{
+		private sealed class NoChange
+		{
+			public static readonly object Value = new NoChange();
+		}
+
 		private readonly object _lock = new object();
 		private readonly IDmsElement _element;
 		private readonly int _tableId;
@@ -115,7 +120,11 @@
 
 				for (int i = 0; i < newValues.Length; i++)
 				{
-					if (newValues[i] == null || Equals(newValues[i], cachedRow[i]))
+					// Empty value means that the value is not changed.
+					if (Equals(newValues[i], NoChange.Value))
+						continue;
+
+					if (Equals(newValues[i], cachedRow[i]))
 						continue;
 
 					cachedRow[i] = newValues[i];
@@ -131,7 +140,7 @@
 			return hasChanges;
 		}
 
-		private static IDictionary<string, object[]> BuildDictionary(ParameterTableUpdateEventMessage message)
+		private IDictionary<string, object[]> BuildDictionary(ParameterTableUpdateEventMessage message)
 		{
 			var result = new Dictionary<string, object[]>();
 
@@ -143,7 +152,7 @@
 			foreach (var updatedRow in message.UpdatedRows)
 			{
 				var array = updatedRow.ArrayValue
-					.Select(pv => pv.CellValue.InteropValue)
+					.Select(pv => pv.IsEmpty ? NoChange.Value : pv.CellValue.InteropValue)
 					.ToArray();
 
 				if (array.Length == 0)
@@ -163,7 +172,7 @@
 			return result;
 		}
 
-		private static IDictionary<string, object[]> BuildDictionary(ParameterChangeEventMessage message, int keyColumnIndex = 0)
+		private IDictionary<string, object[]> BuildDictionary(ParameterChangeEventMessage message, int keyColumnIndex = 0)
 		{
 			var result = new Dictionary<string, object[]>();
 
@@ -172,7 +181,7 @@
 				return result;
 			}
 
-			ParameterValue[] columns = message.NewValue.ArrayValue;
+			var columns = message.NewValue.ArrayValue;
 
 			if (keyColumnIndex >= columns.Length)
 			{
@@ -180,31 +189,30 @@
 			}
 
 			// Dictionary used as a mapping from index to key.
-			string[] keyMap = new string[columns[keyColumnIndex].ArrayValue.Length];
+			var keyColumn = columns[keyColumnIndex].ArrayValue;
+			var keyMap = new string[keyColumn.Length];
 
-			int rowNumber = 0;
-
-			foreach (ParameterValue keyCell in columns[keyColumnIndex].ArrayValue)
+			for (int rowIndex = 0; rowIndex < keyColumn.Length; rowIndex++)
 			{
-				string primaryKey = Convert.ToString(keyCell.CellValue.InteropValue);
+				var keyCell = keyColumn[rowIndex];
+				var primaryKey = keyCell.CellValue.StringValue;
 
 				result[primaryKey] = new object[columns.Length];
-				keyMap[rowNumber] = primaryKey;
-				rowNumber++;
+				keyMap[rowIndex] = primaryKey;
 			}
 
-			int columnNumber = 0;
-			foreach (ParameterValue column in columns)
+			// Fill the result dictionary with values from the columns.
+			for (int columnIndex = 0; columnIndex < columns.Length; columnIndex++)
 			{
-				rowNumber = 0;
+				var column = columns[columnIndex];
 
-				foreach (ParameterValue cell in column.ArrayValue)
+				for (int rowIndex = 0; rowIndex < column.ArrayValue.Length; rowIndex++)
 				{
-					result[keyMap[rowNumber]][columnNumber] = cell.CellValue.ValueType == ParameterValueType.Empty ? null : cell.CellValue.InteropValue;
-					rowNumber++;
-				}
+					var cell = column.ArrayValue[rowIndex];
+					var cellValue = cell.IsEmpty ? NoChange.Value : cell.CellValue.InteropValue;
 
-				columnNumber++;
+					result[keyMap[rowIndex]][columnIndex] = cellValue;
+				}
 			}
 
 			return result;

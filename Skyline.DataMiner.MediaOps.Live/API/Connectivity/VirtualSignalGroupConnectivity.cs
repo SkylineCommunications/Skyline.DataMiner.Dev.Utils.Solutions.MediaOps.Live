@@ -74,7 +74,7 @@
 
 		public override string ToString()
 		{
-			return $"{VirtualSignalGroup.Name} [{VirtualSignalGroup.Name}] - Connected: {ConnectedState}";
+			return $"{VirtualSignalGroup.Name} [{VirtualSignalGroup.ID}] - Connected: {ConnectedState}";
 		}
 	}
 }

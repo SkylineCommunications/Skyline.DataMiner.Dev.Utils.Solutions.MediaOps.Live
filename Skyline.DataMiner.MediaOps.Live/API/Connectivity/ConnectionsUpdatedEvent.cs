@@ -16,5 +16,10 @@
 		public IReadOnlyCollection<EndpointConnectivity> Endpoints { get; }
 
 		public IReadOnlyCollection<VirtualSignalGroupConnectivity> VirtualSignalGroups { get; }
+
+		public override string ToString()
+		{
+			return $"{nameof(ConnectionsUpdatedEvent)}: {Endpoints.Count} endpoints, {VirtualSignalGroups.Count} VSGs";
+		}
 	}
 }

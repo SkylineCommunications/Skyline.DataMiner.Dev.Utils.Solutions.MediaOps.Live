@@ -4,7 +4,7 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Mediation;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 
 	internal class ConnectionOperationContext
 	{

@@ -29,7 +29,10 @@
 
 			if (splitted.Count >= 10)
 			{
-				return splitted.AsParallel().SelectMany(filterResolver);
+				return splitted
+					.AsParallel()
+					.WithDegreeOfParallelism(4)
+					.SelectMany(filterResolver);
 			}
 
 			return splitted.SelectMany(filterResolver);

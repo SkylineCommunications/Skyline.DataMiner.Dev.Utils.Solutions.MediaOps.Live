@@ -4,7 +4,6 @@
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
@@ -12,10 +11,9 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
-	using Skyline.DataMiner.MediaOps.Live.Mediation;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.Net;
 
-	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Connection;
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
 	public class MediaOpsLiveSimulation
@@ -46,31 +44,42 @@
 
 			ClearTestPendingConnectionAction(destination);
 
-			var connection = Api.Connections.GetByDestination(destination)
-				?? new Connection { Destination = destination };
+			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
-			connection.ConnectedSource = source;
-			connection.IsConnected = source != null;
+			var connectionsTable = Dms
+				.Agents[mediationElement.DmaId]
+				.Elements[mediationElement.ElementId]
+				.Tables[MediationElement.ConnectionsTableId];
 
-			Api.Connections.CreateOrUpdate(connection);
+			var rowKey = Convert.ToString(destination.ID);
+			var row = new object[]
+			{
+				rowKey,
+				destination.Name,
+				source != null ? 1 : 0, // IsConnected
+				source?.ID.ToString() ?? String.Empty,
+				source?.Name ?? String.Empty,
+			};
+
+			connectionsTable.SetRow(rowKey, row);
 		}
 
 		public void CreateTestPendingConnectionAction(
 			Endpoint pendingSource,
 			Endpoint destination,
-			PendingConnectionAction.PendingActionType action = PendingConnectionAction.PendingActionType.Connect)
+			PendingConnectionActionType action = PendingConnectionActionType.Connect)
 		{
 			if (destination is null)
 			{
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = MediationElement.GetMediationElements(Api, [destination])[destination];
+			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
 			var pendingActionsTable = Dms
 				.Agents[mediationElement.DmaId]
 				.Elements[mediationElement.ElementId]
-				.Tables[3000];
+				.Tables[MediationElement.PendingConnectionActionsTableId];
 
 			var rowKey = Convert.ToString(destination.ID);
 			var row = new object[]
@@ -93,12 +102,12 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = MediationElement.GetMediationElements(Api, [destination])[destination];
+			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
 			var pendingActionsTable = Dms
 				.Agents[mediationElement.DmaId]
 				.Elements[mediationElement.ElementId]
-				.Tables[3000];
+				.Tables[MediationElement.PendingConnectionActionsTableId];
 
 			var rowKey = Convert.ToString(destination.ID);
 			pendingActionsTable.DeleteRow(rowKey);
@@ -106,7 +115,8 @@
 
 		private void Initialize(bool installDomModules, bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
 		{
-			CreateMediationElement();
+			CreateMediationElement(123, 1000, "MediaOps Mediation 1");
+			CreateMediationElement(124, 1000, "MediaOps Mediation 1");
 
 			if (installDomModules)
 			{
@@ -209,19 +219,8 @@
 
 					if (createConnections)
 					{
-						var connection1 = new Connection
-						{
-							Destination = videoDestination1,
-							ConnectedSource = videoSource1,
-							IsConnected = true,
-						};
-						var connection2 = new Connection
-						{
-							Destination = audioDestination1,
-							ConnectedSource = audioSource1,
-							IsConnected = true,
-						};
-						Api.Connections.CreateOrUpdate([connection1, connection2]);
+						CreateTestConnection(videoSource1, videoDestination1);
+						CreateTestConnection(audioSource1, audioDestination1);
 					}
 				}
 			}
@@ -232,12 +231,14 @@
 			Api.Orchestration.SaveEventConfigurations(job.OrchestrationEvents);
 		}
 
-		private void CreateMediationElement()
+		private void CreateMediationElement(int dmaId, int elementId, string name)
 		{
-			var element = Dms.GetOrCreateAgent(123)
-				.CreateElement(1000, "MediaOps Mediation 1", "Skyline MediaOps Mediation");
+			var element = Dms.GetOrCreateAgent(dmaId)
+				.CreateElement(elementId, name, "Skyline MediaOps Mediation");
 
-			element.CreateTable(3000);
+			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
+			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
+			element.CreateTable(MediationElement.ConnectionsTableId);
 		}
 
 		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)
