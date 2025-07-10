@@ -110,7 +110,10 @@
 				var earlierEvent = orderedByExpectedTypeOrder[i];
 				var laterEvent = orderedByExpectedTypeOrder[i + 1];
 
-				if (earlierEvent.EventTime > laterEvent.EventTime)
+				var earlierEventTime = earlierEvent.ActualStartTime ?? earlierEvent.EventTime;
+				var laterEventTime = laterEvent.ActualStartTime ?? laterEvent.EventTime;
+
+				if (earlierEventTime > laterEventTime)
 				{
 					throw new InvalidOperationException($"Event of type {laterEvent.EventType.ToString()} can not be scheduled before an event of type {earlierEvent.EventType.ToString()} ");
 				}

@@ -11,6 +11,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Jobs;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
@@ -228,6 +229,9 @@
 				{
 					return;
 				}
+
+				// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
+				_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > DateTimeOffset.Now));
 
 				eventExecutionHelper.ExecuteEventsNow(events, performanceTracker);
 			}
