@@ -115,7 +115,8 @@
 
 		private void Initialize(bool installDomModules, bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
 		{
-			CreateMediationElement();
+			CreateMediationElement(123, 1000, "MediaOps Mediation 1");
+			CreateMediationElement(124, 1000, "MediaOps Mediation 1");
 
 			if (installDomModules)
 			{
@@ -230,10 +231,10 @@
 			Api.Orchestration.SaveEventConfigurations(job.OrchestrationEvents);
 		}
 
-		private void CreateMediationElement()
+		private void CreateMediationElement(int dmaId, int elementId, string name)
 		{
-			var element = Dms.GetOrCreateAgent(123)
-				.CreateElement(1000, "MediaOps Mediation 1", "Skyline MediaOps Mediation");
+			var element = Dms.GetOrCreateAgent(dmaId)
+				.CreateElement(elementId, name, "Skyline MediaOps Mediation");
 
 			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
 			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
