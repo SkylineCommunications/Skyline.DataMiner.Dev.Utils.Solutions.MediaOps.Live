@@ -64,7 +64,7 @@
 			{
 				ConnectionsChanged += ConnectionEventHandler;
 
-				if (mre.Wait(250))
+				if (mre.Wait(500))
 				{
 					// Wait a bit for an event.
 					return true;
@@ -111,7 +111,7 @@
 			{
 				ConnectionsChanged += ConnectionEventHandler;
 
-				if (mre.Wait(250))
+				if (mre.Wait(500))
 				{
 					// Wait a bit for an event.
 					return true;
