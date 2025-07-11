@@ -7,7 +7,6 @@
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
@@ -15,14 +14,12 @@
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
-			Api = new MediaOpsLiveApi(engine.GetUserConnection());
+			Api = engine.GetMediaOpsLiveApi();
 		}
 
 		public IEngine Engine { get; }
 
 		public MediaOpsLiveApi Api { get; }
-
-		protected SlcConnectivityManagementHelper Helper => Api.SlcConnectivityManagementHelper;
 
 		public void RegisterConnection(ConnectionUpdate connection)
 		{
