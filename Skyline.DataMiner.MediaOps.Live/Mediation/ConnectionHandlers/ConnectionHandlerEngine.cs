@@ -14,7 +14,8 @@
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
-			Api = engine.GetMediaOpsLiveApi();
+			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw);
+			Api.SetEngine(engine);
 		}
 
 		public IEngine Engine { get; }
