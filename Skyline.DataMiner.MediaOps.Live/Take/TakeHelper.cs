@@ -214,7 +214,6 @@
 		private void DisconnectInternal(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectionMonitor = CreateConnectionMonitor(performanceTracker))
 			{
 				var takeContexts = disconnectRequests
 					.Select(x => new ConnectionOperationContext(x))
@@ -227,7 +226,7 @@
 
 				if (_waitForCompletion)
 				{
-					WaitUntilAllDisconnected(takeContexts, connectionMonitor, performanceTracker);
+					WaitUntilAllDisconnected(takeContexts, performanceTracker);
 				}
 			}
 		}
@@ -448,9 +447,10 @@
 			}
 		}
 
-		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var connectionMonitor = CreateConnectionMonitor(performanceTracker))
 			{
 				var tasks = takeContexts.Select(takeContext =>
 						Task.Factory.StartNew(
