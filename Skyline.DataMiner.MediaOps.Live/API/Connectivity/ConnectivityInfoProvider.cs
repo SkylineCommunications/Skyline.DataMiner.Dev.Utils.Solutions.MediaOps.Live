@@ -40,8 +40,6 @@
 			{
 				Subscribe();
 			}
-
-			LoadDataFromMediationElements();
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
@@ -343,12 +341,12 @@
 				{
 					var connectionSubscription = element.CreateConnectionSubscription();
 					connectionSubscription.Changed += Connections_OnChanged;
-					connectionSubscription.Subscribe();
+					connectionSubscription.Subscribe(skipInitialEvents: false);
 					_connectionSubscriptions.Add(connectionSubscription);
 
 					var pendingActionSubscription = element.CreatePendingActionSubscription();
 					pendingActionSubscription.Changed += PendingConnectionActions_OnChanged;
-					pendingActionSubscription.Subscribe();
+					pendingActionSubscription.Subscribe(skipInitialEvents: false);
 					_pendingActionSubscriptions.Add(pendingActionSubscription);
 				}
 

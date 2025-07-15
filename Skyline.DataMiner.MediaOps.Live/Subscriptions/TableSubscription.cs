@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Subscriptions
 {
 	using System;
+	using System.Threading;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
@@ -59,8 +60,15 @@
 					if (subscribe)
 					{
 						_connection.OnNewMessage += Connection_OnNewMessage;
-						_connection.AddSubscription(_subscriptionSetId, _subscriptionFilters);
 						_connection.Subscribe();
+
+						var subscribeWait = new ManualResetEvent(false);
+
+						_connection.TrackAddSubscription(_subscriptionSetId, _subscriptionFilters)
+							.OnFinished(() => subscribeWait.Set())
+							.Execute();
+
+						subscribeWait.WaitOne();
 					}
 				}
 			}
