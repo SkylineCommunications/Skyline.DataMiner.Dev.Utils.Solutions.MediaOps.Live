@@ -38,7 +38,7 @@
 
 			if (subscribe)
 			{
-				// Subscribe();
+				Subscribe();
 			}
 
 			LoadDataFromMediationElements();
@@ -401,7 +401,7 @@
 				{
 					endpointIds.Add(endpoint);
 
-					var connections = _connectionEndpointsMapping.GetConnections(endpoint);
+					var connections = _connectionEndpointsMapping.GetConnections(endpoint).Where(x => x.IsConnected);
 					var pendingActions = _pendingConnectionActionsMapping.GetPendingConnectionActions(endpoint);
 
 					endpointIds.UnionWith(connections.SelectMany(x => x.GetEndpoints()));

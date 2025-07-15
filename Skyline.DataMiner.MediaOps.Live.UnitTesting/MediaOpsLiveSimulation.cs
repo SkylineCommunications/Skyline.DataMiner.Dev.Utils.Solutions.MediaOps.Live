@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
 {
 	using System;
+	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
@@ -12,6 +13,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages;
 	using Skyline.DataMiner.Net;
 
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
@@ -20,6 +22,9 @@
 	{
 		private readonly SimulatedDms _dms;
 		private readonly IConnection _connection;
+
+		private readonly ConcurrentDictionary<Guid, ConnectionInfo> _testConnections = new();
+		private readonly ConcurrentDictionary<Guid, PendingConnectionActionInfo> _testPendingConnectionActions = new();
 
 		public MediaOpsLiveSimulation(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false, bool createElements = true)
 		{
@@ -46,10 +51,11 @@
 
 			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
-			var connectionsTable = Dms
+			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
-				.Elements[mediationElement.ElementId]
-				.Tables[MediationElement.ConnectionsTableId];
+				.Elements[mediationElement.ElementId];
+
+			var connectionsTable = simulatedElement.Tables[MediationElement.ConnectionsTableId];
 
 			var rowKey = Convert.ToString(destination.ID);
 			var row = new object[]
@@ -62,6 +68,18 @@
 			};
 
 			connectionsTable.SetRow(rowKey, row);
+
+			var connectionInfo = new ConnectionInfo
+			{
+				DestinationId = destination.ID,
+				IsConnected = source != null,
+				ConnectedSource = source?.ID ?? Guid.Empty,
+			};
+
+			_testConnections[destination.ID] = connectionInfo;
+
+			simulatedElement.Parameters[MediationElement.ConnectionsDataPid]
+				.SetValue(Newtonsoft.Json.JsonConvert.SerializeObject(_testConnections.Values));
 		}
 
 		public void CreateTestPendingConnectionAction(
@@ -76,10 +94,11 @@
 
 			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
-			var pendingActionsTable = Dms
+			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
-				.Elements[mediationElement.ElementId]
-				.Tables[MediationElement.PendingConnectionActionsTableId];
+				.Elements[mediationElement.ElementId];
+
+			var pendingActionsTable = simulatedElement.Tables[MediationElement.PendingConnectionActionsTableId];
 
 			var rowKey = Convert.ToString(destination.ID);
 			var row = new object[]
@@ -93,6 +112,18 @@
 			};
 
 			pendingActionsTable.SetRow(rowKey, row);
+
+			var pendingConnectionActionInfo = new PendingConnectionActionInfo
+			{
+				DestinationId = destination.ID,
+				Action = (ConnectionAction)action,
+				PendingSourceId = pendingSource?.ID ?? Guid.Empty,
+			};
+
+			_testPendingConnectionActions[destination.ID] = pendingConnectionActionInfo;
+
+			simulatedElement.Parameters[MediationElement.PendingConnectionActionsDataPid]
+				.SetValue(Newtonsoft.Json.JsonConvert.SerializeObject(_testPendingConnectionActions.Values));
 		}
 
 		public void ClearTestPendingConnectionAction(Endpoint destination)
@@ -104,13 +135,18 @@
 
 			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
-			var pendingActionsTable = Dms
+			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
-				.Elements[mediationElement.ElementId]
-				.Tables[MediationElement.PendingConnectionActionsTableId];
+				.Elements[mediationElement.ElementId];
+
+			var pendingActionsTable = simulatedElement.Tables[MediationElement.PendingConnectionActionsTableId];
 
 			var rowKey = Convert.ToString(destination.ID);
 			pendingActionsTable.DeleteRow(rowKey);
+
+			_testPendingConnectionActions.TryRemove(destination.ID, out _);
+			simulatedElement.Parameters[MediationElement.PendingConnectionActionsDataPid]
+				.SetValue(Newtonsoft.Json.JsonConvert.SerializeObject(_testPendingConnectionActions.Values));
 		}
 
 		private void Initialize(bool installDomModules, bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
@@ -236,11 +272,8 @@
 			var element = Dms.GetOrCreateAgent(dmaId)
 				.CreateElement(elementId, name, "Skyline MediaOps Mediation");
 
-			element.CreateStandaloneParameter(50);
-			element.CreateStandaloneParameter(51);
-
-			element.Parameters[50].SetValue(@"[{""DestinationId"":""2fa58ee8-084b-446c-b143-2da47a05d383"",""IsConnected"":true,""ConnectedSource"":""a308bf1d-da7e-41d4-a850-30fd25f7323d""}]");
-			element.Parameters[51].SetValue("[]");
+			element.CreateStandaloneParameter(MediationElement.ConnectionsDataPid);
+			element.CreateStandaloneParameter(MediationElement.PendingConnectionActionsDataPid);
 
 			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
 			element.CreateTable(MediationElement.PendingConnectionActionsTableId);

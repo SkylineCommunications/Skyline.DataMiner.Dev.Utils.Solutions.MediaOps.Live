@@ -9,6 +9,8 @@
 
 	public sealed class MediationElement
 	{
+		public static readonly int ConnectionsDataPid = 50;
+		public static readonly int PendingConnectionActionsDataPid = 51;
 		public static readonly int ConnectionHandlerScriptsTableId = 1000;
 		public static readonly int PendingConnectionActionsTableId = 3000;
 		public static readonly int ConnectionsTableId = 5000;
@@ -48,7 +50,7 @@
 				return [];
 			}
 
-			var data = DmsElement.GetStandaloneParameter<string>(51).GetValue();
+			var data = DmsElement.GetStandaloneParameter<string>(PendingConnectionActionsDataPid).GetValue();
 
 			if (String.IsNullOrWhiteSpace(data))
 			{
@@ -67,7 +69,7 @@
 				return [];
 			}
 
-			var data = DmsElement.GetStandaloneParameter<string>(50).GetValue();
+			var data = DmsElement.GetStandaloneParameter<string>(ConnectionsDataPid).GetValue();
 
 			if (String.IsNullOrWhiteSpace(data))
 			{
