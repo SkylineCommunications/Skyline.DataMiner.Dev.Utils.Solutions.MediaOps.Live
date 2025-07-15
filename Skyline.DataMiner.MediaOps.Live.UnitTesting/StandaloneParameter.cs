@@ -16,6 +16,11 @@
 
 		public object Value { get; private set; }
 
+		public void SetValue(object value)
+		{
+			Value = value;
+		}
+
 		internal ParameterValue ToParameterValue()
 		{
 			return ParameterValue.Compose(Value);

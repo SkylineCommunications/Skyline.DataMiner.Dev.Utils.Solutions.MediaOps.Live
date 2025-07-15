@@ -239,6 +239,9 @@
 			element.CreateStandaloneParameter(50);
 			element.CreateStandaloneParameter(51);
 
+			element.Parameters[50].SetValue(@"[{""DestinationId"":""2fa58ee8-084b-446c-b143-2da47a05d383"",""IsConnected"":true,""ConnectedSource"":""a308bf1d-da7e-41d4-a850-30fd25f7323d""}]");
+			element.Parameters[51].SetValue("[]");
+
 			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
 			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
 			element.CreateTable(MediationElement.ConnectionsTableId);

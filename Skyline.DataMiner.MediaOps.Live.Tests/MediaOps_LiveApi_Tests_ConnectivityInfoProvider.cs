@@ -10,7 +10,6 @@
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
 	[TestClass]
-	[Ignore]
 	public sealed class MediaOps_LiveApi_Tests_ConnectivityInfoProvider
 	{
 		[TestMethod]

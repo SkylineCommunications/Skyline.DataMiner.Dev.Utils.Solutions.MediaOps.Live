@@ -38,7 +38,7 @@
 
 			if (subscribe)
 			{
-				Subscribe();
+				// Subscribe();
 			}
 
 			LoadDataFromMediationElements();
