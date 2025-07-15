@@ -42,6 +42,7 @@
 			{
 				NewValue = ToParameterValue(row),
 			};
+
 			Element.Dma.NotifySubscriptions(e);
 		}
 

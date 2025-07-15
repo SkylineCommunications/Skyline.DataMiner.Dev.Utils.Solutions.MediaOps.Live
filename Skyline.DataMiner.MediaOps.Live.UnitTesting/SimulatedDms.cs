@@ -82,6 +82,10 @@
 					responses = HandleMessage(msg);
 					return true;
 
+				case GetParameterMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
 				case SetDataMinerInfoMessage msg:
 					responses = HandleMessage(msg);
 					return true;
@@ -141,6 +145,26 @@
 			else
 			{
 				throw new InvalidOperationException($"Element with ID {msg.ElementID} not found in DMA {msg.DataMinerID} or table with ID {msg.ParameterID} not found.");
+			}
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(GetParameterMessage msg)
+		{
+			if (Agents.TryGetValue(msg.DataMinerID, out var dma) &&
+				dma.Elements.TryGetValue(msg.ElId, out var element) &&
+				element.Parameters.TryGetValue(msg.ParameterId, out var param))
+			{
+				yield return new GetParameterResponseMessage
+				{
+					DataMinerID = msg.DataMinerID,
+					ElId = msg.ElId,
+					ParameterId = msg.ParameterId,
+					Value = param.ToParameterValue(),
+				};
+			}
+			else
+			{
+				throw new InvalidOperationException($"Element with ID {msg.ElId} not found in DMA {msg.DataMinerID} or parameter with ID {msg.ParameterId} not found.");
 			}
 		}
 

@@ -49,6 +49,12 @@
 			}
 
 			var data = DmsElement.GetStandaloneParameter<string>(51).GetValue();
+
+			if (String.IsNullOrWhiteSpace(data))
+			{
+				return [];
+			}
+
 			return Newtonsoft.Json.JsonConvert.DeserializeObject<ICollection<PendingConnectionActionInfo>>(data)
 				.Select(x => new PendingConnectionAction(x.DestinationId, x.ConnectionAction, x.PendingSourceId))
 				.ToList();
@@ -62,6 +68,11 @@
 			}
 
 			var data = DmsElement.GetStandaloneParameter<string>(50).GetValue();
+
+			if (String.IsNullOrWhiteSpace(data))
+			{
+				return [];
+			}
 
 			return Newtonsoft.Json.JsonConvert.DeserializeObject<ICollection<ConnectionInfo>>(data)
 				.Select(x => new Connection(x.DestinationId, x.IsConnected, x.ConnectedSource))

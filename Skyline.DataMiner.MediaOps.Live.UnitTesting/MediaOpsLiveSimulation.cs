@@ -236,6 +236,9 @@
 			var element = Dms.GetOrCreateAgent(dmaId)
 				.CreateElement(elementId, name, "Skyline MediaOps Mediation");
 
+			element.CreateStandaloneParameter(50);
+			element.CreateStandaloneParameter(51);
+
 			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
 			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
 			element.CreateTable(MediationElement.ConnectionsTableId);
