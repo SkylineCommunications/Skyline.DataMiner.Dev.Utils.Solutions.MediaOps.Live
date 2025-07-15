@@ -41,26 +41,31 @@
 			return new PendingConnectionActionSubscription(_api, this);
 		}
 
-		public IEnumerable<PendingConnectionAction> GetPendingConnectionActions()
+		public ICollection<PendingConnectionAction> GetPendingConnectionActions()
 		{
 			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
 			{
 				return [];
 			}
 
-			var tableData = DmsElement.GetTable(PendingConnectionActionsTableId).GetData();
-			return tableData.Values.Select(x => new PendingConnectionAction(x));
+			var data = DmsElement.GetStandaloneParameter<string>(51).GetValue();
+			return Newtonsoft.Json.JsonConvert.DeserializeObject<ICollection<PendingConnectionActionInfo>>(data)
+				.Select(x => new PendingConnectionAction(x.DestinationId, x.ConnectionAction, x.PendingSourceId))
+				.ToList();
 		}
 
-		public IEnumerable<Connection> GetConnections()
+		public ICollection<Connection> GetConnections()
 		{
 			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
 			{
 				return [];
 			}
 
-			var tableData = DmsElement.GetTable(ConnectionsTableId).GetData();
-			return tableData.Values.Select(x => new Connection(x));
+			var data = DmsElement.GetStandaloneParameter<string>(50).GetValue();
+
+			return Newtonsoft.Json.JsonConvert.DeserializeObject<ICollection<ConnectionInfo>>(data)
+				.Select(x => new Connection(x.DestinationId, x.IsConnected, x.ConnectedSource))
+				.ToList();
 		}
 
 		public bool TryGetConnection(Guid destinationEndpointId, out Connection connection)

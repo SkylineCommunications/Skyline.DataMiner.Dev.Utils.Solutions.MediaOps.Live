@@ -36,7 +36,12 @@
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 
-			Subscribe();
+			if (subscribe)
+			{
+				Subscribe();
+			}
+
+			LoadDataFromMediationElements();
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
@@ -338,12 +343,12 @@
 				{
 					var connectionSubscription = element.CreateConnectionSubscription();
 					connectionSubscription.Changed += Connections_OnChanged;
-					connectionSubscription.Subscribe(skipInitialEvents: false);
+					connectionSubscription.Subscribe();
 					_connectionSubscriptions.Add(connectionSubscription);
 
 					var pendingActionSubscription = element.CreatePendingActionSubscription();
 					pendingActionSubscription.Changed += PendingConnectionActions_OnChanged;
-					pendingActionSubscription.Subscribe(skipInitialEvents: false);
+					pendingActionSubscription.Subscribe();
 					_pendingActionSubscriptions.Add(pendingActionSubscription);
 				}
 

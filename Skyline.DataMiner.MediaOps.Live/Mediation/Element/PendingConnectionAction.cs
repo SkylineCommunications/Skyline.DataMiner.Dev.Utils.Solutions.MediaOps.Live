@@ -5,6 +5,7 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages;
 
 	public sealed class PendingConnectionAction : IEquatable<PendingConnectionAction>
 	{
@@ -38,6 +39,13 @@
 			{
 				PendingSourceName = pendingSourceNameValue;
 			}
+		}
+
+		internal PendingConnectionAction(ApiObjectReference<Endpoint> destination, ConnectionAction connectionAction, ApiObjectReference<Endpoint>? pendingSource)
+		{
+			Destination = destination;
+			Action = (PendingConnectionActionType)connectionAction;
+			PendingSource = pendingSource;
 		}
 
 		public PendingConnectionActionType Action { get; }
