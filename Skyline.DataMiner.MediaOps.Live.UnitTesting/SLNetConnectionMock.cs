@@ -5,6 +5,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.Core.InterAppCalls.Common.Shared;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Async;
@@ -307,7 +308,10 @@
 		/// <inheritdoc/>
 		public ITrackedSubscriptionUpdate TrackAddSubscription(string setID, params SubscriptionFilter[] newFilters)
 		{
-			throw new NotImplementedException();
+			// quick implementation for unit testing
+			AddSubscription(setID, newFilters);
+
+			return new TrackedSubscriptionUpdate();
 		}
 
 		/// <inheritdoc/>

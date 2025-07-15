@@ -36,10 +36,7 @@
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 
-			if (subscribe)
-			{
-				Subscribe();
-			}
+			Subscribe();
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
