@@ -8,7 +8,7 @@
 	{
 		public Guid DestinationId { get; set; }
 
-		public ConnectionAction ConnectionAction { get; set; }
+		public ConnectionAction Action { get; set; }
 
 		public Guid? PendingSourceId { get; set; }
 	}

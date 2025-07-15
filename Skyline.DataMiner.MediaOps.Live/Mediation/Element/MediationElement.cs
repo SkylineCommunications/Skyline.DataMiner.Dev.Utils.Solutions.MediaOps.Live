@@ -56,7 +56,7 @@
 			}
 
 			return Newtonsoft.Json.JsonConvert.DeserializeObject<ICollection<PendingConnectionActionInfo>>(data)
-				.Select(x => new PendingConnectionAction(x.DestinationId, x.ConnectionAction, x.PendingSourceId))
+				.Select(x => new PendingConnectionAction(x.DestinationId, x.Action, x.PendingSourceId))
 				.ToList();
 		}
 
