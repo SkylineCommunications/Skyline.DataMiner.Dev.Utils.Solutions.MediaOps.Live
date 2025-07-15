@@ -7,15 +7,22 @@
 
 	internal class TrackedSubscriptionUpdate : ITrackedSubscriptionUpdate
 	{
+		private Action _executeAction;
 		private Action _onFinishedAction;
+
+		public TrackedSubscriptionUpdate(Action executeAction)
+		{
+			_executeAction = executeAction ?? throw new ArgumentNullException(nameof(executeAction));
+		}
 
 		public int MarkerID => throw new NotImplementedException();
 
 		public DMSMessage[] Execute()
 		{
+			_executeAction.Invoke();
 			_onFinishedAction?.Invoke();
 
-			return Array.Empty<DMSMessage>();
+			return [];
 		}
 
 		public DMSMessage[] ExecuteAndWait(TimeSpan? timeout = null)

@@ -309,9 +309,7 @@
 		public ITrackedSubscriptionUpdate TrackAddSubscription(string setID, params SubscriptionFilter[] newFilters)
 		{
 			// quick implementation for unit testing
-			AddSubscription(setID, newFilters);
-
-			return new TrackedSubscriptionUpdate();
+			return new TrackedSubscriptionUpdate(() => AddSubscription(setID, newFilters));
 		}
 
 		/// <inheritdoc/>
