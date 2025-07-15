@@ -476,7 +476,8 @@
 				{
 					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
 					{
-						if (connection == existingConnection)
+						if (connection.IsConnected == existingConnection.IsConnected &&
+							connection.ConnectedSource == existingConnection.ConnectedSource)
 						{
 							continue;
 						}
@@ -515,7 +516,8 @@
 				{
 					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
 					{
-						if (pendingAction == existingPendingConnectionAction)
+						if (pendingAction.Action == existingPendingConnectionAction.Action &&
+							pendingAction.PendingSource == existingPendingConnectionAction.PendingSource)
 						{
 							continue;
 						}
