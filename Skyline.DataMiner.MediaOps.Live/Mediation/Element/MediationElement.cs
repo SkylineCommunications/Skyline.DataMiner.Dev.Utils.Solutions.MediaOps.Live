@@ -71,11 +71,11 @@
 				return false;
 			}
 
-			var table = DmsElement.GetTable(ConnectionsTableId);
 			var rowKey = Convert.ToString(destinationEndpointId);
 
 			try
 			{
+				var table = DmsElement.GetTable(ConnectionsTableId);
 				var row = table.GetRow(rowKey);
 
 				if (row != null)
@@ -90,6 +90,36 @@
 			}
 
 			connection = null;
+			return false;
+		}
+
+		public bool TryGetPendingConnectionAction(Guid destinationEndpointId, out PendingConnectionAction pendingConnectionAction)
+		{
+			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			{
+				pendingConnectionAction = null;
+				return false;
+			}
+
+			var rowKey = Convert.ToString(destinationEndpointId);
+
+			try
+			{
+				var table = DmsElement.GetTable(PendingConnectionActionsTableId);
+				var row = table.GetRow(rowKey);
+
+				if (row != null)
+				{
+					pendingConnectionAction = new PendingConnectionAction(row);
+					return true;
+				}
+			}
+			catch
+			{
+				// ignore
+			}
+
+			pendingConnectionAction = null;
 			return false;
 		}
 

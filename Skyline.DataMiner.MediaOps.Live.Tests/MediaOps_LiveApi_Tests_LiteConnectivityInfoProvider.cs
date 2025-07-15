@@ -25,10 +25,7 @@
 
 			using var connectivity = new LiteConnectivityInfoProvider(api);
 
-			Assert.IsTrue(connectivity.IsConnected(audioSource1));
 			Assert.IsTrue(connectivity.IsConnected(audioDestination1));
-
-			Assert.IsFalse(connectivity.IsConnected(audioSource2));
 			Assert.IsFalse(connectivity.IsConnected(audioDestination2));
 		}
 

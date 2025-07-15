@@ -21,6 +21,8 @@
 		private readonly ICollection<ConnectionSubscription> _connectionSubscriptions = [];
 		private readonly ICollection<PendingConnectionActionSubscription> _pendingActionSubscriptions = [];
 
+		private readonly HashSet<ApiObjectReference<Endpoint>> _loadedDestinationsFromElements = [];
+
 		public LiteConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
@@ -29,8 +31,6 @@
 			{
 				Subscribe();
 			}
-
-			LoadDataFromMediationElements();
 		}
 
 		public event EventHandler<ICollection<ApiObjectReference<Endpoint>>> ConnectionsChanged;
@@ -43,18 +43,22 @@
 
 		public bool IsConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
 		{
+			LoadDestinationDataIfNeeded(destination);
+
 			return _connectionsByDestination.TryGetValue(destination, out var connection) &&
 				connection.IsConnected &&
 				connection.ConnectedSource == source;
 		}
 
-		public bool IsConnected(ApiObjectReference<Endpoint> endpoint)
+		public bool IsConnected(ApiObjectReference<Endpoint> destination)
 		{
-			var connections = _connectionEndpointsMapping.GetConnections(endpoint);
+			LoadDestinationDataIfNeeded(destination);
+
+			var connections = _connectionEndpointsMapping.GetConnections(destination);
 
 			return connections.Any(
 				x => x.IsConnected &&
-					(x.Destination == endpoint || x.ConnectedSource == endpoint));
+					(x.Destination == destination || x.ConnectedSource == destination));
 		}
 
 		public void Subscribe()
@@ -186,25 +190,31 @@
 			}
 		}
 
-		private void LoadDataFromMediationElements()
+		private void LoadDestinationDataIfNeeded(ApiObjectReference<Endpoint> destination)
 		{
 			lock (_lock)
 			{
-				var mediationElements = Api.MediationElements.AllElements;
-
-				var connections = mediationElements.SelectMany(x => x.GetConnections()).ToList();
-				var pendingConnectionActions = mediationElements.SelectMany(x => x.GetPendingConnectionActions()).ToList();
-
-				foreach (var connection in connections)
+				if (!_loadedDestinationsFromElements.Add(destination))
 				{
-					_connectionsByDestination[connection.Destination] = connection;
-					_connectionEndpointsMapping.AddOrUpdate(connection);
+					// Already loaded this destination.
+					return;
 				}
 
-				foreach (var action in pendingConnectionActions)
+				var mediationElements = Api.MediationElements.AllElements;
+
+				foreach (var mediationElement in mediationElements)
 				{
-					_pendingActionsByDestination[action.Destination] = action;
-					_pendingConnectionActionsMapping.AddOrUpdate(action);
+					if (mediationElement.TryGetConnection(destination, out var connection))
+					{
+						_connectionsByDestination[connection.Destination] = connection;
+						_connectionEndpointsMapping.AddOrUpdate(connection);
+					}
+
+					if (mediationElement.TryGetPendingConnectionAction(destination, out var pendingConnectionAction))
+					{
+						_pendingActionsByDestination[pendingConnectionAction.Destination] = pendingConnectionAction;
+						_pendingConnectionActionsMapping.AddOrUpdate(pendingConnectionAction);
+					}
 				}
 			}
 		}
