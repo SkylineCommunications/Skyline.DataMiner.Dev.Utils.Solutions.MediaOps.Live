@@ -38,6 +38,11 @@
 				{
 					Options = subscriptionFilterOptions,
 				},
+				new SubscriptionFilterParameter(typeof(ParameterChangeEventMessage), _element.AgentId, _element.Id, _tableId)
+				{
+					Filters = ["forceFullTable=true"],
+					Options = subscriptionFilterOptions,
+				},
 			];
 		}
 
