@@ -10,7 +10,6 @@
 	public sealed class MediationElement
 	{
 		public static readonly int ConnectionsDataPid = 50;
-		public static readonly int PendingConnectionActionsDataPid = 51;
 		public static readonly int ConnectionHandlerScriptsTableId = 1000;
 		public static readonly int PendingConnectionActionsTableId = 3000;
 		public static readonly int ConnectionsTableId = 5000;
@@ -50,15 +49,12 @@
 				return [];
 			}
 
-			var data = DmsElement.GetStandaloneParameter<string>(PendingConnectionActionsDataPid).GetValue();
+			var json = DmsElement.GetStandaloneParameter<string>(ConnectionsDataPid).GetValue();
+			var connectionsData = ConnectionData.FromJson(json);
 
-			if (String.IsNullOrWhiteSpace(data))
-			{
-				return [];
-			}
-
-			return Newtonsoft.Json.JsonConvert.DeserializeObject<ICollection<PendingConnectionActionInfo>>(data)
-				.Select(x => new PendingConnectionAction(x.DestinationId, x.Action, x.PendingSourceId))
+			return connectionsData
+				.Where(x => x.PendingAction.HasValue)
+				.Select(x => new PendingConnectionAction(x.Destination, x.PendingAction.Value, x.PendingSource))
 				.ToList();
 		}
 
@@ -69,15 +65,12 @@
 				return [];
 			}
 
-			var data = DmsElement.GetStandaloneParameter<string>(ConnectionsDataPid).GetValue();
+			var json = DmsElement.GetStandaloneParameter<string>(ConnectionsDataPid).GetValue();
+			var connectionsData = ConnectionData.FromJson(json);
 
-			if (String.IsNullOrWhiteSpace(data))
-			{
-				return [];
-			}
-
-			return Newtonsoft.Json.JsonConvert.DeserializeObject<ICollection<ConnectionInfo>>(data)
-				.Select(x => new Connection(x.DestinationId, x.IsConnected, x.ConnectedSource))
+			return connectionsData
+				.Where(x => x.IsConnected)
+				.Select(x => new Connection(x.Destination, x.IsConnected, x.ConnectedSource))
 				.ToList();
 		}
 
