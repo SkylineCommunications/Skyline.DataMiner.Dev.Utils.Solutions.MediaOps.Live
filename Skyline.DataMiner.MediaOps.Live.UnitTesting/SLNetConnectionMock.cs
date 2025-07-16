@@ -143,6 +143,33 @@
 			}
 		}
 
+		private bool TryHandleMessage(DMSMessage message, out IEnumerable<DMSMessage> responses)
+		{
+			switch (message)
+			{
+				case RequestTicketMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				default:
+					responses = [];
+					return false;
+			}
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(RequestTicketMessage msg)
+		{
+			if (msg.TicketType != TicketType.Authentication)
+			{
+				throw new InvalidOperationException();
+			}
+
+			yield return new TicketResponseMessage
+			{
+				Ticket = "<ticket>",
+			};
+		}
+
 		#region IConnection implementation
 
 		/// <inheritdoc/>
@@ -200,7 +227,8 @@
 				throw new ArgumentNullException(nameof(msg));
 			}
 
-			if (Dms.TryHandleMessage(msg, out var responses))
+			if (TryHandleMessage(msg, out var responses) ||
+				Dms.TryHandleMessage(msg, out responses))
 			{
 				return responses.ToArray();
 			}

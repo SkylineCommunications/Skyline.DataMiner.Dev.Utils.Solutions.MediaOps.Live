@@ -7,7 +7,7 @@
 
 	internal class TrackedSubscriptionUpdate : ITrackedSubscriptionUpdate
 	{
-		private Action _executeAction;
+		private readonly Action _executeAction;
 		private Action _onFinishedAction;
 
 		public TrackedSubscriptionUpdate(Action executeAction)

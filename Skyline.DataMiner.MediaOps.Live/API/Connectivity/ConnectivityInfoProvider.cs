@@ -36,12 +36,7 @@
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 
-			if (subscribe)
-			{
-				Subscribe();
-			}
-
-			LoadDataFromMediationElements();
+			Initialize(subscribe);
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
@@ -431,6 +426,19 @@
 				}
 
 				LoadData(endpoints);
+			}
+		}
+
+		private void Initialize(bool subscribe)
+		{
+			lock (_lock)
+			{
+				if (subscribe)
+				{
+					Subscribe();
+				}
+
+				LoadDataFromMediationElements();
 			}
 		}
 
