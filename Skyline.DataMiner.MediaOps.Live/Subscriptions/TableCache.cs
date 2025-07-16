@@ -112,7 +112,7 @@
 			if (!Rows.TryGetValue(key, out var cachedRow))
 			{
 				cachedRow = new object[newValues.Length];
-				Rows.Add(key, newValues);
+				Rows.Add(key, cachedRow);
 
 				hasChanges = true;
 			}
