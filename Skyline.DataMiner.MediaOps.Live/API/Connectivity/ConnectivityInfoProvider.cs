@@ -401,7 +401,7 @@
 				{
 					endpointIds.Add(endpoint);
 
-					var connections = _connectionEndpointsMapping.GetConnections(endpoint).Where(x => x.IsConnected);
+					var connections = _connectionEndpointsMapping.GetConnections(endpoint);
 					var pendingActions = _pendingConnectionActionsMapping.GetPendingConnectionActions(endpoint);
 
 					endpointIds.UnionWith(connections.SelectMany(x => x.GetEndpoints()));
