@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
+	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
 
@@ -676,21 +677,20 @@
 			{
 				var mediationElements = Api.MediationElements.AllElements;
 
-				var connections = mediationElements.SelectMany(x => x.GetConnections());
-
-				foreach (var connection in connections)
+				Parallel.ForEach(mediationElements, element =>
 				{
-					_connectionsByDestination[connection.Destination] = connection;
-					_connectionEndpointsMapping.AddOrUpdate(connection);
-				}
+					foreach (var connection in element.GetConnections())
+					{
+						_connectionsByDestination[connection.Destination] = connection;
+						_connectionEndpointsMapping.AddOrUpdate(connection);
+					}
 
-				var pendingConnectionActions = mediationElements.SelectMany(x => x.GetPendingConnectionActions());
-
-				foreach (var action in pendingConnectionActions)
-				{
-					_pendingActionsByDestination[action.Destination] = action;
-					_pendingConnectionActionsMapping.AddOrUpdate(action);
-				}
+					foreach (var action in element.GetPendingConnectionActions())
+					{
+						_pendingActionsByDestination[action.Destination] = action;
+						_pendingConnectionActionsMapping.AddOrUpdate(action);
+					}
+				});
 			}
 		}
 

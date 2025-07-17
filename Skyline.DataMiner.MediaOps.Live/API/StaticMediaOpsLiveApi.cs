@@ -20,17 +20,17 @@
 		}
 
 		/// <summary>
-		/// Forces the initialization of the static MediaOpsLiveApi instance.
+		/// Sets the static MediaOpsLiveApi instance.
 		/// For unit tests or scenarios where you want to ensure the API is initialized with a specific connection.
 		/// </summary>
-		public static void Initialize(MediaOpsLiveApi api)
+		public static void SetInstance(MediaOpsLiveApi api)
 		{
 			if (api == null)
 			{
 				throw new ArgumentNullException(nameof(api));
 			}
 
-			_staticApi.Initialize(api);
+			_staticApi.SetValue(api);
 		}
 
 		private static MediaOpsLiveApi CreateStaticApi(IConnection connection)
