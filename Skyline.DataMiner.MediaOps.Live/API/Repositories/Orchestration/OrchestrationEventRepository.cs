@@ -237,6 +237,16 @@
 			}
 		}
 
+		/// <summary>
+		///     Start execution for an event, based on ID.
+		/// </summary>
+		/// <param name="orchestrationEvents">The events to execute.</param>
+		public void ExecuteEventsNow(IEnumerable<OrchestrationEvent> orchestrationEvents)
+		{
+			var eventConfigs = GetEventsAsEventConfigurations(orchestrationEvents);
+			ExecuteEventsNow(eventConfigs.Values);
+		}
+
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsInTimeRange(DateTime start, DateTime end)
 		{
 			DateTime localStart = start.ToUniversalTime();
@@ -386,23 +396,35 @@
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				if (events == null)
-				{
-					throw new ArgumentNullException(nameof(events));
-				}
-
-				IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
-				List<Guid> instancesToRetrieve = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID).ToList();
-
-				IDictionary<Guid, Configuration> configurationMapping = GetConfigurationInstances(instancesToRetrieve);
-
-				return orchestrationEvents
-					.ToDictionary(
-						x => x.ID,
-						x => x.ToOrchestrationEventConfiguration(configurationMapping.TryGetValue(x.ConfigurationReference.GetValueOrDefault(), out Configuration configuration)
-							? configuration.DomInstance
-							: new DomInstance()));
+				return GetEventsAsEventConfigurations(events);
 			}
+		}
+
+		/// <summary>
+		///     Convert a collection of <see cref="OrchestrationEvent" /> objects to <see cref="OrchestrationEventConfiguration" />
+		///     objects by retrieving configuration data from DataMiner.
+		/// </summary>
+		/// <param name="events">The <see cref="OrchestrationEvent" /> objects to convert.</param>
+		/// <returns>A mapping of each event ID to the converted <see cref="OrchestrationEventConfiguration" /> object.</returns>
+		/// <exception cref="ArgumentNullException">Events can not be null.</exception>
+		private Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
+		{
+			if (events == null)
+			{
+				throw new ArgumentNullException(nameof(events));
+			}
+
+			IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
+			List<Guid> instancesToRetrieve = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID).ToList();
+
+			IDictionary<Guid, Configuration> configurationMapping = GetConfigurationInstances(instancesToRetrieve);
+
+			return orchestrationEvents
+				.ToDictionary(
+					x => x.ID,
+					x => x.ToOrchestrationEventConfiguration(configurationMapping.TryGetValue(x.ConfigurationReference.GetValueOrDefault(), out Configuration configuration)
+						? configuration.DomInstance
+						: new ConfigurationInstance()));
 		}
 
 		/// <summary>

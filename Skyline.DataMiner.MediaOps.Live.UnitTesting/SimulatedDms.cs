@@ -1,12 +1,14 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
 
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Net.Messages.Advanced;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
 
 	public sealed class SimulatedDms
@@ -27,6 +29,18 @@
 			return _agents.GetOrAdd(
 				dmaId,
 				id => new SimulatedDma(this, id));
+		}
+
+		public IEnumerable<SimulatedSchedulerTask> GetAllDmsSchedulerTasks()
+		{
+			List<SimulatedSchedulerTask> tasks = new List<SimulatedSchedulerTask>();
+
+			foreach (KeyValuePair<int, SimulatedDma> simulatedDma in _agents)
+			{
+				tasks.AddRange(simulatedDma.Value.Scheduler.Tasks.Values.ToList());
+			}
+
+			return tasks;
 		}
 
 		public IConnection CreateConnection()
@@ -78,6 +92,26 @@
 					return true;
 
 				case GetPartialTableMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				case SetSchedulerInfoMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				case GetInfoMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				case AsyncMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				case GetDataMinerByIDMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				case GetAgentBuildInfo msg:
 					responses = HandleMessage(msg);
 					return true;
 
@@ -133,6 +167,119 @@
 					NewValue = table.ToParameterValue(),
 				};
 			}
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(SetSchedulerInfoMessage msg)
+		{
+			if (Agents.TryGetValue(msg.DataMinerID, out var dma))
+			{
+				int returnId;
+				if (msg.What == 3) // Delete
+				{
+					dma.Scheduler.Tasks.Remove(msg.Info);
+					returnId = 0;
+				}
+				else
+				{
+					var info = msg.Ppsa.Ppsa;
+					var generalInfo = info[0].Psa;
+					var firstArgument = Convert.ToString(generalInfo[0].Sa[0]);
+
+					returnId = !Int32.TryParse(firstArgument, out int taskId) ? dma.Scheduler.GetFirstAvailableId() : taskId;
+					dma.Scheduler.Tasks[returnId] = new SimulatedSchedulerTask(dma.Scheduler, msg);
+				}
+
+				yield return new SetSchedulerInfoResponseMessage
+				{
+					iRet = returnId,
+				};
+			}
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(GetInfoMessage msg)
+		{
+			switch (msg.Type)
+			{
+				case InfoType.SchedulerTasks:
+					return HandleSchedulerTaskInfoMessage();
+
+				case InfoType.DataMinerInfo:
+					return HandleDataMinerInfoMessage();
+
+				default:
+					throw new NotSupportedException("Not Supported");
+			}
+		}
+
+		private IEnumerable<DMSMessage> HandleSchedulerTaskInfoMessage()
+		{
+			List<SimulatedSchedulerTask> allDmsTasks = [];
+			foreach (KeyValuePair<int, SimulatedDma> dma in Agents)
+			{
+				allDmsTasks.AddRange(dma.Value.Scheduler.Tasks.Values);
+			}
+
+			yield return new GetSchedulerTasksResponseMessage
+			{
+				Tasks = new ArrayList(allDmsTasks.Select(task => task.ToSchedulerTaskInfo()).ToList()),
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(AsyncMessage msg)
+		{
+			yield return new AsyncMessageStartResponse(msg.Cookie);
+
+			/*List<DMSMessage> allResponses = [];
+			if (msg.Requests != null && msg.Requests.Any())
+			{
+				foreach (var item in msg.Requests)
+				{
+					TryHandleMessage(item, out IEnumerable<DMSMessage> responses);
+					allResponses.AddRange(responses);
+				}
+			}
+
+			yield return new AsyncResponseEvent(msg.Cookie, allResponses.ToArray());*/
+
+			/*yield return new AsyncProgressResponseEvent
+			{
+				Cookie = msg.Cookie,
+				Response = allResponses.ToArray(),
+			};*/
+		}
+
+		private IEnumerable<DMSMessage> HandleDataMinerInfoMessage()
+		{
+			foreach (KeyValuePair<int, SimulatedDma> simulatedDma in Agents)
+			{
+				yield return new GetDataMinerInfoResponseMessage
+				{
+					ID = simulatedDma.Key,
+				};
+			}
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(GetDataMinerByIDMessage msg)
+		{
+			yield return new GetDataMinerInfoResponseMessage
+			{
+				ComputerName = $"SimulatedHost{msg.ID}",
+				Name = $"Simulated Agent {msg.ID}",
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(GetAgentBuildInfo msg)
+		{
+			yield return new BuildInfoResponse
+			{
+				Agents = new[]
+				{
+					new BuildInfoAgent
+					{
+						RawVersion = "10.5.6",
+					}
+				},
+			};
 		}
 	}
 }

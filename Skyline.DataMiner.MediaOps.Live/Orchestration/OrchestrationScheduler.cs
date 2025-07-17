@@ -45,7 +45,9 @@
 
 			AsyncProgress progress = _connection.Async.Launch(getSchedulerTaskInfoMessage);
 
-			AsyncResponseEvent result = progress.WaitForAsyncResponse(5 * 60);
+			/*var pool = AsyncResponseHandler*/
+
+			AsyncResponseEvent result = progress.WaitForAsyncResponse(/*5 * 60*/5);
 
 			if (result == null || !result.Messages.Any())
 			{
