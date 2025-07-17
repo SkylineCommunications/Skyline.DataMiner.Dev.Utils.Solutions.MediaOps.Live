@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation
+﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers
 {
 	using System;
 	using System.Collections.Generic;
@@ -22,7 +22,7 @@
 				throw new ArgumentNullException(nameof(connection));
 			}
 
-			if (String.IsNullOrEmpty(scriptName))
+			if (string.IsNullOrEmpty(scriptName))
 			{
 				throw new ArgumentException($"'{nameof(scriptName)}' cannot be null or empty.", nameof(scriptName));
 			}
@@ -61,7 +61,7 @@
 				throw new ArgumentNullException(nameof(engine));
 			}
 
-			if (String.IsNullOrEmpty(scriptName))
+			if (string.IsNullOrEmpty(scriptName))
 			{
 				throw new ArgumentException($"'{nameof(scriptName)}' cannot be null or empty.", nameof(scriptName));
 			}
@@ -93,7 +93,7 @@
 
 				if (subScript.HadError)
 				{
-					throw new InvalidOperationException(String.Join(@"\r\n", subScript.GetErrorMessages()));
+					throw new InvalidOperationException(string.Join(@"\r\n", subScript.GetErrorMessages()));
 				}
 			}
 		}
@@ -123,7 +123,7 @@
 			var elementKey = element.DmsElementId.Value;
 			var script = Convert.ToString(mediationElement.GetParameterByPrimaryKey(1003, elementKey));
 
-			if (String.IsNullOrEmpty(script))
+			if (string.IsNullOrEmpty(script))
 			{
 				throw new InvalidOperationException($"No connection handler script found for element '{elementKey}'.");
 			}

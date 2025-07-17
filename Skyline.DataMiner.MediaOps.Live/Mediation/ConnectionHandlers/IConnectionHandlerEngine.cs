@@ -4,7 +4,6 @@
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 
 	public interface IConnectionHandlerEngine
 	{
@@ -12,8 +11,8 @@
 
 		MediaOpsLiveApi Api { get; }
 
-		void RegisterConnection(ConnectionInfo connectionInfo);
+		void RegisterConnection(ConnectionUpdate connection);
 
-		void RegisterConnections(ICollection<ConnectionInfo> connectionInfos);
+		void RegisterConnections(ICollection<ConnectionUpdate> connections);
 	}
 }

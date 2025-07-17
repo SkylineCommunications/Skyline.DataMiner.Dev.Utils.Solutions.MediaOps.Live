@@ -11,7 +11,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Mediation;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
@@ -239,7 +238,7 @@
 				var dms = _api.Connection.GetDms();
 
 				GetDestinationElements(dms, takeContexts, performanceTracker);
-				GetMediationElements(dms, takeContexts, performanceTracker);
+				GetMediationElements(takeContexts, performanceTracker);
 				FindConnectionHandlerScripts(takeContexts, performanceTracker);
 			}
 		}
@@ -273,11 +272,11 @@
 			}
 		}
 
-		private void GetMediationElements(IDms dms, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void GetMediationElements(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var allMediationElements = MediationElement.GetAllMediationElements(dms).ToList();
+				var allMediationElements = _api.MediationElements.AllElements;
 
 				foreach (var group in takeContexts.GroupBy(x => x.DestinationElement.Host))
 				{
@@ -335,22 +334,14 @@
 						var request = new Mediation.InterApp.Messages.PendingConnectionAction
 						{
 							Time = now,
-							Destination = new Mediation.InterApp.Messages.EndpointInfo
-							{
-								ID = connection.Destination.ID,
-								Name = connection.Destination.Name,
-							},
+							Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
 						};
 
 						switch (action)
 						{
 							case ScriptAction.Connect:
 								request.Action = Mediation.InterApp.Messages.ConnectionAction.Connect;
-								request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo
-								{
-									ID = connection.Source.ID,
-									Name = connection.Source.Name,
-								};
+								request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(connection.Source);
 								break;
 							case ScriptAction.Disconnect:
 								request.Action = Mediation.InterApp.Messages.ConnectionAction.Disconnect;
@@ -392,13 +383,17 @@
 						case ScriptAction.Connect:
 							request = new CreateConnectionsRequest
 							{
-								Connections = group.Select(x => ConnectionInfo.Create(x.Source, x.Destination)).ToArray(),
+								Connections = group
+									.Select(x => new Mediation.Data.ConnectionInfo(x.Source, x.Destination))
+									.ToArray(),
 							};
 							break;
 						case ScriptAction.Disconnect:
 							request = new DisconnectDestinationsRequest
 							{
-								Destinations = group.Select(x => EndpointInfo.Create(x.Destination)).ToArray(),
+								Destinations = group
+									.Select(x => new Mediation.Data.EndpointInfo(x.Destination))
+									.ToArray(),
 							};
 							break;
 						default:
@@ -420,21 +415,15 @@
 		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
+			using (var connectionMonitor = CreateConnectionMonitor(performanceTracker))
 			{
-				var connectionsMonitor = new ConnectionMonitor(connectivityInfoProvider);
+				var tasks = takeContexts.Select(takeContext =>
+					Task.Factory.StartNew(
+						() => WaitUntilConnected(takeContext, connectionMonitor, performanceTracker),
+						TaskCreationOptions.LongRunning))
+					.ToArray();
 
-				var tasks = new List<Task<bool>>();
-
-				foreach (var takeContext in takeContexts)
-				{
-					var task = Task.Run(
-						() => WaitUntilConnected(takeContext, connectionsMonitor, performanceTracker));
-
-					tasks.Add(task);
-				}
-
-				var results = Task.WhenAll(tasks).Result;
+				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
 				var failedCount = results.Count(x => !x);
 
 				if (failedCount > 0)
@@ -447,7 +436,6 @@
 		private bool WaitUntilConnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
 			{
 				performanceTracker.AddMetadata("Source", takeContext.Source.Name);
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
@@ -462,21 +450,15 @@
 		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
+			using (var connectionMonitor = CreateConnectionMonitor(performanceTracker))
 			{
-				var connectionMonitor = new ConnectionMonitor(connectivityInfoProvider);
+				var tasks = takeContexts.Select(takeContext =>
+						Task.Factory.StartNew(
+							() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker),
+							TaskCreationOptions.LongRunning))
+						.ToArray();
 
-				var tasks = new List<Task<bool>>();
-
-				foreach (var takeContext in takeContexts)
-				{
-					var task = Task.Run(
-						() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker));
-
-					tasks.Add(task);
-				}
-
-				var results = Task.WhenAll(tasks).Result;
+				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
 				var failedCount = results.Count(x => !x);
 
 				if (failedCount > 0)
@@ -489,13 +471,20 @@
 		private bool WaitUntilDisconnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectivityInfoProvider = new ConnectivityInfoProvider(_api, subscribe: true))
 			{
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
 
 				return connectionMonitor.WaitUntilDisconnected(
 					takeContext.Destination,
 					_timeout);
+			}
+		}
+
+		private ConnectionMonitor CreateConnectionMonitor(PerformanceTracker performanceTracker)
+		{
+			using (new PerformanceTracker(performanceTracker))
+			{
+				return new ConnectionMonitor(_api);
 			}
 		}
 	}

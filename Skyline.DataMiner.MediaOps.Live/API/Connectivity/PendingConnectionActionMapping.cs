@@ -6,11 +6,13 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 
 	internal sealed class PendingConnectionActionMapping
 	{
-		private readonly ManyToManyMapping<PendingConnectionAction, ApiObjectReference<Endpoint>> _mapping = new();
+		private readonly ManyToManyMapping<PendingConnectionAction, ApiObjectReference<Endpoint>> _mapping =
+			new(PropertyComparer<PendingConnectionAction>.Create(x => x.Destination));
 
 		public int PendingConnectionActionCount => _mapping.Forward.Count;
 
@@ -39,7 +41,7 @@
 		{
 			var actions = GetPendingConnectionActions(destination);
 
-			return actions.Any(x => x.Action == PendingConnectionAction.PendingActionType.Connect &&
+			return actions.Any(x => x.Action == PendingConnectionActionType.Connect &&
 				x.Destination == destination &&
 				x.PendingSource == source);
 		}
@@ -48,7 +50,7 @@
 		{
 			var actions = GetPendingConnectionActions(destination);
 
-			return actions.Any(x => x.Action == PendingConnectionAction.PendingActionType.Disconnect &&
+			return actions.Any(x => x.Action == PendingConnectionActionType.Disconnect &&
 				x.Destination == destination);
 		}
 

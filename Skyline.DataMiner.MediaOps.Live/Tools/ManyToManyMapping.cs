@@ -7,10 +7,23 @@
 	{
 		#region Private Fields
 
-		private readonly Dictionary<Ta, ICollection<Tb>> _forwardMapping = new Dictionary<Ta, ICollection<Tb>>();
-		private readonly Dictionary<Tb, ICollection<Ta>> _reverseMapping = new Dictionary<Tb, ICollection<Ta>>();
+		private readonly IEqualityComparer<Ta> _forwardComparer;
+		private readonly IEqualityComparer<Tb> _reverseComparer;
+		private readonly Dictionary<Ta, ICollection<Tb>> _forwardMapping;
+		private readonly Dictionary<Tb, ICollection<Ta>> _reverseMapping;
 
 		#endregion
+
+		public ManyToManyMapping(
+			IEqualityComparer<Ta> forwardComparer = null,
+			IEqualityComparer<Tb> reverseComparer = null)
+		{
+			_forwardComparer = forwardComparer ?? EqualityComparer<Ta>.Default;
+			_reverseComparer = reverseComparer ?? EqualityComparer<Tb>.Default;
+
+			_forwardMapping = new Dictionary<Ta, ICollection<Tb>>(forwardComparer);
+			_reverseMapping = new Dictionary<Tb, ICollection<Ta>>(reverseComparer);
+		}
 
 		#region Public Properties
 
@@ -43,7 +56,7 @@
 
 			if (!_forwardMapping.TryGetValue(a, out var listA))
 			{
-				listA = new List<Tb>() { b };
+				listA = new HashSet<Tb>(_reverseComparer) { b };
 				_forwardMapping.Add(a, listA);
 			}
 			else
@@ -55,7 +68,7 @@
 
 			if (!_reverseMapping.TryGetValue(b, out var listB))
 			{
-				listB = new List<Ta>() { a };
+				listB = new HashSet<Ta>(_forwardComparer) { a };
 				_reverseMapping.Add(b, listB);
 			}
 			else

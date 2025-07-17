@@ -115,6 +115,10 @@
 					responses = HandleMessage(msg);
 					return true;
 
+				case SetDataMinerInfoMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
 				default:
 					responses = [];
 					return false;
@@ -193,6 +197,66 @@
 				{
 					iRet = returnId,
 				};
+			}
+			else
+			{
+				throw new InvalidOperationException($"Element with ID {msg.ElementID} not found in DMA {msg.DataMinerID} or table with ID {msg.ParameterID} not found.");
+			}
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(SetDataMinerInfoMessage msg)
+		{
+			switch ((NotifyType)msg.What)
+			{
+				case NotifyType.GetKeyPosition:
+					{
+						var ids = (int[])msg.Var1;
+						var key = (string)msg.Var2;
+
+						if (Agents.TryGetValue(ids[0], out var dma) &&
+							dma.Elements.TryGetValue(ids[1], out var element) &&
+							element.Tables.TryGetValue(ids[2], out var table))
+						{
+							var index = table.Rows.Keys.ToList().IndexOf(key);
+
+							yield return new SetDataMinerInfoResponseMessage
+							{
+								RawData = index + 1,
+							};
+						}
+						else
+						{
+							throw new InvalidOperationException($"Element with ID {ids[1]} not found in DMA {ids[0]} or table with ID {ids[2]} not found.");
+						}
+					}
+
+					break;
+
+				case NotifyType.NT_GET_ROW:
+					{
+						var var1 = (object[])msg.Var1;
+
+						if (Agents.TryGetValue((int)var1[0], out var dma) &&
+							dma.Elements.TryGetValue((int)var1[1], out var element) &&
+							element.Tables.TryGetValue((int)var1[2], out var table))
+						{
+							table.Rows.TryGetValue((string)var1[3], out var row);
+
+							yield return new SetDataMinerInfoResponseMessage
+							{
+								RawData = row,
+							};
+						}
+						else
+						{
+							throw new InvalidOperationException($"Element with ID {var1[1]} not found in DMA {var1[0]} or table with ID {var1[2]} not found.");
+						}
+					}
+
+					break;
+
+				default:
+					throw new NotSupportedException($"NotifyType '{msg.What}' is not supported.");
 			}
 		}
 

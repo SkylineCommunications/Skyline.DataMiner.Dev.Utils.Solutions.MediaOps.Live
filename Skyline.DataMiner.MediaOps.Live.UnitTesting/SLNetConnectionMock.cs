@@ -115,6 +115,36 @@
 				new NewMessageEventArgs(eventWithSetIds));
 		}
 
+		private void SendInitialEvents(string subscriptionSetId, ICollection<SubscriptionFilter> filters)
+		{
+			foreach (var filter in filters)
+			{
+				if (filter.Options.HasFlag(SubscriptionFilterOptions.SkipInitialEvents))
+				{
+					continue;
+				}
+
+				switch (filter)
+				{
+					case SubscriptionFilterParameter filterParameter:
+						if (filterParameter.ToTypeObject() == typeof(ParameterTableUpdateEventMessage) &&
+							Dms.Agents.TryGetValue(filterParameter.DmaID, out var dma) &&
+							dma.Elements.TryGetValue(filterParameter.ElementID, out var element) &&
+							element.Tables.TryGetValue(filterParameter.ParameterID, out var table))
+						{
+							var initialEvent = new ParameterChangeEventMessage(filterParameter.DmaID, filterParameter.ElementID, filterParameter.ParameterID)
+							{
+								NewValue = table.ToParameterValue(),
+							};
+
+							InvokeOnNewMessageEvent(subscriptionSetId, initialEvent);
+						}
+
+						break;
+				}
+			}
+		}
+
 		#region IConnection implementation
 
 		/// <inheritdoc/>
@@ -205,11 +235,16 @@
 		/// <inheritdoc/>
 		public CreateSubscriptionResponseMessage Subscribe(params SubscriptionFilter[] filters)
 		{
-			var subscription = _subscriptions.GetOrAdd(String.Empty, x => new SubscriptionSet(x));
-
-			foreach (var filter in filters)
+			if (filters.Length > 0)
 			{
-				subscription.Filters.TryAdd(filter);
+				var subscriptionSet = _subscriptions.GetOrAdd(String.Empty, x => new SubscriptionSet(x));
+
+				foreach (var filter in filters)
+				{
+					subscriptionSet.Filters.TryAdd(filter);
+				}
+
+				SendInitialEvents(String.Empty, filters);
 			}
 
 			return new CreateSubscriptionResponseMessage()
@@ -227,22 +262,29 @@
 		/// <inheritdoc/>
 		public void AddSubscription(string setID, params SubscriptionFilter[] newFilters)
 		{
-			var subscription = _subscriptions.GetOrAdd(setID, x => new SubscriptionSet(x));
+			if (newFilters.Length == 0)
+			{
+				return;
+			}
+
+			var subscriptionSet = _subscriptions.GetOrAdd(setID, x => new SubscriptionSet(x));
 
 			foreach (var filter in newFilters)
 			{
-				subscription.Filters.TryAdd(filter);
+				subscriptionSet.Filters.TryAdd(filter);
 			}
+
+			SendInitialEvents(setID, newFilters);
 		}
 
 		/// <inheritdoc/>
 		public void RemoveSubscription(string setID, params SubscriptionFilter[] deletedFilters)
 		{
-			var subscription = _subscriptions.GetOrAdd(setID, x => new SubscriptionSet(x));
+			var subscriptionSet = _subscriptions.GetOrAdd(setID, x => new SubscriptionSet(x));
 
 			foreach (var filter in deletedFilters)
 			{
-				subscription.Filters.TryRemove(filter);
+				subscriptionSet.Filters.TryRemove(filter);
 			}
 		}
 

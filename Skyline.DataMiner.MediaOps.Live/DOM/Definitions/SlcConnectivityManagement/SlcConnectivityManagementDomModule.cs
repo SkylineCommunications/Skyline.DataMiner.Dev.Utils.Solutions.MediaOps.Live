@@ -33,7 +33,6 @@
 			new EndpointDefinition(),
 			new LevelDefinition(),
 			new VirtualSignalGroupDefinition(),
-			new ConnectionDefinition(),
 		};
 	}
 }

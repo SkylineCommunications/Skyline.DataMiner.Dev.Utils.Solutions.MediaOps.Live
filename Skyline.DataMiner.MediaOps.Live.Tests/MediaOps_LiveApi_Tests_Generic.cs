@@ -1,5 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
+	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.GQI.Metrics;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
 	[TestClass]
@@ -15,6 +17,22 @@
 			simulation = new MediaOpsLiveSimulation(installDomModules: true);
 
 			Assert.IsTrue(simulation.Api.IsInstalled());
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConstructorDoesNotExecuteRequest()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var connection = simulation.Dms.CreateConnection();
+			var interceptedConnection = new ConnectionInterceptor(connection);
+
+			var connectionMetrics = new ConnectionMetrics(interceptedConnection);
+			new MediaOpsLiveApi(interceptedConnection);
+
+			// MediaOpsLiveApi constructor should not execute any requests
+			Assert.AreEqual(0UL, connectionMetrics.NumberOfRequests);
+			Assert.AreEqual(0UL, connectionMetrics.NumberOfDomRequests);
+			Assert.AreEqual(0UL, connectionMetrics.NumberOfDomInstancesRetrieved);
 		}
 	}
 }

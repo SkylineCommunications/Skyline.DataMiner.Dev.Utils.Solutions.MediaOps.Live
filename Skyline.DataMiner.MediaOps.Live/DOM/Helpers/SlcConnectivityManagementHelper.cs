@@ -254,86 +254,6 @@
 
 		#endregion
 
-		#region Connections
-
-		public IEnumerable<ConnectionInstance> GetAllConnections()
-		{
-			var filter = DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Connection.Id);
-
-			return GetConnectionsIterator(filter);
-		}
-
-		public IEnumerable<ConnectionInstance> GetConnections(FilterElement<DomInstance> filter)
-		{
-			if (filter == null)
-			{
-				throw new ArgumentNullException(nameof(filter));
-			}
-
-			return GetConnectionsIterator(filter);
-		}
-
-		public IDictionary<Guid, ConnectionInstance> GetConnections(IEnumerable<Guid> ids)
-		{
-			if (ids == null)
-			{
-				throw new ArgumentNullException(nameof(ids));
-			}
-
-			FilterElement<DomInstance> CreateFilter(Guid id) =>
-				DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Connection.Id)
-				.AND(DomInstanceExposers.Id.Equal(id));
-
-			return FilterQueryExecutor.RetrieveFilteredItems(
-					ids,
-					x => CreateFilter(x),
-					x => GetConnections(x))
-				.SafeToDictionary(x => x.ID.Id);
-		}
-
-		public ConnectionInstance GetConnection(Guid id)
-		{
-			var filter = DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Connection.Id)
-				.AND(DomInstanceExposers.Id.Equal(id));
-
-			return GetConnections(filter).FirstOrDefault();
-		}
-
-		public IDictionary<Guid, ConnectionInstance> GetConnectionsForDestinations(IEnumerable<Guid> destinationEndpointIds)
-		{
-			if (destinationEndpointIds == null)
-			{
-				throw new ArgumentNullException(nameof(destinationEndpointIds));
-			}
-
-			FilterElement<DomInstance> CreateFilter(Guid destinationEndpointId) =>
-				DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Connection.Id)
-				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.ConnectionInfo.Destination).Equal(destinationEndpointId));
-
-			return FilterQueryExecutor.RetrieveFilteredItems(
-					destinationEndpointIds,
-					x => CreateFilter(x),
-					x => GetConnections(x))
-				.SafeToDictionary(x => (Guid)x.ConnectionInfo.Destination);
-		}
-
-		public IDictionary<Guid, ConnectionInstance> GetConnectionsForDestinations(IEnumerable<EndpointInstance> destinationEndpoints)
-		{
-			if (destinationEndpoints == null)
-			{
-				throw new ArgumentNullException(nameof(destinationEndpoints));
-			}
-
-			return GetConnectionsForDestinations(destinationEndpoints.Select(x => x.ID.Id));
-		}
-
-		public ConnectionInstance GetConnectionForDestination(Guid destinationEndpointId)
-		{
-			return GetConnectionsForDestinations(new[] { destinationEndpointId }).Values.SingleOrDefault();
-		}
-
-		#endregion
-
 		#region Iterators
 
 		private IEnumerable<TransportTypeInstance> GetTransportTypeIterator(FilterElement<DomInstance> filter)
@@ -354,11 +274,6 @@
 		private IEnumerable<VirtualSignalGroupInstance> GetVirtualSignalGroupsIterator(FilterElement<DomInstance> filter)
 		{
 			return InstanceFactory.ReadAndCreateInstances(DomHelper, filter, x => new VirtualSignalGroupInstance(x));
-		}
-
-		private IEnumerable<ConnectionInstance> GetConnectionsIterator(FilterElement<DomInstance> filter)
-		{
-			return InstanceFactory.ReadAndCreateInstances(DomHelper, filter, x => new ConnectionInstance(x));
 		}
 
 		#endregion

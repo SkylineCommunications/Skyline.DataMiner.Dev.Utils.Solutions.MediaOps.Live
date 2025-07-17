@@ -7,118 +7,51 @@
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
-	using Skyline.DataMiner.Utils.DOM.Extensions;
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
-		private readonly object _lock = new object();
-
 		public ConnectionHandlerEngine(IEngine engine)
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
-			Api = new MediaOpsLiveApi(engine.GetUserConnection());
+			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw);
+			Api.SetEngine(engine);
 		}
 
 		public IEngine Engine { get; }
 
 		public MediaOpsLiveApi Api { get; }
 
-		protected SlcConnectivityManagementHelper Helper => Api.SlcConnectivityManagementHelper;
-
-		public void RegisterConnection(ConnectionInfo connectionInfo)
+		public void RegisterConnection(ConnectionUpdate connection)
 		{
-			if (connectionInfo == null)
+			if (connection == null)
 			{
-				throw new ArgumentNullException(nameof(connectionInfo));
+				throw new ArgumentNullException(nameof(connection));
 			}
 
-			RegisterConnections([connectionInfo]);
+			RegisterConnections([connection]);
 		}
 
-		public void RegisterConnections(ICollection<ConnectionInfo> connectionInfos)
+		public void RegisterConnections(ICollection<ConnectionUpdate> connections)
 		{
-			if (connectionInfos == null)
+			if (connections == null)
 			{
-				throw new ArgumentNullException(nameof(connectionInfos));
+				throw new ArgumentNullException(nameof(connections));
 			}
 
-			UpdateDomConnections(connectionInfos);
-			NotifyPendingConnectionActions(connectionInfos);
+			Engine.GenerateInformation($"Registering {connections.Count} connections...");
+
+			NotifyConnectionChanges(connections);
 		}
 
-		private void UpdateDomConnections(ICollection<ConnectionInfo> connectionInfos)
-		{
-			lock (_lock)
-			{
-				var destinationEndpointIds = connectionInfos.Select(x => x.DestinationEndpoint.ID).ToList();
-				var connectionsByDestination = Helper.GetConnectionsForDestinations(destinationEndpointIds);
-
-				var updatedConnections = new List<ConnectionInstance>();
-
-				foreach (var connectionInfo in connectionInfos)
-				{
-					var hasChanges = false;
-
-					if (!connectionsByDestination.TryGetValue(connectionInfo.DestinationEndpoint.ID, out var connection))
-					{
-						connection = CreateNewConnection(connectionInfo.DestinationEndpoint.ID);
-						connectionsByDestination.Add(connectionInfo.DestinationEndpoint.ID, connection);
-						hasChanges = true;
-					}
-
-					hasChanges |= ApplyConnectionUpdate(connection, connectionInfo.SourceEndpoint?.ID);
-
-					if (hasChanges)
-					{
-						updatedConnections.Add(connection);
-					}
-				}
-
-				if (updatedConnections.Count > 0)
-				{
-					Engine.GenerateInformation($"Updating {updatedConnections.Count} connections...");
-					Helper.DomHelper.DomInstances.CreateOrUpdateInBatches(updatedConnections.Select(x => x.ToInstance())).ThrowOnFailure();
-				}
-			}
-		}
-
-		private static ConnectionInstance CreateNewConnection(Guid destinationEndpointId)
-		{
-			return new ConnectionInstance
-			{
-				ConnectionInfo = new ConnectionInfoSection
-				{
-					Destination = destinationEndpointId,
-					IsConnected = false,
-				},
-			};
-		}
-
-		private static bool ApplyConnectionUpdate(ConnectionInstance connection, Guid? sourceEndpointId)
-		{
-			var wasConnected = connection.ConnectionInfo.IsConnected;
-			var previousSource = connection.ConnectionInfo.ConnectedSource;
-
-			connection.ConnectionInfo.IsConnected = sourceEndpointId != null;
-			connection.ConnectionInfo.ConnectedSource = sourceEndpointId;
-
-			return wasConnected != connection.ConnectionInfo.IsConnected ||
-				   previousSource != connection.ConnectionInfo.ConnectedSource;
-		}
-
-		private void NotifyPendingConnectionActions(ICollection<ConnectionInfo> connectionInfos)
+		private void NotifyConnectionChanges(ICollection<ConnectionUpdate> connections)
 		{
 			var now = DateTimeOffset.Now;
 
-			var mediationElementMap = MediationElement.GetMediationElements(
-				Api,
-				connectionInfos.Select(x => x.DestinationEndpoint));
+			var mediationElementMap = Api.MediationElements.GetMediationElements(
+				connections.Select(x => x.DestinationEndpoint));
 
-			foreach (var group in connectionInfos
+			foreach (var group in connections
 				.Where(x => mediationElementMap.ContainsKey(x.DestinationEndpoint))
 				.GroupBy(x => mediationElementMap[x.DestinationEndpoint]))
 			{
@@ -131,20 +64,13 @@
 					var request = new InterApp.Messages.ConnectionChange
 					{
 						Time = now,
-						Destination = new InterApp.Messages.EndpointInfo
-						{
-							ID = connection.DestinationEndpoint.ID,
-							Name = connection.DestinationEndpoint.Name,
-						},
+						Destination = new InterApp.Messages.EndpointInfo(connection.DestinationEndpoint),
+						IsConnected = connection.IsConnected,
 					};
 
 					if (connection.SourceEndpoint != null)
 					{
-						request.ConnectedSource = new InterApp.Messages.EndpointInfo
-						{
-							ID = connection.SourceEndpoint.ID,
-							Name = connection.SourceEndpoint.Name,
-						};
+						request.ConnectedSource = new InterApp.Messages.EndpointInfo(connection.SourceEndpoint);
 					}
 
 					requests.Add(request);
@@ -156,7 +82,7 @@
 				commands.Messages.Add(message);
 
 				commands.Send(
-					Engine.GetUserConnection(),
+					Api.Connection,
 					mediationElement.DmaId,
 					mediationElement.ElementId,
 					9000000,

@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Tools
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
 	using System;
 	using System.Collections.Generic;
@@ -6,11 +6,13 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 
 	public class ConnectionEndpointsMapping
 	{
-		private readonly ManyToManyMapping<Connection, ApiObjectReference<Endpoint>> _mapping = new();
+		private readonly ManyToManyMapping<Connection, ApiObjectReference<Endpoint>> _mapping =
+			new (PropertyComparer<Connection>.Create(x => x.Destination));
 
 		public int ConnectionCount => _mapping.Forward.Count;
 
