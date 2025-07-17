@@ -1,7 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
 {
 	using System;
-	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
@@ -21,8 +20,6 @@
 	{
 		private readonly SimulatedDms _dms;
 		private readonly IConnection _connection;
-
-		private readonly ConcurrentDictionary<Guid, ConnectionData> _testConnections = new();
 
 		public MediaOpsLiveSimulation(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false, bool createElements = true)
 		{
@@ -66,13 +63,6 @@
 			};
 
 			connectionsTable.SetRow(rowKey, row);
-
-			var connectionData = _testConnections.GetOrAdd(destination.ID, d => new ConnectionData(d));
-			connectionData.IsConnected = source != null;
-			connectionData.ConnectedSource = source?.ID;
-
-			simulatedElement.Parameters[MediationElement.ConnectionsDataPid]
-				.SetValue(ConnectionData.ToJson(_testConnections.Values));
 		}
 
 		public void CreateTestPendingConnectionAction(
@@ -105,13 +95,6 @@
 			};
 
 			pendingActionsTable.SetRow(rowKey, row);
-
-			var connectionData = _testConnections.GetOrAdd(destination.ID, d => new ConnectionData(d));
-			connectionData.PendingAction = action;
-			connectionData.PendingSource = pendingSource?.ID;
-
-			simulatedElement.Parameters[MediationElement.ConnectionsDataPid]
-				.SetValue(ConnectionData.ToJson(_testConnections.Values));
 		}
 
 		public void ClearTestPendingConnectionAction(Endpoint destination)
@@ -131,13 +114,6 @@
 
 			var rowKey = Convert.ToString(destination.ID);
 			pendingActionsTable.DeleteRow(rowKey);
-
-			var connectionData = _testConnections.GetOrAdd(destination.ID, d => new ConnectionData(d));
-			connectionData.PendingAction = null;
-			connectionData.PendingSource = null;
-
-			simulatedElement.Parameters[MediationElement.ConnectionsDataPid]
-				.SetValue(ConnectionData.ToJson(_testConnections.Values));
 		}
 
 		private void Initialize(bool installDomModules, bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
@@ -263,7 +239,6 @@
 			var element = Dms.GetOrCreateAgent(dmaId)
 				.CreateElement(elementId, name, "Skyline MediaOps Mediation");
 
-			element.CreateStandaloneParameter(MediationElement.ConnectionsDataPid);
 			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
 			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
 			element.CreateTable(MediationElement.ConnectionsTableId);

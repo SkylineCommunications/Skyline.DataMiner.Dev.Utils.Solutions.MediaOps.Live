@@ -9,7 +9,6 @@
 
 	public sealed class MediationElement
 	{
-		public static readonly int ConnectionsDataPid = 50;
 		public static readonly int ConnectionHandlerScriptsTableId = 1000;
 		public static readonly int PendingConnectionActionsTableId = 3000;
 		public static readonly int ConnectionsTableId = 5000;
