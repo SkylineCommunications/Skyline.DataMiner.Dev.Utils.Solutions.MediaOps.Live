@@ -113,7 +113,8 @@
 							throw new InvalidOperationException($"Couldn't find destination endpoint for level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
 						}
 
-						var request = new ConnectionRequest(vsgConnectionRequest.ID, sourceEndpoint, destinationEndpoint);
+						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint) { MetaData = vsgConnectionRequest.MetaData };
+
 						connectionRequests.Add(request);
 					}
 				}
@@ -137,7 +138,7 @@
 
 				if (_waitForCompletion)
 				{
-					WaitUntilAllConnected(takeContexts, performanceTracker);
+					WaitUntilAllConnected(connectionRequests, performanceTracker);
 				}
 			}
 		}
@@ -226,7 +227,7 @@
 
 				if (_waitForCompletion)
 				{
-					WaitUntilAllDisconnected(takeContexts, performanceTracker);
+					WaitUntilAllDisconnected(disconnectRequests, performanceTracker);
 				}
 			}
 		}
@@ -412,70 +413,84 @@
 			}
 		}
 
-		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void WaitUntilAllConnected(ICollection<ConnectionRequest> requests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			using (var connectionMonitor = CreateConnectionMonitor(performanceTracker))
 			{
-				var tasks = takeContexts.Select(takeContext =>
+				var tasks = requests.Select(request =>
 					Task.Factory.StartNew(
-						() => WaitUntilConnected(takeContext, connectionMonitor, performanceTracker),
+						() => WaitUntilConnected(request, connectionMonitor, performanceTracker),
 						TaskCreationOptions.LongRunning))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
-				var failedCount = results.Count(x => !x);
 
-				if (failedCount > 0)
+				var failedRequests = requests
+					.Zip(results, (request, result) => new { request, result })
+					.Where(x => !x.result)
+					.Select(x => x.request)
+					.ToList();
+
+				if (failedRequests.Count > 0)
 				{
-					throw new TimeoutException($"Failed to connect {failedCount} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
+					throw new ConnectFailedException(
+						$"Failed to connect {failedRequests.Count} connections within the specified timeout of {_timeout.TotalSeconds} seconds.",
+						failedRequests);
 				}
 			}
 		}
 
-		private bool WaitUntilConnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		private bool WaitUntilConnected(ConnectionRequest request, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				performanceTracker.AddMetadata("Source", takeContext.Source.Name);
-				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
+				performanceTracker.AddMetadata("Source", request.Source.Name);
+				performanceTracker.AddMetadata("Destination", request.Destination.Name);
 
 				return connectionMonitor.WaitUntilConnected(
-					takeContext.Source,
-					takeContext.Destination,
+					request.Source,
+					request.Destination,
 					_timeout);
 			}
 		}
 
-		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void WaitUntilAllDisconnected(ICollection<DisconnectRequest> requests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			using (var connectionMonitor = CreateConnectionMonitor(performanceTracker))
 			{
-				var tasks = takeContexts.Select(takeContext =>
+				var tasks = requests.Select(request =>
 						Task.Factory.StartNew(
-							() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker),
+							() => WaitUntilDisconnected(request, connectionMonitor, performanceTracker),
 							TaskCreationOptions.LongRunning))
 						.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
-				var failedCount = results.Count(x => !x);
 
-				if (failedCount > 0)
+				var failedRequests = requests
+					.Zip(results, (request, result) => new { request, result })
+					.Where(x => !x.result)
+					.Select(x => x.request)
+					.ToList();
+
+				if (failedRequests.Count > 0)
 				{
-					throw new TimeoutException($"Failed to disconnect {failedCount} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
+					throw new DisconnectFailedException(
+						$"Failed to disconnect {failedRequests.Count} connections within the specified timeout of {_timeout.TotalSeconds} seconds.",
+						failedRequests);
 				}
 			}
 		}
 
-		private bool WaitUntilDisconnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		private bool WaitUntilDisconnected(DisconnectRequest request, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
+				performanceTracker.AddMetadata("Destination", request.Destination.Name);
 
 				return connectionMonitor.WaitUntilDisconnected(
-					takeContext.Destination,
+					request.Destination,
 					_timeout);
 			}
 		}

@@ -34,17 +34,13 @@
 			LevelMappings = levelMappings;
 		}
 
-		public VsgConnectionRequest(string id, VirtualSignalGroup source, VirtualSignalGroup destination, ICollection<LevelMapping> levelMappings = null) : this (source, destination, levelMappings)
-		{
-			ID = id;
-		}
-
-		public string ID { get; }
 
 		public VirtualSignalGroup Source { get; }
 
 		public VirtualSignalGroup Destination { get; }
 
 		public ICollection<LevelMapping> LevelMappings { get; }
+
+		public object MetaData { get; set; }
 	}
 }

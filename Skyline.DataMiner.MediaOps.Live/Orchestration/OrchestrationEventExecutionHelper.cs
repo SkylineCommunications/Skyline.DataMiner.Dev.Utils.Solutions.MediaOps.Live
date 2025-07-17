@@ -260,7 +260,10 @@
 							allInvolvedLevels.FirstOrDefault(level => level.Number == map.Source.Number),
 							allInvolvedLevels.FirstOrDefault(level => level.Number == map.Destination.Number))).ToList();
 
-						requests.Add(new VsgConnectionRequest(eventId.ToString(), srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings));
+						requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings)
+						{
+							MetaData = eventId,
+						});
 					}
 				}
 
