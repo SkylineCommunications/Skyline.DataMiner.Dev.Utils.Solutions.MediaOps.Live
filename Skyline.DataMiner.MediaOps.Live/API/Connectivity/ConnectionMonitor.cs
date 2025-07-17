@@ -1,30 +1,24 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
 	using System;
-	using System.Collections.Concurrent;
 	using System.Collections.Generic;
-	using System.Linq;
 	using System.Threading;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 
 	public sealed class ConnectionMonitor : IDisposable
 	{
 		private readonly MediaOpsLiveApi _api;
-		private readonly ICollection<ConnectionSubscription> _subscriptions = [];
-
-		private readonly ConcurrentDictionary<ApiObjectReference<Endpoint>, Connection> _cache = new();
+		private readonly LiteConnectivityInfoProvider _connectivityInfoProvider;
 
 		public ConnectionMonitor(MediaOpsLiveApi api)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 
-			Initialize();
+			_connectivityInfoProvider = new LiteConnectivityInfoProvider(api);
+			_connectivityInfoProvider.Subscribe();
 		}
-
-		private event EventHandler<ConnectionsChangedEvent> ConnectionsChanged;
 
 		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
 		{
@@ -38,23 +32,17 @@
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
-			bool Condition(Connection connection) =>
-				connection != null &&
-				connection.Destination == destination &&
-				connection.IsConnected &&
-				connection.ConnectedSource == source;
-
-			if (TryGetCachedConnection(destination, out var connection) &&
-				Condition(connection))
+			if (_connectivityInfoProvider.IsConnected(source, destination))
 			{
 				return true;
 			}
 
 			using var mre = new ManualResetEventSlim(false);
 
-			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
+			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> e)
 			{
-				if (e.UpdatedConnections.Any(Condition))
+				if ((e.Contains(source) || e.Contains(destination)) &&
+					_connectivityInfoProvider.IsConnected(source, destination))
 				{
 					mre.Set();
 				}
@@ -62,16 +50,10 @@
 
 			try
 			{
-				ConnectionsChanged += ConnectionEventHandler;
-
-				if (mre.Wait(500))
-				{
-					// Wait a bit for an event.
-					return true;
-				}
+				_connectivityInfoProvider.ConnectionsChanged += ConnectionEventHandler;
 
 				// Fallback for when we missed the event.
-				if (IsConnected(source, destination))
+				if (_connectivityInfoProvider.IsConnected(source, destination))
 				{
 					mre.Set();
 				}
@@ -80,7 +62,7 @@
 			}
 			finally
 			{
-				ConnectionsChanged -= ConnectionEventHandler;
+				_connectivityInfoProvider.ConnectionsChanged -= ConnectionEventHandler;
 			}
 		}
 
@@ -91,23 +73,17 @@
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
-			bool Condition(Connection connection) =>
-				connection != null &&
-				connection.Destination == destination &&
-				!connection.IsConnected;
-
-			if (TryGetCachedConnection(destination, out var connection) &&
-				Condition(connection))
+			if (!_connectivityInfoProvider.IsConnected(destination))
 			{
 				return true;
 			}
 
 			using var mre = new ManualResetEventSlim(false);
 
-			void ConnectionEventHandler(object s, ConnectionsChangedEvent e)
+			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> e)
 			{
-				if (e.DeletedConnections.Contains(destination) ||
-					e.UpdatedConnections.Any(Condition))
+				if (e.Contains(destination) &&
+					!_connectivityInfoProvider.IsConnected(destination))
 				{
 					mre.Set();
 				}
@@ -115,102 +91,25 @@
 
 			try
 			{
-				ConnectionsChanged += ConnectionEventHandler;
-
-				if (mre.Wait(500))
-				{
-					// Wait a bit for an event.
-					return true;
-				}
+				_connectivityInfoProvider.ConnectionsChanged += ConnectionEventHandler;
 
 				// Fallback for when we missed the event.
-				if (!IsConnected(destination))
+				if (!_connectivityInfoProvider.IsConnected(destination))
 				{
-					mre.Set();
+					return true;
 				}
 
 				return mre.Wait(timeout);
 			}
 			finally
 			{
-				ConnectionsChanged -= ConnectionEventHandler;
+				_connectivityInfoProvider.ConnectionsChanged -= ConnectionEventHandler;
 			}
 		}
 
 		public void Dispose()
 		{
-			foreach (var subscription in _subscriptions)
-			{
-				subscription.Changed -= OnConnectionsChanged;
-				subscription.Dispose();
-			}
-
-			_subscriptions.Clear();
-		}
-
-		private void Initialize()
-		{
-			foreach (var element in _api.MediationElements.AllElements)
-			{
-				var connectionSubscription = element.CreateConnectionSubscription();
-				_subscriptions.Add(connectionSubscription);
-
-				connectionSubscription.Changed += OnConnectionsChanged;
-				connectionSubscription.Subscribe();
-			}
-		}
-
-		private bool IsConnected(ApiObjectReference<Endpoint> destination)
-		{
-			return TryGetConnection(destination, out var connection) &&
-				connection.IsConnected;
-		}
-
-		private bool IsConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
-		{
-			return TryGetConnection(destination, out var connection) &&
-				connection.IsConnected &&
-				connection.ConnectedSource == source;
-		}
-
-		private bool TryGetCachedConnection(ApiObjectReference<Endpoint> destination, out Connection connection)
-		{
-			return _cache.TryGetValue(destination, out connection) && connection != null;
-		}
-
-		private bool TryGetConnection(ApiObjectReference<Endpoint> destination, out Connection connection)
-		{
-			if (TryGetCachedConnection(destination, out connection))
-			{
-				return true;
-			}
-
-			foreach (var element in _api.MediationElements.AllElements)
-			{
-				if (element.TryGetConnection(destination, out var foundConnection))
-				{
-					connection = foundConnection;
-					return true;
-				}
-			}
-
-			connection = null;
-			return false;
-		}
-
-		private void OnConnectionsChanged(object sender, ConnectionsChangedEvent e)
-		{
-			foreach (var item in e.DeletedConnections)
-			{
-				_cache.TryRemove(item, out var _);
-			}
-
-			foreach (var item in e.UpdatedConnections)
-			{
-				_cache[item.Destination] = item;
-			}
-
-			ConnectionsChanged?.Invoke(sender, e);
+			_connectivityInfoProvider?.Dispose();
 		}
 	}
 }
