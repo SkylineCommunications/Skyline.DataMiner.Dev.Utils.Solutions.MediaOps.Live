@@ -676,7 +676,7 @@
 			{
 				var mediationElements = Api.MediationElements.AllElements;
 
-				var connections = mediationElements.SelectMany(x => x.GetConnections()).ToList();
+				var connections = mediationElements.SelectMany(x => x.GetConnections());
 
 				foreach (var connection in connections)
 				{
@@ -684,7 +684,7 @@
 					_connectionEndpointsMapping.AddOrUpdate(connection);
 				}
 
-				var pendingConnectionActions = mediationElements.SelectMany(x => x.GetPendingConnectionActions()).ToList();
+				var pendingConnectionActions = mediationElements.SelectMany(x => x.GetPendingConnectionActions());
 
 				foreach (var action in pendingConnectionActions)
 				{

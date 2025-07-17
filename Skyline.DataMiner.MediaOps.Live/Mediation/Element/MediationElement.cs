@@ -41,7 +41,7 @@
 			return new PendingConnectionActionSubscription(_api, this);
 		}
 
-		public ICollection<PendingConnectionAction> GetPendingConnectionActions()
+		public IEnumerable<PendingConnectionAction> GetPendingConnectionActions()
 		{
 			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
 			{
@@ -49,10 +49,10 @@
 			}
 
 			var tableData = DmsElement.GetTable(PendingConnectionActionsTableId).GetData();
-			return tableData.Values.Select(x => new PendingConnectionAction(x)).ToList();
+			return tableData.Values.Select(x => new PendingConnectionAction(x));
 		}
 
-		public ICollection<Connection> GetConnections()
+		public IEnumerable<Connection> GetConnections()
 		{
 			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
 			{
@@ -60,7 +60,7 @@
 			}
 
 			var tableData = DmsElement.GetTable(ConnectionsTableId).GetData();
-			return tableData.Values.Select(x => new Connection(x)).ToList();
+			return tableData.Values.Select(x => new Connection(x));
 		}
 
 		public bool TryGetConnection(Guid destinationEndpointId, out Connection connection)
