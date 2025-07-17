@@ -24,12 +24,7 @@
 			Levels = levels;
 		}
 
-		public VsgDisconnectRequest(string id, VirtualSignalGroup destination, ICollection<ApiObjectReference<Level>> levelMappings = null) : this(destination, levelMappings)
-		{
-			ID = id;
-		}
-
-		public string ID { get; }
+		public object MetaData { get; set; }
 
 		public VirtualSignalGroup Destination { get; }
 

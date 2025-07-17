@@ -32,8 +32,6 @@
 			Destination = destination;
 		}
 
-		public string ID { get; }
-
 		public Endpoint Source { get; }
 
 		public Endpoint Destination { get; }

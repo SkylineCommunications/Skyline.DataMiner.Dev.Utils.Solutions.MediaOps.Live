@@ -203,7 +203,7 @@
 							throw new InvalidOperationException($"Couldn't find endpoint with ID '{levelEndpoint.Endpoint.ID}'");
 						}
 
-						var request = new DisconnectRequest(vsgDisconnectRequest.ID, destinationEndpoint);
+						var request = new DisconnectRequest(destinationEndpoint) { MetaData = vsgDisconnectRequest.MetaData };
 						disconnectRequests.Add(request);
 					}
 				}

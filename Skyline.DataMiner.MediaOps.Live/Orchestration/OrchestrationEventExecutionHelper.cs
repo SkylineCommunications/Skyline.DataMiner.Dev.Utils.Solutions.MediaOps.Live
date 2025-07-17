@@ -138,8 +138,34 @@
 					eventConfigurationsWithConnection.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 				}
 
-				ExecuteDisconnects(disconnectsToConfigureByEvent, performanceTracker);
-				ExecuteConnections(connectionsToConfigureByEvent, performanceTracker);
+				try
+				{
+					ExecuteConnections(connectionsToConfigureByEvent, performanceTracker);
+				}
+				catch (ConnectFailedException e)
+				{
+					var eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					{
+						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+					}
+				}
+
+				try
+				{
+					ExecuteDisconnects(disconnectsToConfigureByEvent, performanceTracker);
+				}
+				catch (DisconnectFailedException e)
+				{
+					var eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					{
+						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+					}
+				}
+
 				foreach (OrchestrationEventConfiguration eventConfiguration in eventConfigurations.Where(e => e.ActualStartTime != null))
 				{
 					eventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - eventConfiguration.ActualStartTime;
@@ -196,7 +222,10 @@
 							continue;
 						}
 
-						requests.Add(new VsgDisconnectRequest(eventId.ToString(), dstVirtualSignalGroup, allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID)).ToHashSet()));
+						requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup, allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID)).ToHashSet())
+						{
+							MetaData = eventId,
+						});
 					}
 				}
 

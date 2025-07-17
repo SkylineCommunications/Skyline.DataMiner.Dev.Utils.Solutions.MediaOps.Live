@@ -21,12 +21,7 @@
 			Destination = destination;
 		}
 
-		public DisconnectRequest(string id, Endpoint destination) : this(destination)
-		{
-			ID = id;
-		}
-
-		public string ID { get; }
+		public object MetaData { get; set; }
 
 		public Endpoint Destination { get; }
 	}
