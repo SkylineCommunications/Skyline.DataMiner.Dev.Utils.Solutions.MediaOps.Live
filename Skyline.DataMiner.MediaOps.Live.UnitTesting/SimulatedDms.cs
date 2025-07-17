@@ -103,10 +103,6 @@
 					responses = HandleMessage(msg);
 					return true;
 
-				case AsyncMessage msg:
-					responses = HandleMessage(msg);
-					return true;
-
 				case GetDataMinerByIDMessage msg:
 					responses = HandleMessage(msg);
 					return true;
@@ -171,6 +167,10 @@
 					NewValue = table.ToParameterValue(),
 				};
 			}
+			else
+			{
+				throw new InvalidOperationException($"Element with ID {msg.ElementID} not found in DMA {msg.DataMinerID} or table with ID {msg.ParameterID} not found.");
+			}
 		}
 
 		private IEnumerable<DMSMessage> HandleMessage(SetSchedulerInfoMessage msg)
@@ -197,10 +197,6 @@
 				{
 					iRet = returnId,
 				};
-			}
-			else
-			{
-				throw new InvalidOperationException($"Element with ID {msg.ElementID} not found in DMA {msg.DataMinerID} or table with ID {msg.ParameterID} not found.");
 			}
 		}
 
@@ -289,29 +285,6 @@
 			};
 		}
 
-		private IEnumerable<DMSMessage> HandleMessage(AsyncMessage msg)
-		{
-			yield return new AsyncMessageStartResponse(msg.Cookie);
-
-			/*List<DMSMessage> allResponses = [];
-			if (msg.Requests != null && msg.Requests.Any())
-			{
-				foreach (var item in msg.Requests)
-				{
-					TryHandleMessage(item, out IEnumerable<DMSMessage> responses);
-					allResponses.AddRange(responses);
-				}
-			}
-
-			yield return new AsyncResponseEvent(msg.Cookie, allResponses.ToArray());*/
-
-			/*yield return new AsyncProgressResponseEvent
-			{
-				Cookie = msg.Cookie,
-				Response = allResponses.ToArray(),
-			};*/
-		}
-
 		private IEnumerable<DMSMessage> HandleDataMinerInfoMessage()
 		{
 			foreach (KeyValuePair<int, SimulatedDma> simulatedDma in Agents)
@@ -341,7 +314,8 @@
 					new BuildInfoAgent
 					{
 						RawVersion = "10.5.6",
-					}
+						DataMinerID = msg.DataMinerID,
+					},
 				},
 			};
 		}

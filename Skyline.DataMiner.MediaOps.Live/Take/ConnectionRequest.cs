@@ -32,6 +32,13 @@
 			Destination = destination;
 		}
 
+		public ConnectionRequest(string id, Endpoint source, Endpoint destination) : this(source, destination)
+		{
+			ID = id;
+		}
+
+		public string ID { get; }
+
 		public Endpoint Source { get; }
 
 		public Endpoint Destination { get; }

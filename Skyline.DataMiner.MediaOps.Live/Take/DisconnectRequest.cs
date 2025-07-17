@@ -21,6 +21,13 @@
 			Destination = destination;
 		}
 
+		public DisconnectRequest(string id, Endpoint destination) : this(destination)
+		{
+			ID = id;
+		}
+
+		public string ID { get; }
+
 		public Endpoint Destination { get; }
 	}
 }

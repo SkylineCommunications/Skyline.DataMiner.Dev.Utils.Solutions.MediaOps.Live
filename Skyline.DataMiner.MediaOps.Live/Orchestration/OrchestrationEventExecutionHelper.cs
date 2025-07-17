@@ -121,25 +121,25 @@
 				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = eventConfigurations
 					.Where(orchestrationEventConfiguration => orchestrationEventConfiguration?.Configuration?.Connections != null && orchestrationEventConfiguration.Configuration.Connections.Any()).ToList();
 
-				List<Connection> connectionsToConfigure = [];
-				List<Connection> disconnectsToConfigure = [];
+				Dictionary<Guid, List<Connection>> connectionsToConfigureByEvent = [];
+				Dictionary<Guid, List<Connection>> disconnectsToConfigureByEvent = [];
 
 				foreach (OrchestrationEventConfiguration eventConfigurationsWithConnection in eventConfigurationsWithConnections)
 				{
 					if (eventConfigurationsWithConnection.IsStartEvent)
 					{
-						connectionsToConfigure.AddRange(eventConfigurationsWithConnection.Configuration.Connections);
+						connectionsToConfigureByEvent.Add(eventConfigurationsWithConnection.ID, eventConfigurationsWithConnection.Configuration.Connections.ToList());
 					}
 					else
 					{
-						disconnectsToConfigure.AddRange(eventConfigurationsWithConnection.Configuration.Connections);
+						disconnectsToConfigureByEvent.Add(eventConfigurationsWithConnection.ID, eventConfigurationsWithConnection.Configuration.Connections.ToList());
 					}
 
 					eventConfigurationsWithConnection.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 				}
 
-				ExecuteDisconnects(disconnectsToConfigure, performanceTracker);
-				ExecuteConnections(connectionsToConfigure, performanceTracker);
+				ExecuteDisconnects(disconnectsToConfigureByEvent, performanceTracker);
+				ExecuteConnections(connectionsToConfigureByEvent, performanceTracker);
 				foreach (OrchestrationEventConfiguration eventConfiguration in eventConfigurations.Where(e => e.ActualStartTime != null))
 				{
 					eventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - eventConfiguration.ActualStartTime;
@@ -147,22 +147,23 @@
 			}
 		}
 
-		private void ExecuteDisconnects(List<Connection> disconnects, PerformanceTracker performanceTracker)
+		private void ExecuteDisconnects(Dictionary<Guid, List<Connection>> disconnectsPerId, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				if (!disconnects.Any())
+				if (!disconnectsPerId.Any())
 				{
 					return;
 				}
 
-				TakeHelper takeHelper = new TakeHelper(_api);
+				TakeHelper takeHelper = new(_api);
+				takeHelper.ConfigureWaitForCompletion(true, TimeSpan.FromSeconds(5));
 
 				List<VsgDisconnectRequest> requests = [];
 
 				HashSet<Guid> allInvolvedVsgIds = [];
 				HashSet<int> allInvolvedLevelNumbers = [];
-				foreach (Connection connection in disconnects)
+				foreach (Connection connection in disconnectsPerId.SelectMany(kv => kv.Value))
 				{
 					allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
 
@@ -179,42 +180,47 @@
 
 				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
 
-				ORFilterElement<DomInstance> filter = new ORFilterElement<DomInstance>(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
+				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
 
-				foreach (Connection connection in disconnects)
+				foreach (KeyValuePair<Guid, List<Connection>> keyValuePair in disconnectsPerId)
 				{
-					VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
-
-					if (connection.LevelMappings == null || !connection.LevelMappings.Any())
+					Guid eventId = keyValuePair.Key;
+					foreach (Connection connection in keyValuePair.Value)
 					{
-						requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup));
-						continue;
-					}
+						VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
 
-					requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup, allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID)).ToHashSet()));
+						if (connection.LevelMappings == null || !connection.LevelMappings.Any())
+						{
+							requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup));
+							continue;
+						}
+
+						requests.Add(new VsgDisconnectRequest(eventId.ToString(), dstVirtualSignalGroup, allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID)).ToHashSet()));
+					}
 				}
 
 				takeHelper.Disconnect(requests, performanceTracker.Collector);
 			}
 		}
 
-		private void ExecuteConnections(List<Connection> connections, PerformanceTracker performanceTracker)
+		private void ExecuteConnections(Dictionary<Guid, List<Connection>> connectionsPerEventId, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (new PerformanceTracker(performanceTracker))
 			{
-				if (!connections.Any())
+				if (!connectionsPerEventId.Any())
 				{
 					return;
 				}
 
-				TakeHelper takeHelper = new TakeHelper(_api);
+				TakeHelper takeHelper = new(_api);
+				takeHelper.ConfigureWaitForCompletion(true, TimeSpan.FromSeconds(5));
 
 				List<VsgConnectionRequest> requests = [];
 
 				HashSet<Guid> allInvolvedVsgIds = [];
 				HashSet<int> allInvolvedLevelNumbers = [];
-				foreach (Connection connection in connections)
+				foreach (Connection connection in connectionsPerEventId.SelectMany(kv => kv.Value))
 				{
 					allInvolvedVsgIds.Add(connection.SourceVsg.Value.ID);
 					allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
@@ -233,25 +239,29 @@
 
 				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
 
-				ORFilterElement<DomInstance> filter = new ORFilterElement<DomInstance>(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
+				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
 
-				foreach (Connection connection in connections)
+				foreach (KeyValuePair<Guid, List<Connection>> keyValuePair in connectionsPerEventId)
 				{
-					VirtualSignalGroup srcVirtualSignalGroup = allInvolvedVsgs[connection.SourceVsg.Value.ID];
-					VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
-
-					if (connection.LevelMappings == null || !connection.LevelMappings.Any())
+					Guid eventId = keyValuePair.Key;
+					foreach (Connection connection in keyValuePair.Value)
 					{
-						requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup));
-						continue;
+						VirtualSignalGroup srcVirtualSignalGroup = allInvolvedVsgs[connection.SourceVsg.Value.ID];
+						VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
+
+						if (connection.LevelMappings == null || !connection.LevelMappings.Any())
+						{
+							requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup));
+							continue;
+						}
+
+						List<Take.LevelMapping> levelMappings = connection.LevelMappings.Select(map => new Take.LevelMapping(
+							allInvolvedLevels.FirstOrDefault(level => level.Number == map.Source.Number),
+							allInvolvedLevels.FirstOrDefault(level => level.Number == map.Destination.Number))).ToList();
+
+						requests.Add(new VsgConnectionRequest(eventId.ToString(), srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings));
 					}
-
-					List<Take.LevelMapping> levelMappings = connection.LevelMappings.Select(map => new Take.LevelMapping(
-						allInvolvedLevels.FirstOrDefault(level => level.Number == map.Source.Number),
-						allInvolvedLevels.FirstOrDefault(level => level.Number == map.Destination.Number))).ToList();
-
-					requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings));
 				}
 
 				takeHelper.Take(requests, performanceTracker.Collector);
@@ -262,7 +272,7 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
+				ConcurrentHashSet<string> errors = new();
 				List<Task> nodeOrchestrationTasks = [];
 
 				foreach (NodeConfiguration nodeConfiguration in orchestrationEventConfiguration.Configuration.NodeConfigurations)
@@ -333,7 +343,7 @@
 					.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
 					.ToList();
 
-				DmsAutomationScriptRunOptions scriptOptions = new DmsAutomationScriptRunOptions
+				DmsAutomationScriptRunOptions scriptOptions = new()
 				{
 					ExtendedErrorInfo = true,
 				};

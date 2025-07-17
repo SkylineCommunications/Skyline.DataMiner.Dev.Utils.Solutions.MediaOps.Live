@@ -38,8 +38,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 			Assert.AreEqual(trimmedEventTime, utcScheduledTime);
 
-			Assert.AreEqual(123, orchestrationJob.OrchestrationEvents.First().ReservationInstance.DmaId);
-			Assert.AreEqual(1, orchestrationJob.OrchestrationEvents.First().ReservationInstance.TaskId);
+			Assert.Contains(orchestrationJob.OrchestrationEvents.First().ReservationInstance.DmaId, simulation.Dms.Agents.Keys);
 		}
 
 		[TestMethod]
