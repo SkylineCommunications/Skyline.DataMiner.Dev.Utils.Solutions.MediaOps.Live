@@ -2,14 +2,14 @@
 {
 	using System;
 
-	public class StaticInit<T>
+	public static class Singleton<T>
 	{
-		private readonly object _lock = new object();
+		private static readonly object _lock = new();
 
-		private T _value;
-		private bool _initialized;
+		private static T _value;
+		private static volatile bool _initialized;
 
-		public bool IsInitialized
+		public static bool IsInitialized
 		{
 			get
 			{
@@ -20,7 +20,7 @@
 			}
 		}
 
-		public T GetOrInitialize(Func<T> factory)
+		public static T GetOrInitialize(Func<T> factory)
 		{
 			if (!_initialized)
 			{
@@ -37,7 +37,7 @@
 			return _value;
 		}
 
-		public void SetValue(T value)
+		public static void SetValue(T value)
 		{
 			lock (_lock)
 			{
@@ -46,7 +46,7 @@
 			}
 		}
 
-		public void Reset()
+		public static void Reset()
 		{
 			lock (_lock)
 			{
