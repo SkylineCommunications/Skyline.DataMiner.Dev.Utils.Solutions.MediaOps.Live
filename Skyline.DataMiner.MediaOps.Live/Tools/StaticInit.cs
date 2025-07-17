@@ -36,5 +36,28 @@
 
 			return _value;
 		}
+
+		public void Initialize(T value)
+		{
+			lock (_lock)
+			{
+				if (_initialized)
+				{
+					throw new InvalidOperationException("Value has already been initialized.");
+				}
+
+				_value = value;
+				_initialized = true;
+			}
+		}
+
+		public void Reset()
+		{
+			lock (_lock)
+			{
+				_initialized = false;
+				_value = default!;
+			}
+		}
 	}
 }

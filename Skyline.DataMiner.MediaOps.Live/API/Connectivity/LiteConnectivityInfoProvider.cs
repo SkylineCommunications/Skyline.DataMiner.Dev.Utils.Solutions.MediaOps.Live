@@ -27,10 +27,7 @@
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 
-			if (subscribe)
-			{
-				Subscribe();
-			}
+			Initialize(subscribe);
 		}
 
 		public event EventHandler<ICollection<ApiObjectReference<Endpoint>>> ConnectionsChanged;
@@ -118,6 +115,17 @@
 		public void Dispose()
 		{
 			Unsubscribe();
+		}
+
+		private void Initialize(bool subscribe)
+		{
+			lock (_lock)
+			{
+				if (subscribe)
+				{
+					Subscribe();
+				}
+			}
 		}
 
 		private void Connections_OnChanged(object sender, ConnectionsChangedEvent e)

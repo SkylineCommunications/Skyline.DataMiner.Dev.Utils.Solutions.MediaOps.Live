@@ -36,13 +36,6 @@
 			}
 		}
 
-		public Connection(ApiObjectReference<Endpoint> destination, bool isConnected, ApiObjectReference<Endpoint>? source)
-		{
-			Destination = destination;
-			IsConnected = isConnected;
-			ConnectedSource = source;
-		}
-
 		public ApiObjectReference<Endpoint> Destination { get; }
 
 		public string DestinationName { get; }

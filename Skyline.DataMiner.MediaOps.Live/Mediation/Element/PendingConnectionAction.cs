@@ -40,13 +40,6 @@
 			}
 		}
 
-		internal PendingConnectionAction(ApiObjectReference<Endpoint> destination, PendingConnectionActionType connectionAction, ApiObjectReference<Endpoint>? pendingSource)
-		{
-			Destination = destination;
-			Action = connectionAction;
-			PendingSource = pendingSource;
-		}
-
 		public PendingConnectionActionType Action { get; }
 
 		public DateTime Time { get; }

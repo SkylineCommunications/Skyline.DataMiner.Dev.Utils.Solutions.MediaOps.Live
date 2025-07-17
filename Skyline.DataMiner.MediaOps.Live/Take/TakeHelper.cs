@@ -20,6 +20,7 @@
 		private readonly MediaOpsLiveApi _api;
 
 		private bool _waitForCompletion = false;
+		private ConnectionMonitor _connectionMonitor;
 		private TimeSpan _timeout;
 
 		public TakeHelper(MediaOpsLiveApi api)
@@ -27,15 +28,27 @@
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
 
-		public void ConfigureWaitForCompletion(bool waitForCompletion, TimeSpan timeout)
+		public void EnableWaitForCompletion(ConnectionMonitor connectionMonitor, TimeSpan timeout)
 		{
+			if (connectionMonitor is null)
+			{
+				throw new ArgumentNullException(nameof(connectionMonitor));
+			}
+
 			if (timeout < TimeSpan.Zero)
 			{
 				throw new ArgumentException("Timeout cannot be negative.", nameof(timeout));
 			}
 
-			_waitForCompletion = waitForCompletion;
+			_connectionMonitor = connectionMonitor;
 			_timeout = timeout;
+			_waitForCompletion = true;
+		}
+
+		public void DisableWaitForCompletion()
+		{
+			_waitForCompletion = false;
+			_connectionMonitor = null;
 		}
 
 		public void Take(ICollection<ConnectionRequest> connectionRequests, PerformanceCollector performanceCollector)
@@ -415,11 +428,10 @@
 		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectionMonitor = CreateConnectionMonitor(performanceTracker))
 			{
 				var tasks = takeContexts.Select(takeContext =>
 					Task.Factory.StartNew(
-						() => WaitUntilConnected(takeContext, connectionMonitor, performanceTracker),
+						() => WaitUntilConnected(takeContext, performanceTracker),
 						TaskCreationOptions.LongRunning))
 					.ToArray();
 
@@ -433,14 +445,14 @@
 			}
 		}
 
-		private bool WaitUntilConnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		private bool WaitUntilConnected(ConnectionOperationContext takeContext, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				performanceTracker.AddMetadata("Source", takeContext.Source.Name);
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
 
-				return connectionMonitor.WaitUntilConnected(
+				return _connectionMonitor.WaitUntilConnected(
 					takeContext.Source,
 					takeContext.Destination,
 					_timeout);
@@ -450,11 +462,10 @@
 		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var connectionMonitor = CreateConnectionMonitor(performanceTracker))
 			{
 				var tasks = takeContexts.Select(takeContext =>
 						Task.Factory.StartNew(
-							() => WaitUntilDisconnected(takeContext, connectionMonitor, performanceTracker),
+							() => WaitUntilDisconnected(takeContext, performanceTracker),
 							TaskCreationOptions.LongRunning))
 						.ToArray();
 
@@ -468,23 +479,15 @@
 			}
 		}
 
-		private bool WaitUntilDisconnected(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, PerformanceTracker performanceTracker)
+		private bool WaitUntilDisconnected(ConnectionOperationContext takeContext, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
 
-				return connectionMonitor.WaitUntilDisconnected(
+				return _connectionMonitor.WaitUntilDisconnected(
 					takeContext.Destination,
 					_timeout);
-			}
-		}
-
-		private ConnectionMonitor CreateConnectionMonitor(PerformanceTracker performanceTracker)
-		{
-			using (new PerformanceTracker(performanceTracker))
-			{
-				return new ConnectionMonitor(_api);
 			}
 		}
 	}

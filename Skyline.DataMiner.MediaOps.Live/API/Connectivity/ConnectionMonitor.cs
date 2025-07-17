@@ -21,14 +21,7 @@
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 
-			foreach (var element in api.MediationElements.AllElements)
-			{
-				var connectionSubscription = element.CreateConnectionSubscription();
-				_subscriptions.Add(connectionSubscription);
-
-				connectionSubscription.Changed += OnConnectionsChanged;
-				connectionSubscription.Subscribe();
-			}
+			Initialize();
 		}
 
 		private event EventHandler<ConnectionsChangedEvent> ConnectionsChanged;
@@ -153,6 +146,18 @@
 			}
 
 			_subscriptions.Clear();
+		}
+
+		private void Initialize()
+		{
+			foreach (var element in _api.MediationElements.AllElements)
+			{
+				var connectionSubscription = element.CreateConnectionSubscription();
+				_subscriptions.Add(connectionSubscription);
+
+				connectionSubscription.Changed += OnConnectionsChanged;
+				connectionSubscription.Subscribe();
+			}
 		}
 
 		private bool IsConnected(ApiObjectReference<Endpoint> destination)
