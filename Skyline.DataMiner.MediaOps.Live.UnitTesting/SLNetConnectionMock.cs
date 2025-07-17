@@ -384,7 +384,7 @@
 		{
 			Unsubscribe();
 
-			AsyncProgress test = AsyncProgress2.CreateInstance(null, null, 0, null, null, 0);
+			AsyncProgress test = AsyncProgressBuilder.CreateInstance(null, null, 0, null, null, 0);
 		}
 
 		#endregion

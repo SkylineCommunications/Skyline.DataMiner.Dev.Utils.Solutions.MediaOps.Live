@@ -59,7 +59,6 @@
 			return left.Equals(right);
 		}
 
-
 		/// <summary>
 		/// Operator for comparison.
 		/// </summary>

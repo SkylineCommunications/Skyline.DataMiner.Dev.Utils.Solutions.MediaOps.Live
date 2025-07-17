@@ -23,7 +23,7 @@
 
 		public AsyncProgress Launch(params DMSMessage[] messages)
 		{
-			AsyncProgress progress = AsyncProgress2.CreateInstance(this, messages, 0, null, null, 250);
+			AsyncProgress progress = AsyncProgressBuilder.CreateInstance(this, messages, 0, null, null, 250);
 
 			AsyncResponseEvent response = new()
 			{
@@ -38,7 +38,7 @@
 
 		public AsyncProgress Launch(DMSMessage message, AsyncResponseEventHandler onCompleteHandler = null, AsyncProgressEventHandler onProgressHandler = null, int pageSize = 250)
 		{
-			AsyncProgress progress = AsyncProgress2.CreateInstance(this, new[]{message}, 0, onCompleteHandler, onProgressHandler, pageSize);
+			AsyncProgress progress = AsyncProgressBuilder.CreateInstance(this, new[]{message}, 0, onCompleteHandler, onProgressHandler, pageSize);
 
 			AsyncResponseEvent response = new()
 			{
@@ -103,7 +103,7 @@
 		public IConnection Connection { get; }
 	}
 
-	public class AsyncProgress2
+	public class AsyncProgressBuilder
 	{
 		public static AsyncProgress CreateInstance(
 			IAsyncMessageHandler parent,

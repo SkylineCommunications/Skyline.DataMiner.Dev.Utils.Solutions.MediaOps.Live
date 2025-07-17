@@ -171,6 +171,10 @@
 					NewValue = table.ToParameterValue(),
 				};
 			}
+			else
+			{
+				throw new InvalidOperationException($"Element with ID {msg.ElementID} not found in DMA {msg.DataMinerID} or table with ID {msg.ParameterID} not found.");
+			}
 		}
 
 		private IEnumerable<DMSMessage> HandleMessage(SetSchedulerInfoMessage msg)
@@ -197,10 +201,6 @@
 				{
 					iRet = returnId,
 				};
-			}
-			else
-			{
-				throw new InvalidOperationException($"Element with ID {msg.ElementID} not found in DMA {msg.DataMinerID} or table with ID {msg.ParameterID} not found.");
 			}
 		}
 
