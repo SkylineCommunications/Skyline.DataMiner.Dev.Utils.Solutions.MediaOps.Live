@@ -49,13 +49,8 @@
 				return [];
 			}
 
-			var json = DmsElement.GetStandaloneParameter<string>(ConnectionsDataPid).GetValue();
-			var connectionsData = ConnectionData.FromJson(json);
-
-			return connectionsData
-				.Where(x => x.PendingAction.HasValue)
-				.Select(x => new PendingConnectionAction(x.Destination, x.PendingAction.Value, x.PendingSource))
-				.ToList();
+			var tableData = DmsElement.GetTable(PendingConnectionActionsTableId).GetData();
+			return tableData.Values.Select(x => new PendingConnectionAction(x)).ToList();
 		}
 
 		public ICollection<Connection> GetConnections()
@@ -65,13 +60,8 @@
 				return [];
 			}
 
-			var json = DmsElement.GetStandaloneParameter<string>(ConnectionsDataPid).GetValue();
-			var connectionsData = ConnectionData.FromJson(json);
-
-			return connectionsData
-				.Where(x => x.IsConnected)
-				.Select(x => new Connection(x.Destination, x.IsConnected, x.ConnectedSource))
-				.ToList();
+			var tableData = DmsElement.GetTable(ConnectionsTableId).GetData();
+			return tableData.Values.Select(x => new Connection(x)).ToList();
 		}
 
 		public bool TryGetConnection(Guid destinationEndpointId, out Connection connection)
@@ -82,11 +72,10 @@
 				return false;
 			}
 
-			var rowKey = Convert.ToString(destinationEndpointId);
-
 			try
 			{
 				var table = DmsElement.GetTable(ConnectionsTableId);
+				var rowKey = Convert.ToString(destinationEndpointId);
 				var row = table.GetRow(rowKey);
 
 				if (row != null)
@@ -112,11 +101,10 @@
 				return false;
 			}
 
-			var rowKey = Convert.ToString(destinationEndpointId);
-
 			try
 			{
 				var table = DmsElement.GetTable(PendingConnectionActionsTableId);
+				var rowKey = Convert.ToString(destinationEndpointId);
 				var row = table.GetRow(rowKey);
 
 				if (row != null)
