@@ -6,6 +6,8 @@
 	using System.Linq;
 	using System.Threading.Tasks;
 
+	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
@@ -151,12 +153,12 @@
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}*/
-				catch (Exception e)
+				catch (ConnectFailedException e)
 				{
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}\n{JsonConvert.SerializeObject(e.FailedRequests)}";
 					}
 				}
 
@@ -173,12 +175,12 @@
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}*/
-				catch (Exception e)
+				catch (DisconnectFailedException e)
 				{
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}\n{JsonConvert.SerializeObject(e.FailedRequests)}";
 					}
 				}
 
