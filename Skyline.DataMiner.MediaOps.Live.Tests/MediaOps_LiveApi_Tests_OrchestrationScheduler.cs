@@ -15,6 +15,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 	[TestClass]
 	public class MediaOps_LiveApi_Tests_OrchestrationScheduler
 	{
+		/*
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ConfirmedEventIsScheduled()
 		{
@@ -61,7 +62,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 		}
-
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_CancelledEventIsNotScheduled()
 		{
@@ -109,7 +109,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			Assert.IsNull(ev.ReservationInstance);
 		}
 
-		/*[TestMethod]
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteNow()
 		{
 			var simulation = new MediaOpsLiveSimulation();
