@@ -121,7 +121,7 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				DeleteEvents(job.RemovedIds, performanceTracker);
+				Delete(job.RemovedIds, performanceTracker);
 
 				job.ValidateEventsBeforeSaving(_api.Connection);
 
@@ -143,8 +143,7 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				_slidingWindowScheduler.DeleteEvents(job.OrchestrationEvents);
-				DeleteEvents(job.RemovedIds, performanceTracker);
+				Delete(job.RemovedIds, performanceTracker);
 
 				job.ValidateEventsBeforeSaving(_api.Connection);
 				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
@@ -164,8 +163,7 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				_slidingWindowScheduler.DeleteEvents(job.OrchestrationEvents);
-				DeleteEvents(job.OrchestrationEvents, performanceTracker);
+				Delete(job.OrchestrationEvents, performanceTracker);
 			}
 		}
 
@@ -181,8 +179,7 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				_slidingWindowScheduler.DeleteEvents(job.OrchestrationEvents);
-				DeleteEvents(job.OrchestrationEvents, performanceTracker);
+				Delete(job.OrchestrationEvents, performanceTracker);
 			}
 		}
 
@@ -249,12 +246,19 @@
 
 		public override void Delete(OrchestrationEvent orchestrationEvent)
 		{
-			DeleteEvents(new List<OrchestrationEvent> { orchestrationEvent });
+			Delete(new List<OrchestrationEvent> { orchestrationEvent });
 		}
 
-		public override void Delete(IEnumerable<OrchestrationEvent> orchestrationEvents)
+		public override void Delete(IEnumerable<OrchestrationEvent> events)
 		{
-			DeleteEvents(orchestrationEvents);
+			IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
+			IEnumerable<Guid> configurationsToDelete = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID);
+
+			_slidingWindowScheduler.DeleteEvents(orchestrationEvents);
+
+			_configurationHelper.Delete(GetConfigurationInstances(configurationsToDelete).Values);
+
+			base.Delete(orchestrationEvents);
 		}
 
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsInTimeRange(DateTime start, DateTime end)
@@ -496,13 +500,13 @@
 		/// </summary>
 		/// <param name="eventIds">The events to be deleted.</param>
 		/// <param name="performanceTracker">Performance tracking object.</param>
-		private void DeleteEvents(IEnumerable<Guid> eventIds, PerformanceTracker performanceTracker)
+		private void Delete(IEnumerable<Guid> eventIds, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				ICollection<OrchestrationEvent> orchestrationEvents = Read(eventIds).Values;
 
-				DeleteEvents(orchestrationEvents, performanceTracker);
+				Delete(orchestrationEvents, performanceTracker);
 			}
 		}
 
@@ -511,32 +515,12 @@
 		/// </summary>
 		/// <param name="events">The events to be deleted.</param>
 		/// <param name="performanceTracker">Performance tracking object.</param>
-		private void DeleteEvents(IEnumerable<OrchestrationEvent> events, PerformanceTracker performanceTracker)
+		private void Delete(IEnumerable<OrchestrationEvent> events, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
-				IEnumerable<Guid> configurationsToDelete = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID);
-
-				_configurationHelper.Delete(GetConfigurationInstances(configurationsToDelete).Values);
-
-				Delete(orchestrationEvents);
+				Delete(events);
 			}
-		}
-
-		/// <summary>
-		///     Delete a collection of <see cref="OrchestrationEvent" /> objects from the DataMiner system.
-		/// </summary>
-		/// <param name="events">The events to be deleted.</param>
-		/// <param name="performanceTracker">Performance tracking object.</param>
-		private void DeleteEvents(IEnumerable<OrchestrationEvent> events)
-		{
-			IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
-			IEnumerable<Guid> configurationsToDelete = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID);
-
-			_configurationHelper.Delete(GetConfigurationInstances(configurationsToDelete).Values);
-
-			Delete(orchestrationEvents);
 		}
 
 		protected internal override OrchestrationEvent CreateInstance(DomInstance domInstance)
