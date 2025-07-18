@@ -7,6 +7,7 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.Advanced;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
@@ -69,6 +70,11 @@
 			if (message is null)
 			{
 				throw new ArgumentNullException(nameof(message));
+			}
+
+			if (message is ManagerStoreBulkDeleteRequest<DomInstance>)
+			{
+				bool hello = true;
 			}
 
 			if (_domSLNetMessageHandler.TryHandleMessage(message, out var response))

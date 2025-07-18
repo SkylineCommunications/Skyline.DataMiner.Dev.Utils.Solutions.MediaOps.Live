@@ -247,6 +247,16 @@
 			ExecuteEventsNow(eventConfigs.Values);
 		}
 
+		public override void Delete(OrchestrationEvent orchestrationEvent)
+		{
+			DeleteEvents(new List<OrchestrationEvent> { orchestrationEvent });
+		}
+
+		public override void Delete(IEnumerable<OrchestrationEvent> orchestrationEvents)
+		{
+			DeleteEvents(orchestrationEvents);
+		}
+
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsInTimeRange(DateTime start, DateTime end)
 		{
 			DateTime localStart = start.ToUniversalTime();
@@ -471,7 +481,11 @@
 				configsToWrite.Add(orchestrationEventConfiguration.Configuration);
 			}
 
-			_configurationHelper.Delete(configsToDelete);
+			if (configsToDelete.Any())
+			{
+				_configurationHelper.Delete(configsToDelete);
+			}
+
 			_configurationHelper.CreateOrUpdate(configsToWrite);
 
 			CreateOrUpdate(orchestrationEventConfigurations);
@@ -508,6 +522,21 @@
 
 				Delete(orchestrationEvents);
 			}
+		}
+
+		/// <summary>
+		///     Delete a collection of <see cref="OrchestrationEvent" /> objects from the DataMiner system.
+		/// </summary>
+		/// <param name="events">The events to be deleted.</param>
+		/// <param name="performanceTracker">Performance tracking object.</param>
+		private void DeleteEvents(IEnumerable<OrchestrationEvent> events)
+		{
+			IEnumerable<OrchestrationEvent> orchestrationEvents = events.ToList();
+			IEnumerable<Guid> configurationsToDelete = orchestrationEvents.Where(e => e.ConfigurationReference.HasValue).Select(e => e.ConfigurationReference.Value.ID);
+
+			_configurationHelper.Delete(GetConfigurationInstances(configurationsToDelete).Values);
+
+			Delete(orchestrationEvents);
 		}
 
 		protected internal override OrchestrationEvent CreateInstance(DomInstance domInstance)

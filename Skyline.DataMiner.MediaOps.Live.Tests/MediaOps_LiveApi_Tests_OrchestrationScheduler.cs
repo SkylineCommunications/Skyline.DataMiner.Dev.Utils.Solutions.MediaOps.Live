@@ -2,6 +2,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
 	using System.Runtime.InteropServices;
 
+	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
@@ -113,7 +115,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var ev = new OrchestrationEventConfiguration()
+			var ev = new OrchestrationEvent()
 			{
 				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
 				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
@@ -121,9 +123,11 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 				Name = "Test Event Confirmed",
 			};
 
-			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
 			orchestrationJob.OrchestrationEvents.Add(ev);
-			api.Orchestration.SaveOrchestrationJobConfiguration(orchestrationJob);
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+			Console.WriteLine(JsonConvert.SerializeObject(orchestrationJob));
+
 
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 

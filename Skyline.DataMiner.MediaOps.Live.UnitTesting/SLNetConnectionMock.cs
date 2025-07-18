@@ -99,7 +99,6 @@
 				{
 					InvokeOnNewMessageEvent(subscription.SetId, e);
 				}
-				
 			}
 		}
 
