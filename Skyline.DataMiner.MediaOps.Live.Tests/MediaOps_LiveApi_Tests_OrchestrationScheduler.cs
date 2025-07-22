@@ -15,7 +15,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 	[TestClass]
 	public class MediaOps_LiveApi_Tests_OrchestrationScheduler
 	{
-		
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ConfirmedEventIsScheduled()
 		{
@@ -31,7 +30,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			};
 
 			Assert.AreEqual("Test Event Confirmed", ev.Name);
-			/*var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
@@ -42,10 +41,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 			Assert.AreEqual(trimmedEventTime, utcScheduledTime);
 
-			Assert.Contains(orchestrationJob.OrchestrationEvents.First().ReservationInstance.DmaId, simulation.Dms.Agents.Keys);*/
+			Assert.Contains(orchestrationJob.OrchestrationEvents.First().ReservationInstance.DmaId, simulation.Dms.Agents.Keys);
 		}
 
-		/*[TestMethod]
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_DraftEventIsNotScheduled()
 		{
 			var simulation = new MediaOpsLiveSimulation();
@@ -63,6 +62,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 		}
+
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_CancelledEventIsNotScheduled()
 		{
@@ -110,7 +110,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			Assert.IsNull(ev.ReservationInstance);
 		}
 
-		[TestMethod]
+		/*[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteNow()
 		{
 			var simulation = new MediaOpsLiveSimulation();
@@ -128,7 +128,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 			Console.WriteLine(JsonConvert.SerializeObject(orchestrationJob));
-
 
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 

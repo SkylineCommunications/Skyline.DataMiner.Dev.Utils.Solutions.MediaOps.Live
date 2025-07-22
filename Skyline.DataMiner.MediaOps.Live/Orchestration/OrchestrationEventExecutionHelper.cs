@@ -242,7 +242,7 @@
 
 						requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup, allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID)).ToHashSet())
 						{
-							MetaData = eventId,
+							MetaData = eventId.ToString(),
 						});
 					}
 				}
@@ -309,7 +309,7 @@
 
 						requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings)
 						{
-							MetaData = eventId,
+							MetaData = eventId.ToString(),
 						});
 					}
 				}
