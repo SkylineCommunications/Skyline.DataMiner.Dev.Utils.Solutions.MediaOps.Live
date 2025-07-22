@@ -144,7 +144,7 @@
 				{
 					ExecuteConnections(connectionsToConfigureByEvent, performanceTracker);
 				}
-				/*catch (ConnectFailedException e)
+				catch (ConnectFailedException e)
 				{
 					var eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
@@ -152,13 +152,13 @@
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
-				}*/
-				catch (ConnectFailedException e)
+				}
+				catch (Exception e)
 				{
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}\n{JsonConvert.SerializeObject(e.FailedRequests)}";
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
 
@@ -166,7 +166,7 @@
 				{
 					ExecuteDisconnects(disconnectsToConfigureByEvent, performanceTracker);
 				}
-				/*catch (DisconnectFailedException e)
+				catch (DisconnectFailedException e)
 				{
 					var eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
@@ -174,13 +174,13 @@
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
-				}*/
-				catch (DisconnectFailedException e)
+				}
+				catch (Exception e)
 				{
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}\n{JsonConvert.SerializeObject(e.FailedRequests)}";
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
 

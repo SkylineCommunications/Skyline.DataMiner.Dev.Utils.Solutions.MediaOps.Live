@@ -1,16 +1,11 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Linq;
 	using System.Reflection;
-	using System.Text;
-	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Async;
 	using Skyline.DataMiner.Net.Messages;
-	using Skyline.DataMiner.Net.ServiceManager.Objects;
 
 	internal class AsyncMessageHandlerMock : IAsyncMessageHandler
 	{
@@ -23,7 +18,7 @@
 
 		public AsyncProgress Launch(params DMSMessage[] messages)
 		{
-			AsyncProgress progress = AsyncProgress2.CreateInstance(this, messages, 0, null, null, 250);
+			AsyncProgress progress = AsyncProgressBuilder.CreateInstance(this, messages, 0, null, null, 250);
 
 			AsyncResponseEvent response = new()
 			{
@@ -31,14 +26,14 @@
 			};
 
 			MethodInfo dynMethod = this.GetType().GetMethod("SetResponse", BindingFlags.NonPublic | BindingFlags.Instance);
-			dynMethod.Invoke(this, new object[] { response });
+			dynMethod.Invoke(this, [response]);
 
 			return progress;
 		}
 
 		public AsyncProgress Launch(DMSMessage message, AsyncResponseEventHandler onCompleteHandler = null, AsyncProgressEventHandler onProgressHandler = null, int pageSize = 250)
 		{
-			AsyncProgress progress = AsyncProgress2.CreateInstance(this, new[]{message}, 0, onCompleteHandler, onProgressHandler, pageSize);
+			AsyncProgress progress = AsyncProgressBuilder.CreateInstance(this, [message], 0, onCompleteHandler, onProgressHandler, pageSize);
 
 			AsyncResponseEvent response = new()
 			{
@@ -46,7 +41,7 @@
 			};
 
 			MethodInfo dynMethod = progress.GetType().GetMethod("SetResponse", BindingFlags.NonPublic | BindingFlags.Instance);
-			dynMethod.Invoke(progress, new object[] { response });
+			dynMethod.Invoke(progress, [response]);
 
 			return progress;
 		}
@@ -101,50 +96,5 @@
 		public int TrackedActiveAsyncRequestCount { get; }
 
 		public IConnection Connection { get; }
-	}
-
-	public class AsyncProgress2
-	{
-		public static AsyncProgress CreateInstance(
-			IAsyncMessageHandler parent,
-			DMSMessage[] messages,
-			int compatClientCookie,
-			AsyncResponseEventHandler onCompleteHandler,
-			AsyncProgressEventHandler onProgressHandler,
-			int pageSize)
-		{
-			var type = typeof(AsyncProgress);
-
-			// Find the internal constructor
-			var ctor = type.GetConstructor(
-				BindingFlags.Instance | BindingFlags.NonPublic,
-				null,
-				new Type[] {
-					typeof(IAsyncMessageHandler),
-					typeof(DMSMessage[]),
-					typeof(int),
-					typeof(AsyncResponseEventHandler),
-					typeof(AsyncProgressEventHandler),
-					typeof(int)
-				},
-				null);
-
-			if (ctor == null)
-			{
-				throw new InvalidOperationException("Could not find the internal constructor for AsyncProgress.");
-			}
-
-			// Invoke the constructor
-			var instance = (AsyncProgress)ctor.Invoke(new object[] {
-				parent,
-				messages,
-				compatClientCookie,
-				onCompleteHandler,
-				onProgressHandler,
-				pageSize
-			});
-
-			return instance;
-		}
 	}
 }
