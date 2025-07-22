@@ -236,7 +236,10 @@
 
 						if (connection.LevelMappings == null || !connection.LevelMappings.Any())
 						{
-							requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup));
+							requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup)
+							{
+								MetaData = eventId.ToString(),
+							});
 							continue;
 						}
 
@@ -299,7 +302,10 @@
 
 						if (connection.LevelMappings == null || !connection.LevelMappings.Any())
 						{
-							requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup));
+							requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup)
+							{
+								MetaData = eventId.ToString(),
+							});
 							continue;
 						}
 
