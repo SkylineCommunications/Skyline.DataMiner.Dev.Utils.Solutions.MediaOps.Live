@@ -35,5 +35,7 @@
 		public Endpoint Source { get; }
 
 		public Endpoint Destination { get; }
+
+		public object MetaData { get; set; }
 	}
 }

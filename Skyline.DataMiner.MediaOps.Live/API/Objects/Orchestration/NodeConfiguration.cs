@@ -96,7 +96,7 @@
 			}
 		}
 
-		internal OrchestrationProfile Profile
+		public OrchestrationProfile Profile
 		{
 			get
 			{

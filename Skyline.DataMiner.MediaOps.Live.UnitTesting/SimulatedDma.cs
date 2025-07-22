@@ -14,9 +14,12 @@
 		{
 			Dms = dms ?? throw new ArgumentNullException(nameof(dms));
 			DmaId = dmaId;
+			Scheduler = new SimulatedScheduler(this);
 		}
 
 		public SimulatedDms Dms { get; }
+
+		public SimulatedScheduler Scheduler { get; }
 
 		public int DmaId { get; }
 

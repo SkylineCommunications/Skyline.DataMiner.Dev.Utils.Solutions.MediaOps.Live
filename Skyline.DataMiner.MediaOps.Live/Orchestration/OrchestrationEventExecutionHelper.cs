@@ -3,11 +3,15 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
+	using System.Globalization;
 	using System.Linq;
 	using System.Threading.Tasks;
 
+	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
@@ -23,6 +27,7 @@
 	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection;
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 	using LevelMapping = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.LevelMapping;
+	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
 
 	internal class OrchestrationEventExecutionHelper
 	{
@@ -121,25 +126,67 @@
 				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = eventConfigurations
 					.Where(orchestrationEventConfiguration => orchestrationEventConfiguration?.Configuration?.Connections != null && orchestrationEventConfiguration.Configuration.Connections.Any()).ToList();
 
-				List<Connection> connectionsToConfigure = [];
-				List<Connection> disconnectsToConfigure = [];
+				Dictionary<Guid, List<Connection>> connectionsToConfigureByEvent = [];
+				Dictionary<Guid, List<Connection>> disconnectsToConfigureByEvent = [];
 
 				foreach (OrchestrationEventConfiguration eventConfigurationsWithConnection in eventConfigurationsWithConnections)
 				{
-					if (eventConfigurationsWithConnection.IsStartEvent)
+					if (eventConfigurationsWithConnection.IsStopEvent)
 					{
-						connectionsToConfigure.AddRange(eventConfigurationsWithConnection.Configuration.Connections);
+						disconnectsToConfigureByEvent.Add(eventConfigurationsWithConnection.ID, eventConfigurationsWithConnection.Configuration.Connections.ToList());
 					}
 					else
 					{
-						disconnectsToConfigure.AddRange(eventConfigurationsWithConnection.Configuration.Connections);
+						connectionsToConfigureByEvent.Add(eventConfigurationsWithConnection.ID, eventConfigurationsWithConnection.Configuration.Connections.ToList());
 					}
 
 					eventConfigurationsWithConnection.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 				}
 
-				ExecuteDisconnects(disconnectsToConfigure, performanceTracker);
-				ExecuteConnections(connectionsToConfigure, performanceTracker);
+				try
+				{
+					ExecuteConnections(connectionsToConfigureByEvent, performanceTracker);
+				}
+				catch (ConnectFailedException e)
+				{
+					var eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					{
+						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+					}
+				}
+				catch (Exception e)
+				{
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+					{
+						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+					}
+				}
+
+				try
+				{
+					ExecuteDisconnects(disconnectsToConfigureByEvent, performanceTracker);
+				}
+				catch (DisconnectFailedException e)
+				{
+					var eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					{
+						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+					}
+				}
+				catch (Exception e)
+				{
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+					{
+						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+					}
+				}
+
 				foreach (OrchestrationEventConfiguration eventConfiguration in eventConfigurations.Where(e => e.ActualStartTime != null))
 				{
 					eventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - eventConfiguration.ActualStartTime;
@@ -147,22 +194,23 @@
 			}
 		}
 
-		private void ExecuteDisconnects(List<Connection> disconnects, PerformanceTracker performanceTracker)
+		private void ExecuteDisconnects(Dictionary<Guid, List<Connection>> disconnectsPerId, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				if (!disconnects.Any())
+				if (!disconnectsPerId.Any())
 				{
 					return;
 				}
 
-				TakeHelper takeHelper = new TakeHelper(_api);
+				TakeHelper takeHelper = new(_api);
+				takeHelper.ConfigureWaitForCompletion(true, TimeSpan.FromSeconds(5));
 
 				List<VsgDisconnectRequest> requests = [];
 
 				HashSet<Guid> allInvolvedVsgIds = [];
 				HashSet<int> allInvolvedLevelNumbers = [];
-				foreach (Connection connection in disconnects)
+				foreach (Connection connection in disconnectsPerId.SelectMany(kv => kv.Value))
 				{
 					allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
 
@@ -179,42 +227,53 @@
 
 				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
 
-				ORFilterElement<DomInstance> filter = new ORFilterElement<DomInstance>(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
+				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
 
-				foreach (Connection connection in disconnects)
+				foreach (KeyValuePair<Guid, List<Connection>> keyValuePair in disconnectsPerId)
 				{
-					VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
-
-					if (connection.LevelMappings == null || !connection.LevelMappings.Any())
+					Guid eventId = keyValuePair.Key;
+					foreach (Connection connection in keyValuePair.Value)
 					{
-						requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup));
-						continue;
-					}
+						VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
 
-					requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup, allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID)).ToHashSet()));
+						if (connection.LevelMappings == null || !connection.LevelMappings.Any())
+						{
+							requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup)
+							{
+								MetaData = eventId.ToString(),
+							});
+							continue;
+						}
+
+						requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup, allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID)).ToHashSet())
+						{
+							MetaData = eventId.ToString(),
+						});
+					}
 				}
 
 				takeHelper.Disconnect(requests, performanceTracker.Collector);
 			}
 		}
 
-		private void ExecuteConnections(List<Connection> connections, PerformanceTracker performanceTracker)
+		private void ExecuteConnections(Dictionary<Guid, List<Connection>> connectionsPerEventId, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (new PerformanceTracker(performanceTracker))
 			{
-				if (!connections.Any())
+				if (!connectionsPerEventId.Any())
 				{
 					return;
 				}
 
-				TakeHelper takeHelper = new TakeHelper(_api);
+				TakeHelper takeHelper = new(_api);
+				takeHelper.ConfigureWaitForCompletion(true, TimeSpan.FromSeconds(5));
 
 				List<VsgConnectionRequest> requests = [];
 
 				HashSet<Guid> allInvolvedVsgIds = [];
 				HashSet<int> allInvolvedLevelNumbers = [];
-				foreach (Connection connection in connections)
+				foreach (Connection connection in connectionsPerEventId.SelectMany(kv => kv.Value))
 				{
 					allInvolvedVsgIds.Add(connection.SourceVsg.Value.ID);
 					allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
@@ -233,25 +292,35 @@
 
 				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
 
-				ORFilterElement<DomInstance> filter = new ORFilterElement<DomInstance>(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
+				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
 
-				foreach (Connection connection in connections)
+				foreach (KeyValuePair<Guid, List<Connection>> keyValuePair in connectionsPerEventId)
 				{
-					VirtualSignalGroup srcVirtualSignalGroup = allInvolvedVsgs[connection.SourceVsg.Value.ID];
-					VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
-
-					if (connection.LevelMappings == null || !connection.LevelMappings.Any())
+					Guid eventId = keyValuePair.Key;
+					foreach (Connection connection in keyValuePair.Value)
 					{
-						requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup));
-						continue;
+						VirtualSignalGroup srcVirtualSignalGroup = allInvolvedVsgs[connection.SourceVsg.Value.ID];
+						VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
+
+						if (connection.LevelMappings == null || !connection.LevelMappings.Any())
+						{
+							requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup)
+							{
+								MetaData = eventId.ToString(),
+							});
+							continue;
+						}
+
+						List<Take.LevelMapping> levelMappings = connection.LevelMappings.Select(map => new Take.LevelMapping(
+							allInvolvedLevels.FirstOrDefault(level => level.Number == map.Source.Number),
+							allInvolvedLevels.FirstOrDefault(level => level.Number == map.Destination.Number))).ToList();
+
+						requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings)
+						{
+							MetaData = eventId.ToString(),
+						});
 					}
-
-					List<Take.LevelMapping> levelMappings = connection.LevelMappings.Select(map => new Take.LevelMapping(
-						allInvolvedLevels.FirstOrDefault(level => level.Number == map.Source.Number),
-						allInvolvedLevels.FirstOrDefault(level => level.Number == map.Destination.Number))).ToList();
-
-					requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings));
 				}
 
 				takeHelper.Take(requests, performanceTracker.Collector);
@@ -262,7 +331,7 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				ConcurrentHashSet<string> errors = new ConcurrentHashSet<string>();
+				ConcurrentHashSet<string> errors = new();
 				List<Task> nodeOrchestrationTasks = [];
 
 				foreach (NodeConfiguration nodeConfiguration in orchestrationEventConfiguration.Configuration.NodeConfigurations)
@@ -310,7 +379,7 @@
 			{
 				if (!TryExecuteOrchestrationScript(
 						orchestrationEventConfiguration.GlobalOrchestrationScript,
-						orchestrationEventConfiguration.GlobalOrchestrationScriptArguments,
+						CombineOrchestrationScriptInputs(orchestrationEventConfiguration.GlobalOrchestrationScriptArguments, orchestrationEventConfiguration.Profile.Values),
 						performanceTracker,
 						out string[] errorMessages))
 				{
@@ -323,6 +392,25 @@
 			}
 		}
 
+		private IList<OrchestrationScriptArgument> CombineOrchestrationScriptInputs(IList<OrchestrationScriptArgument> arguments, IList<OrchestrationProfileValue> profileValues)
+		{
+			List<OrchestrationScriptArgument> results = arguments.ToList();
+
+			foreach (OrchestrationProfileValue orchestrationProfileValue in profileValues)
+			{
+				if (results.All(value => value.Name != orchestrationProfileValue.Name))
+				{
+					var value = orchestrationProfileValue.Value.Type == ParameterValue.ValueType.Double
+						? orchestrationProfileValue.Value.DoubleValue.ToString(CultureInfo.InvariantCulture)
+						: orchestrationProfileValue.Value.StringValue;
+
+					results.Add(new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, orchestrationProfileValue.Name, value));
+				}
+			}
+
+			return results;
+		}
+
 		private bool TryExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, PerformanceTracker performanceTracker, out string[] errorMessages)
 		{
 			using (new PerformanceTracker(performanceTracker))
@@ -333,7 +421,7 @@
 					.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
 					.ToList();
 
-				DmsAutomationScriptRunOptions scriptOptions = new DmsAutomationScriptRunOptions
+				DmsAutomationScriptRunOptions scriptOptions = new()
 				{
 					ExtendedErrorInfo = true,
 				};

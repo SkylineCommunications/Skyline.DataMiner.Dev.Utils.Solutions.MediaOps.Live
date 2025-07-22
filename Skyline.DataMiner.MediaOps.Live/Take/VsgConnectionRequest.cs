@@ -34,10 +34,13 @@
 			LevelMappings = levelMappings;
 		}
 
+
 		public VirtualSignalGroup Source { get; }
 
 		public VirtualSignalGroup Destination { get; }
 
 		public ICollection<LevelMapping> LevelMappings { get; }
+
+		public object MetaData { get; set; }
 	}
 }

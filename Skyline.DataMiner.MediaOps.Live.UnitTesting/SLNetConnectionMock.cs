@@ -4,7 +4,6 @@
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Async;
@@ -178,13 +177,13 @@
 		public Guid ConnectionID => throw new NotImplementedException();
 
 		/// <inheritdoc/>
-		public bool IsShuttingDown => throw new NotImplementedException();
+		public bool IsShuttingDown => false;
 
 		/// <inheritdoc/>
-		public IAsyncMessageHandler Async => throw new NotImplementedException();
+		public IAsyncMessageHandler Async => new AsyncMessageHandlerMock(this);
 
 		/// <inheritdoc/>
-		public bool IsReceiving => throw new NotImplementedException();
+		public bool IsReceiving => true;
 
 		/// <inheritdoc/>
 		public ServerDetails ServerDetails => throw new NotImplementedException();
@@ -366,13 +365,13 @@
 		/// <inheritdoc/>
 		public bool SupportsFeature(CompatibilityFlags flags)
 		{
-			throw new NotImplementedException();
+			return true;
 		}
 
 		/// <inheritdoc/>
 		public bool SupportsFeature(string name)
 		{
-			throw new NotImplementedException();
+			return true;
 		}
 
 		/// <inheritdoc/>
@@ -390,25 +389,27 @@
 		/// <inheritdoc/>
 		public void FireOnAsyncResponse(AsyncResponseEvent responseEvent, ref bool handled)
 		{
-			throw new NotImplementedException();
+			// Do Nothing
 		}
 
 		/// <inheritdoc/>
 		public DMSMessage[] UnPack(DMSMessage[] messages)
 		{
-			throw new NotImplementedException();
+			return messages;
 		}
 
 		/// <inheritdoc/>
 		public void SafeWait(int timeout)
 		{
-			throw new NotImplementedException();
+			// No logic needed
 		}
 
 		/// <inheritdoc/>
 		public void Dispose()
 		{
 			Unsubscribe();
+
+			AsyncProgress test = AsyncProgressBuilder.CreateInstance(null, null, 0, null, null, 0);
 		}
 
 		#endregion
