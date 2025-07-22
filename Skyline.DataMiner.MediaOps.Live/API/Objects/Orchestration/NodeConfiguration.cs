@@ -96,6 +96,10 @@
 			}
 		}
 
+
+		/// <summary>
+		/// Gets or sets profile information to be used as node orchestration script input.
+		/// </summary>
 		public OrchestrationProfile Profile
 		{
 			get

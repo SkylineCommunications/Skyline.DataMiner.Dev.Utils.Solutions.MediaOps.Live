@@ -68,6 +68,9 @@
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets profile information to be used as global orchestration script input.
+		/// </summary>
 		public new OrchestrationProfile Profile
 		{
 			get
