@@ -11,6 +11,7 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -204,7 +205,7 @@
 				}
 
 				TakeHelper takeHelper = new(_api);
-				takeHelper.ConfigureWaitForCompletion(true, TimeSpan.FromSeconds(5));
+				takeHelper.EnableWaitForCompletion(new ConnectionMonitor(_api),TimeSpan.FromSeconds(5));
 
 				List<VsgDisconnectRequest> requests = [];
 
@@ -267,7 +268,7 @@
 				}
 
 				TakeHelper takeHelper = new(_api);
-				takeHelper.ConfigureWaitForCompletion(true, TimeSpan.FromSeconds(5));
+				takeHelper.EnableWaitForCompletion(new ConnectionMonitor(_api),TimeSpan.FromSeconds(5));
 
 				List<VsgConnectionRequest> requests = [];
 
