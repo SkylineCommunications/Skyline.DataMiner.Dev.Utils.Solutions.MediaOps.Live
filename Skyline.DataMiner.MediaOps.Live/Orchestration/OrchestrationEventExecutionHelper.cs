@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
+	using System.Globalization;
 	using System.Linq;
 	using System.Threading.Tasks;
 
@@ -10,6 +11,7 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
@@ -25,6 +27,7 @@
 	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection;
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 	using LevelMapping = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.LevelMapping;
+	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
 
 	internal class OrchestrationEventExecutionHelper
 	{
@@ -376,7 +379,7 @@
 			{
 				if (!TryExecuteOrchestrationScript(
 						orchestrationEventConfiguration.GlobalOrchestrationScript,
-						orchestrationEventConfiguration.GlobalOrchestrationScriptArguments,
+						CombineOrchestrationScriptInputs(orchestrationEventConfiguration.GlobalOrchestrationScriptArguments, orchestrationEventConfiguration.Profile.Values),
 						performanceTracker,
 						out string[] errorMessages))
 				{
@@ -387,6 +390,25 @@
 
 				orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 			}
+		}
+
+		private IList<OrchestrationScriptArgument> CombineOrchestrationScriptInputs(IList<OrchestrationScriptArgument> arguments, IList<OrchestrationProfileValue> profileValues)
+		{
+			List<OrchestrationScriptArgument> results = arguments.ToList();
+
+			foreach (OrchestrationProfileValue orchestrationProfileValue in profileValues)
+			{
+				if (results.All(value => value.Name != orchestrationProfileValue.Name))
+				{
+					var value = orchestrationProfileValue.Value.Type == ParameterValue.ValueType.Double
+						? orchestrationProfileValue.Value.DoubleValue.ToString(CultureInfo.InvariantCulture)
+						: orchestrationProfileValue.Value.StringValue;
+
+					results.Add(new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, orchestrationProfileValue.Name, value));
+				}
+			}
+
+			return results;
 		}
 
 		private bool TryExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, PerformanceTracker performanceTracker, out string[] errorMessages)

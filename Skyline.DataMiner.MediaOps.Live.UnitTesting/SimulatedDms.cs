@@ -15,7 +15,7 @@
 	public sealed class SimulatedDms
 	{
 		private readonly ConcurrentDictionary<int, SimulatedDma> _agents = new();
-		private readonly ConcurrentBag<SLNetConnectionMock> _connections = new();
+		private readonly ConcurrentBag<SLNetConnectionMock> _connections = [];
 		private readonly DomSLNetMessageHandler _domSLNetMessageHandler = new();
 
 		public SimulatedDms()
@@ -34,7 +34,7 @@
 
 		public IEnumerable<SimulatedSchedulerTask> GetAllDmsSchedulerTasks()
 		{
-			List<SimulatedSchedulerTask> tasks = new List<SimulatedSchedulerTask>();
+			List<SimulatedSchedulerTask> tasks = [];
 
 			foreach (KeyValuePair<int, SimulatedDma> simulatedDma in _agents)
 			{
@@ -70,11 +70,6 @@
 			if (message is null)
 			{
 				throw new ArgumentNullException(nameof(message));
-			}
-
-			if (message is ManagerStoreBulkDeleteRequest<DomInstance>)
-			{
-				bool hello = true;
 			}
 
 			if (_domSLNetMessageHandler.TryHandleMessage(message, out var response))
@@ -315,14 +310,14 @@
 		{
 			yield return new BuildInfoResponse
 			{
-				Agents = new[]
-				{
+				Agents =
+				[
 					new BuildInfoAgent
 					{
 						RawVersion = "10.5.6",
 						DataMinerID = msg.DataMinerID,
 					},
-				},
+				],
 			};
 		}
 	}

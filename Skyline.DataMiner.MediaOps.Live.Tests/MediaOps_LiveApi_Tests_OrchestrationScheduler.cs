@@ -1,16 +1,10 @@
 namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using System.Runtime.InteropServices;
-
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
-	using Skyline.DataMiner.Net.Time;
 
 	[TestClass]
 	public class MediaOps_LiveApi_Tests_OrchestrationScheduler
@@ -29,7 +23,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 				Name = "Test Event Confirmed",
 			};
 
-			Assert.AreEqual("Test Event Confirmed", ev.Name);
 			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
