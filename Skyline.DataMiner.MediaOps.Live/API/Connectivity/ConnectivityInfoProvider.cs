@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
+	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
 
@@ -36,12 +37,7 @@
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 
-			if (subscribe)
-			{
-				Subscribe();
-			}
-
-			LoadDataFromMediationElements();
+			Initialize(subscribe);
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
@@ -434,6 +430,19 @@
 			}
 		}
 
+		private void Initialize(bool subscribe)
+		{
+			lock (_lock)
+			{
+				if (subscribe)
+				{
+					Subscribe();
+				}
+
+				LoadDataFromMediationElements();
+			}
+		}
+
 		private void Endpoints_Changed(object sender, ApiObjectsChangedEvent<Endpoint> e)
 		{
 			lock (_lock)
@@ -476,7 +485,8 @@
 				{
 					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
 					{
-						if (connection == existingConnection)
+						if (connection.IsConnected == existingConnection.IsConnected &&
+							connection.ConnectedSource == existingConnection.ConnectedSource)
 						{
 							continue;
 						}
@@ -515,7 +525,8 @@
 				{
 					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
 					{
-						if (pendingAction == existingPendingConnectionAction)
+						if (pendingAction.Action == existingPendingConnectionAction.Action &&
+							pendingAction.PendingSource == existingPendingConnectionAction.PendingSource)
 						{
 							continue;
 						}
@@ -666,21 +677,20 @@
 			{
 				var mediationElements = Api.MediationElements.AllElements;
 
-				var connections = mediationElements.SelectMany(x => x.GetConnections()).ToList();
-
-				foreach (var connection in connections)
+				Parallel.ForEach(mediationElements, element =>
 				{
-					_connectionsByDestination[connection.Destination] = connection;
-					_connectionEndpointsMapping.AddOrUpdate(connection);
-				}
+					foreach (var connection in element.GetConnections())
+					{
+						_connectionsByDestination[connection.Destination] = connection;
+						_connectionEndpointsMapping.AddOrUpdate(connection);
+					}
 
-				var pendingConnectionActions = mediationElements.SelectMany(x => x.GetPendingConnectionActions()).ToList();
-
-				foreach (var action in pendingConnectionActions)
-				{
-					_pendingActionsByDestination[action.Destination] = action;
-					_pendingConnectionActionsMapping.AddOrUpdate(action);
-				}
+					foreach (var action in element.GetPendingConnectionActions())
+					{
+						_pendingActionsByDestination[action.Destination] = action;
+						_pendingConnectionActionsMapping.AddOrUpdate(action);
+					}
+				});
 			}
 		}
 

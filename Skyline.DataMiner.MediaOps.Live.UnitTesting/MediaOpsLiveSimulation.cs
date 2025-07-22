@@ -46,10 +46,11 @@
 
 			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
-			var connectionsTable = Dms
+			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
-				.Elements[mediationElement.ElementId]
-				.Tables[MediationElement.ConnectionsTableId];
+				.Elements[mediationElement.ElementId];
+
+			var connectionsTable = simulatedElement.Tables[MediationElement.ConnectionsTableId];
 
 			var rowKey = Convert.ToString(destination.ID);
 			var row = new object[]
@@ -76,10 +77,11 @@
 
 			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
-			var pendingActionsTable = Dms
+			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
-				.Elements[mediationElement.ElementId]
-				.Tables[MediationElement.PendingConnectionActionsTableId];
+				.Elements[mediationElement.ElementId];
+
+			var pendingActionsTable = simulatedElement.Tables[MediationElement.PendingConnectionActionsTableId];
 
 			var rowKey = Convert.ToString(destination.ID);
 			var row = new object[]
@@ -104,10 +106,11 @@
 
 			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
-			var pendingActionsTable = Dms
+			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
-				.Elements[mediationElement.ElementId]
-				.Tables[MediationElement.PendingConnectionActionsTableId];
+				.Elements[mediationElement.ElementId];
+
+			var pendingActionsTable = simulatedElement.Tables[MediationElement.PendingConnectionActionsTableId];
 
 			var rowKey = Convert.ToString(destination.ID);
 			pendingActionsTable.DeleteRow(rowKey);

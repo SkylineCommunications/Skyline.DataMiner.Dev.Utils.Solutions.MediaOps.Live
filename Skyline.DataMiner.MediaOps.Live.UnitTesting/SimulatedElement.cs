@@ -10,6 +10,7 @@
 
 	public sealed class SimulatedElement
 	{
+		private readonly ConcurrentDictionary<int, StandaloneParameter> _parameters = new();
 		private readonly ConcurrentDictionary<int, TableParameter> _tables = new();
 
 		public SimulatedElement(SimulatedDma dma, int elementId, string name, string protocolName, string protocolVersion)
@@ -39,7 +40,21 @@
 
 		public ElementState State { get; set; } = ElementState.Active;
 
+		public IReadOnlyDictionary<int, StandaloneParameter> Parameters => _parameters;
+
 		public IReadOnlyDictionary<int, TableParameter> Tables => _tables;
+
+		public StandaloneParameter CreateStandaloneParameter(int id)
+		{
+			var param = new StandaloneParameter(this, id);
+
+			if (!_parameters.TryAdd(id, param))
+			{
+				throw new InvalidOperationException($"Parameter with ID {id} already exists in element {Name}.");
+			}
+
+			return param;
+		}
 
 		public TableParameter CreateTable(int id)
 		{

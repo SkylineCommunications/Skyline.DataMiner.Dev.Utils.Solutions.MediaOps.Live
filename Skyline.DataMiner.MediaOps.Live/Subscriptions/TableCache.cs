@@ -109,31 +109,31 @@
 		{
 			bool hasChanges = false;
 
-			if (Rows.TryGetValue(key, out var cachedRow))
+			if (!Rows.TryGetValue(key, out var cachedRow))
 			{
-				if (cachedRow.Length < newValues.Length)
-				{
-					// should not be possible, but you never know...
-					Array.Resize(ref cachedRow, newValues.Length);
-					hasChanges = true;
-				}
+				cachedRow = new object[newValues.Length];
+				Rows.Add(key, cachedRow);
 
-				for (int i = 0; i < newValues.Length; i++)
-				{
-					// Empty value means that the value is not changed.
-					if (Equals(newValues[i], NoChange.Value))
-						continue;
-
-					if (Equals(newValues[i], cachedRow[i]))
-						continue;
-
-					cachedRow[i] = newValues[i];
-					hasChanges = true;
-				}
+				hasChanges = true;
 			}
-			else
+
+			if (cachedRow.Length < newValues.Length)
 			{
-				Rows.Add(key, newValues);
+				// should not be possible, but you never know...
+				Array.Resize(ref cachedRow, newValues.Length);
+				hasChanges = true;
+			}
+
+			for (int i = 0; i < newValues.Length; i++)
+			{
+				// Empty value means that the value is not changed.
+				if (Equals(newValues[i], NoChange.Value))
+					continue;
+
+				if (Equals(newValues[i], cachedRow[i]))
+					continue;
+
+				cachedRow[i] = newValues[i];
 				hasChanges = true;
 			}
 

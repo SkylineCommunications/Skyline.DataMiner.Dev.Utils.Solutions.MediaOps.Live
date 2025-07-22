@@ -18,6 +18,7 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var connection = simulation.Dms.CreateConnection();
 			var interceptedConnection = new ConnectionInterceptor(connection);
+
 			var api = new MediaOpsLiveApi(interceptedConnection);
 
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
