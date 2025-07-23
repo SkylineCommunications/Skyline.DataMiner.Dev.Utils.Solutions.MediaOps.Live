@@ -151,19 +151,21 @@
 				return;
 			}
 
-			foreach (AutomationParameterInfo automationParameterInfo in scriptInfoResponse.Parameters)
+			List<string> inputParamsRequired = scriptInfoResponse.Parameters.Select(param => param.Description).ToList();
+			List<string> inputDummiesRequired = scriptInfoResponse.Dummies.Select(dummy => dummy.Description).ToList();
+			foreach (string paramDescription in inputDummiesRequired.Union(inputParamsRequired))
 			{
-				if (arguments.Any(arg => arg.Name == automationParameterInfo.Description))
+				if (arguments.Any(arg => arg.Name == paramDescription))
 				{
 					continue;
 				}
 
-				if (profileValues.Any(value => value.Name == automationParameterInfo.Description))
+				if (profileValues.Any(value => value.Name == paramDescription))
 				{
 					continue;
 				}
 
-				throw new InvalidOperationException($"Script input missing for confirmed event. Script: {scriptName}. Parameter: {automationParameterInfo.Description}");
+				throw new InvalidOperationException($"Script input missing for confirmed event. Script: {scriptName}. Parameter: {paramDescription}");
 			}
 		}
 
