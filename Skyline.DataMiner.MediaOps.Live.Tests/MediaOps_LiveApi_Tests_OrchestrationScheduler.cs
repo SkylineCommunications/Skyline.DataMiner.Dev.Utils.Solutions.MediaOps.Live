@@ -103,7 +103,32 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			Assert.IsNull(ev.ReservationInstance);
 		}
 
-		/*[TestMethod]
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_DeleteConfirmedEvent()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var ev = new OrchestrationEvent
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
+				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				Name = "Test Event Confirmed",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+
+			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+
+			api.Orchestration.DeleteJob(orchestrationJob);
+
+			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteNow()
 		{
 			var simulation = new MediaOpsLiveSimulation();
@@ -128,6 +153,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 			Assert.AreEqual(SlcOrchestrationIds.Enums.EventState.Completed, ev.EventState);
-		}*/
+		}
 	}
 }

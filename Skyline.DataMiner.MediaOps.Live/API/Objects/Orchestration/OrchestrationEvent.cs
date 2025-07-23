@@ -5,6 +5,8 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
@@ -180,7 +182,7 @@
 				return time;
 			}
 
-			set
+			internal set
 			{
 				_domInstance.OrchestrationEventInfo.ActualStartTime = value?.UtcDateTime;
 			}
@@ -201,7 +203,7 @@
 				return _domInstance.OrchestrationEventInfo.OrchestrationDuration.Value;
 			}
 
-			set
+			internal set
 			{
 				_domInstance.OrchestrationEventInfo.OrchestrationDuration = value;
 			}

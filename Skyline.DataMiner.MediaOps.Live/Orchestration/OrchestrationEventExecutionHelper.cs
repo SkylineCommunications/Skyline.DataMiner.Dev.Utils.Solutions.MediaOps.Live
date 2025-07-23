@@ -150,7 +150,7 @@
 				}
 				catch (ConnectFailedException e)
 				{
-					var eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
+					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
@@ -172,7 +172,7 @@
 				}
 				catch (DisconnectFailedException e)
 				{
-					var eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
+					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
@@ -401,7 +401,7 @@
 			{
 				if (results.All(value => value.Name != orchestrationProfileValue.Name))
 				{
-					var value = orchestrationProfileValue.Value.Type == ParameterValue.ValueType.Double
+					string value = orchestrationProfileValue.Value.Type == ParameterValue.ValueType.Double
 						? orchestrationProfileValue.Value.DoubleValue.ToString(CultureInfo.InvariantCulture)
 						: orchestrationProfileValue.Value.StringValue;
 
@@ -419,8 +419,26 @@
 				IDms dms = _api.Connection.GetDms();
 				IDmsAutomationScript script = dms.GetScript(scriptName);
 				List<DmsAutomationScriptParamValue> scriptParams = arguments
+					.Where(arg => arg.Type == OrchestrationScriptArgumentType.Parameter)
 					.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
 					.ToList();
+
+				List<DmsAutomationScriptDummyValue> scriptDummies = new List<DmsAutomationScriptDummyValue>();
+				foreach (OrchestrationScriptArgument dummyArgument in arguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Element))
+				{
+					if (dummyArgument.Value.Contains("/")) // By ID
+					{
+						string[] splittedId = dummyArgument.Value.Split('/');
+						int dmaId = Convert.ToInt32(splittedId[0]);
+						int elementId = Convert.ToInt32(splittedId[1]);
+						scriptDummies.Add(new DmsAutomationScriptDummyValue(dummyArgument.Name, new DmsElementId(dmaId, elementId)));
+					}
+					else // By Name
+					{
+						IDmsElement element = dms.GetElement(dummyArgument.Value);
+						scriptDummies.Add(new DmsAutomationScriptDummyValue(dummyArgument.Name, element.DmsElementId));
+					}
+				}
 
 				DmsAutomationScriptRunOptions scriptOptions = new()
 				{

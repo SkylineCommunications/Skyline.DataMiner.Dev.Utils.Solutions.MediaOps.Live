@@ -469,8 +469,8 @@
 
 		internal void SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
 		{
-			List<Configuration> configsToDelete = new List<Configuration>();
-			List<Configuration> configsToWrite = new List<Configuration>();
+			List<Configuration> configsToDelete = [];
+			List<Configuration> configsToWrite = [];
 
 			IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations = events.ToList();
 			foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
