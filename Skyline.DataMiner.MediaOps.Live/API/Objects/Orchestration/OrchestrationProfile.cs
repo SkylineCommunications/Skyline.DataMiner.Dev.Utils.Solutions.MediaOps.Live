@@ -4,6 +4,11 @@
 
 	public class OrchestrationProfile
 	{
+		public OrchestrationProfile()
+		{
+			Values = new List<OrchestrationProfileValue>();
+		}
+
 		public string Definition { get; set; }
 
 		public string Instance { get; set; }

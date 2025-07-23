@@ -101,6 +101,14 @@
 
 				Task.WaitAll(tasks.ToArray());
 
+				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
+				{
+					if (orchestrationEventConfiguration.EventState != SlcOrchestrationIds.Enums.EventState.Failed)
+					{
+						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
+					}
+				}
+
 				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
 			}
 		}
@@ -140,8 +148,6 @@
 					{
 						connectionsToConfigureByEvent.Add(eventConfigurationsWithConnection.ID, eventConfigurationsWithConnection.Configuration.Connections.ToList());
 					}
-
-					eventConfigurationsWithConnection.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 				}
 
 				try
@@ -367,10 +373,7 @@
 				if (orchestrationEventConfiguration.EventState == SlcOrchestrationIds.Enums.EventState.Failed)
 				{
 					orchestrationEventConfiguration.FailureInfo += String.Join("\n", errors);
-					return;
 				}
-
-				orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 			}
 		}
 
@@ -386,10 +389,7 @@
 				{
 					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", errorMessages)}";
 					orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-					return;
 				}
-
-				orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 			}
 		}
 

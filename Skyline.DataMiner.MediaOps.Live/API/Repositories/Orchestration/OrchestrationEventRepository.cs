@@ -421,7 +421,7 @@
 		/// <param name="events">The <see cref="OrchestrationEvent" /> objects to convert.</param>
 		/// <returns>A mapping of each event ID to the converted <see cref="OrchestrationEventConfiguration" /> object.</returns>
 		/// <exception cref="ArgumentNullException">Events can not be null.</exception>
-		private Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
+		internal Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
 		{
 			if (events == null)
 			{
@@ -479,6 +479,7 @@
 				{
 					orchestrationEventConfiguration.ConfigurationReference = null;
 					configsToDelete.Add(orchestrationEventConfiguration.Configuration);
+					continue;
 				}
 
 				orchestrationEventConfiguration.ConfigurationReference = orchestrationEventConfiguration.Configuration.ID;

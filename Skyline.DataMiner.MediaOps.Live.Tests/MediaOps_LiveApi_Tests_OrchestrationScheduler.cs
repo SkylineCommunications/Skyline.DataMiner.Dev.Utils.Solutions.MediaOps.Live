@@ -1,7 +1,5 @@
 namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using Newtonsoft.Json;
-
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
@@ -128,7 +126,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 		}
 
-		/*[TestMethod]
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteNow()
 		{
 			var simulation = new MediaOpsLiveSimulation();
@@ -145,7 +143,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
-			Console.WriteLine(JsonConvert.SerializeObject(orchestrationJob));
 
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 
@@ -153,8 +150,44 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 			Assert.AreEqual(SlcOrchestrationIds.Enums.EventState.Completed, ev.EventState);
-		}*/
+		}
 
-		// TODO: Reschedule events
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_Reschedule()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var hourFromNow = DateTimeOffset.UtcNow + TimeSpan.FromHours(1);
+			var ev = new OrchestrationEvent
+			{
+				EventTime = hourFromNow,
+				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
+				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				Name = "Test Event Confirmed",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+
+			var utcScheduledTime = simulation.Dms.GetAllDmsSchedulerTasks().First().StartTime.ToUniversalTime();
+			var trimmedEventTime = new DateTimeOffset(
+				new DateTime(ev.EventTime.Value.Ticks - ev.EventTime.Value.Ticks % TimeSpan.TicksPerSecond, DateTimeKind.Utc));
+
+			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.AreEqual(trimmedEventTime, utcScheduledTime);
+
+			var twoHoursForNow = DateTimeOffset.UtcNow + TimeSpan.FromHours(2);
+			ev.EventTime = twoHoursForNow;
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+
+			utcScheduledTime = simulation.Dms.GetAllDmsSchedulerTasks().First().StartTime.ToUniversalTime();
+			trimmedEventTime = new DateTimeOffset(
+				new DateTime(ev.EventTime.Value.Ticks - ev.EventTime.Value.Ticks % TimeSpan.TicksPerSecond, DateTimeKind.Utc));
+
+			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.AreEqual(trimmedEventTime, utcScheduledTime);
+		}
 	}
 }
