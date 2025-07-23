@@ -445,7 +445,7 @@
 					ExtendedErrorInfo = true,
 				};
 
-				DmsAutomationScriptResult scriptResult = script.Execute(scriptParams, new List<DmsAutomationScriptDummyValue>(), scriptOptions);
+				DmsAutomationScriptResult scriptResult = script.Execute(scriptParams, scriptDummies, scriptOptions);
 
 				if (scriptResult.HadError)
 				{
