@@ -28,5 +28,7 @@
 			Assert.AreEqual(1, job.RemovedIds.Count());
 			Assert.AreEqual(toRemove, job.RemovedIds.FirstOrDefault());
 		}
+
+		// TODO: Test validations
 	}
 }

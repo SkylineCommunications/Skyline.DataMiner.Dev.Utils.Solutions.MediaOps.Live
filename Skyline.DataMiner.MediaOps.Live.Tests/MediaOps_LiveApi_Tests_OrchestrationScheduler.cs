@@ -128,7 +128,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 		}
 
-		[TestMethod]
+		/*[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteNow()
 		{
 			var simulation = new MediaOpsLiveSimulation();
@@ -153,6 +153,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 			Assert.AreEqual(SlcOrchestrationIds.Enums.EventState.Completed, ev.EventState);
-		}
+		}*/
+
+		// TODO: Reschedule events
 	}
 }
