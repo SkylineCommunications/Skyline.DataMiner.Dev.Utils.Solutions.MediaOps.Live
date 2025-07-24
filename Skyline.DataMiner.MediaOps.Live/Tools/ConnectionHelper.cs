@@ -38,6 +38,17 @@
 			}
 		}
 
+		public static bool IsManagedDataMinerModule(IConnection connection)
+		{
+			if (connection == null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			return connection is IConnectionConfig connectionConfig &&
+				connectionConfig.Attributes.HasFlag(ConnectionAttributes.ManagedDataMinerModule);
+		}
+
 		/// <summary>
 		/// Requests a one time ticket that can be used to authenticate another connection.
 		/// </summary>

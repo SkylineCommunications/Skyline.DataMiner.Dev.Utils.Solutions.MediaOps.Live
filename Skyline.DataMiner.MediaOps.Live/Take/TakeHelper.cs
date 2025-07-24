@@ -14,6 +14,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
 	public class TakeHelper
@@ -495,8 +496,20 @@
 
 		private ConnectionMonitor CreateConnectionMonitor()
 		{
-			var staticConnection = ConnectionHelper.CreateConnection(_api.Connection, "MediaOps.Live - Connection monitor");
-			var staticLiveApi = new MediaOpsLiveApi(staticConnection);
+			IConnection connection;
+
+			if (ConnectionHelper.IsManagedDataMinerModule(_api.Connection))
+			{
+				// If the connection is a managed DataMiner module (e.g. Engine.SLNetRaw), use the existing connection directly.
+				connection = _api.Connection;
+			}
+			else
+			{
+				connection = ConnectionHelper.CreateConnection(_api.Connection, "MediaOps.Live - Connection monitor");
+			}
+
+			var staticLiveApi = new MediaOpsLiveApi(connection);
+
 			return new ConnectionMonitor(staticLiveApi);
 		}
 	}
