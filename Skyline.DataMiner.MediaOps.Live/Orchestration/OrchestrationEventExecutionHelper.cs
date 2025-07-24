@@ -27,14 +27,10 @@
 	internal class OrchestrationEventExecutionHelper
 	{
 		private readonly MediaOpsLiveApi _api;
-		private readonly TakeHelper _takeHelper;
 
 		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api)
 		{
 			_api = api;
-
-			_takeHelper = new TakeHelper(_api);
-			_takeHelper.EnableWaitForCompletion(TimeSpan.FromSeconds(60));
 		}
 
 		internal void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds, PerformanceTracker performanceTracker)
@@ -255,7 +251,10 @@
 					}
 				}
 
-				_takeHelper.Disconnect(requests, performanceTracker.Collector);
+				var takeHelper = new TakeHelper(_api);
+				takeHelper.EnableWaitForCompletion(TimeSpan.FromSeconds(60));
+
+				takeHelper.Disconnect(requests, performanceTracker.Collector);
 			}
 		}
 
@@ -322,7 +321,10 @@
 					}
 				}
 
-				_takeHelper.Take(requests, performanceTracker.Collector);
+				var takeHelper = new TakeHelper(_api);
+				takeHelper.EnableWaitForCompletion(TimeSpan.FromSeconds(60));
+
+				takeHelper.Take(requests, performanceTracker.Collector);
 			}
 		}
 
@@ -344,10 +346,10 @@
 						() =>
 						{
 							if (TryExecuteOrchestrationScript(
-								    nodeConfiguration.OrchestrationScriptName,
-								    nodeConfiguration.OrchestrationScriptArguments,
-								    performanceTracker,
-								    out string[] errorMessages))
+									nodeConfiguration.OrchestrationScriptName,
+									nodeConfiguration.OrchestrationScriptArguments,
+									performanceTracker,
+									out string[] errorMessages))
 							{
 								return;
 							}
