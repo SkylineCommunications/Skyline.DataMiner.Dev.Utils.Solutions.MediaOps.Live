@@ -20,8 +20,6 @@
 
 		private readonly Dictionary<ApiObjectReference<Endpoint>, Endpoint> _endpoints = new();
 		private readonly Dictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> _virtualSignalGroups = new();
-		private readonly Dictionary<ApiObjectReference<Endpoint>, Connection> _connectionsByDestination = new();
-		private readonly Dictionary<ApiObjectReference<Endpoint>, PendingConnectionAction> _pendingActionsByDestination = new();
 
 		private readonly VirtualSignalGroupEndpointsMapping _virtualSignalGroupEndpointsMapping = new();
 		private readonly ConnectionEndpointsMapping _connectionEndpointsMapping = new();
@@ -473,17 +471,13 @@
 
 				foreach (var connection in e.DeletedConnections)
 				{
-					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
-					{
-						impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
-						_connectionsByDestination.Remove(existingConnection.Destination);
-						_connectionEndpointsMapping.Remove(existingConnection);
-					}
+					impactedEndpoints.UnionWith(connection.GetEndpoints());
+					_connectionEndpointsMapping.Remove(connection);
 				}
 
 				foreach (var connection in e.UpdatedConnections)
 				{
-					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
+					if (_connectionEndpointsMapping.TryGetConnectionForDestination(connection.Destination, out var existingConnection))
 					{
 						if (connection.IsConnected == existingConnection.IsConnected &&
 							connection.ConnectedSource == existingConnection.ConnectedSource)
@@ -495,7 +489,6 @@
 					}
 
 					impactedEndpoints.UnionWith(connection.GetEndpoints());
-					_connectionsByDestination[connection.Destination] = connection;
 					_connectionEndpointsMapping.AddOrUpdate(connection);
 				}
 
@@ -513,17 +506,13 @@
 
 				foreach (var pendingAction in e.DeletedPendingActions)
 				{
-					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingAction))
-					{
-						impactedEndpoints.UnionWith(existingPendingAction.GetEndpoints());
-						_pendingActionsByDestination.Remove(existingPendingAction.Destination);
-						_pendingConnectionActionsMapping.Remove(existingPendingAction);
-					}
+					impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
+					_pendingConnectionActionsMapping.Remove(pendingAction);
 				}
 
 				foreach (var pendingAction in e.UpdatedPendingActions)
 				{
-					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
+					if (_pendingConnectionActionsMapping.TryGetPendingConnectionActionForDestination(pendingAction.Destination, out var existingPendingConnectionAction))
 					{
 						if (pendingAction.Action == existingPendingConnectionAction.Action &&
 							pendingAction.PendingSource == existingPendingConnectionAction.PendingSource)
@@ -535,7 +524,6 @@
 					}
 
 					impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
-					_pendingActionsByDestination[pendingAction.Destination] = pendingAction;
 					_pendingConnectionActionsMapping.AddOrUpdate(pendingAction);
 				}
 
@@ -681,13 +669,11 @@
 				{
 					foreach (var connection in element.GetConnections())
 					{
-						_connectionsByDestination[connection.Destination] = connection;
 						_connectionEndpointsMapping.AddOrUpdate(connection);
 					}
 
 					foreach (var action in element.GetPendingConnectionActions())
 					{
-						_pendingActionsByDestination[action.Destination] = action;
 						_pendingConnectionActionsMapping.AddOrUpdate(action);
 					}
 				});

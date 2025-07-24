@@ -12,7 +12,7 @@
 	public class ConnectionEndpointsMapping
 	{
 		private readonly ManyToManyMapping<Connection, ApiObjectReference<Endpoint>> _mapping =
-			new (PropertyComparer<Connection>.Create(x => x.Destination));
+			new(PropertyComparer<Connection>.Create(x => x.Destination));
 
 		public int ConnectionCount => _mapping.Forward.Count;
 
@@ -35,6 +35,14 @@
 			return _mapping.Reverse.TryGetValue(endpoint, out var connections)
 				? connections.ToList()
 				: Array.Empty<Connection>();
+		}
+
+		public bool TryGetConnectionForDestination(ApiObjectReference<Endpoint> destination, out Connection connection)
+		{
+			var connections = GetConnections(destination);
+
+			connection = connections.SingleOrDefault(c => c.Destination == destination);
+			return connection != null;
 		}
 
 		public void Add(Connection connection)

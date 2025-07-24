@@ -37,6 +37,14 @@
 				: Array.Empty<PendingConnectionAction>();
 		}
 
+		public bool TryGetPendingConnectionActionForDestination(ApiObjectReference<Endpoint> destination, out PendingConnectionAction pendingConnectionAction)
+		{
+			var pendingConnectionActions = GetPendingConnectionActions(destination);
+
+			pendingConnectionAction = pendingConnectionActions.SingleOrDefault(c => c.Destination == destination);
+			return pendingConnectionAction != null;
+		}
+
 		public bool IsConnecting(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
 		{
 			var actions = GetPendingConnectionActions(destination);
