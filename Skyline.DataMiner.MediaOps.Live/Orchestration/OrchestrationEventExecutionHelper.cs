@@ -2,16 +2,12 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Collections.ObjectModel;
 	using System.Globalization;
 	using System.Linq;
 	using System.Threading.Tasks;
 
-	using Newtonsoft.Json;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -19,11 +15,9 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
-	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
 
 	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection;
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
@@ -33,10 +27,14 @@
 	internal class OrchestrationEventExecutionHelper
 	{
 		private readonly MediaOpsLiveApi _api;
+		private readonly TakeHelper _takeHelper;
 
 		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api)
 		{
 			_api = api;
+
+			_takeHelper = new TakeHelper(_api);
+			_takeHelper.EnableWaitForCompletion(TimeSpan.FromSeconds(60));
 		}
 
 		internal void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds, PerformanceTracker performanceTracker)
@@ -210,9 +208,6 @@
 					return;
 				}
 
-				TakeHelper takeHelper = new(_api);
-				takeHelper.EnableWaitForCompletion(new ConnectionMonitor(_api),TimeSpan.FromSeconds(5));
-
 				List<VsgDisconnectRequest> requests = [];
 
 				HashSet<Guid> allInvolvedVsgIds = [];
@@ -260,7 +255,7 @@
 					}
 				}
 
-				takeHelper.Disconnect(requests, performanceTracker.Collector);
+				_takeHelper.Disconnect(requests, performanceTracker.Collector);
 			}
 		}
 
@@ -272,9 +267,6 @@
 				{
 					return;
 				}
-
-				TakeHelper takeHelper = new(_api);
-				takeHelper.EnableWaitForCompletion(new ConnectionMonitor(_api),TimeSpan.FromSeconds(5));
 
 				List<VsgConnectionRequest> requests = [];
 
@@ -330,7 +322,7 @@
 					}
 				}
 
-				takeHelper.Take(requests, performanceTracker.Collector);
+				_takeHelper.Take(requests, performanceTracker.Collector);
 			}
 		}
 

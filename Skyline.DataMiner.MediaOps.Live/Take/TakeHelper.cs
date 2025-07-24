@@ -13,6 +13,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
+	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
 	public class TakeHelper
@@ -20,29 +21,30 @@
 		private readonly MediaOpsLiveApi _api;
 
 		private bool _waitForCompletion = false;
-		private ConnectionMonitor _connectionMonitor;
 		private TimeSpan _timeout;
+		private ConnectionMonitor _connectionMonitor;
 
 		public TakeHelper(MediaOpsLiveApi api)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
 
-		public void EnableWaitForCompletion(ConnectionMonitor connectionMonitor, TimeSpan timeout)
+		public void EnableWaitForCompletion(TimeSpan timeout, ConnectionMonitor connectionMonitor = null)
 		{
-			if (connectionMonitor is null)
-			{
-				throw new ArgumentNullException(nameof(connectionMonitor));
-			}
-
 			if (timeout < TimeSpan.Zero)
 			{
 				throw new ArgumentException("Timeout cannot be negative.", nameof(timeout));
 			}
 
-			_connectionMonitor = connectionMonitor;
-			_timeout = timeout;
 			_waitForCompletion = true;
+			_timeout = timeout;
+
+			if (connectionMonitor == null)
+			{
+				connectionMonitor = ServiceProvider.Instance.GetOrAddService(CreateConnectionMonitor);
+			}
+
+			_connectionMonitor = connectionMonitor;
 		}
 
 		public void DisableWaitForCompletion()
@@ -489,6 +491,13 @@
 					takeContext.Destination,
 					_timeout);
 			}
+		}
+
+		private ConnectionMonitor CreateConnectionMonitor()
+		{
+			var staticConnection = ConnectionHelper.CreateConnection(_api.Connection, "MediaOps.Live - Connection monitor");
+			var staticLiveApi = new MediaOpsLiveApi(staticConnection);
+			return new ConnectionMonitor(staticLiveApi);
 		}
 	}
 }
