@@ -68,13 +68,24 @@
 		{
 			foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
 			{
-				if (orchestrationEvent.EventState == SlcOrchestrationIds.Enums.EventState.Confirmed && orchestrationEvent.HasScripts())
+				if (orchestrationEvent.EventState != SlcOrchestrationIds.Enums.EventState.Confirmed)
+				{
+					continue;
+				}
+
+				OrchestrationJob.ValidateOrchestrationScriptInput(
+					connection,
+					orchestrationEvent.GlobalOrchestrationScript,
+					orchestrationEvent.GlobalOrchestrationScriptArguments.ToList(),
+					orchestrationEvent.Profile.Values.ToList());
+
+				foreach (NodeConfiguration configurationNodeConfiguration in orchestrationEvent.Configuration.NodeConfigurations)
 				{
 					OrchestrationJob.ValidateOrchestrationScriptInput(
 						connection,
-						orchestrationEvent.GlobalOrchestrationScript,
-						orchestrationEvent.GlobalOrchestrationScriptArguments.ToList(),
-						orchestrationEvent.Profile.Values.ToList());
+						configurationNodeConfiguration.OrchestrationScriptName,
+						configurationNodeConfiguration.OrchestrationScriptArguments.ToList(),
+						configurationNodeConfiguration.Profile.Values.ToList());
 				}
 			}
 		}

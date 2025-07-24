@@ -131,7 +131,7 @@
 		{
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
-				if (orchestrationEvent.EventState == SlcOrchestrationIds.Enums.EventState.Confirmed && !String.IsNullOrEmpty(orchestrationEvent.GlobalOrchestrationScript))
+				if (orchestrationEvent.EventState == SlcOrchestrationIds.Enums.EventState.Confirmed)
 				{
 					ValidateOrchestrationScriptInput(
 						connection,
@@ -144,6 +144,11 @@
 
 		internal static void ValidateOrchestrationScriptInput(IConnection connection, string scriptName, List<OrchestrationScriptArgument> arguments, List<OrchestrationProfileValue> profileValues)
 		{
+			if (String.IsNullOrEmpty(scriptName))
+			{
+				return;
+			}
+
 			GetScriptInfoResponseMessage scriptInfoResponse = (GetScriptInfoResponseMessage)connection.HandleSingleResponseMessage(new GetScriptInfoMessage(scriptName));
 
 			if (scriptInfoResponse?.Parameters == null || !scriptInfoResponse.Parameters.Any())
