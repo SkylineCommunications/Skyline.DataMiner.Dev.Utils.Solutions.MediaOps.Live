@@ -39,7 +39,7 @@
 			lock (_lock)
 			{
 				IDictionary<string, object[]> updatedRows;
-				ICollection<string> deletedRows;
+				IDictionary<string, object[]> deletedRows;
 
 				if (message is ParameterTableUpdateEventMessage parameterTableUpdateEventMessage)
 				{
@@ -49,7 +49,7 @@
 				else
 				{
 					updatedRows = ApplyUpdatedRows(message);
-					deletedRows = Array.Empty<string>();
+					deletedRows = new Dictionary<string, object[]>();
 				}
 
 				return new TableValueChange(_element, _tableId, updatedRows, deletedRows);
@@ -85,20 +85,21 @@
 			return updatedRows;
 		}
 
-		private ICollection<string> ApplyDeletedRows(ParameterTableUpdateEventMessage update)
+		private IDictionary<string, object[]> ApplyDeletedRows(ParameterTableUpdateEventMessage update)
 		{
+			var deletedRows = new Dictionary<string, object[]>();
+
 			if (update.DeletedRows == null)
 			{
-				return Array.Empty<string>();
+				return deletedRows;
 			}
-
-			var deletedRows = new List<string>();
 
 			foreach (var r in update.DeletedRows)
 			{
-				if (Rows.Remove(r))
+				if (Rows.TryGetValue(r, out var row))
 				{
-					deletedRows.Add(r);
+					Rows.Remove(r);
+					deletedRows.Add(r, row);
 				}
 			}
 

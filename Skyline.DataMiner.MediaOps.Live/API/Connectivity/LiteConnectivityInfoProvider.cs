@@ -131,9 +131,9 @@
 			{
 				var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
 
-				foreach (var destinationId in e.DeletedConnections)
+				foreach (var connection in e.DeletedConnections)
 				{
-					if (_connectionsByDestination.TryGetValue(destinationId, out var existingConnection))
+					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
 					{
 						impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
 						_connectionsByDestination.Remove(existingConnection.Destination);
@@ -166,9 +166,9 @@
 			{
 				var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
 
-				foreach (var destinationId in e.DeletedPendingActions)
+				foreach (var pendingAction in e.DeletedPendingActions)
 				{
-					if (_pendingActionsByDestination.TryGetValue(destinationId, out var existingPendingAction))
+					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingAction))
 					{
 						impactedEndpoints.UnionWith(existingPendingAction.GetEndpoints());
 						_pendingActionsByDestination.Remove(existingPendingAction.Destination);

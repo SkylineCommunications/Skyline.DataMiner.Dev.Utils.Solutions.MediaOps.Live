@@ -6,7 +6,7 @@
 
 	public class PendingConnectionActionsChangedEvent
 	{
-		public PendingConnectionActionsChangedEvent(IEnumerable<PendingConnectionAction> updatedPendingActions, IEnumerable<Guid> deletedPendingActions)
+		public PendingConnectionActionsChangedEvent(IEnumerable<PendingConnectionAction> updatedPendingActions, IEnumerable<PendingConnectionAction> deletedPendingActions)
 		{
 			UpdatedPendingActions = (updatedPendingActions ?? []).ToList();
 			DeletedPendingActions = (deletedPendingActions ?? []).ToList();
@@ -18,10 +18,9 @@
 		public ICollection<PendingConnectionAction> UpdatedPendingActions { get; }
 
 		/// <summary>
-		/// Gets the IDs of the deleted pending connection actions.
-		/// The IDs correspond to the destination endpoint IDs.
+		/// Gets the deleted pending connection actions.
 		/// </summary>
-		public ICollection<Guid> DeletedPendingActions { get; }
+		public ICollection<PendingConnectionAction> DeletedPendingActions { get; }
 
 		public override string ToString()
 		{

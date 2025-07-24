@@ -11,7 +11,7 @@
 			IDmsElement element,
 			int tableId,
 			IDictionary<string, object[]> updatedRows,
-			ICollection<string> deletedRows)
+			IDictionary<string, object[]> deletedRows)
 		{
 			Element = element ?? throw new ArgumentNullException(nameof(element));
 			TableId = tableId;
@@ -26,7 +26,7 @@
 
 		public IDictionary<string, object[]> UpdatedRows { get; }
 
-		public ICollection<string> DeletedRows { get; }
+		public IDictionary<string, object[]> DeletedRows { get; }
 
 		public override string ToString()
 		{

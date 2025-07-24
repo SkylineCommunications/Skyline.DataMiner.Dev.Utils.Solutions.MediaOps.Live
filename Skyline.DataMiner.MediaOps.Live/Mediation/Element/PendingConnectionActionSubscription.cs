@@ -55,7 +55,7 @@
 		private void HandleChange(object sender, TableValueChange e)
 		{
 			var updated = e.UpdatedRows.Values.Select(r => new PendingConnectionAction(r));
-			var deleted = e.DeletedRows.Select(id => Guid.Parse(id));
+			var deleted = e.DeletedRows.Values.Select(r => new PendingConnectionAction(r));
 
 			Changed?.Invoke(this, new PendingConnectionActionsChangedEvent(updated, deleted));
 		}

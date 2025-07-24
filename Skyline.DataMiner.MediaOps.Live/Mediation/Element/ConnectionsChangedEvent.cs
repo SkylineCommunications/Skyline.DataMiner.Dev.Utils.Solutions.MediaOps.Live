@@ -6,7 +6,7 @@
 
 	public class ConnectionsChangedEvent
 	{
-		public ConnectionsChangedEvent(IEnumerable<Connection> updatedConnections, IEnumerable<Guid> deletedConnections)
+		public ConnectionsChangedEvent(IEnumerable<Connection> updatedConnections, IEnumerable<Connection> deletedConnections)
 		{
 			UpdatedConnections = (updatedConnections ?? []).ToList();
 			DeletedConnections = (deletedConnections ?? []).ToList();
@@ -18,10 +18,9 @@
 		public ICollection<Connection> UpdatedConnections { get; }
 
 		/// <summary>
-		/// Gets the IDs of the deleted connections.
-		/// The IDs correspond to the destination endpoint IDs.
+		/// Gets the deleted connections.
 		/// </summary>
-		public ICollection<Guid> DeletedConnections { get; }
+		public ICollection<Connection> DeletedConnections { get; }
 
 		public override string ToString()
 		{
