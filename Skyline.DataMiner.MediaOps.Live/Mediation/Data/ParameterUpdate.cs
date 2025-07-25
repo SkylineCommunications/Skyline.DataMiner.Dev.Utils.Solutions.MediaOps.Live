@@ -19,7 +19,7 @@
 
 		public IDictionary<string, object[]> UpdatedRows { get; set; }
 
-		public ICollection<string> DeletedRows { get; set; }
+		public IDictionary<string, object[]> DeletedRows { get; set; }
 
 		public override string ToString()
 		{
