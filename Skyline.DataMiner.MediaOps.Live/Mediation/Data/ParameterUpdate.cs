@@ -3,11 +3,15 @@
 	using System.Collections.Generic;
 	using System.Text;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+
 	public class ParameterUpdate
 	{
 		public int AgentId { get; set; }
 
 		public int ElementId { get; set; }
+
+		public DmsElementId DmsElementId => new(AgentId, ElementId);
 
 		public int ParameterId { get; set; }
 

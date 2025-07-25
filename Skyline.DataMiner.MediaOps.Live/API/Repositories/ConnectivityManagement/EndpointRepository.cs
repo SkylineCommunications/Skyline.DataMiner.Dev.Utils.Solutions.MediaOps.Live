@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Data;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -39,22 +40,22 @@
 			return Read(filter);
 		}
 
-		public IEnumerable<Endpoint> GetByElementAndIdentifiers(string dmaElementId, IEnumerable<string> identifiers)
+		public IEnumerable<Endpoint> GetByElementAndIdentifiers(DmsElementId elementId, IEnumerable<string> identifiers)
 		{
-			if (String.IsNullOrWhiteSpace(dmaElementId))
-			{
-				throw new ArgumentException($"'{nameof(dmaElementId)}' cannot be null or whitespace.", nameof(dmaElementId));
-			}
-
 			if (identifiers == null)
 			{
 				throw new ArgumentNullException(nameof(identifiers));
 			}
 
+			if (identifiers.Any(x => String.IsNullOrWhiteSpace(x)))
+			{
+				throw new ArgumentException($"'{nameof(identifiers)}' cannot contain null or whitespace values.", nameof(identifiers));
+			}
+
 			FilterElement<DomInstance> CreateFilter(string identifier) =>
 				new ANDFilterElement<DomInstance>(
 					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(dmaElementId),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(elementId.Value),
 					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Identifier).Equal(identifier));
 
 			return FilterQueryExecutor.RetrieveFilteredItems(
@@ -81,13 +82,8 @@
 				f => Read(f));
 		}
 
-		public IEnumerable<Endpoint> GetByElementAndMulticasts(string dmaElementId, IEnumerable<Multicast> multicasts)
+		public IEnumerable<Endpoint> GetByElementAndMulticasts(DmsElementId elementId, IEnumerable<Multicast> multicasts)
 		{
-			if (String.IsNullOrWhiteSpace(dmaElementId))
-			{
-				throw new ArgumentException($"'{nameof(dmaElementId)}' cannot be null or whitespace.", nameof(dmaElementId));
-			}
-
 			if (multicasts == null)
 			{
 				throw new ArgumentNullException(nameof(multicasts));
@@ -96,7 +92,7 @@
 			FilterElement<DomInstance> CreateFilter(Multicast multicast) =>
 				new ANDFilterElement<DomInstance>(
 					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(dmaElementId),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(elementId.Value),
 					CreateMulticastFilter(multicast));
 
 			return FilterQueryExecutor.RetrieveFilteredItems(
@@ -185,19 +181,21 @@
 
 		private static FilterElement<DomInstance> CreateMulticastFilter(Multicast multicast)
 		{
-			var filters = new List<FilterElement<DomInstance>>
+			var filters = new List<FilterElement<DomInstance>>();
+
+			if (!String.IsNullOrWhiteSpace(multicast.IpAddress))
 			{
-				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP).Equal(multicast.IpAddress),
-			};
+				filters.Add(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP).Equal(multicast.IpAddress));
+			}
+
+			if (!String.IsNullOrWhiteSpace(multicast.SourceIP))
+			{
+				filters.Add(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP).Equal(multicast.SourceIP));
+			}
 
 			if (multicast.Port > 0)
 			{
 				filters.Add(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port).Equal(multicast.Port));
-			}
-
-			if (multicast.SourceIP != null)
-			{
-				filters.Add(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP).Equal(multicast.SourceIP));
 			}
 
 			return filters.Count == 1

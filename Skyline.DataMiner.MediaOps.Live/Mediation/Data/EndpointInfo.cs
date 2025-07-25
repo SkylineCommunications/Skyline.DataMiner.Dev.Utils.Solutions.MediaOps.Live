@@ -19,7 +19,7 @@
 
 			ID = instance.ID;
 			Name = instance.Name;
-			Element = instance.Element;
+			Element = instance.Element?.Value ?? String.Empty;
 			Identifier = instance.Identifier;
 		}
 
