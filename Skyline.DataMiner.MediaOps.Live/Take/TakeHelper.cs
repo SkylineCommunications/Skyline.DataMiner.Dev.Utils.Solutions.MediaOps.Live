@@ -5,6 +5,7 @@
 	using System.Linq;
 	using System.Threading.Tasks;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
@@ -503,9 +504,17 @@
 				// If the connection is a managed DataMiner module (e.g. Engine.SLNetRaw), use the existing connection directly.
 				connection = _api.Connection;
 			}
+			else if (ConnectionHelper.TryCloneConnection(_api.Connection, "MediaOps.Live - Connection monitor", out var clonedConnection))
+			{
+				connection = clonedConnection;
+			}
+			else if (_api.HasEngine && Engine.SLNetRaw != null)
+			{
+				connection = Engine.SLNetRaw;
+			}
 			else
 			{
-				connection = ConnectionHelper.CreateConnection(_api.Connection, "MediaOps.Live - Connection monitor");
+				throw new InvalidOperationException("Failed to create a connection.");
 			}
 
 			var staticLiveApi = new MediaOpsLiveApi(connection);

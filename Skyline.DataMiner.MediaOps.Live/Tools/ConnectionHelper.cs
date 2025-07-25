@@ -8,7 +8,7 @@
 
 	public static class ConnectionHelper
 	{
-		public static Connection CreateConnection(IConnection baseConnection, string clientName)
+		public static Connection CloneConnection(IConnection baseConnection, string clientName)
 		{
 			if (baseConnection == null)
 			{
@@ -35,6 +35,20 @@
 			catch (Exception ex)
 			{
 				throw new DataMinerException("Failed to setup a connection with the DataMiner Agent: " + ex.Message, ex);
+			}
+		}
+
+		public static bool TryCloneConnection(IConnection baseConnection, string clientName, out IConnection connection)
+		{
+			try
+			{
+				connection = CloneConnection(baseConnection, clientName);
+				return true;
+			}
+			catch (Exception)
+			{
+				connection = null;
+				return false;
 			}
 		}
 
