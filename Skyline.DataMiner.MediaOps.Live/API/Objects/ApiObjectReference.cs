@@ -2,11 +2,6 @@
 {
 	using System;
 
-	public interface IApiObjectReference
-	{
-		Guid ID { get; }
-	}
-
 	public readonly struct ApiObjectReference<T> : IApiObjectReference, IEquatable<ApiObjectReference<T>>
 		where T : ApiObject<T>
 	{
