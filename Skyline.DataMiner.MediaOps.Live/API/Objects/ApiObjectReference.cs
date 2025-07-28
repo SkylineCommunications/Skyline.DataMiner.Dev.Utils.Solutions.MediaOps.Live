@@ -2,7 +2,12 @@
 {
 	using System;
 
-	public readonly struct ApiObjectReference<T> : IEquatable<ApiObjectReference<T>>
+	public interface IApiObjectReference
+	{
+		Guid ID { get; }
+	}
+
+	public readonly struct ApiObjectReference<T> : IApiObjectReference, IEquatable<ApiObjectReference<T>>
 		where T : ApiObject<T>
 	{
 		public ApiObjectReference(Guid id)
@@ -13,21 +18,6 @@
 		public static ApiObjectReference<T> Empty { get; } = new ApiObjectReference<T>(Guid.Empty);
 
 		public Guid ID { get; }
-
-		public static ApiObjectReference<T> Convert(object obj)
-		{
-			switch (obj)
-			{
-				case ApiObjectReference<T> refValue:
-					return refValue;
-				case ApiObject<T> apiObj:
-					return apiObj.Reference;
-				case Guid guid:
-					return new ApiObjectReference<T>(guid);
-				default:
-					throw new InvalidOperationException($"Cannot convert {obj?.GetType().Name} to {typeof(ApiObjectReference<T>).Name}");
-			}
-		}
 
 		public static implicit operator ApiObjectReference<T>(Guid id)
 		{

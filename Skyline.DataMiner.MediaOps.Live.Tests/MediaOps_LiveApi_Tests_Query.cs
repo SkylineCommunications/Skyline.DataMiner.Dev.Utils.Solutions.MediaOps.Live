@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
@@ -149,6 +150,17 @@
 
 			{
 				var endpoint = api.Endpoints.Query().FirstOrDefault(x => x.ID == Guid.NewGuid());
+				Assert.IsNull(endpoint);
+			}
+
+			{
+				var endpoint = api.Endpoints.Query().FirstOrDefault(x => x.Element == new DmsElementId(123, 1));
+				Assert.IsNotNull(endpoint);
+				Assert.AreEqual("Video Source 1", endpoint.Name);
+			}
+
+			{
+				var endpoint = api.Endpoints.Query().FirstOrDefault(x => x.Element == null);
 				Assert.IsNull(endpoint);
 			}
 		}

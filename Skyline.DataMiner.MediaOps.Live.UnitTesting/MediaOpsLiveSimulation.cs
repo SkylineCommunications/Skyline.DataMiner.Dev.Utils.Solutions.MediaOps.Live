@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -151,12 +152,14 @@
 
 				if (createEndpoints)
 				{
+					var elementId = new DmsElementId(123, i);
+
 					var videoSource1 = new Endpoint(Tools.GuidFromString($"Video Source {i}"))
 					{
 						Role = Role.Source,
 						Name = $"Video Source {i}",
 						TransportType = transportTypeIP,
-						Element = $"123/{i}",
+						Element = elementId,
 						Identifier = $"Key-{i}",
 					};
 					var audioSource1 = new Endpoint(Tools.GuidFromString($"Audio Source {i}"))
@@ -164,7 +167,7 @@
 						Role = Role.Source,
 						Name = $"Audio Source {i}",
 						TransportType = transportTypeIP,
-						Element = $"123/{i}",
+						Element = elementId,
 						Identifier = $"Key-{i}",
 					};
 					var videoDestination1 = new Endpoint(Tools.GuidFromString($"Video Destination {i}"))
@@ -172,7 +175,7 @@
 						Role = Role.Destination,
 						Name = $"Video Destination {i}",
 						TransportType = transportTypeIP,
-						Element = $"123/{i}",
+						Element = elementId,
 						Identifier = $"Key-{i}",
 					};
 					var audioDestination1 = new Endpoint(Tools.GuidFromString($"Audio Destination {i}"))
@@ -180,7 +183,7 @@
 						Role = Role.Destination,
 						Name = $"Audio Destination {i}",
 						TransportType = transportTypeIP,
-						Element = $"123/{i}",
+						Element = elementId,
 						Identifier = $"Key-{i}",
 					};
 					Api.Endpoints.CreateOrUpdate([videoSource1, audioSource1, videoDestination1, audioDestination1]);

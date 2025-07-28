@@ -5,15 +5,12 @@
 	using System.Collections.Generic;
 	using System.Globalization;
 	using System.Linq;
-	using System.Security.Cryptography;
 
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.Advanced;
-	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	public class SimulatedSchedulerTask
 	{

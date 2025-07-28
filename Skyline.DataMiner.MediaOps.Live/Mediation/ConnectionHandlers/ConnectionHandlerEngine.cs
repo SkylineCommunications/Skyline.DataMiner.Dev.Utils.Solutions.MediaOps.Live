@@ -5,22 +5,30 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
+		private readonly Lazy<IDms> _lazyDms;
+
 		public ConnectionHandlerEngine(IEngine engine)
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
 			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw);
 			Api.SetEngine(engine);
+
+			_lazyDms = new Lazy<IDms>(engine.GetDms);
 		}
 
 		public IEngine Engine { get; }
 
 		public MediaOpsLiveApi Api { get; }
+
+		public IDms Dms => _lazyDms.Value;
 
 		public void RegisterConnection(ConnectionUpdate connection)
 		{

@@ -278,8 +278,12 @@
 			{
 				foreach (var group in takeContexts.GroupBy(x => x.Destination.Element))
 				{
-					var elementKey = group.Key;
-					var element = dms.GetElementReference(new DmsElementId(elementKey));
+					if (group.Key == null)
+					{
+						continue;
+					}
+
+					var element = dms.GetElementReference(group.Key.Value);
 
 					foreach (var connection in group)
 					{

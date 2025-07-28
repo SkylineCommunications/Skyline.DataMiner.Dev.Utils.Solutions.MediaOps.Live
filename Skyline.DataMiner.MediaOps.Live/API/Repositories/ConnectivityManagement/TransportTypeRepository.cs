@@ -69,7 +69,7 @@
 			switch (fieldName)
 			{
 				case nameof(Level.Name):
-					return FilterElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name), comparer, (string)value);
+					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name), comparer, value);
 			}
 
 			return base.CreateFilter(fieldName, comparer, value);

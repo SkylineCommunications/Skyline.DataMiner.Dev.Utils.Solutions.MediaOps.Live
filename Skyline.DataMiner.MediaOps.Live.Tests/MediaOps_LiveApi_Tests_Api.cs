@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -120,11 +121,12 @@
 			var endpoint0 = endpoints[0];
 			var id0 = endpoints[0].ID;
 
-			endpoint0.Element = "10/123";
+			var newElementId = new DmsElementId(10, 123);
+			endpoint0.Element = newElementId;
 			api.Endpoints.Update(endpoint0);
 
 			var endpoint_read = api.Endpoints.Read(id0);
-			Assert.AreEqual("10/123", endpoint_read.Element);
+			Assert.AreEqual(newElementId, endpoint_read.Element);
 		}
 
 		[TestMethod]

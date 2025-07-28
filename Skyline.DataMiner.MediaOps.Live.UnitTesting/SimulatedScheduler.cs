@@ -4,11 +4,8 @@
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
-	using System.Text;
-	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
-	using Skyline.DataMiner.Net.Messages;
 
 	public class SimulatedScheduler
 	{

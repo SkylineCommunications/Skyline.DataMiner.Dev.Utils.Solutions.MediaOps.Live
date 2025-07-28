@@ -2,6 +2,7 @@
 {
 	using System;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.API.Validation;
@@ -59,16 +60,21 @@
 			}
 		}
 
-		public string Element
+		public DmsElementId? Element
 		{
 			get
 			{
-				return _domInstance.EndpointInfo.Element;
+				if (!String.IsNullOrWhiteSpace(_domInstance.EndpointInfo.Element))
+				{
+					return new DmsElementId(_domInstance.EndpointInfo.Element);
+				}
+
+				return null;
 			}
 
 			set
 			{
-				_domInstance.EndpointInfo.Element = value;
+				_domInstance.EndpointInfo.Element = value?.Value;
 			}
 		}
 
@@ -85,16 +91,21 @@
 			}
 		}
 
-		public string ControlElement
+		public DmsElementId? ControlElement
 		{
 			get
 			{
-				return _domInstance.EndpointInfo.ControlElement;
+				if (!String.IsNullOrWhiteSpace(_domInstance.EndpointInfo.ControlElement))
+				{
+					return new DmsElementId(_domInstance.EndpointInfo.ControlElement);
+				}
+
+				return null;
 			}
 
 			set
 			{
-				_domInstance.EndpointInfo.ControlElement = value;
+				_domInstance.EndpointInfo.ControlElement = value?.Value;
 			}
 		}
 
@@ -166,9 +177,9 @@
 		public static readonly Exposer<Endpoint, Guid> ID = new Exposer<Endpoint, Guid>(x => x.ID, nameof(Endpoint.ID));
 		public static readonly Exposer<Endpoint, string> Name = new Exposer<Endpoint, string>(x => x.Name, nameof(Endpoint.Name));
 		public static readonly Exposer<Endpoint, Role> Role = new Exposer<Endpoint, Role>(x => x.Role, nameof(Endpoint.Role));
-		public static readonly Exposer<Endpoint, string> Element = new Exposer<Endpoint, string>(x => x.Element, nameof(Endpoint.Element));
+		public static readonly Exposer<Endpoint, DmsElementId?> Element = new Exposer<Endpoint, DmsElementId?>(x => x.Element, nameof(Endpoint.Element));
 		public static readonly Exposer<Endpoint, string> Identifier = new Exposer<Endpoint, string>(x => x.Identifier, nameof(Endpoint.Identifier));
-		public static readonly Exposer<Endpoint, string> ControlElement = new Exposer<Endpoint, string>(x => x.ControlElement, nameof(Endpoint.ControlElement));
+		public static readonly Exposer<Endpoint, DmsElementId?> ControlElement = new Exposer<Endpoint, DmsElementId?>(x => x.ControlElement, nameof(Endpoint.ControlElement));
 		public static readonly Exposer<Endpoint, string> ControlIdentifier = new Exposer<Endpoint, string>(x => x.ControlIdentifier, nameof(Endpoint.ControlIdentifier));
 		public static readonly Exposer<Endpoint, ApiObjectReference<TransportType>?> TransportType = new Exposer<Endpoint, ApiObjectReference<TransportType>?>(x => x.TransportType, nameof(Endpoint.TransportType));
 

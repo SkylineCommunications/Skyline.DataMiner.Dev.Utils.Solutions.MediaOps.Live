@@ -488,7 +488,7 @@
 			switch (fieldName)
 			{
 				case nameof(ApiObject<T>.ID):
-					return FilterElementFactory.Create(DomInstanceExposers.Id, comparer, (Guid)value);
+					return FilterElementFactory.Create<Guid>(DomInstanceExposers.Id, comparer, value);
 				default:
 					throw new NotImplementedException();
 			}
