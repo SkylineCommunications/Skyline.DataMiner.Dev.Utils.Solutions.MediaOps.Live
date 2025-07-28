@@ -4,7 +4,7 @@
 
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model;
 
-	public abstract class ApiObject<T> : IEquatable<ApiObject<T>>
+	public abstract class ApiObject<T> : IApiObjectReference, IEquatable<ApiObject<T>>
 		where T : ApiObject<T>
 	{
 		protected ApiObject(DomInstanceBase domInstance)

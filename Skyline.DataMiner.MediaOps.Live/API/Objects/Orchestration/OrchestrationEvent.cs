@@ -2,15 +2,11 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Profiles;
 
 	/// <summary>
 	/// Information about an orchestration event.

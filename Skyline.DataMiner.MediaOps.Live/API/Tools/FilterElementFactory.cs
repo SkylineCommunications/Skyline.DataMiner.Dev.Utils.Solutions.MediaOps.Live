@@ -2,90 +2,144 @@
 {
 	using System;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	public static class FilterElementFactory
 	{
-		public static FilterElement<DomInstance> Create<T>(DynamicListExposer<DomInstance, T> exposer, Comparer comparer, T value)
+		public static FilterElement<DomInstance> Create<T>(DynamicListExposer<DomInstance, T> exposer, Comparer comparer, object value)
 		{
 			if (exposer == null)
 			{
 				throw new ArgumentNullException(nameof(exposer));
 			}
 
+			var filterValue = ConvertFilterValue<T>(value);
+
+			return CreateFilter(exposer, comparer, filterValue);
+		}
+
+		public static FilterElement<DomInstance> Create<T>(DynamicListExposer<DomInstance, object> exposer, Comparer comparer, object value)
+		{
+			if (exposer == null)
+			{
+				throw new ArgumentNullException(nameof(exposer));
+			}
+
+			var filterValue = ConvertFilterValue<T>(value);
+
+			return CreateFilter(exposer, comparer, filterValue);
+		}
+
+		public static FilterElement<DomInstance> Create<T>(Exposer<DomInstance, T> exposer, Comparer comparer, object value)
+		{
+			if (exposer == null)
+			{
+				throw new ArgumentNullException(nameof(exposer));
+			}
+
+			var filterValue = ConvertFilterValue<T>(value);
+
+			return CreateFilter(exposer, comparer, filterValue);
+		}
+
+		public static FilterElement<DomInstance> Create<T>(Exposer<DomInstance, object> exposer, Comparer comparer, object value)
+		{
+			if (exposer == null)
+			{
+				throw new ArgumentNullException(nameof(exposer));
+			}
+
+			var filterValue = ConvertFilterValue<T>(value);
+
+			return CreateFilter(exposer, comparer, filterValue);
+		}
+
+		private static FilterElement<DomInstance> CreateFilter<T>(DynamicListExposer<DomInstance, T> exposer, Comparer comparer, T filterValue)
+		{
 			switch (comparer)
 			{
 				case Comparer.Equals:
-					return exposer.Equal(value);
+					return exposer.Equal(filterValue);
 				case Comparer.NotEquals:
-					return exposer.NotEqual(value);
+					return exposer.NotEqual(filterValue);
 				case Comparer.GT:
-					return exposer.GreaterThan(value);
+					return exposer.GreaterThan(filterValue);
 				case Comparer.GTE:
-					return exposer.GreaterThanOrEqual(value);
+					return exposer.GreaterThanOrEqual(filterValue);
 				case Comparer.LT:
-					return exposer.LessThan(value);
+					return exposer.LessThan(filterValue);
 				case Comparer.LTE:
-					return exposer.LessThanOrEqual(value);
+					return exposer.LessThanOrEqual(filterValue);
 				case Comparer.Contains:
-					return exposer.Contains(value);
+					return exposer.Contains(filterValue);
 				case Comparer.NotContains:
-					return exposer.NotContains(value);
+					return exposer.NotContains(filterValue);
 				default:
 					throw new NotSupportedException("This comparer option is not supported");
 			}
 		}
 
-		public static FilterElement<DomInstance> Create<T>(Exposer<DomInstance, T> exposer, Comparer comparer, T value)
+		private static FilterElement<DomInstance> CreateFilter<T>(Exposer<DomInstance, T> exposer, Comparer comparer, T filterValue)
 		{
-			if (exposer == null)
-			{
-				throw new ArgumentNullException(nameof(exposer));
-			}
-
 			switch (comparer)
 			{
 				case Comparer.Equals:
-					return exposer.UncheckedEqual(value);
+					return exposer.UncheckedEqual(filterValue);
 				case Comparer.NotEquals:
-					return exposer.UncheckedNotEqual(value);
+					return exposer.UncheckedNotEqual(filterValue);
 				case Comparer.GT:
-					return exposer.UncheckedGreaterThan(value);
+					return exposer.UncheckedGreaterThan(filterValue);
 				case Comparer.GTE:
-					return exposer.UncheckedGreaterThanOrEqual(value);
+					return exposer.UncheckedGreaterThanOrEqual(filterValue);
 				case Comparer.LT:
-					return exposer.UncheckedLessThan(value);
+					return exposer.UncheckedLessThan(filterValue);
 				case Comparer.LTE:
-					return exposer.UncheckedLessThanOrEqual(value);
+					return exposer.UncheckedLessThanOrEqual(filterValue);
 				default:
 					throw new NotSupportedException("This comparer option is not supported");
 			}
 		}
 
-		public static FilterElement<DomInstance> Create<T, TApi>(DynamicListExposer<DomInstance, T> exposer, Comparer comparer, ApiObjectReference<TApi> apiObjRef)
-			where TApi : ApiObject<TApi>
+		private static T ConvertFilterValue<T>(object value)
 		{
-			if (exposer == null)
+			if (value == null)
 			{
-				throw new ArgumentNullException(nameof(exposer));
+				return default;
 			}
 
-			var value = (T)(object)apiObjRef.ID;
-			return Create(exposer, comparer, value);
-		}
-
-		public static FilterElement<DomInstance> Create<T, TApi>(Exposer<DomInstance, T> exposer, Comparer comparer, ApiObjectReference<TApi> apiObjRef)
-			where TApi : ApiObject<TApi>
-		{
-			if (exposer == null)
+			// Already the correct type
+			if (value is T typedValue)
 			{
-				throw new ArgumentNullException(nameof(exposer));
+				return typedValue;
 			}
 
-			var value = (T)(object)apiObjRef.ID;
-			return Create(exposer, comparer, value);
+			if (typeof(T) == typeof(string) && value is DmsElementId id)
+			{
+				return (T)(object)id.Value;
+			}
+
+			if (typeof(T) == typeof(Guid))
+			{
+				if (value is IApiObjectReference apiRef)
+				{
+					return (T)(object)apiRef.ID;
+				}
+				else if (value is string str && Guid.TryParse(str, out var guid))
+				{
+					return (T)(object)guid;
+				}
+			}
+
+			if (value is IConvertible)
+			{
+				var targetType = Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T);
+				return (T)Convert.ChangeType(value, targetType);
+			}
+
+			throw new InvalidCastException($"Cannot convert value of type {value.GetType()} to {typeof(T)}.");
 		}
 	}
 }

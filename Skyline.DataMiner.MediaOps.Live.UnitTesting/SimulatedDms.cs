@@ -7,7 +7,6 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Net;
-	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.Advanced;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
