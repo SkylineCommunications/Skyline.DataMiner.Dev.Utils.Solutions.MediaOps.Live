@@ -252,7 +252,7 @@
 
 			var audioDestination4Connectivity = connectivity.GetConnectivity(audioDestination4);
 			audioDestination4Connectivity.ConnectionState.ShouldBe(EndpointConnectionState.Connected);
-			audioSource4Connectivity.ConnectedSource.ShouldBeNull(); // Connected to an unknown source
+			audioDestination4Connectivity.ConnectedSource.ShouldBeNull(); // Connected to an unknown source
 			audioDestination4Connectivity.IsConnected.ShouldBeTrue();
 			audioDestination4Connectivity.IsConnecting.ShouldBeFalse();
 			audioDestination4Connectivity.IsDisconnecting.ShouldBeFalse();
