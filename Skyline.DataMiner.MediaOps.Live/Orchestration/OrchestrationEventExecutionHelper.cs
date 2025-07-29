@@ -69,7 +69,6 @@
 		private void ExecuteEvents(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var taskScheduler = new MediaOpsTaskScheduler())
 			{
 				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
 				foreach (OrchestrationEventConfiguration orchestrationEvent in eventConfigurations)
@@ -86,12 +85,12 @@
 					Task nodeOrchestrationTask = Task.Factory.StartNew(
 						() =>
 						{
-							ExecuteEventConfigurationScripts(orchestrationEventConfiguration, taskScheduler, performanceTracker);
+							ExecuteEventConfigurationScripts(orchestrationEventConfiguration, performanceTracker);
 							ProcessConnections(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
 						},
 						CancellationToken.None,
 						TaskCreationOptions.None,
-						taskScheduler);
+						MediaOpsTaskScheduler.Instance);
 
 					tasks.Add(nodeOrchestrationTask);
 				}
@@ -112,7 +111,7 @@
 			}
 		}
 
-		private void ExecuteEventConfigurationScripts(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
+		private void ExecuteEventConfigurationScripts(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -122,7 +121,7 @@
 					return;
 				}
 
-				ExecuteNodesConfiguration(orchestrationEventConfiguration, taskScheduler, performanceTracker);
+				ExecuteNodesConfiguration(orchestrationEventConfiguration, performanceTracker);
 			}
 		}
 
@@ -333,7 +332,7 @@
 			}
 		}
 
-		private void ExecuteNodesConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
+		private void ExecuteNodesConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -364,7 +363,7 @@
 						},
 						CancellationToken.None,
 						TaskCreationOptions.None,
-						taskScheduler);
+						MediaOpsTaskScheduler.Instance);
 
 					nodeOrchestrationTasks.Add(nodeOrchestrationTask);
 				}

@@ -7,8 +7,10 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	internal class MediaOpsTaskScheduler : TaskScheduler, IDisposable
+	internal sealed class MediaOpsTaskScheduler : TaskScheduler, IDisposable
 	{
+		public static MediaOpsTaskScheduler Instance { get; } = new();
+
 		private readonly object _lock = new();
 		private readonly int _concurrencyLevel;
 		private readonly List<Thread> _threads = [];
@@ -49,11 +51,6 @@
 				var roomForMoreThreads = _threads.Count < _concurrencyLevel;
 
 				if (roomForMoreThreads && allBusy)
-				{
-					StartNewThread();
-				}
-
-				if (_threads.Count < _concurrencyLevel && _workingThreads >= _threads.Count)
 				{
 					StartNewThread();
 				}
