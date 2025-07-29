@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Globalization;
 	using System.Linq;
+	using System.Threading;
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
@@ -14,6 +15,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Take;
+	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
@@ -67,6 +69,7 @@
 		private void ExecuteEvents(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var taskScheduler = new MediaOpsTaskScheduler())
 			{
 				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
 				foreach (OrchestrationEventConfiguration orchestrationEvent in eventConfigurations)
@@ -83,10 +86,12 @@
 					Task nodeOrchestrationTask = Task.Factory.StartNew(
 						() =>
 						{
-							ExecuteEventConfigurationScripts(orchestrationEventConfiguration, performanceTracker);
+							ExecuteEventConfigurationScripts(orchestrationEventConfiguration, taskScheduler, performanceTracker);
 							ProcessConnections(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
 						},
-						TaskCreationOptions.LongRunning);
+						CancellationToken.None,
+						TaskCreationOptions.None,
+						taskScheduler);
 
 					tasks.Add(nodeOrchestrationTask);
 				}
@@ -107,7 +112,7 @@
 			}
 		}
 
-		private void ExecuteEventConfigurationScripts(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
+		private void ExecuteEventConfigurationScripts(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -117,7 +122,7 @@
 					return;
 				}
 
-				ExecuteNodesConfiguration(orchestrationEventConfiguration, performanceTracker);
+				ExecuteNodesConfiguration(orchestrationEventConfiguration, taskScheduler, performanceTracker);
 			}
 		}
 
@@ -328,7 +333,7 @@
 			}
 		}
 
-		private void ExecuteNodesConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
+		private void ExecuteNodesConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -357,7 +362,9 @@
 							errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}");
 							orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						},
-						TaskCreationOptions.LongRunning);
+						CancellationToken.None,
+						TaskCreationOptions.None,
+						taskScheduler);
 
 					nodeOrchestrationTasks.Add(nodeOrchestrationTask);
 				}

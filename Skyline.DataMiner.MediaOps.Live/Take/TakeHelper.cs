@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Threading;
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Automation;
@@ -436,11 +437,14 @@
 		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var taskScheduler = new MediaOpsTaskScheduler())
 			{
 				var tasks = takeContexts.Select(takeContext =>
 					Task.Factory.StartNew(
 						() => WaitUntilConnected(takeContext, performanceTracker),
-						TaskCreationOptions.LongRunning))
+						CancellationToken.None,
+						TaskCreationOptions.None,
+						taskScheduler))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
@@ -470,12 +474,15 @@
 		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var taskScheduler = new MediaOpsTaskScheduler())
 			{
 				var tasks = takeContexts.Select(takeContext =>
-						Task.Factory.StartNew(
-							() => WaitUntilDisconnected(takeContext, performanceTracker),
-							TaskCreationOptions.LongRunning))
-						.ToArray();
+					Task.Factory.StartNew(
+						() => WaitUntilDisconnected(takeContext, performanceTracker),
+						CancellationToken.None,
+						TaskCreationOptions.None,
+						taskScheduler))
+					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
 				var failedCount = results.Count(x => !x);
