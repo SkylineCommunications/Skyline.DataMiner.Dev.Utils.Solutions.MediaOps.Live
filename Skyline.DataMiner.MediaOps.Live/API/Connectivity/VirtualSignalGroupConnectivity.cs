@@ -18,7 +18,7 @@
 			IReadOnlyCollection<VirtualSignalGroup> pendingConnectedDestinations)
 		{
 			VirtualSignalGroup = virtualSignalGroup ?? throw new ArgumentNullException(nameof(virtualSignalGroup));
-			Levels = levelsConnectivity ?? throw new ArgumentNullException(nameof(levelsConnectivity));
+			Levels = levelsConnectivity ?? new Dictionary<ApiObjectReference<Level>, EndpointConnectivity>();
 			ConnectedSources = connectedSources ?? [];
 			PendingConnectedSources = pendingConnectedSources ?? [];
 			ConnectedDestinations = connectedDestinations ?? [];

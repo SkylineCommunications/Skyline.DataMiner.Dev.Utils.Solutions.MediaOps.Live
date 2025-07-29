@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
+	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
@@ -17,7 +18,7 @@
 			IReadOnlyCollection<VirtualSignalGroup> virtualSignalGroups,
 			IReadOnlyCollection<EndpointConnection> destinationConnections)
 		{
-			Endpoint = endpoint;
+			Endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
 			IsConnected = isConnected;
 			IsConnecting = isConnecting;
 			IsDisconnecting = isDisconnecting;
