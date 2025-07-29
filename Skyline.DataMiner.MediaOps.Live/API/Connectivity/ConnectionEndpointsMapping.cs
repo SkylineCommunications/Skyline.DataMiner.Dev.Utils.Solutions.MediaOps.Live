@@ -52,6 +52,13 @@
 			return connection != null;
 		}
 
+		public bool IsConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
+		{
+			return TryGetConnectionForDestination(destination, out var connection) &&
+				connection.IsConnected &&
+				connection.ConnectedSource == source;
+		}
+
 		public void Add(Connection connection)
 		{
 			if (connection is null)

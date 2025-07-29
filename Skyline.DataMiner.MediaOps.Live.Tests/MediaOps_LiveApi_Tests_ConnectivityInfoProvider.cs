@@ -140,6 +140,9 @@
 
 			Assert.IsFalse(connectivity.IsConnected(audioSource2));
 			Assert.IsFalse(connectivity.IsConnected(audioDestination2));
+
+			Assert.IsTrue(connectivity.IsConnected(audioSource1, audioDestination1));
+			Assert.IsFalse(connectivity.IsConnected(audioSource2, audioDestination1));
 		}
 
 		[TestMethod]
@@ -197,6 +200,8 @@
 			simulation.CreateTestPendingConnectionAction(audioSource3, audioDestination3, PendingConnectionActionType.Disconnect); // pending disconnect
 
 			simulation.CreateTestConnection(null, audioDestination4); // connected to an unknown source
+
+			simulation.CreateTestPendingConnectionAction(null, audioDestination5, PendingConnectionActionType.Disconnect); // should be ignored because not connected
 
 			using var connectivity = new ConnectivityInfoProvider(api);
 

@@ -59,6 +59,26 @@
 			}
 		}
 
+		public bool IsConnected(Endpoint source, Endpoint destination)
+		{
+			if (source is null)
+			{
+				throw new ArgumentNullException(nameof(source));
+			}
+
+			if (destination is null)
+			{
+				throw new ArgumentNullException(nameof(destination));
+			}
+
+			lock (_lock)
+			{
+				LoadData([source, destination]);
+
+				return _connectionEndpointsMapping.IsConnected(source, destination);
+			}
+		}
+
 		public ConnectionState IsConnected(VirtualSignalGroup virtualSignalGroup)
 		{
 			if (virtualSignalGroup is null)
@@ -690,7 +710,10 @@
 					}
 					else if (pendingAction.Action == PendingConnectionActionType.Disconnect)
 					{
-						isDisconnecting = true;
+						if (isConnected)
+						{
+							isDisconnecting = true;
+						}
 					}
 				}
 
@@ -747,19 +770,14 @@
 						continue;
 					}
 
-					if (pendingAction.Action == PendingConnectionActionType.Connect)
+					if (pendingAction.Action == PendingConnectionActionType.Connect &&
+						!_connectionEndpointsMapping.IsConnected(endpoint, destination))
 					{
-						if (destinationStates.TryGetValue(destination, out var existingState) &&
-							existingState == EndpointConnectionState.Connected)
-						{
-							// If already fully connected, we can ignore this pending action
-							continue;
-						}
-
 						isConnecting = true;
 						destinationStates[destination] = EndpointConnectionState.Connecting;
 					}
-					else if (pendingAction.Action == PendingConnectionActionType.Disconnect)
+					else if (pendingAction.Action == PendingConnectionActionType.Disconnect &&
+						_connectionEndpointsMapping.IsConnected(endpoint, destination))
 					{
 						isDisconnecting = true;
 						destinationStates[destination] = EndpointConnectionState.Disconnecting;
