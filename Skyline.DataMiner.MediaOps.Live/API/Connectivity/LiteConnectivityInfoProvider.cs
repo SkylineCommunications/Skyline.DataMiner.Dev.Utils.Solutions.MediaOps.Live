@@ -143,7 +143,8 @@
 
 				foreach (var connection in e.UpdatedConnections)
 				{
-					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
+					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection) &&
+						existingConnection != connection)
 					{
 						impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
 					}
@@ -178,7 +179,8 @@
 
 				foreach (var pendingAction in e.UpdatedPendingActions)
 				{
-					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
+					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction) &&
+						existingPendingConnectionAction != pendingAction)
 					{
 						impactedEndpoints.UnionWith(existingPendingConnectionAction.GetEndpoints());
 					}

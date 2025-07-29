@@ -9,11 +9,9 @@
 
 	internal sealed class MediaOpsTaskScheduler : TaskScheduler, IDisposable
 	{
-		public static MediaOpsTaskScheduler Instance { get; } = new();
-
 		private readonly object _lock = new();
 		private readonly int _concurrencyLevel;
-		private readonly List<Thread> _threads = [];
+		private readonly HashSet<Thread> _threads = [];
 		private readonly BlockingCollection<Task> _tasks = [];
 
 		private int _workingThreads;
@@ -47,10 +45,10 @@
 
 			lock (_lock)
 			{
-				var allBusy = _workingThreads >= _threads.Count;
+				var moreWorkThanThreads = _workingThreads + _tasks.Count > _threads.Count;
 				var roomForMoreThreads = _threads.Count < _concurrencyLevel;
 
-				if (roomForMoreThreads && allBusy)
+				if (moreWorkThanThreads && roomForMoreThreads)
 				{
 					StartNewThread();
 				}
@@ -64,12 +62,20 @@
 				throw new ArgumentNullException(nameof(task));
 			}
 
-			if (!taskWasPreviouslyQueued && _threads.Contains(Thread.CurrentThread))
+			if (taskWasPreviouslyQueued)
 			{
-				return TryExecuteTask(task);
+				return false;
 			}
 
-			return false;
+			lock (_lock)
+			{
+				if (!_threads.Contains(Thread.CurrentThread))
+				{
+					return false;
+				}
+			}
+
+			return TryExecuteTask(task);
 		}
 
 		private void StartNewThread()

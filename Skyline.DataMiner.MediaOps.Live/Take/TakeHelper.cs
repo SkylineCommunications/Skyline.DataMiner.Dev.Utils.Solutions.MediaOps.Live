@@ -437,13 +437,14 @@
 		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var taskScheduler = new MediaOpsTaskScheduler())
 			{
 				var tasks = takeContexts.Select(takeContext =>
 					Task.Factory.StartNew(
 						() => WaitUntilConnected(takeContext, performanceTracker),
 						CancellationToken.None,
 						TaskCreationOptions.None,
-						MediaOpsTaskScheduler.Instance))
+						taskScheduler))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
@@ -473,13 +474,14 @@
 		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (var taskScheduler = new MediaOpsTaskScheduler())
 			{
 				var tasks = takeContexts.Select(takeContext =>
 					Task.Factory.StartNew(
 						() => WaitUntilDisconnected(takeContext, performanceTracker),
 						CancellationToken.None,
 						TaskCreationOptions.None,
-						MediaOpsTaskScheduler.Instance))
+						taskScheduler))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
