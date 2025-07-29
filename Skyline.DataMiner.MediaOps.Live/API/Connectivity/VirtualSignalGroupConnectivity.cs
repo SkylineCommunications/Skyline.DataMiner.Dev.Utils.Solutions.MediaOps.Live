@@ -68,7 +68,7 @@
 
 		public bool IsConnected => Levels.Values.Any(x => x.IsConnected);
 
-		public bool IsPendingConnected => Levels.Values.Any(x => x.IsConnecting);
+		public bool IsConnecting => Levels.Values.Any(x => x.IsConnecting);
 
 		public bool IsDisconnecting => Levels.Values.Any(x => x.IsDisconnecting);
 

@@ -431,7 +431,7 @@
 
 			var source1Connectivity = connectivity.GetConnectivity(source1);
 			source1Connectivity.IsConnected.ShouldBeTrue();
-			source1Connectivity.IsPendingConnected.ShouldBeFalse();
+			source1Connectivity.IsConnecting.ShouldBeFalse();
 			source1Connectivity.IsDisconnecting.ShouldBeFalse();
 			source1Connectivity.ConnectedState.ShouldBe(ConnectionState.Connected);
 			source1Connectivity.ConnectedSources.ShouldBeEmpty();
@@ -442,7 +442,7 @@
 
 			var destination1Connectivity = connectivity.GetConnectivity(destination1);
 			destination1Connectivity.IsConnected.ShouldBeTrue();
-			destination1Connectivity.IsPendingConnected.ShouldBeTrue();
+			destination1Connectivity.IsConnecting.ShouldBeTrue();
 			destination1Connectivity.IsDisconnecting.ShouldBeFalse();
 			destination1Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
 			destination1Connectivity.ConnectedSources.ShouldBe([source1]);
@@ -455,7 +455,7 @@
 
 			var source2Connectivity = connectivity.GetConnectivity(source2);
 			source2Connectivity.IsConnected.ShouldBeTrue();
-			source2Connectivity.IsPendingConnected.ShouldBeFalse();
+			source2Connectivity.IsConnecting.ShouldBeFalse();
 			source2Connectivity.IsDisconnecting.ShouldBeFalse();
 			source2Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
 			source2Connectivity.ConnectedSources.ShouldBeEmpty();
@@ -464,7 +464,7 @@
 
 			var destination2Connectivity = connectivity.GetConnectivity(destination2);
 			destination2Connectivity.IsConnected.ShouldBeTrue();
-			destination2Connectivity.IsPendingConnected.ShouldBeFalse();
+			destination2Connectivity.IsConnecting.ShouldBeFalse();
 			destination2Connectivity.IsDisconnecting.ShouldBeFalse();
 			destination2Connectivity.ConnectedState.ShouldBe(ConnectionState.Connected);
 			destination2Connectivity.ConnectedSources.ShouldBe([source1, source2], ignoreOrder: true);
@@ -472,7 +472,7 @@
 
 			var source3Connectivity = connectivity.GetConnectivity(source3);
 			source3Connectivity.IsConnected.ShouldBeFalse();
-			source3Connectivity.IsPendingConnected.ShouldBeTrue();
+			source3Connectivity.IsConnecting.ShouldBeTrue();
 			source3Connectivity.IsDisconnecting.ShouldBeFalse();
 			source3Connectivity.ConnectedState.ShouldBe(ConnectionState.Disconnected);
 			source3Connectivity.ConnectedSources.ShouldBeEmpty();
@@ -481,7 +481,7 @@
 
 			var destination3Connectivity = connectivity.GetConnectivity(destination3);
 			destination3Connectivity.IsConnected.ShouldBeFalse();
-			destination3Connectivity.IsPendingConnected.ShouldBeFalse();
+			destination3Connectivity.IsConnecting.ShouldBeFalse();
 			destination3Connectivity.IsDisconnecting.ShouldBeFalse();
 			destination3Connectivity.ConnectedState.ShouldBe(ConnectionState.Disconnected);
 			destination3Connectivity.ConnectedSources.ShouldBeEmpty();
@@ -489,25 +489,25 @@
 
 			var source4Connectivity = connectivity.GetConnectivity(source4);
 			source4Connectivity.IsConnected.ShouldBeTrue();
-			source4Connectivity.IsPendingConnected.ShouldBeFalse();
+			source4Connectivity.IsConnecting.ShouldBeFalse();
 			source4Connectivity.IsDisconnecting.ShouldBeTrue();
 			source4Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
 
 			var destination4Connectivity = connectivity.GetConnectivity(destination4);
 			destination4Connectivity.IsConnected.ShouldBeTrue();
-			destination4Connectivity.IsPendingConnected.ShouldBeFalse();
+			destination4Connectivity.IsConnecting.ShouldBeFalse();
 			destination4Connectivity.IsDisconnecting.ShouldBeTrue();
 			destination4Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
 
 			var source5Connectivity = connectivity.GetConnectivity(source5);
 			source5Connectivity.IsConnected.ShouldBeFalse();
-			source5Connectivity.IsPendingConnected.ShouldBeFalse();
+			source5Connectivity.IsConnecting.ShouldBeFalse();
 			source5Connectivity.IsDisconnecting.ShouldBeFalse();
 			source5Connectivity.ConnectedState.ShouldBe(ConnectionState.Disconnected);
 
 			var destination5Connectivity = connectivity.GetConnectivity(destination5);
 			destination5Connectivity.IsConnected.ShouldBeTrue();
-			destination5Connectivity.IsPendingConnected.ShouldBeFalse();
+			destination5Connectivity.IsConnecting.ShouldBeFalse();
 			destination5Connectivity.IsDisconnecting.ShouldBeFalse();
 			destination5Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
 		}
@@ -551,7 +551,7 @@
 			result.Keys.ShouldBe([source1, destination1, source2, destination2, source3, destination3], ignoreOrder: true);
 
 			result[source1].IsConnected.ShouldBeTrue();
-			result[source1].IsPendingConnected.ShouldBeFalse();
+			result[source1].IsConnecting.ShouldBeFalse();
 			result[source1].IsDisconnecting.ShouldBeFalse();
 			result[source1].ConnectedState.ShouldBe(ConnectionState.Connected);
 			result[source1].ConnectedDestinations.ShouldBe([destination1, destination2], ignoreOrder: true);
@@ -561,7 +561,7 @@
 			result[source1].Levels[audioLevel].ConnectedDestinations.ShouldBe([audioDestination2]);
 
 			result[destination1].IsConnected.ShouldBeTrue();
-			result[destination1].IsPendingConnected.ShouldBeTrue();
+			result[destination1].IsConnecting.ShouldBeTrue();
 			result[destination1].IsDisconnecting.ShouldBeFalse();
 			result[destination1].ConnectedState.ShouldBe(ConnectionState.Partial);
 			result[destination1].ConnectedSources.ShouldBe([source1]);
@@ -572,28 +572,28 @@
 			result[destination1].Levels[audioLevel].PendingConnectedSource.ShouldBe(audioSource3);
 
 			result[source2].IsConnected.ShouldBeTrue();
-			result[source2].IsPendingConnected.ShouldBeFalse();
+			result[source2].IsConnecting.ShouldBeFalse();
 			result[source2].IsDisconnecting.ShouldBeFalse();
 			result[source2].ConnectedState.ShouldBe(ConnectionState.Partial);
 			result[source2].ConnectedDestinations.ShouldBe([destination2]);
 			result[source2].PendingConnectedDestinations.ShouldBeEmpty();
 
 			result[destination2].IsConnected.ShouldBeTrue();
-			result[destination2].IsPendingConnected.ShouldBeFalse();
+			result[destination2].IsConnecting.ShouldBeFalse();
 			result[destination2].IsDisconnecting.ShouldBeFalse();
 			result[destination2].ConnectedState.ShouldBe(ConnectionState.Connected);
 			result[destination2].ConnectedSources.ShouldBe([source1, source2], ignoreOrder: true);
 			result[destination2].PendingConnectedSources.ShouldBeEmpty();
 
 			result[source3].IsConnected.ShouldBeFalse();
-			result[source3].IsPendingConnected.ShouldBeTrue();
+			result[source3].IsConnecting.ShouldBeTrue();
 			result[source3].IsDisconnecting.ShouldBeFalse();
 			result[source3].ConnectedState.ShouldBe(ConnectionState.Disconnected);
 			result[source3].ConnectedDestinations.ShouldBeEmpty();
 			result[source3].PendingConnectedDestinations.ShouldBe([destination1]);
 
 			result[destination3].IsConnected.ShouldBeFalse();
-			result[destination3].IsPendingConnected.ShouldBeFalse();
+			result[destination3].IsConnecting.ShouldBeFalse();
 			result[destination3].IsDisconnecting.ShouldBeFalse();
 			result[destination3].ConnectedState.ShouldBe(ConnectionState.Disconnected);
 			result[destination3].ConnectedSources.ShouldBeEmpty();
