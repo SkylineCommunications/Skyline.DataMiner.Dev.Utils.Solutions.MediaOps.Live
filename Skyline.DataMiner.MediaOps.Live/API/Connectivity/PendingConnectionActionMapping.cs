@@ -37,6 +37,13 @@
 				: Array.Empty<PendingConnectionAction>();
 		}
 
+		public IReadOnlyCollection<PendingConnectionAction> GetPendingConnectionActionsWithSource(ApiObjectReference<Endpoint> source)
+		{
+			var pendingConnectionActions = GetPendingConnectionActions(source);
+
+			return pendingConnectionActions.Where(c => c.PendingSource == source).ToList();
+		}
+
 		public bool TryGetPendingConnectionActionForDestination(ApiObjectReference<Endpoint> destination, out PendingConnectionAction pendingConnectionAction)
 		{
 			var pendingConnectionActions = GetPendingConnectionActions(destination);

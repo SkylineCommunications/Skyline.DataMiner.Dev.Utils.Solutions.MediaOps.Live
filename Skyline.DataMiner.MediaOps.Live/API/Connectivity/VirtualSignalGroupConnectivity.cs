@@ -68,13 +68,13 @@
 
 		public bool IsConnected => Levels.Values.Any(x => x.IsConnected);
 
-		public bool IsPendingConnected => Levels.Values.Any(x => x.IsPendingConnected);
+		public bool IsPendingConnected => Levels.Values.Any(x => x.IsConnecting);
 
 		public bool IsDisconnecting => Levels.Values.Any(x => x.IsDisconnecting);
 
 		public override string ToString()
 		{
-			return $"{VirtualSignalGroup.Name} [{VirtualSignalGroup.ID}] - Connected: {ConnectedState}";
+			return $"{VirtualSignalGroup.Name} [{VirtualSignalGroup.ID}] - State: {ConnectedState}";
 		}
 	}
 }

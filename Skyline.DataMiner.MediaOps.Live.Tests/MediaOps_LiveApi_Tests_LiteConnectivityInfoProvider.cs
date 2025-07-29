@@ -74,6 +74,7 @@
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
 			receivedEvents.Count.ShouldBe(1);
 			receivedEvents.Last().ShouldBe([audioSource1, audioDestination1], ignoreOrder: true);
+			connectivity.IsConnected(audioDestination1).ShouldBeTrue();
 			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeTrue();
 			connectivity.IsConnected(audioSource2, audioDestination1).ShouldBeFalse();
 
@@ -85,13 +86,23 @@
 			simulation.CreateTestConnection(audioSource2, audioDestination1);
 			receivedEvents.Count.ShouldBe(2);
 			receivedEvents.Last().ShouldBe([audioSource1, audioSource2, audioDestination1], ignoreOrder: true);
+			connectivity.IsConnected(audioDestination1).ShouldBeTrue();
 			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeFalse();
 			connectivity.IsConnected(audioSource2, audioDestination1).ShouldBeTrue();
 
-			// Disconnect
+			// Connect an unknown source
 			simulation.CreateTestConnection(null, audioDestination1);
 			receivedEvents.Count.ShouldBe(3);
 			receivedEvents.Last().ShouldBe([audioSource2, audioDestination1], ignoreOrder: true);
+			connectivity.IsConnected(audioDestination1).ShouldBeTrue();
+			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeFalse();
+			connectivity.IsConnected(audioSource2, audioDestination1).ShouldBeFalse();
+
+			// Disconnect
+			simulation.TestDisconnectDestination(audioDestination1);
+			receivedEvents.Count.ShouldBe(4);
+			receivedEvents.Last().ShouldBe([audioDestination1], ignoreOrder: true);
+			connectivity.IsConnected(audioDestination1).ShouldBeFalse();
 			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeFalse();
 			connectivity.IsConnected(audioSource2, audioDestination1).ShouldBeFalse();
 		}
