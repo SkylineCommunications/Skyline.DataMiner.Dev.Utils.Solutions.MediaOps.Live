@@ -399,25 +399,30 @@
 			var videoSource3 = api.Endpoints.Read("Video Source 3");
 			var audioSource3 = api.Endpoints.Read("Audio Source 3");
 			var videoSource4 = api.Endpoints.Read("Video Source 4");
+			var videoSource5 = api.Endpoints.Read("Video Source 5");
 			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 			var videoDestination2 = api.Endpoints.Read("Video Destination 2");
 			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
 			var videoDestination4 = api.Endpoints.Read("Video Destination 4");
+			var videoDestination5 = api.Endpoints.Read("Video Destination 5");
 
 			var source1 = api.VirtualSignalGroups.Read("Source 1");
 			var source2 = api.VirtualSignalGroups.Read("Source 2");
 			var source3 = api.VirtualSignalGroups.Read("Source 3");
 			var source4 = api.VirtualSignalGroups.Read("Source 4");
+			var source5 = api.VirtualSignalGroups.Read("Source 5");
 			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
 			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
 			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
 			var destination4 = api.VirtualSignalGroups.Read("Destination 4");
+			var destination5 = api.VirtualSignalGroups.Read("Destination 5");
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			simulation.CreateTestConnection(audioSource1, audioDestination2);
 			simulation.CreateTestConnection(videoSource2, videoDestination2);
 			simulation.CreateTestConnection(videoSource4, videoDestination4);
+			simulation.CreateTestConnection(null, videoDestination5); // Connected to an unknown source
 			simulation.CreateTestPendingConnectionAction(videoSource3, videoDestination1);
 			simulation.CreateTestPendingConnectionAction(audioSource3, audioDestination1);
 			simulation.CreateTestPendingConnectionAction(videoSource4, videoDestination4, PendingConnectionActionType.Disconnect);
@@ -486,11 +491,25 @@
 			source4Connectivity.IsConnected.ShouldBeTrue();
 			source4Connectivity.IsPendingConnected.ShouldBeFalse();
 			source4Connectivity.IsDisconnecting.ShouldBeTrue();
+			source4Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
 
 			var destination4Connectivity = connectivity.GetConnectivity(destination4);
 			destination4Connectivity.IsConnected.ShouldBeTrue();
 			destination4Connectivity.IsPendingConnected.ShouldBeFalse();
 			destination4Connectivity.IsDisconnecting.ShouldBeTrue();
+			destination4Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
+
+			var source5Connectivity = connectivity.GetConnectivity(source5);
+			source5Connectivity.IsConnected.ShouldBeFalse();
+			source5Connectivity.IsPendingConnected.ShouldBeFalse();
+			source5Connectivity.IsDisconnecting.ShouldBeFalse();
+			source5Connectivity.ConnectedState.ShouldBe(ConnectionState.Disconnected);
+
+			var destination5Connectivity = connectivity.GetConnectivity(destination5);
+			destination5Connectivity.IsConnected.ShouldBeTrue();
+			destination5Connectivity.IsPendingConnected.ShouldBeFalse();
+			destination5Connectivity.IsDisconnecting.ShouldBeFalse();
+			destination5Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
 		}
 
 		[TestMethod]
