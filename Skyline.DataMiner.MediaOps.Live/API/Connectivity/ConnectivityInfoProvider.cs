@@ -91,7 +91,7 @@
 			}
 		}
 
-		public IDictionary<Endpoint, bool> IsConnected(ICollection<Endpoint> endpoints)
+		public IReadOnlyDictionary<Endpoint, bool> IsConnected(ICollection<Endpoint> endpoints)
 		{
 			if (endpoints is null)
 			{
@@ -106,7 +106,7 @@
 			}
 		}
 
-		public IDictionary<VirtualSignalGroup, ConnectionState> IsConnected(ICollection<VirtualSignalGroup> virtualSignalGroups)
+		public IReadOnlyDictionary<VirtualSignalGroup, ConnectionState> IsConnected(ICollection<VirtualSignalGroup> virtualSignalGroups)
 		{
 			if (virtualSignalGroups is null)
 			{
@@ -132,76 +132,18 @@
 			{
 				LoadData(endpoint);
 
-				var connectedSource = (EndpointConnection)null;
-				var pendingConnectedSource = (Endpoint)null;
-				var destinationStates = new Dictionary<Endpoint, EndpointConnectionState>();
-
-				var connections = _connectionEndpointsMapping.GetConnections(endpoint);
-				var pendingActions = _pendingConnectionActionsMapping.GetPendingConnectionActions(endpoint);
-
-				foreach (var connection in connections.Where(x => x.ConnectedSource.HasValue))
+				if (endpoint.IsDestination)
 				{
-					if (connection.ConnectedSource.HasValue &&
-						_endpoints.TryGetValue(connection.Destination, out var destination) &&
-						_endpoints.TryGetValue(connection.ConnectedSource.Value, out var connectedSourceEndpoint))
-					{
-						var isDisconnecting = _pendingConnectionActionsMapping.IsDisconnecting(connection.Destination);
-						var state = isDisconnecting ? EndpointConnectionState.Disconnecting : EndpointConnectionState.Connected;
-
-						if (connection.Destination == endpoint)
-						{
-							connectedSource = new EndpointConnection(connectedSourceEndpoint, state);
-						}
-						else if (connection.ConnectedSource == endpoint)
-						{
-							destinationStates[destination] = state;
-						}
-					}
+					return GetConnectivityForDestination(endpoint);
 				}
-
-				foreach (var pendingAction in pendingActions)
+				else if (endpoint.IsSource)
 				{
-					if (pendingAction.Action == PendingConnectionActionType.Connect &&
-						pendingAction.PendingSource.HasValue &&
-						_endpoints.TryGetValue(pendingAction.PendingSource.Value, out var pendingSource))
-					{
-						if (pendingAction.Destination == endpoint)
-						{
-							if (pendingSource == connectedSource?.Endpoint)
-							{
-								// If the pending source is the same as the connected source, we can ignore this pending action
-								continue;
-							}
-
-							pendingConnectedSource = pendingSource;
-						}
-						else if (pendingAction.PendingSource == endpoint)
-						{
-							if (!_endpoints.TryGetValue(pendingAction.Destination, out var destination))
-							{
-								continue;
-							}
-
-							if (destinationStates.TryGetValue(destination, out var existingState) &&
-								existingState == EndpointConnectionState.Connected)
-							{
-								// If already fully connected, we can ignore this pending action
-								continue;
-							}
-
-							destinationStates[destination] = EndpointConnectionState.Connecting;
-						}
-					}
+					return GetConnectivityForSource(endpoint);
 				}
-
-				var destinationConnections = destinationStates.Select(x => new EndpointConnection(x.Key, x.Value)).ToList();
-
-				return new EndpointConnectivity(
-					endpoint,
-					_virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint),
-					connectedSource,
-					pendingConnectedSource,
-					destinationConnections);
+				else
+				{
+					throw new InvalidOperationException($"Endpoint has invalid role: {endpoint.Role}");
+				}
 			}
 		}
 
@@ -255,7 +197,7 @@
 
 					if (connectivity.ConnectedSource != null)
 					{
-						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.ConnectedSource.Endpoint);
+						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.ConnectedSource);
 						connectedSources.UnionWith(virtualSignalGroups);
 					}
 
@@ -288,7 +230,7 @@
 			}
 		}
 
-		public IDictionary<Endpoint, EndpointConnectivity> GetConnectivity(ICollection<Endpoint> endpoints)
+		public IReadOnlyDictionary<Endpoint, EndpointConnectivity> GetConnectivity(ICollection<Endpoint> endpoints)
 		{
 			if (endpoints is null)
 			{
@@ -303,7 +245,24 @@
 			}
 		}
 
-		public IDictionary<VirtualSignalGroup, VirtualSignalGroupConnectivity> GetConnectivity(ICollection<VirtualSignalGroup> virtualSignalGroups)
+		public IReadOnlyDictionary<Endpoint, EndpointConnectivity> GetConnectivity(ICollection<ApiObjectReference<Endpoint>> endpoints)
+		{
+			if (endpoints is null)
+			{
+				throw new ArgumentNullException(nameof(endpoints));
+			}
+
+			lock (_lock)
+			{
+				LoadData(endpoints);
+
+				return endpoints
+					.Select(GetConnectivity)
+					.ToDictionary(x => x.Endpoint, x => x);
+			}
+		}
+
+		public IReadOnlyDictionary<VirtualSignalGroup, VirtualSignalGroupConnectivity> GetConnectivity(ICollection<VirtualSignalGroup> virtualSignalGroups)
 		{
 			if (virtualSignalGroups is null)
 			{
@@ -426,6 +385,11 @@
 
 				LoadData(endpoints);
 			}
+		}
+
+		public void Dispose()
+		{
+			Unsubscribe();
 		}
 
 		private void Initialize(bool subscribe)
@@ -680,9 +644,141 @@
 			}
 		}
 
-		public void Dispose()
+		private EndpointConnectivity GetConnectivityForDestination(Endpoint endpoint)
 		{
-			Unsubscribe();
+			if (endpoint == null)
+			{
+				throw new ArgumentNullException(nameof(endpoint));
+			}
+
+			if (!endpoint.IsDestination)
+			{
+				throw new ArgumentException("Endpoint must be a destination endpoint.", nameof(endpoint));
+			}
+
+			lock (_lock)
+			{
+				bool isConnected = false;
+				bool isConnecting = false;
+				bool isDisconnecting = false;
+				Endpoint connectedSource = null;
+				Endpoint pendingConnectedSource = null;
+
+				if (_connectionEndpointsMapping.TryGetConnectionForDestination(endpoint, out var connection) &&
+					connection.IsConnected)
+				{
+					isConnected = true;
+
+					if (connection.ConnectedSource.HasValue &&
+						_endpoints.TryGetValue(connection.ConnectedSource.Value, out Endpoint connectedSourceEndpoint))
+					{
+						connectedSource = connectedSourceEndpoint;
+					}
+				}
+
+				if (_pendingConnectionActionsMapping.TryGetPendingConnectionActionForDestination(endpoint, out var pendingAction))
+				{
+					if (pendingAction.Action == PendingConnectionActionType.Connect)
+					{
+						if (pendingAction.PendingSource.HasValue &&
+							_endpoints.TryGetValue(pendingAction.PendingSource.Value, out var pendingSource) &&
+							pendingSource != connectedSource)
+						{
+							isConnecting = true;
+							pendingConnectedSource = pendingSource;
+						}
+					}
+					else if (pendingAction.Action == PendingConnectionActionType.Disconnect)
+					{
+						isDisconnecting = true;
+					}
+				}
+
+				var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint);
+
+				return new EndpointConnectivity(
+					endpoint,
+					isConnected,
+					isConnecting,
+					isDisconnecting,
+					connectedSource,
+					pendingConnectedSource,
+					virtualSignalGroups,
+					destinationConnections: null);
+			}
+		}
+
+		private EndpointConnectivity GetConnectivityForSource(Endpoint endpoint)
+		{
+			if (endpoint == null)
+			{
+				throw new ArgumentNullException(nameof(endpoint));
+			}
+
+			if (!endpoint.IsSource)
+			{
+				throw new ArgumentException("Endpoint must be a source endpoint.", nameof(endpoint));
+			}
+
+			lock (_lock)
+			{
+				var isConnected = false;
+				var isConnecting = false;
+				var isDisconnecting = false;
+				var destinationStates = new Dictionary<Endpoint, EndpointConnectionState>();
+
+				var connections = _connectionEndpointsMapping.GetConnectionsWithSource(endpoint);
+				var pendingActions = _pendingConnectionActionsMapping.GetPendingConnectionActionsWithSource(endpoint);
+
+				foreach (var connection in connections.Where(c => c.IsConnected))
+				{
+					isConnected = true;
+
+					if (_endpoints.TryGetValue(connection.Destination, out var destination))
+					{
+						destinationStates[destination] = EndpointConnectionState.Connected;
+					}
+				}
+
+				foreach (var pendingAction in pendingActions)
+				{
+					if (!_endpoints.TryGetValue(pendingAction.Destination, out var destination))
+					{
+						continue;
+					}
+
+					if (pendingAction.Action == PendingConnectionActionType.Connect)
+					{
+						if (destinationStates.TryGetValue(destination, out var existingState) &&
+							existingState == EndpointConnectionState.Connected)
+						{
+							// If already fully connected, we can ignore this pending action
+							continue;
+						}
+
+						isConnecting = true;
+						destinationStates[destination] = EndpointConnectionState.Connecting;
+					}
+					else if (pendingAction.Action == PendingConnectionActionType.Disconnect)
+					{
+						isDisconnecting = true;
+						destinationStates[destination] = EndpointConnectionState.Disconnecting;
+					}
+				}
+
+				var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint);
+				var destinationConnections = destinationStates.Select(x => new EndpointConnection(x.Key, x.Value)).ToList();
+
+				return new EndpointConnectivity(
+					endpoint,
+					isConnected,
+					isConnecting,
+					isDisconnecting,
+					connectedSource: null,
+					pendingConnectedSource: null,
+					virtualSignalGroups,
+					destinationConnections);
+			}
 		}
 	}
 }

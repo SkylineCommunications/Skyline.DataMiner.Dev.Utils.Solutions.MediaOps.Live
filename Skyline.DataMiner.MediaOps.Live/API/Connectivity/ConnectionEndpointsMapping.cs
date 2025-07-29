@@ -37,6 +37,13 @@
 				: Array.Empty<Connection>();
 		}
 
+		public IReadOnlyCollection<Connection> GetConnectionsWithSource(ApiObjectReference<Endpoint> source)
+		{
+			var connections = GetConnections(source);
+
+			return connections.Where(c => c.ConnectedSource == source).ToList();
+		}
+
 		public bool TryGetConnectionForDestination(ApiObjectReference<Endpoint> destination, out Connection connection)
 		{
 			var connections = GetConnections(destination);

@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
+	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
@@ -9,15 +10,21 @@
 	{
 		public EndpointConnectivity(
 			Endpoint endpoint,
-			IReadOnlyCollection<VirtualSignalGroup> virtualSignalGroups,
-			EndpointConnection connectedSource,
+			bool isConnected,
+			bool isConnecting,
+			bool isDisconnecting,
+			Endpoint connectedSource,
 			Endpoint pendingConnectedSource,
+			IReadOnlyCollection<VirtualSignalGroup> virtualSignalGroups,
 			IReadOnlyCollection<EndpointConnection> destinationConnections)
 		{
-			Endpoint = endpoint;
-			VirtualSignalGroups = virtualSignalGroups ?? [];
+			Endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
+			IsConnected = isConnected;
+			IsConnecting = isConnecting;
+			IsDisconnecting = isDisconnecting;
 			ConnectedSource = connectedSource;
 			PendingConnectedSource = pendingConnectedSource;
+			VirtualSignalGroups = virtualSignalGroups ?? [];
 			DestinationConnections = destinationConnections ?? [];
 		}
 
@@ -32,10 +39,25 @@
 		public IReadOnlyCollection<VirtualSignalGroup> VirtualSignalGroups { get; }
 
 		/// <summary>
+		/// Gets whether this endpoint is connected to another endpoint.
+		/// </summary>
+		public bool IsConnected { get; }
+
+		/// <summary>
+		/// Gets whether this endpoint is connecting to another endpoint.
+		/// </summary>
+		public bool IsConnecting { get; }
+
+		/// <summary>
+		/// Gets whether this endpoint is disconnecting from another endpoint.
+		/// </summary>
+		public bool IsDisconnecting { get; }
+
+		/// <summary>
 		/// Gets the endpoint that this endpoint is connected to as a source.
 		/// Null if not connected.
 		/// </summary>
-		public EndpointConnection ConnectedSource { get; }
+		public Endpoint ConnectedSource { get; }
 
 		/// <summary>
 		/// Gets the pending endpoint that this endpoint is connecting to as a source.
@@ -73,21 +95,18 @@
 			.Where(x => x.State == EndpointConnectionState.Disconnecting)
 			.Select(x => x.Endpoint);
 
-		public bool IsConnected =>
-			(ConnectedSource != null && ConnectedSource.IsConnected) ||
-			DestinationConnections.Any(c => c.IsConnected);
-
-		public bool IsPendingConnected =>
-			PendingConnectedSource != null ||
-			DestinationConnections.Any(c => c.State == EndpointConnectionState.Connecting);
-
-		public bool IsDisconnecting =>
-			(ConnectedSource != null && ConnectedSource.State == EndpointConnectionState.Disconnecting) ||
-			DestinationConnections.Any(c => c.State == EndpointConnectionState.Disconnecting);
+		/// <summary>
+		/// Gets the connection state of this endpoint.
+		/// </summary>
+		public EndpointConnectionState ConnectionState =>
+			IsConnecting ? EndpointConnectionState.Connecting :
+			IsDisconnecting ? EndpointConnectionState.Disconnecting :
+			IsConnected ? EndpointConnectionState.Connected :
+			EndpointConnectionState.Disconnected;
 
 		public override string ToString()
 		{
-			return $"{Endpoint.Name} [{Endpoint.ID}] - Connected: {IsConnected}";
+			return $"{Endpoint.Name} [{Endpoint.ID}] - State: {ConnectionState}";
 		}
 	}
 }

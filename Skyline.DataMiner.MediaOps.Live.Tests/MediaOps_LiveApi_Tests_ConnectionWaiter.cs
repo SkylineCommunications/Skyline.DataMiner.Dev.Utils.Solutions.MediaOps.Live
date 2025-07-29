@@ -77,7 +77,7 @@
 			Thread.Sleep(200);
 			Assert.IsFalse(waitTask.IsCompleted);
 
-			simulation.CreateTestConnection(null, videoDestination1);
+			simulation.TestDisconnectDestination(videoDestination1);
 
 			waitTask.Wait(TimeSpan.FromSeconds(5));
 

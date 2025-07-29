@@ -18,7 +18,7 @@
 			IReadOnlyCollection<VirtualSignalGroup> pendingConnectedDestinations)
 		{
 			VirtualSignalGroup = virtualSignalGroup ?? throw new ArgumentNullException(nameof(virtualSignalGroup));
-			Levels = levelsConnectivity ?? throw new ArgumentNullException(nameof(levelsConnectivity));
+			Levels = levelsConnectivity ?? new Dictionary<ApiObjectReference<Level>, EndpointConnectivity>();
 			ConnectedSources = connectedSources ?? [];
 			PendingConnectedSources = pendingConnectedSources ?? [];
 			ConnectedDestinations = connectedDestinations ?? [];
@@ -68,13 +68,13 @@
 
 		public bool IsConnected => Levels.Values.Any(x => x.IsConnected);
 
-		public bool IsPendingConnected => Levels.Values.Any(x => x.IsPendingConnected);
+		public bool IsConnecting => Levels.Values.Any(x => x.IsConnecting);
 
 		public bool IsDisconnecting => Levels.Values.Any(x => x.IsDisconnecting);
 
 		public override string ToString()
 		{
-			return $"{VirtualSignalGroup.Name} [{VirtualSignalGroup.ID}] - Connected: {ConnectedState}";
+			return $"{VirtualSignalGroup.Name} [{VirtualSignalGroup.ID}] - State: {ConnectedState}";
 		}
 	}
 }

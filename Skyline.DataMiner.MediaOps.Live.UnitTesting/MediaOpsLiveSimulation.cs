@@ -58,9 +58,39 @@
 			{
 				rowKey,
 				destination.Name,
-				source != null ? 1 : 0, // IsConnected
+				1, // IsConnected=true
 				source?.ID.ToString() ?? String.Empty,
 				source?.Name ?? String.Empty,
+			};
+
+			connectionsTable.SetRow(rowKey, row);
+		}
+
+		public void TestDisconnectDestination(Endpoint destination)
+		{
+			if (destination is null)
+			{
+				throw new ArgumentNullException(nameof(destination));
+			}
+
+			ClearTestPendingConnectionAction(destination);
+
+			var mediationElement = Api.MediationElements.GetMediationElement(destination);
+
+			var simulatedElement = Dms
+				.Agents[mediationElement.DmaId]
+				.Elements[mediationElement.ElementId];
+
+			var connectionsTable = simulatedElement.Tables[MediationElement.ConnectionsTableId];
+
+			var rowKey = Convert.ToString(destination.ID);
+			var row = new object[]
+			{
+				rowKey,
+				destination.Name,
+				0, // IsConnected=false
+				String.Empty, // Source ID
+				String.Empty, // Source Name
 			};
 
 			connectionsTable.SetRow(rowKey, row);
