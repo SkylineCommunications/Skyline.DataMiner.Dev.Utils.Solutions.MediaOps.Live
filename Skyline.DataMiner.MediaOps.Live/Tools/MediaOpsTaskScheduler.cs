@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
+	using System.Linq;
 	using System.Threading;
 	using System.Threading.Tasks;
 
@@ -128,7 +129,7 @@
 
 			lock (_lock)
 			{
-				foreach (var thread in _threads)
+				foreach (var thread in _threads.ToList())
 				{
 					thread.Join();
 				}
