@@ -87,7 +87,6 @@
 						() =>
 						{
 							ExecuteEventConfigurationScripts(orchestrationEventConfiguration, taskScheduler, performanceTracker);
-							ProcessConnections(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
 						},
 						CancellationToken.None,
 						TaskCreationOptions.None,
@@ -96,7 +95,7 @@
 					tasks.Add(nodeOrchestrationTask);
 				}
 
-				ProcessConnections(eventConfigurations.Where(e => !e.HasScripts()), performanceTracker);
+				ProcessConnections(eventConfigurations, performanceTracker);
 
 				Task.WaitAll(tasks.ToArray());
 
