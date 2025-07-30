@@ -2,7 +2,9 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 	using System.Threading;
+	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -22,7 +24,7 @@
 			_connectivityInfoProvider.Subscribe();
 		}
 
-		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
+		public async Task<bool> WaitUntilConnectedAsync(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, CancellationToken cancellationToken)
 		{
 			if (source == ApiObjectReference<Endpoint>.Empty)
 			{
@@ -39,28 +41,96 @@
 				return true;
 			}
 
-			using var mre = new ManualResetEventSlim(false);
+			var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+			using var registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
 
-			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> e)
+			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> changedEndpoints)
 			{
-				if ((e.Contains(source) || e.Contains(destination)) &&
+				if (changedEndpoints.Any(e => e == source || e == destination) &&
 					_connectivityInfoProvider.IsConnected(source, destination))
 				{
-					mre.Set();
+					tcs.TrySetResult(true);
 				}
+			}
+
+			_connectivityInfoProvider.ConnectionsChanged += ConnectionEventHandler;
+
+			try
+			{
+				// Fallback for when we missed the event.
+				if (_connectivityInfoProvider.IsConnected(source, destination))
+				{
+					tcs.TrySetResult(true);
+				}
+
+				return await tcs.Task;
+			}
+			finally
+			{
+				_connectivityInfoProvider.ConnectionsChanged -= ConnectionEventHandler;
+			}
+		}
+
+		public bool WaitUntilConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, TimeSpan timeout)
+		{
+			if (source == ApiObjectReference<Endpoint>.Empty)
+			{
+				throw new ArgumentException("Source cannot be empty.", nameof(source));
+			}
+
+			if (destination == ApiObjectReference<Endpoint>.Empty)
+			{
+				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
 			try
 			{
-				_connectivityInfoProvider.ConnectionsChanged += ConnectionEventHandler;
+				using var cts = new CancellationTokenSource(timeout);
 
-				// Fallback for when we missed the event.
-				if (_connectivityInfoProvider.IsConnected(source, destination))
+				var task = WaitUntilConnectedAsync(source, destination, cts.Token);
+				return task.GetAwaiter().GetResult();
+			}
+			catch (OperationCanceledException)
+			{
+				return false;
+			}
+		}
+
+		public async Task<bool> WaitUntilDisconnectedAsync(ApiObjectReference<Endpoint> destination, CancellationToken cancellationToken)
+		{
+			if (destination == ApiObjectReference<Endpoint>.Empty)
+			{
+				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
+			}
+
+			if (!_connectivityInfoProvider.IsConnected(destination))
+			{
+				return true;
+			}
+
+			var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+			using var registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+
+			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> changedEndpoints)
+			{
+				if (changedEndpoints.Contains(destination) &&
+					!_connectivityInfoProvider.IsConnected(destination))
 				{
-					mre.Set();
+					tcs.TrySetResult(true);
+				}
+			}
+
+			_connectivityInfoProvider.ConnectionsChanged += ConnectionEventHandler;
+
+			try
+			{
+				// Fallback for when we missed the event.
+				if (!_connectivityInfoProvider.IsConnected(destination))
+				{
+					tcs.TrySetResult(true);
 				}
 
-				return mre.Wait(timeout);
+				return await tcs.Task;
 			}
 			finally
 			{
@@ -75,37 +145,16 @@
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
-			if (!_connectivityInfoProvider.IsConnected(destination))
-			{
-				return true;
-			}
-
-			using var mre = new ManualResetEventSlim(false);
-
-			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> e)
-			{
-				if (e.Contains(destination) &&
-					!_connectivityInfoProvider.IsConnected(destination))
-				{
-					mre.Set();
-				}
-			}
-
 			try
 			{
-				_connectivityInfoProvider.ConnectionsChanged += ConnectionEventHandler;
+				using var cts = new CancellationTokenSource(timeout);
 
-				// Fallback for when we missed the event.
-				if (!_connectivityInfoProvider.IsConnected(destination))
-				{
-					return true;
-				}
-
-				return mre.Wait(timeout);
+				var task = WaitUntilDisconnectedAsync(destination, cts.Token);
+				return task.GetAwaiter().GetResult();
 			}
-			finally
+			catch (OperationCanceledException)
 			{
-				_connectivityInfoProvider.ConnectionsChanged -= ConnectionEventHandler;
+				return false;
 			}
 		}
 

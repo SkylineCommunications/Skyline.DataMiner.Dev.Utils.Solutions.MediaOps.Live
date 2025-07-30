@@ -437,14 +437,10 @@
 		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var taskScheduler = new MediaOpsTaskScheduler())
+			using (var cts = new CancellationTokenSource(_timeout))
 			{
-				var tasks = takeContexts.Select(takeContext =>
-					Task.Factory.StartNew(
-						() => WaitUntilConnected(takeContext, performanceTracker),
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler))
+				var tasks = takeContexts
+					.Select(takeContext => WaitUntilConnectedAsync(takeContext, cts.Token, performanceTracker))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
@@ -457,31 +453,34 @@
 			}
 		}
 
-		private bool WaitUntilConnected(ConnectionOperationContext takeContext, PerformanceTracker performanceTracker)
+		private async Task<bool> WaitUntilConnectedAsync(ConnectionOperationContext takeContext, CancellationToken cancellationToken, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				performanceTracker.AddMetadata("Source", takeContext.Source.Name);
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
 
-				return _connectionMonitor.WaitUntilConnected(
-					takeContext.Source,
-					takeContext.Destination,
-					_timeout);
+				try
+				{
+					return await _connectionMonitor.WaitUntilConnectedAsync(
+						takeContext.Source,
+						takeContext.Destination,
+						cancellationToken);
+				}
+				catch (OperationCanceledException)
+				{
+					return false;
+				}
 			}
 		}
 
 		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			using (var taskScheduler = new MediaOpsTaskScheduler())
+			using (var cts = new CancellationTokenSource(_timeout))
 			{
-				var tasks = takeContexts.Select(takeContext =>
-					Task.Factory.StartNew(
-						() => WaitUntilDisconnected(takeContext, performanceTracker),
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler))
+				var tasks = takeContexts
+					.Select(takeContext => WaitUntilDisconnectedAsync(takeContext, cts.Token, performanceTracker))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
@@ -494,15 +493,22 @@
 			}
 		}
 
-		private bool WaitUntilDisconnected(ConnectionOperationContext takeContext, PerformanceTracker performanceTracker)
+		private async Task<bool> WaitUntilDisconnectedAsync(ConnectionOperationContext takeContext, CancellationToken cancellationToken, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
 
-				return _connectionMonitor.WaitUntilDisconnected(
-					takeContext.Destination,
-					_timeout);
+				try
+				{
+					return await _connectionMonitor.WaitUntilDisconnectedAsync(
+						takeContext.Destination,
+						cancellationToken);
+				}
+				catch (OperationCanceledException)
+				{
+					return false;
+				}
 			}
 		}
 
