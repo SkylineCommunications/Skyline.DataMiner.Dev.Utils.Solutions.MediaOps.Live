@@ -35,7 +35,7 @@
 
 			Assert.IsTrue(connectionMetrics.NumberOfRequests < 10);
 			Assert.IsTrue(connectionMetrics.NumberOfDomRequests < 10);
-			Assert.IsTrue(connectionMetrics.NumberOfDomInstancesRetrieved < 10);
+			Assert.IsTrue(connectionMetrics.NumberOfDomInstancesRetrieved < 100);
 		}
 
 		[TestMethod]

@@ -10,7 +10,6 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 
@@ -18,22 +17,24 @@
 	{
 		private readonly object _lock = new();
 
-		private readonly Dictionary<ApiObjectReference<Endpoint>, Endpoint> _endpoints = new();
-		private readonly Dictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> _virtualSignalGroups = new();
-
-		private readonly VirtualSignalGroupEndpointsMapping _virtualSignalGroupEndpointsMapping = new();
 		private readonly ConnectionEndpointsMapping _connectionEndpointsMapping = new();
 		private readonly PendingConnectionActionMapping _pendingConnectionActionsMapping = new();
 
 		private readonly ICollection<ConnectionSubscription> _connectionSubscriptions = [];
 		private readonly ICollection<PendingConnectionActionSubscription> _pendingActionSubscriptions = [];
 
-		private RepositorySubscription<Endpoint> _subscriptionEndpoints;
-		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
+		public ConnectivityInfoProvider(MediaOpsLiveApi api, VirtualSignalGroupEndpointsCache endpointsCache, bool subscribe = false)
+		{
+			Api = api ?? throw new ArgumentNullException(nameof(api));
+			Endpoints = endpointsCache ?? throw new ArgumentNullException(nameof(endpointsCache));
+
+			Initialize(subscribe);
+		}
 
 		public ConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
+			Endpoints = new VirtualSignalGroupEndpointsCache(api, subscribe);
 
 			Initialize(subscribe);
 		}
@@ -42,39 +43,37 @@
 
 		public MediaOpsLiveApi Api { get; }
 
+		public VirtualSignalGroupEndpointsCache Endpoints { get; }
+
 		public bool IsSubscribed { get; private set; }
 
-		public bool IsConnected(Endpoint endpoint)
+		public bool IsConnected(ApiObjectReference<Endpoint> endpoint)
 		{
-			if (endpoint is null)
+			if (endpoint == ApiObjectReference<Endpoint>.Empty)
 			{
-				throw new ArgumentNullException(nameof(endpoint));
+				new ArgumentNullException(nameof(endpoint));
 			}
 
 			lock (_lock)
 			{
-				LoadData(endpoint);
-
 				return _connectionEndpointsMapping.GetConnections(endpoint).Any(c => c.IsConnected);
 			}
 		}
 
-		public bool IsConnected(Endpoint source, Endpoint destination)
+		public bool IsConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
 		{
-			if (source is null)
+			if (source == ApiObjectReference<Endpoint>.Empty)
 			{
 				throw new ArgumentNullException(nameof(source));
 			}
 
-			if (destination is null)
+			if (destination == ApiObjectReference<Endpoint>.Empty)
 			{
 				throw new ArgumentNullException(nameof(destination));
 			}
 
 			lock (_lock)
 			{
-				LoadData([source, destination]);
-
 				return _connectionEndpointsMapping.IsConnected(source, destination);
 			}
 		}
@@ -88,16 +87,12 @@
 
 			lock (_lock)
 			{
-				LoadData(virtualSignalGroup);
-
 				bool anyConnected = false;
 				bool anyDisconnected = false;
 
 				foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
 				{
-					var endpoint = _endpoints[levelEndpoint.Endpoint];
-
-					if (IsConnected(endpoint))
+					if (IsConnected(levelEndpoint.Endpoint))
 						anyConnected = true;
 					else
 						anyDisconnected = true;
@@ -120,9 +115,7 @@
 
 			lock (_lock)
 			{
-				LoadData(endpoints.Select(x => x.Reference));
-
-				return endpoints.ToDictionary(x => x, IsConnected);
+				return endpoints.ToDictionary(x => x, x => IsConnected(x));
 			}
 		}
 
@@ -135,8 +128,6 @@
 
 			lock (_lock)
 			{
-				LoadData(virtualSignalGroups.Select(x => x.Reference));
-
 				return virtualSignalGroups.ToDictionary(x => x, IsConnected);
 			}
 		}
@@ -150,8 +141,6 @@
 
 			lock (_lock)
 			{
-				LoadData(endpoint);
-
 				if (endpoint.IsDestination)
 				{
 					return GetConnectivityForDestination(endpoint);
@@ -176,9 +165,7 @@
 
 			lock (_lock)
 			{
-				LoadData(endpointRef);
-
-				if (!_endpoints.TryGetValue(endpointRef, out var endpoint))
+				if (!Endpoints.TryGetEndpoint(endpointRef, out var endpoint))
 				{
 					throw new InvalidOperationException($"Endpoint {endpointRef.ID} not found");
 				}
@@ -196,8 +183,6 @@
 
 			lock (_lock)
 			{
-				LoadData(virtualSignalGroup);
-
 				var levelsConnectivity = new Dictionary<ApiObjectReference<Level>, EndpointConnectivity>();
 				var connectedSources = new HashSet<VirtualSignalGroup>();
 				var pendingConnectedSources = new HashSet<VirtualSignalGroup>();
@@ -206,7 +191,7 @@
 
 				foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
 				{
-					if (!_endpoints.TryGetValue(levelEndpoint.Endpoint, out var endpoint))
+					if (!Endpoints.TryGetEndpoint(levelEndpoint.Endpoint, out var endpoint))
 					{
 						throw new InvalidOperationException($"Endpoint {levelEndpoint.Endpoint.ID} not found for virtual signal group {virtualSignalGroup.ID}");
 					}
@@ -217,25 +202,25 @@
 
 					if (connectivity.ConnectedSource != null)
 					{
-						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.ConnectedSource);
+						var virtualSignalGroups = Endpoints.GetVirtualSignalGroupsThatContainEndpoint(connectivity.ConnectedSource);
 						connectedSources.UnionWith(virtualSignalGroups);
 					}
 
 					if (connectivity.PendingConnectedSource != null)
 					{
-						var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(connectivity.PendingConnectedSource);
+						var virtualSignalGroups = Endpoints.GetVirtualSignalGroupsThatContainEndpoint(connectivity.PendingConnectedSource);
 						pendingConnectedSources.UnionWith(virtualSignalGroups);
 					}
 
 					if (connectivity.ConnectedDestinations.Any())
 					{
-						var virtualSignalGroups = connectivity.ConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
+						var virtualSignalGroups = connectivity.ConnectedDestinations.SelectMany(x => Endpoints.GetVirtualSignalGroupsThatContainEndpoint(x));
 						connectedDestinations.UnionWith(virtualSignalGroups);
 					}
 
 					if (connectivity.PendingConnectedDestinations.Any())
 					{
-						var virtualSignalGroups = connectivity.PendingConnectedDestinations.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x));
+						var virtualSignalGroups = connectivity.PendingConnectedDestinations.SelectMany(x => Endpoints.GetVirtualSignalGroupsThatContainEndpoint(x));
 						pendingConnectedDestinations.UnionWith(virtualSignalGroups);
 					}
 				}
@@ -259,8 +244,6 @@
 
 			lock (_lock)
 			{
-				LoadData(endpoints.Select(x => x.Reference));
-
 				return endpoints.ToDictionary(x => x, GetConnectivity);
 			}
 		}
@@ -274,8 +257,6 @@
 
 			lock (_lock)
 			{
-				LoadData(endpoints);
-
 				return endpoints
 					.Select(GetConnectivity)
 					.ToDictionary(x => x.Endpoint, x => x);
@@ -291,8 +272,6 @@
 
 			lock (_lock)
 			{
-				LoadData(virtualSignalGroups.Select(x => x.Reference));
-
 				return virtualSignalGroups.ToDictionary(x => x, GetConnectivity);
 			}
 		}
@@ -306,11 +285,7 @@
 					return;
 				}
 
-				_subscriptionEndpoints = Api.Endpoints.Subscribe();
-				_subscriptionVirtualSignalGroups = Api.VirtualSignalGroups.Subscribe();
-
-				_subscriptionEndpoints.Changed += Endpoints_Changed;
-				_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
+				Endpoints.Subscribe();
 
 				foreach (var element in Api.MediationElements.AllElements)
 				{
@@ -338,11 +313,7 @@
 					return;
 				}
 
-				_subscriptionEndpoints.Changed -= Endpoints_Changed;
-				_subscriptionVirtualSignalGroups.Changed -= VirtualSignalGroups_Changed;
-
-				_subscriptionEndpoints.Dispose();
-				_subscriptionVirtualSignalGroups.Dispose();
+				Endpoints.Unsubscribe();
 
 				foreach (var subscription in _connectionSubscriptions)
 				{
@@ -363,50 +334,6 @@
 			}
 		}
 
-		public void LoadData(params IEnumerable<ApiObjectReference<Endpoint>> endpoints)
-		{
-			lock (_lock)
-			{
-				var endpointIds = new HashSet<ApiObjectReference<Endpoint>>();
-
-				// Extend the endpoint IDs with the endpoints in linked connections and pending actions
-				foreach (var endpoint in endpoints)
-				{
-					endpointIds.Add(endpoint);
-
-					var connections = _connectionEndpointsMapping.GetConnections(endpoint);
-					var pendingActions = _pendingConnectionActionsMapping.GetPendingConnectionActions(endpoint);
-
-					endpointIds.UnionWith(connections.SelectMany(x => x.GetEndpoints()));
-					endpointIds.UnionWith(pendingActions.SelectMany(x => x.GetEndpoints()));
-				}
-
-				// Load the data for the endpoints
-				LoadEndpoints(endpointIds);
-				LoadVirtualSignalGroupsThatContainEndpoints(endpointIds);
-			}
-		}
-
-		public void LoadData(params IEnumerable<ApiObjectReference<VirtualSignalGroup>> virtualSignalGroups)
-		{
-			lock (_lock)
-			{
-				LoadVirtualSignalGroups(virtualSignalGroups);
-
-				var endpoints = new HashSet<ApiObjectReference<Endpoint>>();
-
-				foreach (var virtualSignalGroupRef in virtualSignalGroups)
-				{
-					if (_virtualSignalGroups.TryGetValue(virtualSignalGroupRef, out var virtualSignalGroup))
-					{
-						endpoints.UnionWith(virtualSignalGroup.GetLevelEndpoints().Select(x => x.Endpoint));
-					}
-				}
-
-				LoadData(endpoints);
-			}
-		}
-
 		public void Dispose()
 		{
 			Unsubscribe();
@@ -422,26 +349,6 @@
 				}
 
 				LoadDataFromMediationElements();
-			}
-		}
-
-		private void Endpoints_Changed(object sender, ApiObjectsChangedEvent<Endpoint> e)
-		{
-			lock (_lock)
-			{
-				Debug.WriteLine($"Endpoints changed: {e}");
-
-				UpdateEndpoints(e.Created.Concat(e.Updated), e.Deleted);
-			}
-		}
-
-		private void VirtualSignalGroups_Changed(object sender, ApiObjectsChangedEvent<VirtualSignalGroup> e)
-		{
-			lock (_lock)
-			{
-				Debug.WriteLine($"Virtual Signal Groups changed: {e}");
-
-				UpdateVirtualSignalGroups(e.Created.Concat(e.Updated), e.Deleted);
 			}
 		}
 
@@ -522,10 +429,8 @@
 				return;
 			}
 
-			LoadData(impactedEndpoints);
-
 			var impactedVirtualSignalGroups = impactedEndpoints
-				.SelectMany(x => _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(x))
+				.SelectMany(x => Endpoints.GetVirtualSignalGroupsThatContainEndpoint(x))
 				.Distinct()
 				.ToList();
 
@@ -534,113 +439,6 @@
 				impactedVirtualSignalGroups.Select(GetConnectivity).ToList());
 
 			ConnectionsUpdated?.Invoke(this, eventArgs);
-		}
-
-		private void UpdateEndpoints(IEnumerable<Endpoint> updated, IEnumerable<Endpoint> deleted = null)
-		{
-			lock (_lock)
-			{
-				if (updated != null)
-				{
-					foreach (var item in updated)
-					{
-						_endpoints[item.ID] = item;
-					}
-				}
-
-				if (deleted != null)
-				{
-					foreach (var item in deleted)
-					{
-						_endpoints.Remove(item);
-					}
-				}
-			}
-		}
-
-		private void UpdateVirtualSignalGroups(IEnumerable<VirtualSignalGroup> updated, IEnumerable<VirtualSignalGroup> deleted = null)
-		{
-			lock (_lock)
-			{
-				if (updated != null)
-				{
-					foreach (var item in updated)
-					{
-						_virtualSignalGroups[item.ID] = item;
-						_virtualSignalGroupEndpointsMapping.AddOrUpdate(item);
-					}
-				}
-
-				if (deleted != null)
-				{
-					foreach (var item in deleted)
-					{
-						_virtualSignalGroups.Remove(item);
-						_virtualSignalGroupEndpointsMapping.Remove(item);
-					}
-				}
-			}
-		}
-
-		private void LoadVirtualSignalGroupsThatContainEndpoints(IEnumerable<ApiObjectReference<Endpoint>> endpoints)
-		{
-			lock (_lock)
-			{
-				var endpointsToLoad = endpoints
-					.Where(x => !_virtualSignalGroupEndpointsMapping.Contains(x))
-					.Select(x => x.ID)
-					.Distinct()
-					.ToList();
-
-				if (endpointsToLoad.Count > 0)
-				{
-					Debug.WriteLine($"Loading VSGs with endpoints: {String.Join(", ", endpointsToLoad)}");
-					var virtualSignalGroups = Api.VirtualSignalGroups.GetByEndpointIds(endpointsToLoad).ToList();
-					Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs: {String.Join(", ", virtualSignalGroups.Select(x => x.ID))}");
-
-					UpdateVirtualSignalGroups(virtualSignalGroups);
-				}
-			}
-		}
-
-		private void LoadEndpoints(IEnumerable<ApiObjectReference<Endpoint>> endpointIds)
-		{
-			lock (_lock)
-			{
-				var endpointIdsToRetrieve = endpointIds
-					.Where(id => !_endpoints.ContainsKey(id))
-					.Distinct()
-					.ToList();
-
-				if (endpointIdsToRetrieve.Count > 0)
-				{
-					Debug.WriteLine($"Loading endpoints: {String.Join(", ", endpointIdsToRetrieve.Select(x => x.ID))}");
-					var endpoints = Api.Endpoints.Read(endpointIdsToRetrieve);
-					Debug.WriteLine($"Loaded {endpoints.Count} endpoints");
-
-					UpdateEndpoints(endpoints.Values);
-				}
-			}
-		}
-
-		private void LoadVirtualSignalGroups(IEnumerable<ApiObjectReference<VirtualSignalGroup>> vsgIds)
-		{
-			lock (_lock)
-			{
-				var vsgIdsToRetrieve = vsgIds
-					.Where(id => !_virtualSignalGroups.ContainsKey(id))
-					.Distinct()
-					.ToList();
-
-				if (vsgIdsToRetrieve.Count > 0)
-				{
-					Debug.WriteLine($"Loading VSGs: {String.Join(", ", vsgIdsToRetrieve.Select(x => x.ID))}");
-					var virtualSignalGroups = Api.VirtualSignalGroups.Read(vsgIdsToRetrieve);
-					Debug.WriteLine($"Loaded {virtualSignalGroups.Count} VSGs");
-
-					UpdateVirtualSignalGroups(virtualSignalGroups.Values);
-				}
-			}
 		}
 
 		private void LoadDataFromMediationElements()
@@ -690,7 +488,7 @@
 					isConnected = true;
 
 					if (connection.ConnectedSource.HasValue &&
-						_endpoints.TryGetValue(connection.ConnectedSource.Value, out Endpoint connectedSourceEndpoint))
+						Endpoints.TryGetEndpoint(connection.ConnectedSource.Value, out Endpoint connectedSourceEndpoint))
 					{
 						connectedSource = connectedSourceEndpoint;
 					}
@@ -701,7 +499,7 @@
 					if (pendingAction.Action == PendingConnectionActionType.Connect)
 					{
 						if (pendingAction.PendingSource.HasValue &&
-							_endpoints.TryGetValue(pendingAction.PendingSource.Value, out var pendingSource) &&
+							Endpoints.TryGetEndpoint(pendingAction.PendingSource.Value, out var pendingSource) &&
 							pendingSource != connectedSource)
 						{
 							isConnecting = true;
@@ -717,7 +515,7 @@
 					}
 				}
 
-				var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint);
+				var virtualSignalGroups = Endpoints.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
 
 				return new EndpointConnectivity(
 					endpoint,
@@ -757,7 +555,7 @@
 				{
 					isConnected = true;
 
-					if (_endpoints.TryGetValue(connection.Destination, out var destination))
+					if (Endpoints.TryGetEndpoint(connection.Destination, out var destination))
 					{
 						destinationStates[destination] = EndpointConnectionState.Connected;
 					}
@@ -765,7 +563,7 @@
 
 				foreach (var pendingAction in pendingActions)
 				{
-					if (!_endpoints.TryGetValue(pendingAction.Destination, out var destination))
+					if (!Endpoints.TryGetEndpoint(pendingAction.Destination, out var destination))
 					{
 						continue;
 					}
@@ -784,7 +582,7 @@
 					}
 				}
 
-				var virtualSignalGroups = _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint);
+				var virtualSignalGroups = Endpoints.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
 				var destinationConnections = destinationStates.Select(x => new EndpointConnection(x.Key, x.Value)).ToList();
 
 				return new EndpointConnectivity(
