@@ -455,22 +455,16 @@
 
 		private async Task<bool> WaitUntilConnectedAsync(ConnectionOperationContext takeContext, CancellationToken cancellationToken, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			try
 			{
-				performanceTracker.AddMetadata("Source", takeContext.Source.Name);
-				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
-
-				try
-				{
-					return await _connectionMonitor.WaitUntilConnectedAsync(
-						takeContext.Source,
-						takeContext.Destination,
-						cancellationToken);
-				}
-				catch (OperationCanceledException)
-				{
-					return false;
-				}
+				return await _connectionMonitor.WaitUntilConnectedAsync(
+					takeContext.Source,
+					takeContext.Destination,
+					cancellationToken);
+			}
+			catch (OperationCanceledException)
+			{
+				return false;
 			}
 		}
 
@@ -495,20 +489,15 @@
 
 		private async Task<bool> WaitUntilDisconnectedAsync(ConnectionOperationContext takeContext, CancellationToken cancellationToken, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			try
 			{
-				performanceTracker.AddMetadata("Destination", takeContext.Destination.Name);
-
-				try
-				{
-					return await _connectionMonitor.WaitUntilDisconnectedAsync(
-						takeContext.Destination,
-						cancellationToken);
-				}
-				catch (OperationCanceledException)
-				{
-					return false;
-				}
+				return await _connectionMonitor.WaitUntilDisconnectedAsync(
+					takeContext.Destination,
+					cancellationToken);
+			}
+			catch (OperationCanceledException)
+			{
+				return false;
 			}
 		}
 
