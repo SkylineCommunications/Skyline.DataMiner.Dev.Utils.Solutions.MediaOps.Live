@@ -440,7 +440,7 @@
 			using (var cts = new CancellationTokenSource(_timeout))
 			{
 				var tasks = takeContexts
-					.Select(takeContext => WaitUntilConnectedAsync(takeContext, cts.Token, performanceTracker))
+					.Select(takeContext => WaitUntilConnectedAsync(takeContext, cts.Token))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
@@ -453,7 +453,7 @@
 			}
 		}
 
-		private async Task<bool> WaitUntilConnectedAsync(ConnectionOperationContext takeContext, CancellationToken cancellationToken, PerformanceTracker performanceTracker)
+		private async Task<bool> WaitUntilConnectedAsync(ConnectionOperationContext takeContext, CancellationToken cancellationToken)
 		{
 			try
 			{
@@ -474,7 +474,7 @@
 			using (var cts = new CancellationTokenSource(_timeout))
 			{
 				var tasks = takeContexts
-					.Select(takeContext => WaitUntilDisconnectedAsync(takeContext, cts.Token, performanceTracker))
+					.Select(takeContext => WaitUntilDisconnectedAsync(takeContext, cts.Token))
 					.ToArray();
 
 				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
@@ -487,7 +487,7 @@
 			}
 		}
 
-		private async Task<bool> WaitUntilDisconnectedAsync(ConnectionOperationContext takeContext, CancellationToken cancellationToken, PerformanceTracker performanceTracker)
+		private async Task<bool> WaitUntilDisconnectedAsync(ConnectionOperationContext takeContext, CancellationToken cancellationToken)
 		{
 			try
 			{

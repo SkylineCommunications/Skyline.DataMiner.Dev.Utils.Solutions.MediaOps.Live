@@ -51,7 +51,7 @@
 		{
 			if (endpoint == ApiObjectReference<Endpoint>.Empty)
 			{
-				new ArgumentNullException(nameof(endpoint));
+				throw new ArgumentNullException(nameof(endpoint));
 			}
 
 			lock (_lock)
