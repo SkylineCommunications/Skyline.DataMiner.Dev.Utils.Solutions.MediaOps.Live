@@ -10,19 +10,27 @@
 	internal sealed class MediaOpsTaskScheduler : TaskScheduler, IDisposable
 	{
 		private readonly object _lock = new();
-		private readonly int _concurrencyLevel;
-		private readonly HashSet<Thread> _threads = [];
+		private readonly int _maxConcurrencyLevel;
+		private readonly List<Thread> _threads = [];
 		private readonly BlockingCollection<Task> _tasks = [];
+
+		/// <summary>Whether we're processing tasks on the current thread.</summary>
+		private static readonly ThreadLocal<bool> _taskProcessingThread = new();
 
 		private int _workingThreads;
 		private bool _disposed;
 
-		public MediaOpsTaskScheduler(int concurrencyLevel = 100)
+		public MediaOpsTaskScheduler(int maxConcurrencyLevel = 100)
 		{
-			_concurrencyLevel = concurrencyLevel;
+			if (maxConcurrencyLevel < 1)
+			{
+				throw new ArgumentOutOfRangeException(nameof(maxConcurrencyLevel));
+			}
+
+			_maxConcurrencyLevel = maxConcurrencyLevel;
 		}
 
-		public override int MaximumConcurrencyLevel => _concurrencyLevel;
+		public override int MaximumConcurrencyLevel => _maxConcurrencyLevel;
 
 		protected override IEnumerable<Task> GetScheduledTasks()
 		{
@@ -43,16 +51,7 @@
 
 			_tasks.Add(task);
 
-			lock (_lock)
-			{
-				var moreWorkThanThreads = _workingThreads + _tasks.Count > _threads.Count;
-				var roomForMoreThreads = _threads.Count < _concurrencyLevel;
-
-				if (moreWorkThanThreads && roomForMoreThreads)
-				{
-					StartNewThread();
-				}
-			}
+			MaybeStartNewThread();
 		}
 
 		protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
@@ -62,20 +61,26 @@
 				throw new ArgumentNullException(nameof(task));
 			}
 
-			if (taskWasPreviouslyQueued)
+			if (!taskWasPreviouslyQueued && _taskProcessingThread.Value)
 			{
-				return false;
+				return TryExecuteTask(task);
 			}
 
+			return false;
+		}
+
+		private void MaybeStartNewThread()
+		{
 			lock (_lock)
 			{
-				if (!_threads.Contains(Thread.CurrentThread))
+				var moreWorkThanThreads = _workingThreads + _tasks.Count > _threads.Count;
+				var roomForMoreThreads = _threads.Count < _maxConcurrencyLevel;
+
+				if (moreWorkThanThreads && roomForMoreThreads)
 				{
-					return false;
+					StartNewThread();
 				}
 			}
-
-			return TryExecuteTask(task);
 		}
 
 		private void StartNewThread()
@@ -94,6 +99,8 @@
 		{
 			try
 			{
+				_taskProcessingThread.Value = true;
+
 				foreach (var task in _tasks.GetConsumingEnumerable())
 				{
 					try
@@ -113,6 +120,8 @@
 			}
 			finally
 			{
+				_taskProcessingThread.Value = false;
+
 				lock (_lock)
 				{
 					_threads.Remove(Thread.CurrentThread);
