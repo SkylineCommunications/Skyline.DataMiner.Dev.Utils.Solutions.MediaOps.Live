@@ -153,6 +153,60 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteNowWithSuccessfulScripts()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var ev = new OrchestrationEventConfiguration
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
+				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				Name = "Test Event Confirmed",
+				GlobalOrchestrationScript = "Script_Success",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJobConfiguration(orchestrationJob);
+
+			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+
+			api.Orchestration.ExecuteEventsNow(new List<OrchestrationEvent> { ev });
+
+			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.AreEqual(SlcOrchestrationIds.Enums.EventState.Completed, ev.EventState);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteNowWithFailedScripts()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var ev = new OrchestrationEventConfiguration
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
+				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				Name = "Test Event Confirmed",
+				GlobalOrchestrationScript = "Script_Fail",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJobConfiguration(orchestrationJob);
+
+			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+
+			api.Orchestration.ExecuteEventsNow(new List<OrchestrationEvent> { ev });
+
+			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.AreEqual(SlcOrchestrationIds.Enums.EventState.Failed, ev.EventState);
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_Reschedule()
 		{
 			var simulation = new MediaOpsLiveSimulation();
