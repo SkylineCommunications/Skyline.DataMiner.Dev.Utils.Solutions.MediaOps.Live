@@ -5,6 +5,8 @@
 	using System.Linq;
 
 	using Newtonsoft.Json;
+	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Net.Scheduling;
 
 	/// <summary>
 	/// Contains information about scheduler orchestration tasks.
@@ -70,6 +72,31 @@
 				new object[] { GenerateActionsTaskData() },
 				new object[] { },
 			];
+		}
+
+		public static bool TryParseFromSchedulerTask(SchedulerTask task, out OrchestrationSchedulerTask orchestrationTask)
+		{
+			orchestrationTask = null;
+
+			if (task.Description != Constants.OrchestrationTaskNaming)
+			{
+				return false;
+			}
+
+			SchedulerAction eventOrchestrationTask = task.Actions.FirstOrDefault(action =>
+				action.ActionType == SchedulerActionType.Automation && action.ScriptInstance.ScriptName == Constants.OrchestrationScriptName);
+
+			if (eventOrchestrationTask == null)
+			{
+				return false;
+			}
+
+			AutomationScriptInstanceInfo automationScriptInfo = (AutomationScriptInstanceInfo)eventOrchestrationTask.ScriptInstance.ParameterIdToValue[0];
+
+			List<Guid> eventGuidsInput = JsonConvert.DeserializeObject<List<Guid>>(automationScriptInfo.Value);
+			orchestrationTask = new(System.DateTime.SpecifyKind(task.StartTime, DateTimeKind.Local), eventGuidsInput, new ScheduledTaskId(task.HandlingDMA, task.Id));
+
+			return true;
 		}
 
 		private string[] GenerateGeneralInfoTaskData()

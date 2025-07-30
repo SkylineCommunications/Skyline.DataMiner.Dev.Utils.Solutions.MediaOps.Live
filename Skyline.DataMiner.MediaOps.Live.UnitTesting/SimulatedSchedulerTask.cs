@@ -89,6 +89,26 @@
 			}
 		}
 
+		public List<Guid> GetOrchestrationSchedulingInputList()
+		{
+			if (Description != Constants.OrchestrationTaskNaming)
+			{
+				return new List<Guid>();
+			}
+
+			SchedulerAction eventOrchestrationTask = Actions.FirstOrDefault(action =>
+				action.ActionType == SchedulerActionType.Automation && action.ScriptInstance.ScriptName == Constants.OrchestrationScriptName);
+
+			if (eventOrchestrationTask == null)
+			{
+				return new List<Guid>();
+			}
+
+			AutomationScriptInstanceInfo automationScriptInfo = (AutomationScriptInstanceInfo)eventOrchestrationTask.ScriptInstance.ParameterIdToValue[0];
+
+			return JsonConvert.DeserializeObject<List<Guid>>(automationScriptInfo.Value);
+		}
+
 		private SchedulerAction ParseAction(List<string> actionsInfo)
 		{
 			return actionsInfo[0] switch

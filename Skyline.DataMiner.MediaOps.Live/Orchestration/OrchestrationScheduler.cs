@@ -70,25 +70,10 @@
 			{
 				SchedulerTask task = (SchedulerTask)taskObject;
 
-				if (task.Description != Constants.OrchestrationTaskNaming)
+				if (OrchestrationSchedulerTask.TryParseFromSchedulerTask(task, out OrchestrationSchedulerTask orchestrationTask))
 				{
-					continue;
+					list.Add(orchestrationTask);
 				}
-
-				SchedulerAction eventOrchestrationTask = task.Actions.FirstOrDefault(action =>
-					action.ActionType == SchedulerActionType.Automation && action.ScriptInstance.ScriptName == Constants.OrchestrationScriptName);
-
-				if (eventOrchestrationTask == null)
-				{
-					continue;
-				}
-
-				AutomationScriptInstanceInfo automationScriptInfo = (AutomationScriptInstanceInfo)eventOrchestrationTask.ScriptInstance.ParameterIdToValue[0];
-
-				List<Guid> eventGuidsInput = JsonConvert.DeserializeObject<List<Guid>>(automationScriptInfo.Value);
-				OrchestrationSchedulerTask existingTask = new(DateTime.SpecifyKind(task.StartTime, DateTimeKind.Local), eventGuidsInput, new ScheduledTaskId(task.HandlingDMA, task.Id));
-
-				list.Add(existingTask);
 			}
 
 			return list;
