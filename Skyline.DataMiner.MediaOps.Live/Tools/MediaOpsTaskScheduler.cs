@@ -139,14 +139,16 @@
 			_disposed = true;
 			_tasks.CompleteAdding();
 
+			ICollection<Thread> threadsToJoin;
+
 			lock (_lock)
 			{
-				foreach (var thread in _threads.ToList())
-				{
-					thread.Join();
-				}
+				threadsToJoin = _threads.ToArray();
+			}
 
-				_threads.Clear();
+			foreach (var thread in threadsToJoin)
+			{
+				thread.Join();
 			}
 
 			_tasks.Dispose();
