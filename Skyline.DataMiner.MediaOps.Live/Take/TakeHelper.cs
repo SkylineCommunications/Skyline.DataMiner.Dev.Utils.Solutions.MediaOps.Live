@@ -439,17 +439,27 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			using (var cts = new CancellationTokenSource(_timeout))
 			{
-				var tasks = takeContexts
-					.Select(takeContext => WaitUntilConnectedAsync(takeContext, cts.Token))
-					.ToArray();
+				WaitUntilAllConnectedAsync(takeContexts, cts.Token).GetAwaiter().GetResult();
+			}
+		}
 
-				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
-				var failedCount = results.Count(x => !x);
+		private async Task WaitUntilAllConnectedAsync(ICollection<ConnectionOperationContext> takeContexts, CancellationToken cancellationToken)
+		{
+			var failed = new List<ConnectionOperationContext>();
 
-				if (failedCount > 0)
+			foreach (var item in takeContexts)
+			{
+				var result = await WaitUntilConnectedAsync(item, cancellationToken);
+
+				if (!result)
 				{
-					throw new TimeoutException($"Failed to connect {failedCount} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
+					failed.Add(item);
 				}
+			}
+
+			if (failed.Count > 0)
+			{
+				throw new TimeoutException($"Failed to connect {failed.Count} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
 			}
 		}
 
@@ -473,17 +483,27 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			using (var cts = new CancellationTokenSource(_timeout))
 			{
-				var tasks = takeContexts
-					.Select(takeContext => WaitUntilDisconnectedAsync(takeContext, cts.Token))
-					.ToArray();
+				WaitUntilAllDisconnected(takeContexts, cts.Token).GetAwaiter().GetResult();
+			}
+		}
 
-				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
-				var failedCount = results.Count(x => !x);
+		private async Task WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, CancellationToken cancellationToken)
+		{
+			var failed = new List<ConnectionOperationContext>();
 
-				if (failedCount > 0)
+			foreach (var item in takeContexts)
+			{
+				var result = await WaitUntilDisconnectedAsync(item, cancellationToken);
+
+				if (!result)
 				{
-					throw new TimeoutException($"Failed to disconnect {failedCount} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
+					failed.Add(item);
 				}
+			}
+
+			if (failed.Count > 0)
+			{
+				throw new TimeoutException($"Failed to disconnect {failed.Count} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
 			}
 		}
 
