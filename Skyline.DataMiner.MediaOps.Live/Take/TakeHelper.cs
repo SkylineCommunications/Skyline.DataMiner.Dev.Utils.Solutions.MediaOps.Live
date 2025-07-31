@@ -436,30 +436,35 @@
 
 		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (new PerformanceTracker(performanceTracker))
 			using (var cts = new CancellationTokenSource(_timeout))
+			using (var semaphore = new SemaphoreSlim(100))
 			{
-				WaitUntilAllConnectedAsync(takeContexts, cts.Token).GetAwaiter().GetResult();
-			}
-		}
+				var tasks = takeContexts
+					.Select(async takeContext =>
+					{
+						try
+						{
+							await semaphore.WaitAsync(cts.Token);
+							return await WaitUntilConnectedAsync(takeContext, cts.Token);
+						}
+						catch (Exception)
+						{
+							return false;
+						}
+						finally
+						{
+							semaphore.Release();
+						}
+					});
 
-		private async Task WaitUntilAllConnectedAsync(ICollection<ConnectionOperationContext> takeContexts, CancellationToken cancellationToken)
-		{
-			var failed = new List<ConnectionOperationContext>();
+				var result = Task.WhenAll(tasks).GetAwaiter().GetResult();
+				var failedCount = result.Count(x => x == false);
 
-			foreach (var item in takeContexts)
-			{
-				var result = await WaitUntilConnectedAsync(item, cancellationToken);
-
-				if (!result)
+				if (failedCount > 0)
 				{
-					failed.Add(item);
+					throw new TimeoutException($"Failed to connect {failedCount} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
 				}
-			}
-
-			if (failed.Count > 0)
-			{
-				throw new TimeoutException($"Failed to connect {failed.Count} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
 			}
 		}
 
@@ -480,30 +485,35 @@
 
 		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (new PerformanceTracker(performanceTracker))
 			using (var cts = new CancellationTokenSource(_timeout))
+			using (var semaphore = new SemaphoreSlim(100))
 			{
-				WaitUntilAllDisconnected(takeContexts, cts.Token).GetAwaiter().GetResult();
-			}
-		}
+				var tasks = takeContexts
+					.Select(async takeContext =>
+					{
+						try
+						{
+							await semaphore.WaitAsync(cts.Token);
+							return await WaitUntilDisconnectedAsync(takeContext, cts.Token);
+						}
+						catch (Exception)
+						{
+							return false;
+						}
+						finally
+						{
+							semaphore.Release();
+						}
+					});
 
-		private async Task WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, CancellationToken cancellationToken)
-		{
-			var failed = new List<ConnectionOperationContext>();
+				var result = Task.WhenAll(tasks).GetAwaiter().GetResult();
+				var failedCount = result.Count(x => x == false);
 
-			foreach (var item in takeContexts)
-			{
-				var result = await WaitUntilDisconnectedAsync(item, cancellationToken);
-
-				if (!result)
+				if (failedCount > 0)
 				{
-					failed.Add(item);
+					throw new TimeoutException($"Failed to disconnect {failedCount} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
 				}
-			}
-
-			if (failed.Count > 0)
-			{
-				throw new TimeoutException($"Failed to disconnect {failed.Count} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
 			}
 		}
 
