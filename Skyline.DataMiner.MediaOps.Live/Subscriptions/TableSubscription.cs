@@ -59,8 +59,7 @@
 					if (subscribe)
 					{
 						_connection.OnNewMessage += Connection_OnNewMessage;
-						_connection.AddSubscription(_subscriptionSetId, _subscriptionFilters);
-						_connection.Subscribe();
+						_connection.TrackAddSubscription(_subscriptionSetId, _subscriptionFilters).ExecuteAndWait();
 					}
 				}
 			}
@@ -73,7 +72,7 @@
 
 					if (Changed == null)
 					{
-						_connection.ClearSubscriptions(_subscriptionSetId);
+						_connection.TrackClearSubscriptions(_subscriptionSetId).ExecuteAndWait();
 						_connection.OnNewMessage -= Connection_OnNewMessage;
 					}
 				}

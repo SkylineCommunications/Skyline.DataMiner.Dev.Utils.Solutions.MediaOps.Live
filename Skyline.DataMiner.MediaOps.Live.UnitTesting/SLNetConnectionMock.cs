@@ -334,26 +334,25 @@
 		/// <inheritdoc/>
 		public ITrackedSubscriptionUpdate TrackAddSubscription(string setID, params SubscriptionFilter[] newFilters)
 		{
-			// quick implementation for unit testing
 			return new TrackedSubscriptionUpdate(() => AddSubscription(setID, newFilters));
 		}
 
 		/// <inheritdoc/>
 		public ITrackedSubscriptionUpdate TrackRemoveSubscription(string setID, params SubscriptionFilter[] deletedFilters)
 		{
-			throw new NotImplementedException();
+			return new TrackedSubscriptionUpdate(() => RemoveSubscription(setID, deletedFilters));
 		}
 
 		/// <inheritdoc/>
 		public ITrackedSubscriptionUpdate TrackReplaceSubscription(string setID, params SubscriptionFilter[] newFilters)
 		{
-			throw new NotImplementedException();
+			return new TrackedSubscriptionUpdate(() => ReplaceSubscription(setID, newFilters));
 		}
 
 		/// <inheritdoc/>
 		public ITrackedSubscriptionUpdate TrackClearSubscriptions(string setID)
 		{
-			throw new NotImplementedException();
+			return new TrackedSubscriptionUpdate(() => ClearSubscriptions(setID));
 		}
 
 		/// <inheritdoc/>

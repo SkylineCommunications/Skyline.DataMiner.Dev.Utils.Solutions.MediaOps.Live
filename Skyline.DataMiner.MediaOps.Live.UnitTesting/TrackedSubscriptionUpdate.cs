@@ -27,7 +27,7 @@
 
 		public DMSMessage[] ExecuteAndWait(TimeSpan? timeout = null)
 		{
-			throw new NotImplementedException();
+			return Execute();
 		}
 
 		public ITrackedSubscriptionUpdate OnAfterInitialEvents(Action action)
