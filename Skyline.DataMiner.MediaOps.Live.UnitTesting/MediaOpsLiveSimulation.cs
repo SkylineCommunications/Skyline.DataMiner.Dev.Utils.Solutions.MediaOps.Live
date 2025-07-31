@@ -269,10 +269,10 @@
 			Api.Orchestration.SaveEventConfigurations(job.OrchestrationEvents);
 		}
 
-		private void CreateOrchestrationScript(string scriptName, List<string> requiredParameters, List<string> requiredDummies)
+		/*private void CreateOrchestrationScript(string scriptName, List<string> requiredParameters, List<string> requiredDummies)
 		{
 			throw new NotImplementedException();
-		}
+		}*/
 
 		private void CreateMediationElement(int dmaId, int elementId, string name)
 		{

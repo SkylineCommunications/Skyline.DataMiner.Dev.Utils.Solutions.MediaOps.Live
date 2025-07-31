@@ -9,7 +9,7 @@
 
 	public class SimulatedScheduler
 	{
-		private ConcurrentDictionary<int, SimulatedSchedulerTask> _tasks;
+		private readonly ConcurrentDictionary<int, SimulatedSchedulerTask> _tasks;
 
 		public SimulatedScheduler(SimulatedDma dma)
 		{

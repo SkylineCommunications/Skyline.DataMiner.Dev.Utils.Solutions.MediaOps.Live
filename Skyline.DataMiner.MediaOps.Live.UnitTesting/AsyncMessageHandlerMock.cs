@@ -9,7 +9,7 @@
 
 	internal class AsyncMessageHandlerMock : IAsyncMessageHandler
 	{
-		private IConnection _connection;
+		private readonly IConnection _connection;
 
 		public AsyncMessageHandlerMock(IConnection connection)
 		{

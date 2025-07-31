@@ -310,31 +310,6 @@
 			}
 		}
 
-		private IEnumerable<DMSMessage> HandleSchedulerTaskInfoMessage()
-		{
-			List<SimulatedSchedulerTask> allDmsTasks = [];
-			foreach (KeyValuePair<int, SimulatedDma> dma in Agents)
-			{
-				allDmsTasks.AddRange(dma.Value.Scheduler.Tasks.Values);
-			}
-
-			yield return new GetSchedulerTasksResponseMessage
-			{
-				Tasks = new ArrayList(allDmsTasks.Select(task => task.ToSchedulerTaskInfo()).ToList()),
-			};
-		}
-
-		private IEnumerable<DMSMessage> HandleDataMinerInfoMessage()
-		{
-			foreach (KeyValuePair<int, SimulatedDma> simulatedDma in Agents)
-			{
-				yield return new GetDataMinerInfoResponseMessage
-				{
-					ID = simulatedDma.Key,
-				};
-			}
-		}
-
 		private IEnumerable<DMSMessage> HandleMessage(GetDataMinerByIDMessage msg)
 		{
 			yield return new GetDataMinerInfoResponseMessage
@@ -395,6 +370,31 @@
 				Type = AutomationScriptType.Automation,
 				Exes = [],
 			};
+		}
+
+		private IEnumerable<DMSMessage> HandleSchedulerTaskInfoMessage()
+		{
+			List<SimulatedSchedulerTask> allDmsTasks = [];
+			foreach (KeyValuePair<int, SimulatedDma> dma in Agents)
+			{
+				allDmsTasks.AddRange(dma.Value.Scheduler.Tasks.Values);
+			}
+
+			yield return new GetSchedulerTasksResponseMessage
+			{
+				Tasks = new ArrayList(allDmsTasks.Select(task => task.ToSchedulerTaskInfo()).ToList()),
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleDataMinerInfoMessage()
+		{
+			foreach (KeyValuePair<int, SimulatedDma> simulatedDma in Agents)
+			{
+				yield return new GetDataMinerInfoResponseMessage
+				{
+					ID = simulatedDma.Key,
+				};
+			}
 		}
 	}
 }

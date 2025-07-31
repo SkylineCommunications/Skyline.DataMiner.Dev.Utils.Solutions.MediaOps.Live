@@ -14,7 +14,7 @@
 
 	public class SimulatedSchedulerTask
 	{
-		private SimulatedScheduler _scheduler;
+		private readonly SimulatedScheduler _scheduler;
 
 		public SimulatedSchedulerTask(SimulatedScheduler scheduler, OrchestrationSchedulerTask orchestrationSchedulerTask) : this(scheduler)
 		{
@@ -184,17 +184,6 @@
 				default:
 					return;
 			}
-		}
-
-		private SchedulerActionType ParseSchedulerActionType(string type)
-		{
-			return type switch
-			{
-				"automation" => SchedulerActionType.Automation,
-				"information" => SchedulerActionType.Information,
-				"notification" => SchedulerActionType.Notification,
-				_ => SchedulerActionType.Undefined,
-			};
 		}
 
 		private SchedulerRepeatType ParseTaskType(string type)
