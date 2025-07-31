@@ -115,7 +115,7 @@
 
 				if (earlierEventTime > laterEventTime)
 				{
-					throw new InvalidOperationException($"Event of type {laterEvent.EventType.ToString()} can not be scheduled before an event of type {earlierEvent.EventType.ToString()} ");
+					throw new InvalidOperationException($"Event of type {laterEvent.EventType.ToString()} can not be scheduled before an event of type {earlierEvent.EventType.ToString()}");
 				}
 			}
 		}

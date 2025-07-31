@@ -408,8 +408,6 @@
 		public void Dispose()
 		{
 			Unsubscribe();
-
-			AsyncProgress test = AsyncProgressBuilder.CreateInstance(null, null, 0, null, null, 0);
 		}
 
 		#endregion

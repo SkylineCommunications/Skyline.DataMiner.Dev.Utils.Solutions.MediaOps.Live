@@ -14,7 +14,7 @@
 
 	public class SimulatedSchedulerTask
 	{
-		private SimulatedScheduler _scheduler;
+		private readonly SimulatedScheduler _scheduler;
 
 		public SimulatedSchedulerTask(SimulatedScheduler scheduler, OrchestrationSchedulerTask orchestrationSchedulerTask) : this(scheduler)
 		{
@@ -87,6 +87,26 @@
 
 				Actions.Add(ParseAction(actionsInfo));
 			}
+		}
+
+		public List<Guid> GetOrchestrationSchedulingInputList()
+		{
+			if (Description != Constants.OrchestrationTaskNaming)
+			{
+				return new List<Guid>();
+			}
+
+			SchedulerAction eventOrchestrationTask = Actions.FirstOrDefault(action =>
+				action.ActionType == SchedulerActionType.Automation && action.ScriptInstance.ScriptName == Constants.OrchestrationScriptName);
+
+			if (eventOrchestrationTask == null)
+			{
+				return new List<Guid>();
+			}
+
+			AutomationScriptInstanceInfo automationScriptInfo = (AutomationScriptInstanceInfo)eventOrchestrationTask.ScriptInstance.ParameterIdToValue[0];
+
+			return JsonConvert.DeserializeObject<List<Guid>>(automationScriptInfo.Value);
 		}
 
 		private SchedulerAction ParseAction(List<string> actionsInfo)
@@ -164,17 +184,6 @@
 				default:
 					return;
 			}
-		}
-
-		private SchedulerActionType ParseSchedulerActionType(string type)
-		{
-			return type switch
-			{
-				"automation" => SchedulerActionType.Automation,
-				"information" => SchedulerActionType.Information,
-				"notification" => SchedulerActionType.Notification,
-				_ => SchedulerActionType.Undefined,
-			};
 		}
 
 		private SchedulerRepeatType ParseTaskType(string type)

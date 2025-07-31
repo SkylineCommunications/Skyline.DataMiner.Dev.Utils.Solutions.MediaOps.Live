@@ -187,31 +187,25 @@
 		///     Start execution for an event, based on ID.
 		/// </summary>
 		/// <param name="orchestrationIds">The IDs of the events to execute.</param>
-		public void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds)
+		/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
+		public void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds, OrchestrationSettings settings = null)
 		{
-			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-ExecuteEventsNow", performanceLogFilename);
-
-			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
-			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
+			List<Guid> eventIds = orchestrationIds.ToList();
+			if (!eventIds.Any())
 			{
-				var eventExecutionHelper = new OrchestrationEventExecutionHelper(_api);
-
-				IEnumerable<Guid> eventIds = orchestrationIds.ToList();
-				if (!eventIds.Any())
-				{
-					return;
-				}
-
-				eventExecutionHelper.ExecuteEventsNow(eventIds, performanceTracker);
+				return;
 			}
+
+			List<OrchestrationEventConfiguration> orchestrationEvents = _api.Orchestration.GetEventConfigurationsById(eventIds).ToList();
+			ExecuteEventsNow(orchestrationEvents, settings);
 		}
 
 		/// <summary>
 		///     Start execution for an event, based on ID.
 		/// </summary>
 		/// <param name="orchestrationEvents">The events to execute.</param>
-		public void ExecuteEventsNow(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents)
+		/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
+		public void ExecuteEventsNow(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents, OrchestrationSettings settings = null)
 		{
 			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
 			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-ExecuteEventsNow", performanceLogFilename);
@@ -219,7 +213,7 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				var eventExecutionHelper = new OrchestrationEventExecutionHelper(_api);
+				var eventExecutionHelper = new OrchestrationEventExecutionHelper(_api, settings);
 
 				IEnumerable<OrchestrationEventConfiguration> events = orchestrationEvents.ToList();
 				if (!events.Any())
@@ -358,18 +352,24 @@
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				List<Guid> instanceIds = eventIds.ToList();
-				if (instanceIds == null || instanceIds.Any(guid => guid == Guid.Empty))
-				{
-					throw new ArgumentException($"'{nameof(eventIds)}' cannot contain empty Guids.", nameof(eventIds));
-				}
-
-				ORFilterElement<DomInstance> combinedFilter = new ORFilterElement<DomInstance>(instanceIds.Select(id => FilterElementFactory.Create(DomInstanceExposers.Id, Comparer.Equals, id)).ToArray());
-
-				IEnumerable<OrchestrationEvent> result = Read(combinedFilter);
-
-				return result;
+				return GetEventsById(eventIds);
 			}
+		}
+
+		private IEnumerable<OrchestrationEvent> GetEventsById(IEnumerable<Guid> eventIds)
+		{
+			List<Guid> instanceIds = eventIds.ToList();
+
+			if (instanceIds == null || instanceIds.Any(guid => guid == Guid.Empty))
+			{
+				throw new ArgumentException($"'{nameof(eventIds)}' cannot contain empty Guids.", nameof(eventIds));
+			}
+
+			ORFilterElement<DomInstance> combinedFilter = new ORFilterElement<DomInstance>(instanceIds.Select(id => FilterElementFactory.Create(DomInstanceExposers.Id, Comparer.Equals, id)).ToArray());
+
+			IEnumerable<OrchestrationEvent> result = Read(combinedFilter);
+
+			return result;
 		}
 
 		/// <summary>
@@ -396,6 +396,20 @@
 
 				return GetEventsAsEventConfigurations(orchestrationEvents, performanceTracker).Values;
 			}
+		}
+
+		internal IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsById(IEnumerable<Guid> eventIds)
+		{
+			List<Guid> instanceIds = eventIds.ToList();
+
+			if (instanceIds == null || instanceIds.Any(guid => guid == Guid.Empty))
+			{
+				throw new ArgumentException($"'{nameof(eventIds)}' cannot contain empty Guids.", nameof(eventIds));
+			}
+
+			IEnumerable<OrchestrationEvent> orchestrationEvents = GetEventsById(instanceIds);
+
+			return GetEventsAsEventConfigurations(orchestrationEvents).Values;
 		}
 
 		/// <summary>
