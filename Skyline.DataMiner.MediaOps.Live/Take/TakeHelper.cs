@@ -56,37 +56,37 @@
 			_connectionMonitor = null;
 		}
 
-		public void Take(ICollection<ConnectionRequest> connectionRequests, PerformanceCollector performanceCollector)
+		public void Take(ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker)
 		{
 			if (connectionRequests == null)
 			{
 				throw new ArgumentNullException(nameof(connectionRequests));
 			}
 
-			if (performanceCollector == null)
+			if (performanceTracker == null)
 			{
-				throw new ArgumentNullException(nameof(performanceCollector));
+				throw new ArgumentNullException(nameof(performanceTracker));
 			}
 
-			using (var performanceTracker = new PerformanceTracker(performanceCollector))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				TakeInternal(connectionRequests, performanceTracker);
 			}
 		}
 
-		public void Take(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceCollector performanceCollector)
+		public void Take(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
 		{
 			if (vsgConnectionRequests == null)
 			{
 				throw new ArgumentNullException(nameof(vsgConnectionRequests));
 			}
 
-			if (performanceCollector == null)
+			if (performanceTracker == null)
 			{
-				throw new ArgumentNullException(nameof(performanceCollector));
+				throw new ArgumentNullException(nameof(performanceTracker));
 			}
 
-			using (var performanceTracker = new PerformanceTracker(performanceCollector))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				// load all endpoints
 				var endpointIds = vsgConnectionRequests
@@ -160,37 +160,37 @@
 			}
 		}
 
-		public void Disconnect(ICollection<DisconnectRequest> disconnectRequests, PerformanceCollector performanceCollector)
+		public void Disconnect(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
 		{
 			if (disconnectRequests == null)
 			{
 				throw new ArgumentNullException(nameof(disconnectRequests));
 			}
 
-			if (performanceCollector == null)
+			if (performanceTracker == null)
 			{
-				throw new ArgumentNullException(nameof(performanceCollector));
+				throw new ArgumentNullException(nameof(performanceTracker));
 			}
 
-			using (var performanceTracker = new PerformanceTracker(performanceCollector))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				DisconnectInternal(disconnectRequests, performanceTracker);
 			}
 		}
 
-		public void Disconnect(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceCollector performanceCollector)
+		public void Disconnect(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
 		{
 			if (vsgDisconnectRequests == null)
 			{
 				throw new ArgumentNullException(nameof(vsgDisconnectRequests));
 			}
 
-			if (performanceCollector == null)
+			if (performanceTracker == null)
 			{
-				throw new ArgumentNullException(nameof(performanceCollector));
+				throw new ArgumentNullException(nameof(performanceTracker));
 			}
 
-			using (var performanceTracker = new PerformanceTracker(performanceCollector))
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				// load all endpoints
 				var endpointIds = vsgDisconnectRequests

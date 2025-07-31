@@ -251,7 +251,7 @@
 				TakeHelper takeHelper = new TakeHelper(_api);
 				takeHelper.EnableWaitForCompletion(_settings.Timeout);
 
-				takeHelper.Disconnect(requests, performanceTracker.Collector);
+				takeHelper.Disconnect(requests, performanceTracker);
 			}
 		}
 
@@ -321,7 +321,7 @@
 				TakeHelper takeHelper = new TakeHelper(_api);
 				takeHelper.EnableWaitForCompletion(_settings.Timeout);
 
-				takeHelper.Take(requests, performanceTracker.Collector);
+				takeHelper.Take(requests, performanceTracker);
 			}
 		}
 
