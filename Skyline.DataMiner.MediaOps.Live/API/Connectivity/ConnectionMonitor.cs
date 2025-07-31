@@ -36,13 +36,18 @@
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
+			if (cancellationToken.IsCancellationRequested)
+			{
+				return false;
+			}
+
 			if (_connectivityInfoProvider.IsConnected(source, destination))
 			{
 				return true;
 			}
 
 			var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-			using var registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+			using var registration = cancellationToken.Register(() => tcs.TrySetResult(false));
 
 			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> changedEndpoints)
 			{
@@ -103,13 +108,18 @@
 				throw new ArgumentException("Destination cannot be empty.", nameof(destination));
 			}
 
+			if (cancellationToken.IsCancellationRequested)
+			{
+				return false;
+			}
+
 			if (!_connectivityInfoProvider.IsConnected(destination))
 			{
 				return true;
 			}
 
 			var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-			using var registration = cancellationToken.Register(() => tcs.TrySetCanceled(cancellationToken));
+			using var registration = cancellationToken.Register(() => tcs.TrySetResult(false));
 
 			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> changedEndpoints)
 			{
