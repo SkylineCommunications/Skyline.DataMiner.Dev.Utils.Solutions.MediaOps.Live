@@ -19,8 +19,7 @@
 		private readonly ConnectionEndpointsMapping _connectionEndpointsMapping = new();
 		private readonly PendingConnectionActionMapping _pendingConnectionActionsMapping = new();
 
-		private readonly ICollection<ConnectionSubscription> _connectionSubscriptions = [];
-		private readonly ICollection<PendingConnectionActionSubscription> _pendingActionSubscriptions = [];
+		private ICollection<MediationElement> _subscribedElements = [];
 
 		public LiteConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
@@ -100,15 +99,10 @@
 
 				foreach (var element in Api.MediationElements.AllElements)
 				{
-					var connectionSubscription = element.CreateConnectionSubscription();
-					connectionSubscription.Changed += Connections_OnChanged;
-					connectionSubscription.Subscribe();
-					_connectionSubscriptions.Add(connectionSubscription);
-
-					var pendingActionSubscription = element.CreatePendingActionSubscription();
-					pendingActionSubscription.Changed += PendingConnectionActions_OnChanged;
-					pendingActionSubscription.Subscribe();
-					_pendingActionSubscriptions.Add(pendingActionSubscription);
+					_subscribedElements.Add(element);
+					element.ConnectionsChanged += Connections_OnChanged;
+					element.PendingConnectionActionsChanged += PendingConnectionActions_OnChanged;
+					element.Subscribe();
 				}
 
 				IsSubscribed = true;
@@ -124,20 +118,14 @@
 					return;
 				}
 
-				foreach (var subscription in _connectionSubscriptions)
+				foreach (var element in _subscribedElements)
 				{
-					subscription.Unsubscribe();
-					subscription.Changed -= Connections_OnChanged;
+					element.Unsubscribe();
+					element.ConnectionsChanged -= Connections_OnChanged;
+					element.PendingConnectionActionsChanged -= PendingConnectionActions_OnChanged;
 				}
 
-				foreach (var subscription in _pendingActionSubscriptions)
-				{
-					subscription.Unsubscribe();
-					subscription.Changed -= PendingConnectionActions_OnChanged;
-				}
-
-				_connectionSubscriptions.Clear();
-				_pendingActionSubscriptions.Clear();
+				_subscribedElements.Clear();
 
 				IsSubscribed = false;
 			}
