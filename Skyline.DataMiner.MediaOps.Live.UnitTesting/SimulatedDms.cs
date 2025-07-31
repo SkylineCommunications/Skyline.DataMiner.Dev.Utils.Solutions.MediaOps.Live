@@ -14,6 +14,7 @@
 	public sealed class SimulatedDms
 	{
 		private readonly ConcurrentDictionary<int, SimulatedDma> _agents = new();
+		private readonly ConcurrentBag<SimulatedAutomationScript> _scripts = [];
 		private readonly ConcurrentBag<SLNetConnectionMock> _connections = [];
 		private readonly DomSLNetMessageHandler _domSLNetMessageHandler = new();
 
@@ -23,6 +24,8 @@
 		}
 
 		public IReadOnlyDictionary<int, SimulatedDma> Agents => _agents;
+
+		public IReadOnlyCollection<SimulatedAutomationScript> Scripts => _scripts;
 
 		public SimulatedDma GetOrCreateAgent(int dmaId)
 		{
@@ -116,6 +119,18 @@
 					return true;
 
 				case SetDataMinerInfoMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				case ImpersonateMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				case ExecuteScriptMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				case GetScriptInfoMessage msg:
 					responses = HandleMessage(msg);
 					return true;
 
@@ -341,6 +356,44 @@
 						DataMinerID = msg.DataMinerID,
 					},
 				],
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(ImpersonateMessage msg)
+		{
+			List<DMSMessage> responses = new List<DMSMessage>();
+			foreach (ClientRequestMessage clientRequestMessage in msg.Messages)
+			{
+				TryHandleMessage(clientRequestMessage, out IEnumerable<DMSMessage> msgResponses);
+				responses.AddRange(msgResponses);
+			}
+
+			return responses;
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(ExecuteScriptMessage msg)
+		{
+			int returnCode = msg.ScriptName == "Script_Fail" ? -1 : 0;
+
+			yield return new ExecuteScriptResponseMessage
+			{
+				saRet = new SA(
+				[
+					returnCode.ToString(), // Return code,
+				]),
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(GetScriptInfoMessage msg)
+		{
+			yield return new GetScriptInfoResponseMessage
+			{
+				Parameters = [],
+				Name = msg.Name,
+				Dummies = [],
+				Memories = [],
+				Type = AutomationScriptType.Automation,
+				Exes = [],
 			};
 		}
 	}
