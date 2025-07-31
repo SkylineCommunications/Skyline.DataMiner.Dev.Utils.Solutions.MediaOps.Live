@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 	using System.Threading;
 	using System.Threading.Tasks;
 
@@ -46,12 +45,12 @@
 				return true;
 			}
 
-			var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+			var tcs = new TaskCompletionSource<bool>();
 			using var registration = cancellationToken.Register(() => tcs.TrySetResult(false));
 
 			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> changedEndpoints)
 			{
-				if (changedEndpoints.Any(e => e == source || e == destination) &&
+				if (changedEndpoints.Contains(destination) &&
 					_connectivityInfoProvider.IsConnected(source, destination))
 				{
 					tcs.TrySetResult(true);
@@ -118,7 +117,7 @@
 				return true;
 			}
 
-			var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+			var tcs = new TaskCompletionSource<bool>();
 			using var registration = cancellationToken.Register(() => tcs.TrySetResult(false));
 
 			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> changedEndpoints)
