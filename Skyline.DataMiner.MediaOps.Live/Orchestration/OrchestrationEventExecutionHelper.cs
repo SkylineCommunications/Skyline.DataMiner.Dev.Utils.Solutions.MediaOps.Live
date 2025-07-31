@@ -29,13 +29,19 @@
 	internal class OrchestrationEventExecutionHelper
 	{
 		private readonly MediaOpsLiveApi _api;
+		private readonly OrchestrationSettings _settings;
 
-		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api)
+		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, OrchestrationSettings settings)
 		{
 			_api = api;
+
+			if (settings == null)
+			{
+				_settings = new OrchestrationSettings();
+			}
 		}
 
-		internal void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds, PerformanceTracker performanceTracker)
+		private void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -254,8 +260,8 @@
 					}
 				}
 
-				var takeHelper = new TakeHelper(_api);
-				takeHelper.EnableWaitForCompletion(TimeSpan.FromSeconds(60));
+				TakeHelper takeHelper = new TakeHelper(_api);
+				takeHelper.EnableWaitForCompletion(_settings.Timeout);
 
 				takeHelper.Disconnect(requests, performanceTracker.Collector);
 			}
@@ -324,8 +330,8 @@
 					}
 				}
 
-				var takeHelper = new TakeHelper(_api);
-				takeHelper.EnableWaitForCompletion(TimeSpan.FromSeconds(60));
+				TakeHelper takeHelper = new TakeHelper(_api);
+				takeHelper.EnableWaitForCompletion(_settings.Timeout);
 
 				takeHelper.Take(requests, performanceTracker.Collector);
 			}
@@ -417,25 +423,45 @@
 			{
 				IDms dms = _api.Connection.GetDms();
 				IDmsAutomationScript script = dms.GetScript(scriptName);
-				List<DmsAutomationScriptParamValue> scriptParams = arguments
-					.Where(arg => arg.Type == OrchestrationScriptArgumentType.Parameter)
-					.Select(arg => new DmsAutomationScriptParamValue(arg.Name, arg.Value))
-					.ToList();
 
-				List<DmsAutomationScriptDummyValue> scriptDummies = new List<DmsAutomationScriptDummyValue>();
-				foreach (OrchestrationScriptArgument dummyArgument in arguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Element))
+				List<DmsAutomationScriptParamValue> scriptParams = [];
+				IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments = arguments.ToList();
+
+				foreach (IDmsAutomationScriptParameter requiredParameter in script.Parameters)
 				{
-					if (dummyArgument.Value.Contains("/")) // By ID
+					OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredParameter.Description);
+
+					if (matchingArgument == null)
 					{
-						string[] splittedId = dummyArgument.Value.Split('/');
+						errorMessages = [$"Missing required script parameter: {requiredParameter.Description}"];
+						return false;
+					}
+
+					scriptParams.Add(new DmsAutomationScriptParamValue(matchingArgument.Name, matchingArgument.Value));
+				}
+
+				List<DmsAutomationScriptDummyValue> scriptDummies = [];
+				foreach (IDmsAutomationScriptDummy requiredDummy in script.Dummies)
+				{
+					OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredDummy.Description);
+
+					if (matchingArgument == null)
+					{
+						errorMessages = [$"Missing required script dummy: {requiredDummy.Description}"];
+						return false;
+					}
+
+					if (matchingArgument.Value.Contains("/")) // By ID
+					{
+						string[] splittedId = matchingArgument.Value.Split('/');
 						int dmaId = Convert.ToInt32(splittedId[0]);
 						int elementId = Convert.ToInt32(splittedId[1]);
-						scriptDummies.Add(new DmsAutomationScriptDummyValue(dummyArgument.Name, new DmsElementId(dmaId, elementId)));
+						scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, new DmsElementId(dmaId, elementId)));
 					}
 					else // By Name
 					{
-						IDmsElement element = dms.GetElement(dummyArgument.Value);
-						scriptDummies.Add(new DmsAutomationScriptDummyValue(dummyArgument.Name, element.DmsElementId));
+						IDmsElement element = dms.GetElement(matchingArgument.Value);
+						scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, element.DmsElementId));
 					}
 				}
 

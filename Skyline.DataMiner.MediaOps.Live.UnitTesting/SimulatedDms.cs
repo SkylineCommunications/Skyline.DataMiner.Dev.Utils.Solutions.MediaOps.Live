@@ -14,6 +14,7 @@
 	public sealed class SimulatedDms
 	{
 		private readonly ConcurrentDictionary<int, SimulatedDma> _agents = new();
+		private readonly ConcurrentBag<SimulatedAutomationScript> _scripts = [];
 		private readonly ConcurrentBag<SLNetConnectionMock> _connections = [];
 		private readonly DomSLNetMessageHandler _domSLNetMessageHandler = new();
 
@@ -23,6 +24,8 @@
 		}
 
 		public IReadOnlyDictionary<int, SimulatedDma> Agents => _agents;
+
+		public IReadOnlyCollection<SimulatedAutomationScript> Scripts => _scripts;
 
 		public SimulatedDma GetOrCreateAgent(int dmaId)
 		{
