@@ -152,7 +152,7 @@
 			CreateMediationElement(123, 1000, "MediaOps Mediation 1");
 			CreateMediationElement(124, 1000, "MediaOps Mediation 1");
 
-			CreateOrchestrationScript("Script_Success", new List<string>(), new List<string>());
+			//CreateOrchestrationScript("Script_Success", new List<string>(), new List<string>());
 
 			if (installDomModules)
 			{
