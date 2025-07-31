@@ -1,7 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
 {
 	using System;
-	using System.Collections.Generic;
 
 	public class OrchestrationSettings
 	{

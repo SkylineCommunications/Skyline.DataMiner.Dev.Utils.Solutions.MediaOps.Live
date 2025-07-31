@@ -34,6 +34,11 @@
 				id => new SimulatedDma(this, id));
 		}
 
+		public void AddScript(string name, List<string> parameters, List<string> dummies)
+		{
+			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies));
+		}
+
 		public IEnumerable<SimulatedSchedulerTask> GetAllDmsSchedulerTasks()
 		{
 			List<SimulatedSchedulerTask> tasks = [];

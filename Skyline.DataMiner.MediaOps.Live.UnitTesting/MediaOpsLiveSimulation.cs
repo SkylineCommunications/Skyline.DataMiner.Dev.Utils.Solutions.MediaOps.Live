@@ -152,7 +152,8 @@
 			CreateMediationElement(123, 1000, "MediaOps Mediation 1");
 			CreateMediationElement(124, 1000, "MediaOps Mediation 1");
 
-			//CreateOrchestrationScript("Script_Success", new List<string>(), new List<string>());
+			Dms.AddScript("Script_Success", new List<string>(), new List<string>());
+			Dms.AddScript("Script_Fail", new List<string>(), new List<string>());
 
 			if (installDomModules)
 			{
@@ -268,11 +269,6 @@
 
 			Api.Orchestration.SaveEventConfigurations(job.OrchestrationEvents);
 		}
-
-		/*private void CreateOrchestrationScript(string scriptName, List<string> requiredParameters, List<string> requiredDummies)
-		{
-			throw new NotImplementedException();
-		}*/
 
 		private void CreateMediationElement(int dmaId, int elementId, string name)
 		{

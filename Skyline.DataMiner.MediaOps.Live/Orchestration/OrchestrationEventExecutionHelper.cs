@@ -35,20 +35,7 @@
 		{
 			_api = api;
 
-			if (settings == null)
-			{
-				_settings = new OrchestrationSettings();
-			}
-		}
-
-		private void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				List<OrchestrationEventConfiguration> orchestrationEvents = _api.Orchestration.GetEventConfigurationsById(orchestrationIds, performanceTracker).ToList();
-
-				ExecuteEventsNow(orchestrationEvents, performanceTracker);
-			}
+			_settings = settings ?? new OrchestrationSettings();
 		}
 
 		internal void ExecuteEventsNow(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents, PerformanceTracker performanceTracker)
