@@ -53,7 +53,7 @@
 				}
 			}
 
-			_connectivityInfoProvider.ConnectionsChanged += ConnectionEventHandler;
+			_connectivityInfoProvider.EndpointsImpacted += ConnectionEventHandler;
 
 			try
 			{
@@ -67,7 +67,7 @@
 			}
 			finally
 			{
-				_connectivityInfoProvider.ConnectionsChanged -= ConnectionEventHandler;
+				_connectivityInfoProvider.EndpointsImpacted -= ConnectionEventHandler;
 			}
 		}
 
@@ -120,7 +120,7 @@
 				}
 			}
 
-			_connectivityInfoProvider.ConnectionsChanged += ConnectionEventHandler;
+			_connectivityInfoProvider.EndpointsImpacted += ConnectionEventHandler;
 
 			try
 			{
@@ -134,7 +134,7 @@
 			}
 			finally
 			{
-				_connectivityInfoProvider.ConnectionsChanged -= ConnectionEventHandler;
+				_connectivityInfoProvider.EndpointsImpacted -= ConnectionEventHandler;
 			}
 		}
 

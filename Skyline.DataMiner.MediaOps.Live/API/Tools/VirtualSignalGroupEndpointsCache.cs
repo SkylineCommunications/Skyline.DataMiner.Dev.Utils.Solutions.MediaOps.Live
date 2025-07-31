@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
+	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -36,9 +37,29 @@
 
 		public bool IsSubscribed { get; private set; }
 
+		public Endpoint GetEndpoint(ApiObjectReference<Endpoint> id)
+		{
+			if (!TryGetEndpoint(id, out var endpoint))
+			{
+				throw new ArgumentException($"Couldn't find endpoint with ID {id.ID}", nameof(id));
+			}
+
+			return endpoint;
+		}
+
 		public bool TryGetEndpoint(ApiObjectReference<Endpoint> id, out Endpoint endpoint)
 		{
 			return _endpoints.TryGetValue(id, out endpoint);
+		}
+
+		public VirtualSignalGroup GetVirtualSignalGroup(ApiObjectReference<VirtualSignalGroup> id)
+		{
+			if (!TryGetVirtualSignalGroup(id, out var virtualSignalGroup))
+			{
+				throw new ArgumentException($"Couldn't find virtual signal group with ID {id.ID}", nameof(id));
+			}
+
+			return virtualSignalGroup;
 		}
 
 		public bool TryGetVirtualSignalGroup(ApiObjectReference<VirtualSignalGroup> id, out VirtualSignalGroup virtualSignalGroup)
@@ -103,9 +124,19 @@
 					Subscribe();
 				}
 
-				UpdateEndpoints(Api.Endpoints.ReadAll());
-				UpdateVirtualSignalGroups(Api.VirtualSignalGroups.ReadAll());
+				LoadInitialData();
 			}
+		}
+
+		private void LoadInitialData()
+		{
+			var endpointsTask = Task.Run(() => Api.Endpoints.ReadAll());
+			var virtualSignalGroupsTask = Task.Run(() => Api.VirtualSignalGroups.ReadAll());
+
+			Task.WaitAll(endpointsTask, virtualSignalGroupsTask);
+
+			UpdateEndpoints(endpointsTask.Result);
+			UpdateVirtualSignalGroups(virtualSignalGroupsTask.Result);
 		}
 
 		private void Endpoints_Changed(object sender, ApiObjectsChangedEvent<Endpoint> e)

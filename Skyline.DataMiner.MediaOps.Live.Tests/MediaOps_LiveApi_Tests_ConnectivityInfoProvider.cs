@@ -33,9 +33,9 @@
 				Assert.IsTrue(connectivity.IsConnected(audioSource1));
 			}
 
-			Assert.IsTrue(connectionMetrics.NumberOfRequests < 10);
-			Assert.IsTrue(connectionMetrics.NumberOfDomRequests < 10);
-			Assert.IsTrue(connectionMetrics.NumberOfDomInstancesRetrieved < 100);
+			connectionMetrics.NumberOfRequests.ShouldBeLessThan(10UL);
+			connectionMetrics.NumberOfDomRequests.ShouldBeLessThan(10UL);
+			connectionMetrics.NumberOfDomInstancesRetrieved.ShouldBeLessThan(100UL);
 		}
 
 		[TestMethod]

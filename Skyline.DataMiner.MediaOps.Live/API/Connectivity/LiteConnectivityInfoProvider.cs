@@ -29,9 +29,7 @@
 			Initialize(subscribe);
 		}
 
-		public event EventHandler<ICollection<ApiObjectReference<Endpoint>>> ConnectionsChanged;
-
-		public event EventHandler<ICollection<ApiObjectReference<Endpoint>>> PendingConnectionActionsChanged;
+		public event EventHandler<ICollection<ApiObjectReference<Endpoint>>> EndpointsImpacted;
 
 		public MediaOpsLiveApi Api { get; }
 
@@ -39,18 +37,56 @@
 
 		public bool IsConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
 		{
-			return _connectionsByDestination.TryGetValue(destination, out var connection) &&
-				connection.IsConnected &&
-				connection.ConnectedSource == source;
+			lock (_lock)
+			{
+				return _connectionsByDestination.TryGetValue(destination, out var connection) &&
+					connection.IsConnected &&
+					connection.ConnectedSource == source; 
+			}
 		}
 
-		public bool IsConnected(ApiObjectReference<Endpoint> destination)
+		public bool IsConnected(ApiObjectReference<Endpoint> endpoint)
 		{
-			var connections = _connectionEndpointsMapping.GetConnections(destination);
+			lock (_lock)
+			{
+				var connections = _connectionEndpointsMapping.GetConnections(endpoint);
 
-			return connections.Any(
-				x => x.IsConnected &&
-					(x.Destination == destination || x.ConnectedSource == destination));
+				return connections.Any(
+					x => x.IsConnected &&
+						(x.Destination == endpoint || x.ConnectedSource == endpoint)); 
+			}
+		}
+
+		public bool TryGetConnectionForDestination(Endpoint destination, out Connection connection)
+		{
+			lock (_lock)
+			{
+				return _connectionEndpointsMapping.TryGetConnectionForDestination(destination, out connection);
+			}
+		}
+
+		public bool TryGetPendingConnectionActionForDestination(Endpoint destination, out PendingConnectionAction pendingAction)
+		{
+			lock (_lock)
+			{
+				return _pendingConnectionActionsMapping.TryGetPendingConnectionActionForDestination(destination, out pendingAction);
+			}
+		}
+
+		public IEnumerable<Connection> GetConnectionsWithSource(Endpoint source)
+		{
+			lock (_lock)
+			{
+				return _connectionEndpointsMapping.GetConnectionsWithSource(source);
+			}
+		}
+
+		public IEnumerable<PendingConnectionAction> GetPendingConnectionActionsWithSource(Endpoint source)
+		{
+			lock (_lock)
+			{
+				return _pendingConnectionActionsMapping.GetPendingConnectionActionsWithSource(source); 
+			}
 		}
 
 		public void Subscribe()
@@ -156,7 +192,7 @@
 
 				if (impactedEndpoints.Count > 0)
 				{
-					ConnectionsChanged?.Invoke(this, impactedEndpoints);
+					EndpointsImpacted?.Invoke(this, impactedEndpoints);
 				}
 			}
 		}
@@ -192,7 +228,7 @@
 
 				if (impactedEndpoints.Count > 0)
 				{
-					PendingConnectionActionsChanged?.Invoke(this, impactedEndpoints);
+					EndpointsImpacted?.Invoke(this, impactedEndpoints);
 				}
 			}
 		}

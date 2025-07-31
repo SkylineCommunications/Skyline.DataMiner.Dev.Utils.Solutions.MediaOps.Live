@@ -66,7 +66,7 @@
 			using var connectivity = new LiteConnectivityInfoProvider(api, subscribe: true);
 
 			var receivedEvents = new List<ICollection<ApiObjectReference<Endpoint>>>();
-			connectivity.ConnectionsChanged += (sender, e) => receivedEvents.Add(e);
+			connectivity.EndpointsImpacted += (sender, e) => receivedEvents.Add(e);
 
 			receivedEvents.Count.ShouldBe(0);
 
