@@ -10,6 +10,8 @@
 
 	public sealed class MediationElement : IDisposable
 	{
+		public static string ProtocolName => Constants.MediationProtocolName;
+
 		public static readonly int ConnectionHandlerScriptsTableId = 1000;
 		public static readonly int PendingConnectionActionsTableId = 3000;
 		public static readonly int ConnectionsTableId = 5000;
@@ -34,7 +36,7 @@
 
 		public IDmsElement DmsElement { get; }
 
-		public DmsElementId Id => DmsElement.DmsElementId;
+		public DmsElementId DmsElementId => DmsElement.DmsElementId;
 
 		public int DmaId => DmsElement.AgentId;
 
@@ -44,24 +46,24 @@
 
 		public IEnumerable<PendingConnectionAction> GetPendingConnectionActions()
 		{
-			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			if (DmsElement.State != ElementState.Active)
 			{
 				return [];
 			}
 
 			var tableData = DmsElement.GetTable(PendingConnectionActionsTableId).GetData();
-			return tableData.Values.Select(x => new PendingConnectionAction(x));
+			return tableData.Values.Select(x => new PendingConnectionAction(this, x));
 		}
 
 		public IEnumerable<Connection> GetConnections()
 		{
-			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			if (DmsElement.State != ElementState.Active)
 			{
 				return [];
 			}
 
 			var tableData = DmsElement.GetTable(ConnectionsTableId).GetData();
-			return tableData.Values.Select(x => new Connection(x));
+			return tableData.Values.Select(x => new Connection(this, x));
 		}
 
 		public void Subscribe(bool skipInitialEvents = true)
@@ -115,7 +117,7 @@
 
 		public bool TryGetConnection(Guid destinationEndpointId, out Connection connection)
 		{
-			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			if (DmsElement.State != ElementState.Active)
 			{
 				connection = null;
 				return false;
@@ -129,7 +131,7 @@
 
 				if (row != null)
 				{
-					connection = new Connection(row);
+					connection = new Connection(this, row);
 					return true;
 				}
 			}
@@ -144,7 +146,7 @@
 
 		public bool TryGetPendingConnectionAction(Guid destinationEndpointId, out PendingConnectionAction pendingConnectionAction)
 		{
-			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			if (DmsElement.State != ElementState.Active)
 			{
 				pendingConnectionAction = null;
 				return false;
@@ -158,7 +160,7 @@
 
 				if (row != null)
 				{
-					pendingConnectionAction = new PendingConnectionAction(row);
+					pendingConnectionAction = new PendingConnectionAction(this, row);
 					return true;
 				}
 			}
@@ -190,18 +192,38 @@
 			return script;
 		}
 
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(this, obj))
+			{
+				return true;
+			}
+
+			if (obj is MediationElement other)
+			{
+				return DmsElementId == other.DmsElementId;
+			}
+
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return DmsElementId.GetHashCode();
+		}
+
 		private void HandleChange_Connections(object sender, TableValueChange e)
 		{
-			var updated = e.UpdatedRows.Values.Select(r => new Connection(r));
-			var deleted = e.DeletedRows.Values.Select(r => new Connection(r));
+			var updated = e.UpdatedRows.Values.Select(r => new Connection(this, r));
+			var deleted = e.DeletedRows.Values.Select(r => new Connection(this, r));
 
 			ConnectionsChanged?.Invoke(this, new ConnectionsChangedEvent(updated, deleted));
 		}
 
 		private void HandleChange_PendingConnectionActions(object sender, TableValueChange e)
 		{
-			var updated = e.UpdatedRows.Values.Select(r => new PendingConnectionAction(r));
-			var deleted = e.DeletedRows.Values.Select(r => new PendingConnectionAction(r));
+			var updated = e.UpdatedRows.Values.Select(r => new PendingConnectionAction(this, r));
+			var deleted = e.DeletedRows.Values.Select(r => new PendingConnectionAction(this, r));
 
 			PendingConnectionActionsChanged?.Invoke(this, new PendingConnectionActionsChangedEvent(updated, deleted));
 		}
