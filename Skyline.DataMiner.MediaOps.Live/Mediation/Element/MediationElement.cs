@@ -15,8 +15,6 @@
 		public static readonly int PendingConnectionActionsTableId = 3000;
 		public static readonly int ConnectionsTableId = 5000;
 
-		private readonly object _lock = new();
-
 		private readonly MediaOpsLiveApi _api;
 
 		internal MediationElement(MediaOpsLiveApi api, IDmsElement dmsElement)
