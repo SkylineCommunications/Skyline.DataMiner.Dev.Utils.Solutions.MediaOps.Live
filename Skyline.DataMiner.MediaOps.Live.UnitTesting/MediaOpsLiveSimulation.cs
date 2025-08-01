@@ -21,13 +21,14 @@
 	{
 		private readonly SimulatedDms _dms;
 		private readonly IConnection _connection;
+		private readonly StaticMediaOpsLiveCache _staticApi;
 
 		public MediaOpsLiveSimulation(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false, bool createElements = true)
 		{
 			_dms = new SimulatedDms();
 			_connection = Dms.CreateConnection();
 
-			Api = new MediaOpsLiveApi(_connection);
+			_staticApi = new StaticMediaOpsLiveCache(_connection);
 
 			Initialize(installDomModules, createEndpoints, createVsgs, createConnections, createElements);
 		}
@@ -35,6 +36,9 @@
 		public SimulatedDms Dms => _dms;
 
 		public MediaOpsLiveApi Api { get; }
+
+		// Todo: create static cache
+		public StaticMediaOpsLiveCache Cache { get; } = new StaticMediaOpsLiveCache();
 
 		public void CreateTestConnection(Endpoint source, Endpoint destination)
 		{
