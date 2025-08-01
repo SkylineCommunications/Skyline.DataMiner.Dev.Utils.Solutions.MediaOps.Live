@@ -1,7 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 {
 	using System;
-	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Threading.Tasks;
@@ -11,7 +10,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Subscriptions;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 
 	using ElementState = Skyline.DataMiner.Net.Messages.ElementState;
 
@@ -25,7 +23,8 @@
 		private readonly ConnectionEndpointsMapping _connectionEndpointsMapping = new();
 		private readonly PendingConnectionActionMapping _pendingConnectionActionsMapping = new();
 
-		private readonly ConcurrentDictionary<DmsElementId, MediationElement> _subscribedElements = new();
+		private readonly Dictionary<DmsElementId, MediationElement> _elements = new();
+		private readonly Dictionary<DmsElementId, MediationElementSubscription> _elementSubscriptions = new();
 		private ElementStateSubscription _elementStateSubscription;
 
 		public LiteConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
@@ -107,7 +106,7 @@
 				_elementStateSubscription = new ElementStateSubscription(Api.Connection);
 				_elementStateSubscription.OnStateChanged += Element_OnStateChanged;
 
-				foreach (var element in Api.MediationElements.AllElements)
+				foreach (var element in _elements.Values)
 				{
 					SubscribeElement(element);
 				}
@@ -129,12 +128,12 @@
 				_elementStateSubscription.Dispose();
 				_elementStateSubscription = null;
 
-				foreach (var element in _subscribedElements.Values)
+				foreach (var elementSubscription in _elementSubscriptions.Values)
 				{
-					UnsubscribeElement(element);
+					UnsubscribeElement(elementSubscription.MediationElement);
 				}
 
-				_subscribedElements.Clear();
+				_elementSubscriptions.Clear();
 
 				IsSubscribed = false;
 			}
@@ -149,39 +148,52 @@
 		{
 			lock (_lock)
 			{
+				var mediationElements = Api.MediationElements.AllElements;
+
+				foreach (var element in mediationElements)
+				{
+					_elements[element.DmsElementId] = element;
+				}
+
 				if (subscribe)
 				{
 					Subscribe();
 				}
 
-				LoadDataFromMediationElements();
+				Parallel.ForEach(mediationElements, LoadDataFromMediationElement);
 			}
 		}
 
 		private void SubscribeElement(MediationElement element)
 		{
-			if (!_subscribedElements.TryAdd(element.DmsElementId, element))
+			if (!_elementSubscriptions.ContainsKey(element.DmsElementId))
 			{
 				// Already subscribed
 				return;
 			}
 
-			element.ConnectionsChanged += Connections_OnChanged;
-			element.PendingConnectionActionsChanged += PendingConnectionActions_OnChanged;
-			element.Subscribe();
+			var subscription = element.CreateSubscription();
+			subscription.ConnectionsChanged += Connections_OnChanged;
+			subscription.PendingConnectionActionsChanged += PendingConnectionActions_OnChanged;
+			subscription.Subscribe();
+
+			_elementSubscriptions[element.DmsElementId] = subscription;
 		}
 
 		private void UnsubscribeElement(MediationElement element)
 		{
-			if (!_subscribedElements.TryRemove(element.DmsElementId, out var removed))
+			if (!_elementSubscriptions.TryGetValue(element.DmsElementId, out var subscription))
 			{
 				// Already unsubscribed or not found
 				return;
 			}
 
-			removed.Unsubscribe();
-			removed.ConnectionsChanged -= Connections_OnChanged;
-			removed.PendingConnectionActionsChanged -= PendingConnectionActions_OnChanged;
+			subscription.Unsubscribe();
+			subscription.ConnectionsChanged -= Connections_OnChanged;
+			subscription.PendingConnectionActionsChanged -= PendingConnectionActions_OnChanged;
+			subscription.Dispose();
+
+			_elementSubscriptions.Remove(element.DmsElementId);
 		}
 
 		private void Element_OnStateChanged(object sender, ElementStateChange e)
@@ -196,18 +208,22 @@
 
 				if (e.State == ElementState.Active)
 				{
-					if (!_subscribedElements.ContainsKey(e.Element.DmsElementId))
+					if (!_elements.ContainsKey(e.Element.DmsElementId))
 					{
 						var mediationElement = new MediationElement(Api, e.Element);
+						_elements[mediationElement.DmsElementId] = mediationElement;
+
 						SubscribeElement(mediationElement);
 						LoadDataFromMediationElement(mediationElement);
 					}
 				}
 				else if (e.State == ElementState.Deleted)
 				{
-					if (_subscribedElements.TryGetValue(e.Element.DmsElementId, out var subscribedElement))
+					_elements.Remove(e.Element.DmsElementId);
+
+					if (_elementSubscriptions.TryGetValue(e.Element.DmsElementId, out var subscription))
 					{
-						UnsubscribeElement(subscribedElement);
+						UnsubscribeElement(subscription.MediationElement);
 					}
 
 					var pendingActions = _pendingActionsByDestination.Values
@@ -304,16 +320,6 @@
 				{
 					EndpointsImpacted?.Invoke(this, impactedEndpoints);
 				}
-			}
-		}
-
-		private void LoadDataFromMediationElements()
-		{
-			lock (_lock)
-			{
-				var mediationElements = Api.MediationElements.AllElements;
-
-				Parallel.ForEach(mediationElements, LoadDataFromMediationElement);
 			}
 		}
 

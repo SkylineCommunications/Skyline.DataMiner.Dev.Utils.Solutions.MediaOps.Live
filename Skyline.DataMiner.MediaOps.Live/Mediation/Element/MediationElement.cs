@@ -6,9 +6,8 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.Subscriptions;
 
-	public sealed class MediationElement : IDisposable
+	public sealed class MediationElement
 	{
 		public static string ProtocolName => Constants.MediationProtocolName;
 
@@ -20,19 +19,11 @@
 
 		private readonly MediaOpsLiveApi _api;
 
-		private bool _isSubscribed;
-		private TableSubscription _subscriptionConnections;
-		private TableSubscription _subscriptionPendingConnectionActions;
-
 		internal MediationElement(MediaOpsLiveApi api, IDmsElement dmsElement)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 			DmsElement = dmsElement ?? throw new ArgumentNullException(nameof(dmsElement));
 		}
-
-		public event EventHandler<ConnectionsChangedEvent> ConnectionsChanged;
-
-		public event EventHandler<PendingConnectionActionsChangedEvent> PendingConnectionActionsChanged;
 
 		public IDmsElement DmsElement { get; }
 
@@ -43,6 +34,11 @@
 		public int ElementId => DmsElement.Id;
 
 		public string Name => DmsElement.Name;
+
+		public MediationElementSubscription CreateSubscription()
+		{
+			return new MediationElementSubscription(_api, this);
+		}
 
 		public IEnumerable<PendingConnectionAction> GetPendingConnectionActions()
 		{
@@ -64,55 +60,6 @@
 
 			var tableData = DmsElement.GetTable(ConnectionsTableId).GetData();
 			return tableData.Values.Select(x => new Connection(this, x));
-		}
-
-		public void Subscribe(bool skipInitialEvents = true)
-		{
-			lock (_lock)
-			{
-				if (_isSubscribed)
-					return;
-
-				_subscriptionConnections = new TableSubscription(
-					_api.Connection,
-					DmsElement,
-					MediationElement.ConnectionsTableId,
-					skipInitialEvents: skipInitialEvents);
-				_subscriptionConnections.OnChanged += HandleChange_Connections;
-
-				_subscriptionPendingConnectionActions = new TableSubscription(
-					_api.Connection,
-					DmsElement,
-					MediationElement.PendingConnectionActionsTableId,
-					skipInitialEvents: skipInitialEvents);
-				_subscriptionPendingConnectionActions.OnChanged += HandleChange_PendingConnectionActions;
-
-				_isSubscribed = true;
-			}
-		}
-
-		public void Unsubscribe()
-		{
-			lock (_lock)
-			{
-				if (!_isSubscribed)
-					return;
-
-				_subscriptionConnections.OnChanged -= HandleChange_Connections;
-				_subscriptionConnections.Dispose();
-				_subscriptionConnections = null;
-
-				_subscriptionPendingConnectionActions.OnChanged -= HandleChange_Connections;
-				_subscriptionPendingConnectionActions.Dispose();
-				_subscriptionPendingConnectionActions = null;
-
-				_isSubscribed = false;
-			}
-		}
-
-		public void Dispose()
-		{
-			Unsubscribe();
 		}
 
 		public bool TryGetConnection(Guid destinationEndpointId, out Connection connection)
@@ -210,22 +157,6 @@
 		public override int GetHashCode()
 		{
 			return DmsElementId.GetHashCode();
-		}
-
-		private void HandleChange_Connections(object sender, TableValueChange e)
-		{
-			var updated = e.UpdatedRows.Values.Select(r => new Connection(this, r));
-			var deleted = e.DeletedRows.Values.Select(r => new Connection(this, r));
-
-			ConnectionsChanged?.Invoke(this, new ConnectionsChangedEvent(updated, deleted));
-		}
-
-		private void HandleChange_PendingConnectionActions(object sender, TableValueChange e)
-		{
-			var updated = e.UpdatedRows.Values.Select(r => new PendingConnectionAction(this, r));
-			var deleted = e.DeletedRows.Values.Select(r => new PendingConnectionAction(this, r));
-
-			PendingConnectionActionsChanged?.Invoke(this, new PendingConnectionActionsChangedEvent(updated, deleted));
 		}
 	}
 }
