@@ -118,7 +118,7 @@
 			{
 				if (filter.Options.HasFlag(SubscriptionFilterOptions.SkipInitialEvents))
 				{
-					// continue;
+					continue;
 				}
 
 				switch (filter)
