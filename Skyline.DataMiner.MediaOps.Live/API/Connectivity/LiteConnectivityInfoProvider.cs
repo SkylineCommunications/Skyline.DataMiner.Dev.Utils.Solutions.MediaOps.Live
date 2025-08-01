@@ -25,8 +25,8 @@
 		private readonly ConnectionEndpointsMapping _connectionEndpointsMapping = new();
 		private readonly PendingConnectionActionMapping _pendingConnectionActionsMapping = new();
 
+		private readonly ConcurrentDictionary<DmsElementId, MediationElement> _subscribedElements = new();
 		private ElementStateSubscription _elementStateSubscription;
-		private ConcurrentDictionary<DmsElementId, MediationElement> _subscribedElements = new();
 
 		public LiteConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
