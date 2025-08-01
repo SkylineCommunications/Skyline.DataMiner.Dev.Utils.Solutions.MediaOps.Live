@@ -61,7 +61,7 @@
 						_connection.OnNewMessage += Connection_OnNewMessage;
 						_connection.TrackAddSubscription(_subscriptionSetId, _subscriptionFilters)
 							.OnAfterInitialEvents(() => _initialEventsReceived = true)
-							.ExecuteAndWait();
+							.Execute();
 					}
 				}
 			}
@@ -74,7 +74,7 @@
 
 					if (Changed == null)
 					{
-						_connection.TrackClearSubscriptions(_subscriptionSetId).ExecuteAndWait();
+						_connection.ClearSubscriptions(_subscriptionSetId);
 						_connection.OnNewMessage -= Connection_OnNewMessage;
 						_initialEventsReceived = false;
 					}
