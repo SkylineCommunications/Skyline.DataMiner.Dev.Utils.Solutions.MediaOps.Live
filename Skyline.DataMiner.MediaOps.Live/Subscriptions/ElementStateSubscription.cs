@@ -20,21 +20,21 @@
 		private readonly ConcurrentDictionary<DmsElementId, IDmsElement> _elements = new();
 		private readonly ConcurrentDictionary<DmsElementId, ElementState> _elementStates = new();
 
+		private readonly bool _skipInitialEvents;
+		private bool _initialEventsReceived;
+
 		public ElementStateSubscription(IConnection connection, bool skipInitialEvents = true)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
-			var subscriptionFilterOptions = skipInitialEvents
-				? SubscriptionFilterOptions.SkipInitialEvents
-				: SubscriptionFilterOptions.None;
-
+			_skipInitialEvents = skipInitialEvents;
 			_subscriptionSetId = $"{nameof(ElementStateSubscription)}_{Guid.NewGuid()}";
 
 			_subscriptionFilters =
 			[
 				new SubscriptionFilter(typeof(ElementStateEventMessage))
 				{
-					Options = subscriptionFilterOptions,
+					Options = skipInitialEvents ? SubscriptionFilterOptions.SkipInitialEvents : SubscriptionFilterOptions.None,
 				},
 			];
 		}
@@ -52,7 +52,9 @@
 					if (subscribe)
 					{
 						_connection.OnNewMessage += Connection_OnNewMessage;
-						_connection.TrackAddSubscription(_subscriptionSetId, _subscriptionFilters).ExecuteAndWait();
+						_connection.TrackAddSubscription(_subscriptionSetId, _subscriptionFilters)
+							.OnAfterInitialEvents(() => _initialEventsReceived = true)
+							.ExecuteAndWait();
 					}
 				}
 			}
@@ -67,6 +69,7 @@
 					{
 						_connection.TrackClearSubscriptions(_subscriptionSetId).ExecuteAndWait();
 						_connection.OnNewMessage -= Connection_OnNewMessage;
+						_initialEventsReceived = false;
 					}
 				}
 			}
@@ -84,6 +87,11 @@
 
 		private void Connection_OnNewMessage(object sender, NewMessageEventArgs e)
 		{
+			if (_skipInitialEvents && !_initialEventsReceived)
+			{
+				return;
+			}
+
 			if (!e.FromSet(_subscriptionSetId))
 			{
 				// Not for our subscription

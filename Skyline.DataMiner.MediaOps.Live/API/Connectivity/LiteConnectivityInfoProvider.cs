@@ -243,9 +243,14 @@
 
 				foreach (var connection in e.UpdatedConnections)
 				{
-					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection) &&
-						existingConnection != connection)
+					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
 					{
+						if (existingConnection == connection)
+						{
+							// No change
+							continue;
+						}
+
 						impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
 					}
 
@@ -279,9 +284,14 @@
 
 				foreach (var pendingAction in e.UpdatedPendingActions)
 				{
-					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction) &&
-						existingPendingConnectionAction != pendingAction)
+					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
 					{
+						if (existingPendingConnectionAction != pendingAction)
+						{
+							// No change
+							continue;
+						}
+
 						impactedEndpoints.UnionWith(existingPendingConnectionAction.GetEndpoints());
 					}
 

@@ -4,6 +4,7 @@
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Async;
@@ -117,23 +118,39 @@
 			{
 				if (filter.Options.HasFlag(SubscriptionFilterOptions.SkipInitialEvents))
 				{
-					continue;
+					// continue;
 				}
 
 				switch (filter)
 				{
 					case SubscriptionFilterParameter filterParameter:
-						if (filterParameter.ToTypeObject() == typeof(ParameterTableUpdateEventMessage) &&
-							Dms.Agents.TryGetValue(filterParameter.DmaID, out var dma) &&
-							dma.Elements.TryGetValue(filterParameter.ElementID, out var element) &&
-							element.Tables.TryGetValue(filterParameter.ParameterID, out var table))
 						{
-							var initialEvent = new ParameterChangeEventMessage(filterParameter.DmaID, filterParameter.ElementID, filterParameter.ParameterID)
+							if (filterParameter.ToTypeObject() == typeof(ParameterTableUpdateEventMessage) &&
+								Dms.Agents.TryGetValue(filterParameter.DmaID, out var dma) &&
+								dma.Elements.TryGetValue(filterParameter.ElementID, out var element) &&
+								element.Tables.TryGetValue(filterParameter.ParameterID, out var table))
 							{
-								NewValue = table.ToParameterValue(),
-							};
+								var initialEvent = new ParameterChangeEventMessage(filterParameter.DmaID, filterParameter.ElementID, filterParameter.ParameterID)
+								{
+									NewValue = table.ToParameterValue(),
+								};
 
-							InvokeOnNewMessageEvent(subscriptionSetId, initialEvent);
+								InvokeOnNewMessageEvent(subscriptionSetId, initialEvent);
+							}
+						}
+
+						break;
+
+					default:
+						if (filter.ToTypeObject() == typeof(ElementStateEventMessage))
+						{
+							var elements = Dms.Agents.Values.SelectMany(x => x.Elements.Values);
+
+							foreach (var element in elements)
+							{
+								var initialEvent = new ElementStateEventMessage(element.Dma.DmaId, element.ElementId, ElementState.Active, AlarmLevel.Normal);
+								InvokeOnNewMessageEvent(subscriptionSetId, initialEvent);
+							}
 						}
 
 						break;

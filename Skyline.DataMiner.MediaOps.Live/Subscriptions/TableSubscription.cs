@@ -18,6 +18,9 @@
 
 		private readonly TableCache _cache;
 
+		private readonly bool _skipInitialEvents;
+		private bool _initialEventsReceived;
+
 		public TableSubscription(IConnection connection, IDmsElement element, int tableId, bool skipInitialEvents = true)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -26,22 +29,19 @@
 
 			_cache = new TableCache(element, tableId);
 
-			var subscriptionFilterOptions = skipInitialEvents
-				? SubscriptionFilterOptions.SkipInitialEvents
-				: SubscriptionFilterOptions.None;
-
+			_skipInitialEvents = skipInitialEvents;
 			_subscriptionSetId = $"{nameof(TableSubscription)}_{_element.DmsElementId.Value}_{_tableId}_{Guid.NewGuid()}";
 
 			_subscriptionFilters =
 			[
 				new SubscriptionFilterParameter(typeof(ParameterTableUpdateEventMessage), _element.AgentId, _element.Id, _tableId)
 				{
-					Options = subscriptionFilterOptions,
+					Options = skipInitialEvents ? SubscriptionFilterOptions.SkipInitialEvents : SubscriptionFilterOptions.None,
 				},
 				new SubscriptionFilterParameter(typeof(ParameterChangeEventMessage), _element.AgentId, _element.Id, _tableId)
 				{
 					Filters = ["forceFullTable=true"],
-					Options = subscriptionFilterOptions,
+					Options = skipInitialEvents ? SubscriptionFilterOptions.SkipInitialEvents : SubscriptionFilterOptions.None,
 				},
 			];
 		}
@@ -59,7 +59,9 @@
 					if (subscribe)
 					{
 						_connection.OnNewMessage += Connection_OnNewMessage;
-						_connection.TrackAddSubscription(_subscriptionSetId, _subscriptionFilters).ExecuteAndWait();
+						_connection.TrackAddSubscription(_subscriptionSetId, _subscriptionFilters)
+							.OnAfterInitialEvents(() => _initialEventsReceived = true)
+							.ExecuteAndWait();
 					}
 				}
 			}
@@ -74,6 +76,7 @@
 					{
 						_connection.TrackClearSubscriptions(_subscriptionSetId).ExecuteAndWait();
 						_connection.OnNewMessage -= Connection_OnNewMessage;
+						_initialEventsReceived = false;
 					}
 				}
 			}
@@ -91,6 +94,11 @@
 
 		private void Connection_OnNewMessage(object sender, NewMessageEventArgs e)
 		{
+			if (_skipInitialEvents && !_initialEventsReceived)
+			{
+				return;
+			}
+
 			if (!e.FromSet(_subscriptionSetId))
 			{
 				// Not for our subscription
