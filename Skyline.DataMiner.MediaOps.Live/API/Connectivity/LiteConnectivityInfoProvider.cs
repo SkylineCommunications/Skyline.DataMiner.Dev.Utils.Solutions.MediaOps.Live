@@ -203,7 +203,7 @@
 						LoadDataFromMediationElement(mediationElement);
 					}
 				}
-				else if (e.State == ElementState.Stopped)
+				else if (e.State == ElementState.Deleted)
 				{
 					if (_subscribedElements.TryGetValue(e.Element.DmsElementId, out var subscribedElement))
 					{
