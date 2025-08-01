@@ -128,12 +128,10 @@
 				_elementStateSubscription.Dispose();
 				_elementStateSubscription = null;
 
-				foreach (var elementSubscription in _elementSubscriptions.Values)
+				foreach (var elementSubscription in _elementSubscriptions.Values.ToList())
 				{
 					UnsubscribeElement(elementSubscription.MediationElement);
 				}
-
-				_elementSubscriptions.Clear();
 
 				IsSubscribed = false;
 			}
