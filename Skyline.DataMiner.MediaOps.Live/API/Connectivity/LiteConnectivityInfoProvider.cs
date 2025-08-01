@@ -166,7 +166,7 @@
 
 		private void SubscribeElement(MediationElement element)
 		{
-			if (!_elementSubscriptions.ContainsKey(element.DmsElementId))
+			if (_elementSubscriptions.ContainsKey(element.DmsElementId))
 			{
 				// Already subscribed
 				return;
