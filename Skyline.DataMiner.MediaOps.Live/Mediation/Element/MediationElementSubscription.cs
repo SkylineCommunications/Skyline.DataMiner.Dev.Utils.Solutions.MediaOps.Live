@@ -65,7 +65,7 @@
 				_subscriptionConnections.Dispose();
 				_subscriptionConnections = null;
 
-				_subscriptionPendingConnectionActions.OnChanged -= HandleChange_Connections;
+				_subscriptionPendingConnectionActions.OnChanged -= HandleChange_PendingConnectionActions;
 				_subscriptionPendingConnectionActions.Dispose();
 				_subscriptionPendingConnectionActions = null;
 

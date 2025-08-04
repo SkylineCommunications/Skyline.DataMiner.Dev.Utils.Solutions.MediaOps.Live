@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Concurrent;
+	using System.Diagnostics;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
@@ -12,12 +13,13 @@
 	internal sealed class ElementStateSubscription : IDisposable
 	{
 		private readonly object _lock = new object();
+
 		private readonly IConnection _connection;
+		private readonly IDms _dms;
 
 		private readonly string _subscriptionSetId;
 		private readonly SubscriptionFilter[] _subscriptionFilters;
 
-		private readonly ConcurrentDictionary<DmsElementId, IDmsElement> _elements = new();
 		private readonly ConcurrentDictionary<DmsElementId, ElementState> _elementStates = new();
 
 		private readonly bool _skipInitialEvents;
@@ -26,6 +28,7 @@
 		public ElementStateSubscription(IConnection connection, bool skipInitialEvents = true)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
+			_dms = connection.GetDms();
 
 			_skipInitialEvents = skipInitialEvents;
 			_subscriptionSetId = $"{nameof(ElementStateSubscription)}_{Guid.NewGuid()}";
@@ -39,7 +42,7 @@
 			];
 		}
 
-		public event EventHandler<ElementStateChange> OnStateChanged
+		public event EventHandler<ElementStateChangeEvent> OnStateChanged
 		{
 			add
 			{
@@ -75,7 +78,7 @@
 			}
 		}
 
-		private event EventHandler<ElementStateChange> OnStateChanged_Internal;
+		private event EventHandler<ElementStateChangeEvent> OnStateChanged_Internal;
 
 		public void Dispose()
 		{
@@ -87,51 +90,52 @@
 
 		private void Connection_OnNewMessage(object sender, NewMessageEventArgs e)
 		{
-			if (_skipInitialEvents && !_initialEventsReceived)
+			try
 			{
-				return;
-			}
+				if (_skipInitialEvents && !_initialEventsReceived)
+				{
+					return;
+				}
 
-			if (!e.FromSet(_subscriptionSetId))
-			{
-				// Not for our subscription
-				return;
-			}
+				if (!e.FromSet(_subscriptionSetId))
+				{
+					// Not for our subscription
+					return;
+				}
 
-			if (e.Message is ElementStateEventMessage elementStateEventMessage)
+				if (e.Message is ElementStateEventMessage elementStateEventMessage)
+				{
+					HandleElementStateEventMessage(elementStateEventMessage);
+				}
+			}
+			catch (Exception ex)
 			{
-				HandleElementStateEventMessage(elementStateEventMessage);
+				Debug.WriteLine($"Exception in {nameof(ElementStateSubscription)}: {ex}");
 			}
 		}
 
 		private void HandleElementStateEventMessage(ElementStateEventMessage elementStateEvent)
 		{
-			if (elementStateEvent.State == ElementState.Active &&
-				!elementStateEvent.IsElementStartupComplete)
+			var elementId = new DmsElementId(elementStateEvent.DataMinerID, elementStateEvent.ElementID);
+			var newState = elementStateEvent.State;
+
+			if (newState == ElementState.Active && !elementStateEvent.IsElementStartupComplete)
 			{
 				// ignore elements that are not fully started yet
 				return;
 			}
 
-			var elementId = new DmsElementId(elementStateEvent.DataMinerID, elementStateEvent.ElementID);
-
 			if (_elementStates.TryGetValue(elementId, out var previousState) &&
-				previousState == elementStateEvent.State)
+				previousState == newState)
 			{
 				// No change in state, ignore
 				return;
 			}
 
-			_elementStates[elementId] = elementStateEvent.State;
+			// Update the state in the dictionary
+			_elementStates[elementId] = newState;
 
-			if (!_elements.TryGetValue(elementId, out var element))
-			{
-				var dms = _connection.GetDms();
-				element = dms.GetElementReference(elementId);
-				_elements[elementId] = element;
-			}
-
-			var change = new ElementStateChange(element, elementStateEvent.State);
+			var change = new ElementStateChangeEvent(elementId, newState);
 			OnStateChanged_Internal?.Invoke(this, change);
 		}
 	}

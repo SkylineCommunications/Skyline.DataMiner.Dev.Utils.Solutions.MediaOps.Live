@@ -273,19 +273,25 @@
 			}
 		}
 
-		private void GetDestinationElements(IDms dms, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void GetDestinationElements(IDms dms, ICollection<ConnectionOperationContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				foreach (var group in takeContexts.GroupBy(x => x.Destination.Element))
+				// Group connections by their destination element
+				foreach (var group in connectionContexts.GroupBy(ctx => ctx.Destination.Element))
 				{
-					if (group.Key == null)
+					var elementId = group.Key;
+
+					if (elementId == null)
 					{
+						// Skip connections without a valid destination element
 						continue;
 					}
 
-					var element = dms.GetElementReference(group.Key.Value);
+					// Get the element once for this group
+					var element = dms.GetElement(elementId.Value);
 
+					// Assign the fetched element to each connection in the group
 					foreach (var connection in group)
 					{
 						connection.DestinationElement = element;
@@ -298,7 +304,7 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var allMediationElements = _api.MediationElements.AllElements;
+				var allMediationElements = _api.MediationElements.GetAllElementsCached();
 
 				foreach (var group in takeContexts.GroupBy(x => x.DestinationElement.Host))
 				{

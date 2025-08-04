@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Subscriptions
 {
 	using System;
+	using System.Diagnostics;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
@@ -94,20 +95,27 @@
 
 		private void Connection_OnNewMessage(object sender, NewMessageEventArgs e)
 		{
-			if (_skipInitialEvents && !_initialEventsReceived)
+			try
 			{
-				return;
-			}
+				if (_skipInitialEvents && !_initialEventsReceived)
+				{
+					return;
+				}
 
-			if (!e.FromSet(_subscriptionSetId))
-			{
-				// Not for our subscription
-				return;
-			}
+				if (!e.FromSet(_subscriptionSetId))
+				{
+					// Not for our subscription
+					return;
+				}
 
-			if (e.Message is ParameterChangeEventMessage parameterChangeEventMessage)
+				if (e.Message is ParameterChangeEventMessage parameterChangeEventMessage)
+				{
+					HandleParameterChangeEventMessage(parameterChangeEventMessage);
+				}
+			}
+			catch (Exception ex)
 			{
-				HandleParameterChangeEventMessage(parameterChangeEventMessage);
+				Debug.WriteLine($"Exception in {nameof(TableSubscription)}: {ex}");
 			}
 		}
 

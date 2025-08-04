@@ -1,14 +1,12 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Subscriptions
 {
-	using System;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 
 	using ElementState = Skyline.DataMiner.Net.Messages.ElementState;
 
-	public readonly struct ElementStateChange(IDmsElement element, ElementState state)
+	public readonly struct ElementStateChangeEvent(DmsElementId elementId, ElementState state)
 	{
-		public IDmsElement Element { get; } = element ?? throw new ArgumentNullException(nameof(element));
+		public DmsElementId ElementId { get; } = elementId;
 
 		public ElementState State { get; } = state;
 	}

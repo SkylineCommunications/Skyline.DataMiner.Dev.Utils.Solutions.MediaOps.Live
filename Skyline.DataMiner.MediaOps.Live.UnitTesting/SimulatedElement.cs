@@ -38,11 +38,41 @@
 
 		public string ProtocolVersion { get; }
 
-		public ElementState State { get; set; } = ElementState.Active;
+		public ElementState State { get; private set; } = ElementState.Active;
 
 		public IReadOnlyDictionary<int, StandaloneParameter> Parameters => _parameters;
 
 		public IReadOnlyDictionary<int, TableParameter> Tables => _tables;
+
+		public void Start()
+		{
+			if (State != ElementState.Active)
+			{
+				State = ElementState.Active;
+
+				// send events
+				var e1 = new ElementStateEventMessage(DmaId, ElementId, ElementState.Active, AlarmLevel.Normal);
+				Dma.NotifySubscriptions(e1);
+
+				var e2 = new ElementStateEventMessage(DmaId, ElementId, ElementState.Active, AlarmLevel.Normal)
+				{
+					IsElementStartupComplete = true,
+				};
+				Dma.NotifySubscriptions(e2);
+			}
+		}
+
+		public void Stop()
+		{
+			if (State != ElementState.Stopped)
+			{
+				State = ElementState.Stopped;
+
+				// send event
+				var e = new ElementStateEventMessage(DmaId, ElementId, ElementState.Stopped, AlarmLevel.Normal);
+				Dma.NotifySubscriptions(e);
+			}
+		}
 
 		public StandaloneParameter CreateStandaloneParameter(int id)
 		{

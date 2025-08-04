@@ -29,18 +29,30 @@
 
 		internal SimulatedDms Dms { get; }
 
+		public int SubscriptionCount => _subscriptions.Count;
+
 		internal void NotifySubscriptions(EventMessage eventMessage)
 		{
-			switch (eventMessage)
+			if (eventMessage is DomInstancesChangedEventMessage domInstancesChangedEvent)
 			{
-				case DomInstancesChangedEventMessage domInstancesChangedEvent:
-					NotifyDomInstancesChanged(domInstancesChangedEvent);
-					break;
-				case ParameterTableUpdateEventMessage parameterTableUpdateEvent:
-					NotifyTableUpdate(parameterTableUpdateEvent);
-					break;
-				default:
-					throw new NotSupportedException($"Unsupported event message type: {eventMessage.GetType()}");
+				NotifyDomInstancesChanged(domInstancesChangedEvent);
+				return;
+			}
+
+			if (eventMessage is ParameterTableUpdateEventMessage parameterTableUpdateEvent)
+			{
+				NotifyTableUpdate(parameterTableUpdateEvent);
+				return;
+			}
+
+			foreach (var subscription in _subscriptions.Values)
+			{
+				if (!subscription.Filters.Any(f => f.ToTypeObject() == eventMessage.GetType()))
+				{
+					continue;
+				}
+
+				InvokeOnNewMessageEvent(subscription.SetId, eventMessage);
 			}
 		}
 
@@ -232,7 +244,7 @@
 		/// Gets a value indicating whether there are subscribers to the <see cref="OnNewMessage"/> event.
 		/// For unit testing purposes.
 		/// </summary>
-		internal bool HasOnNewMessageSubscribers => OnNewMessage?.GetInvocationList().Any() ?? false;
+		public bool HasOnNewMessageSubscribers => OnNewMessage?.GetInvocationList().Any() ?? false;
 
 		/// <inheritdoc/>
 		public DMSMessage[] HandleMessage(DMSMessage msg)

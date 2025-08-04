@@ -175,91 +175,104 @@
 			var dataLevel = new Level { Number = 3, Name = "Data", TransportType = transportTypeIP };
 			Api.Levels.CreateOrUpdate([videoLevel, audioLevel, dataLevel]);
 
-			for (int i = 1; i <= 10; i++)
+			const int numberOfElements = 2;
+
+			if (createElements)
 			{
-				if (createElements)
+				for (int eid = 1; eid <= numberOfElements; eid++)
 				{
 					Dms.GetOrCreateAgent(123)
-						.CreateElement(i, $"MediaOps Simulator {i}", "Skyline MediaOps Simulator");
+						.CreateElement(eid, $"MediaOps Simulator {eid}", "Skyline MediaOps Simulator");
 				}
+			}
 
-				if (createEndpoints)
+			const int vsgPerElement = 5;
+			int vsgCounter = 0;
+
+			if (createEndpoints)
+			{
+				for (int eid = 1; eid <= numberOfElements; eid++)
 				{
-					var elementId = new DmsElementId(123, i);
+					var elementId = new DmsElementId(123, eid);
 
-					var videoSource1 = new Endpoint(Tools.GuidFromString($"Video Source {i}"))
+					for (int i = 1; i <= vsgPerElement; i++)
 					{
-						Role = Role.Source,
-						Name = $"Video Source {i}",
-						TransportType = transportTypeIP,
-						Element = elementId,
-						Identifier = $"Key-{i}",
-					};
-					var audioSource1 = new Endpoint(Tools.GuidFromString($"Audio Source {i}"))
-					{
-						Role = Role.Source,
-						Name = $"Audio Source {i}",
-						TransportType = transportTypeIP,
-						Element = elementId,
-						Identifier = $"Key-{i}",
-					};
-					var videoDestination1 = new Endpoint(Tools.GuidFromString($"Video Destination {i}"))
-					{
-						Role = Role.Destination,
-						Name = $"Video Destination {i}",
-						TransportType = transportTypeIP,
-						Element = elementId,
-						Identifier = $"Key-{i}",
-					};
-					var audioDestination1 = new Endpoint(Tools.GuidFromString($"Audio Destination {i}"))
-					{
-						Role = Role.Destination,
-						Name = $"Audio Destination {i}",
-						TransportType = transportTypeIP,
-						Element = elementId,
-						Identifier = $"Key-{i}",
-					};
-					Api.Endpoints.CreateOrUpdate([videoSource1, audioSource1, videoDestination1, audioDestination1]);
+						vsgCounter++;
 
-					if (createVsgs)
-					{
-						var source1 = new VirtualSignalGroup(Tools.GuidFromString($"Source {i}"))
+						var videoSource = new Endpoint(Tools.GuidFromString($"Video Source {vsgCounter}"))
 						{
 							Role = Role.Source,
-							Name = $"Source {i}",
-							Description = $"Source {i}",
-							Categories =
-							[
-								category,
-							],
-							Levels =
-							[
-								new LevelEndpoint(videoLevel, videoSource1),
-								new LevelEndpoint(audioLevel, audioSource1),
-							],
+							Name = $"Video Source {vsgCounter}",
+							TransportType = transportTypeIP,
+							Element = elementId,
+							Identifier = $"Key-{vsgCounter}",
 						};
-						var destination1 = new VirtualSignalGroup(Tools.GuidFromString($"Destination {i}"))
+						var audioSource = new Endpoint(Tools.GuidFromString($"Audio Source {vsgCounter}"))
+						{
+							Role = Role.Source,
+							Name = $"Audio Source {vsgCounter}",
+							TransportType = transportTypeIP,
+							Element = elementId,
+							Identifier = $"Key-{vsgCounter}",
+						};
+						var videoDestination = new Endpoint(Tools.GuidFromString($"Video Destination {vsgCounter}"))
 						{
 							Role = Role.Destination,
-							Name = $"Destination {i}",
-							Description = $"Destination {i}",
-							Categories =
-							[
-								category,
-							],
-							Levels =
-							[
-								new LevelEndpoint(videoLevel, videoDestination1),
-								new LevelEndpoint(audioLevel, audioDestination1),
-							],
+							Name = $"Video Destination {vsgCounter}",
+							TransportType = transportTypeIP,
+							Element = elementId,
+							Identifier = $"Key-{vsgCounter}",
 						};
-						Api.VirtualSignalGroups.CreateOrUpdate([source1, destination1]);
-					}
+						var audioDestination = new Endpoint(Tools.GuidFromString($"Audio Destination {vsgCounter}"))
+						{
+							Role = Role.Destination,
+							Name = $"Audio Destination {vsgCounter}",
+							TransportType = transportTypeIP,
+							Element = elementId,
+							Identifier = $"Key-{vsgCounter}",
+						};
+						Api.Endpoints.CreateOrUpdate([videoSource, audioSource, videoDestination, audioDestination]);
 
-					if (createConnections)
-					{
-						CreateTestConnection(videoSource1, videoDestination1);
-						CreateTestConnection(audioSource1, audioDestination1);
+						if (createVsgs)
+						{
+							var source1 = new VirtualSignalGroup(Tools.GuidFromString($"Source {vsgCounter}"))
+							{
+								Role = Role.Source,
+								Name = $"Source {vsgCounter}",
+								Description = $"Source {vsgCounter}",
+								Categories =
+								[
+									category,
+								],
+								Levels =
+								[
+									new LevelEndpoint(videoLevel, videoSource),
+									new LevelEndpoint(audioLevel, audioSource),
+								],
+							};
+							var destination1 = new VirtualSignalGroup(Tools.GuidFromString($"Destination {vsgCounter}"))
+							{
+								Role = Role.Destination,
+								Name = $"Destination {vsgCounter}",
+								Description = $"Destination {vsgCounter}",
+								Categories =
+								[
+									category,
+								],
+								Levels =
+								[
+									new LevelEndpoint(videoLevel, videoDestination),
+									new LevelEndpoint(audioLevel, audioDestination),
+								],
+							};
+							Api.VirtualSignalGroups.CreateOrUpdate([source1, destination1]);
+						}
+
+						if (createConnections)
+						{
+							CreateTestConnection(videoSource, videoDestination);
+							CreateTestConnection(audioSource, audioDestination);
+						}
 					}
 				}
 			}

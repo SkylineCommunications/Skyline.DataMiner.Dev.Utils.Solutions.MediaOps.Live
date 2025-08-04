@@ -15,13 +15,13 @@
 		public static readonly int PendingConnectionActionsTableId = 3000;
 		public static readonly int ConnectionsTableId = 5000;
 
-		private readonly MediaOpsLiveApi _api;
-
 		internal MediationElement(MediaOpsLiveApi api, IDmsElement dmsElement)
 		{
-			_api = api ?? throw new ArgumentNullException(nameof(api));
+			Api = api ?? throw new ArgumentNullException(nameof(api));
 			DmsElement = dmsElement ?? throw new ArgumentNullException(nameof(dmsElement));
 		}
+
+		internal MediaOpsLiveApi Api { get; }
 
 		public IDmsElement DmsElement { get; }
 
@@ -35,7 +35,7 @@
 
 		public MediationElementSubscription CreateSubscription()
 		{
-			return new MediationElementSubscription(_api, this);
+			return new MediationElementSubscription(Api, this);
 		}
 
 		public IEnumerable<PendingConnectionAction> GetPendingConnectionActions()

@@ -106,5 +106,52 @@
 			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeFalse();
 			connectivity.IsConnected(audioSource2, audioDestination1).ShouldBeFalse();
 		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_LiteConnectivityInfoProvider_StartStopElement()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var audioSource1 = api.Endpoints.Read("Audio Source 1");
+			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+
+			var mediationElement = api.MediationElements.GetMediationElement(audioDestination1);
+			var simulatedMediationElement = simulation.Dms.Agents[mediationElement.DmaId].Elements[mediationElement.ElementId];
+
+			simulation.CreateTestConnection(audioSource1, audioDestination1);
+
+			using var connectivity = new LiteConnectivityInfoProvider(api, subscribe: true);
+
+			var receivedEvents = new List<ICollection<ApiObjectReference<Endpoint>>>();
+			connectivity.EndpointsImpacted += (sender, e) => receivedEvents.Add(e);
+
+			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeTrue();
+
+			simulatedMediationElement.Stop();
+			receivedEvents.Count.ShouldBe(1);
+			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeFalse();
+
+			simulatedMediationElement.Start();
+			receivedEvents.Count.ShouldBe(2);
+			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeTrue();
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_LiteConnectivityInfoProvider_Dispose()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+			var connection = (SLNetConnectionMock)api.Connection;
+
+			using (var connectivity = new LiteConnectivityInfoProvider(api, subscribe: true))
+			{
+				connection.SubscriptionCount.ShouldBeGreaterThan(0);
+				connection.HasOnNewMessageSubscribers.ShouldBeTrue();
+			}
+
+			connection.SubscriptionCount.ShouldBe(0);
+			connection.HasOnNewMessageSubscribers.ShouldBeFalse();
+		}
 	}
 }
