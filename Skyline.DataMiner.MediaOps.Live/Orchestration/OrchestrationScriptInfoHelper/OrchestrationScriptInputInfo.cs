@@ -11,16 +11,22 @@
 	{
 		public OrchestrationScriptInputInfo()
 		{
-			Parameters = new List<OrchestrationScriptInputParameter>();
+			Parameters = [];
+			Elements = [];
+		}
+
+		public OrchestrationScriptInputInfo(string scriptName) : this()
+		{
+			ScriptName = scriptName;
 		}
 
 		public string ScriptName { get; set; }
 
 		public Guid ProfileDefinition { get; set; }
 
-		public List<OrchestrationScriptInputParameter> Parameters { get; set; }
+		public List<OrchestrationScriptInputParameter> Parameters { get; }
 
-		public List<AutomationProtocolInfo> Elements { get; set; }
+		public List<OrchestrationScriptInputElement> Elements { get; }
 
 		public List<ProfileInstance> GetApplicableInstances(ProfileHelper helper)
 		{

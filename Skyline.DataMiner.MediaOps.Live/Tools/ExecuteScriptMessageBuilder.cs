@@ -1,14 +1,9 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tools
 {
-	using System;
 	using System.Collections.Generic;
-	using System.Linq;
-	using System.Text;
-	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
-	using Skyline.DataMiner.Net.ReportsAndDashboards;
 
 	public class ExecuteScriptMessageBuilder
 	{

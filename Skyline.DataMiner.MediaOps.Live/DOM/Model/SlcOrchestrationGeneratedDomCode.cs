@@ -8,7 +8,7 @@
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 {
 	using System;
-	using System.ComponentModel;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
 
@@ -120,7 +120,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	using System.Collections.Generic;
 	using System.Linq;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Messages;
 
 	/// <summary>
 	/// Represents a wrapper class for accessing a OrchestrationEventInstance DOM instance.
@@ -396,12 +395,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 {
 	using System;
-	using System.Collections.Generic;
-	using System.Collections.ObjectModel;
-	using System.Linq;
-	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Apps.Sections.Sections;
-	using Skyline.DataMiner.Net.Messages;
+
 	using Skyline.DataMiner.Net.Sections;
 
 	/// <summary>

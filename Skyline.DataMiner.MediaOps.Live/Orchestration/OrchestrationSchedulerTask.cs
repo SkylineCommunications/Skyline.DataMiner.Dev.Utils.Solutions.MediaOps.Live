@@ -6,7 +6,6 @@
 
 	using Newtonsoft.Json;
 	using Skyline.DataMiner.Net.Messages;
-	using Skyline.DataMiner.Net.Scheduling;
 
 	/// <summary>
 	/// Contains information about scheduler orchestration tasks.

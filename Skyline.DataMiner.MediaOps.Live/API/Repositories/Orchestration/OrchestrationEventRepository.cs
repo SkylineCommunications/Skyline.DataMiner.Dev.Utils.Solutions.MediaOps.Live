@@ -11,7 +11,6 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Jobs;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
@@ -28,6 +27,7 @@
 		private readonly MediaOpsLiveApi _api;
 		private readonly ConfigurationRepository _configurationHelper;
 		private readonly OrchestrationSlidingWindowScheduler _slidingWindowScheduler;
+		private readonly OrchestrationScriptInfoHelper _orchestrationScriptInfoHelper;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEventRepository"/> class.
@@ -42,7 +42,11 @@
 				this,
 				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
 				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future));
+
+			_orchestrationScriptInfoHelper = new OrchestrationScriptInfoHelper(api.Connection);
 		}
+
+		public OrchestrationScriptInfoHelper Scripts => _orchestrationScriptInfoHelper;
 
 		/// <summary>
 		/// Gets the DOM definition GUID.
