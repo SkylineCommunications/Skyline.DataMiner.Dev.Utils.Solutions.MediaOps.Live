@@ -16,11 +16,11 @@
 		private readonly ConcurrentDictionary<int, SimulatedDma> _agents = new();
 		private readonly ConcurrentBag<SimulatedAutomationScript> _scripts = [];
 		private readonly ConcurrentBag<SLNetConnectionMock> _connections = [];
-		private readonly DomSLNetMessageHandler _domSLNetMessageHandler = new();
+		private readonly DomSLNetMessageHandler _domSlNetMessageHandler = new();
 
 		public SimulatedDms()
 		{
-			_domSLNetMessageHandler.OnInstancesChanged += (s, e) => NotifySubscriptions(e);
+			_domSlNetMessageHandler.OnInstancesChanged += (s, e) => NotifySubscriptions(e);
 		}
 
 		public IReadOnlyDictionary<int, SimulatedDma> Agents => _agents;
@@ -79,7 +79,7 @@
 				throw new ArgumentNullException(nameof(message));
 			}
 
-			if (_domSLNetMessageHandler.TryHandleMessage(message, out var response))
+			if (_domSlNetMessageHandler.TryHandleMessage(message, out var response))
 			{
 				responses = [response];
 				return true;
@@ -366,11 +366,14 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(GetScriptInfoMessage msg)
 		{
+			SimulatedAutomationScript script = Scripts.First(s => s.Name == msg.Name);
+
+			int id = 1;
 			yield return new GetScriptInfoResponseMessage
 			{
-				Parameters = [],
+				Parameters = script.Parameters.Select(param => new AutomationParameterInfo { Description = param, ParameterId = id++}).ToArray(),
 				Name = msg.Name,
-				Dummies = [],
+				Dummies = script.Dummies.Select(dummy => new AutomationProtocolInfo() { Description = dummy, ProtocolId = id++ }).ToArray(),
 				Memories = [],
 				Type = AutomationScriptType.Automation,
 				Exes = [],

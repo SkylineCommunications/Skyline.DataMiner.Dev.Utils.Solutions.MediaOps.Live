@@ -50,7 +50,7 @@
 					{ "Input Data", inputData },
 				};
 
-				AutomationHelper.ExecuteAutomationScript(connection, scriptName, parameters);
+				AutomationHelper.ExecuteConnectionHandlerScript(connection, scriptName, parameters);
 			}
 		}
 
