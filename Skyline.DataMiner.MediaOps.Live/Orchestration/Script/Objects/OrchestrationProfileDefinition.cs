@@ -16,7 +16,7 @@
 		private readonly Dictionary<string, string> _orchestrationOverrideNames;
 
 		private ProfileDefinition _profileDefinition;
-		private Dictionary<string, Parameter> _parameterReferences;
+		private readonly Dictionary<string, Parameter> _parameterReferences;
 		private bool _isLoaded;
 
 		public OrchestrationProfileDefinition(string profileDefinitionName) : this(profileDefinitionName, new Dictionary<string, string>())
@@ -27,6 +27,7 @@
 		{
 			_orchestrationOverrideNames = orchestrationOverrideParameterNames;
 			_profileDefinitionName = profileDefinitionName;
+			_parameterReferences = new Dictionary<string, Parameter>();
 			_isLoaded = false;
 		}
 
@@ -74,9 +75,9 @@
 				throw new InvalidOperationException($"Multiple profile definitions found with name {Name}");
 			}
 
-			ProfileDefinition definition = profileDefinitions.First();
+			_profileDefinition = profileDefinitions.First();
 
-			foreach (Parameter parameter in definition.Parameters)
+			foreach (Parameter parameter in _profileDefinition.Parameters)
 			{
 				if (_parameterReferences.ContainsKey(parameter.Name))
 				{
