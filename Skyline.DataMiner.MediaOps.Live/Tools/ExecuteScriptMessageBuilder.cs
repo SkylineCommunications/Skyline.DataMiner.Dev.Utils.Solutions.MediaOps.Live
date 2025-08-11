@@ -7,8 +7,8 @@
 
 	public class ExecuteScriptMessageBuilder
 	{
-		private ExecuteScriptMessage _message;
-		private List<string> _options;
+		private readonly ExecuteScriptMessage _message;
+		private readonly List<string> _options;
 
 		public ExecuteScriptMessageBuilder(string scriptName)
 		{
@@ -19,11 +19,7 @@
 				HostingDataMinerID = -1,
 			};
 
-			var options = new List<string>
-			{
-				$"CHECKSETS:TRUE",
-				$"DEFER:TRUE",
-			};
+			_options = [];
 		}
 
 		public void SetCheckSets(bool checkSets)

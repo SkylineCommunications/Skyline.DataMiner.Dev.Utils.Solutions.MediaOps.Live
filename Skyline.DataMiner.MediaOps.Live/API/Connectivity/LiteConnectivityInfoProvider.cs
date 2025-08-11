@@ -41,7 +41,7 @@
 			{
 				return _connectionsByDestination.TryGetValue(destination, out var connection) &&
 					connection.IsConnected &&
-					connection.ConnectedSource == source; 
+					connection.ConnectedSource == source;
 			}
 		}
 
@@ -53,7 +53,7 @@
 
 				return connections.Any(
 					x => x.IsConnected &&
-						(x.Destination == endpoint || x.ConnectedSource == endpoint)); 
+						(x.Destination == endpoint || x.ConnectedSource == endpoint));
 			}
 		}
 
@@ -85,7 +85,7 @@
 		{
 			lock (_lock)
 			{
-				return _pendingConnectionActionsMapping.GetPendingConnectionActionsWithSource(source); 
+				return _pendingConnectionActionsMapping.GetPendingConnectionActionsWithSource(source);
 			}
 		}
 

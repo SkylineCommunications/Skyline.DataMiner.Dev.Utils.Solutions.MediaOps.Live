@@ -39,17 +39,17 @@
 		public IReadOnlyCollection<VirtualSignalGroup> VirtualSignalGroups { get; }
 
 		/// <summary>
-		/// Gets whether this endpoint is connected to another endpoint.
+		/// Gets a value indicating whether this endpoint is connected to another endpoint.
 		/// </summary>
 		public bool IsConnected { get; }
 
 		/// <summary>
-		/// Gets whether this endpoint is connecting to another endpoint.
+		/// Gets a value indicating whether this endpoint is connecting to another endpoint.
 		/// </summary>
 		public bool IsConnecting { get; }
 
 		/// <summary>
-		/// Gets whether this endpoint is disconnecting from another endpoint.
+		/// Gets a value indicating whether this endpoint is disconnecting from another endpoint.
 		/// </summary>
 		public bool IsDisconnecting { get; }
 

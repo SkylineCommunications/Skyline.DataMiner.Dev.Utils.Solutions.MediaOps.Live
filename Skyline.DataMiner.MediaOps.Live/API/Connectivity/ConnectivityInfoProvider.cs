@@ -302,6 +302,7 @@
 			{
 				return;
 			}
+
 			_isDisposed = true;
 
 			_liteConnectivityInfoProvider.EndpointsImpacted -= Endpoints_Impacted;

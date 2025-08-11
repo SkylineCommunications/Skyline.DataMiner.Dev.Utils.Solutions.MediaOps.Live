@@ -163,7 +163,7 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the actual time at which the event has started.
+		/// Gets the actual time at which the event has started.
 		/// </summary>
 		public DateTimeOffset? ActualStartTime
 		{
@@ -185,7 +185,7 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the total duration of the orchestration.
+		/// Gets the total duration of the orchestration.
 		/// </summary>
 		public TimeSpan? OrchestrationDuration
 		{

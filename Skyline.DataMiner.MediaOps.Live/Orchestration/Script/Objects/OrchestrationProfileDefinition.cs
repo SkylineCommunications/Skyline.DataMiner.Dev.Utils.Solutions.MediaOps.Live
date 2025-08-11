@@ -8,11 +8,10 @@
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 
-	using Parameter = Net.Profiles.Parameter;
+	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
 
 	internal class OrchestrationProfileDefinition : IOrchestrationParameters
 	{
-
 		private readonly string _profileDefinitionName;
 		private readonly Dictionary<string, string> _orchestrationOverrideNames;
 
