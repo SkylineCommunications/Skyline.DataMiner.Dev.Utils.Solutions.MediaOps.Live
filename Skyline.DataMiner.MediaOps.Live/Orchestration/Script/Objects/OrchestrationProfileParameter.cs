@@ -15,13 +15,9 @@
 		private readonly string _profileParameterName;
 		private readonly string _orchestrationOverrideName;
 
-		public OrchestrationProfileParameter(string profileParameterName)
+		public OrchestrationProfileParameter(string profileParameterName, string orchestrationOverrideName = null)
 		{
 			_profileParameterName = profileParameterName;
-		}
-
-		public OrchestrationProfileParameter(string profileParameterName, string orchestrationOverrideName) : this(profileParameterName)
-		{
 			_orchestrationOverrideName = orchestrationOverrideName;
 		}
 

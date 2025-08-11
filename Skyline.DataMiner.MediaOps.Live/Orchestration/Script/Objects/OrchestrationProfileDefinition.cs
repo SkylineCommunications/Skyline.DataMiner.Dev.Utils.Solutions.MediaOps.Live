@@ -19,16 +19,16 @@
 		private Dictionary<string, Guid> _parameterInformation;
 		private bool _isLoaded;
 
-		public OrchestrationProfileDefinition(string profileDefinitionName)
+		public OrchestrationProfileDefinition(string profileDefinitionName) : this(profileDefinitionName, new Dictionary<string, string>())
 		{
+		}
+
+		public OrchestrationProfileDefinition(string profileDefinitionName, Dictionary<string, string> orchestrationOverrideParameterNames)
+		{
+			_orchestrationOverrideNames = orchestrationOverrideParameterNames;
 			_profileDefinitionName = profileDefinitionName;
 			_parameterInformation = new Dictionary<string, Guid>();
 			_isLoaded = false;
-		}
-
-		public OrchestrationProfileDefinition(string profileDefinitionName, Dictionary<string, string> orchestrationOverrideParameterNames) : this(profileDefinitionName)
-		{
-			_orchestrationOverrideNames = orchestrationOverrideParameterNames;
 		}
 
 		public string Name => _profileDefinitionName;
