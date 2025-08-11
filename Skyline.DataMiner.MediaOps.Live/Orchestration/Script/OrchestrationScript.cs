@@ -37,6 +37,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		[AutomationEntryPoint(AutomationEntryPointType.Types.OnRequestScriptInfo)]
 		public RequestScriptInfoOutput OnRequestScriptInfoRequest(IEngine engine, RequestScriptInfoInput inputData)
 		{
+			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 			return new RequestScriptInfoOutput
 			{
 				Data = HandleRequestInfoEntryPoint(inputData.Data),
