@@ -14,6 +14,8 @@
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Profiles;
 
+	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
+
 	/// <summary>
 	/// Helper class to retrieve orchestration script input information.
 	/// </summary>
@@ -46,12 +48,12 @@
 
 			if (scriptOrchestrationInfo.ProfileDefinitions.Any())
 			{
-				result.ProfileDefinition = scriptOrchestrationInfo.ProfileDefinitions.First();
+				result.ProfileDefinition = scriptOrchestrationInfo.ProfileDefinitions.First().ID;
 			}
 
-			foreach (KeyValuePair<string, Guid> profileParameter in scriptOrchestrationInfo.ProfileParameters)
+			foreach (KeyValuePair<string, Parameter> profileParameter in scriptOrchestrationInfo.ProfileParameters)
 			{
-				var orchestrationParam = new OrchestrationScriptInputParameter(profileParameter.Key, profileParameter.Value);
+				var orchestrationParam = new OrchestrationScriptInputParameter(profileParameter.Key, profileParameter.Value.ID);
 				orchestrationParam.LoadLinkedProfileParameter(_profileHelper);
 				result.Parameters.Add(orchestrationParam);
 			}

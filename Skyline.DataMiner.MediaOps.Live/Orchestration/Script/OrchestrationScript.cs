@@ -9,10 +9,17 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.Dialogs;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
+	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
+
+	using GroupPresetOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<Mvc.DisplayTypes.PresetGroupDisplayInfo.PresetInfo>;
+	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
+	using ValueOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<object>;
 
 	public abstract class OrchestrationScript
 	{
@@ -77,9 +84,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
-			var scriptInfo = GetScriptInfo();
+			ScriptInfo scriptInfo = GetScriptInfo();
 
-			var parameterInfos = CreateParameterInfos(scriptInfo, new ValueInfo());
+			List<ParameterInfo> parameterInfos = CreateParameterInfos(scriptInfo, new ValueInfo());
 
 			if (GetIncompleteInfos(parameterInfos).Any())
 			{
@@ -110,7 +117,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				case OrchestrationScriptAction.PerformOrchestration:
 				case OrchestrationScriptAction.PerformOrchestrationAskMissingValues:
 				{
-					var scriptOutput = PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
+					ScriptOutput scriptOutput = PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
 					return new Dictionary<string, string> { { ScriptOutputRequestScriptInfoKey, scriptOutput == null ? null : JsonConvert.SerializeObject(scriptOutput) } };
 				}
 
@@ -121,15 +128,15 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 		private ScriptInfo GetScriptInfo()
 		{
-			var info = new ScriptInfo();
+			ScriptInfo info = new ScriptInfo();
 			foreach (IOrchestrationParameters orchestrationParameters in GetParameters())
 			{
 				if (orchestrationParameters is OrchestrationProfileDefinition)
 				{
-					info.ProfileDefinitions.Add(orchestrationParameters.GetDefinition(_engine));
+					info.ProfileDefinitions.Add(((OrchestrationProfileDefinition)orchestrationParameters).GetDefinitionReference(_engine));
 				}
 
-				foreach (KeyValuePair<string, Guid> keyValuePair in orchestrationParameters.GetParameterInformation(_engine))
+				foreach (KeyValuePair<string, Parameter> keyValuePair in orchestrationParameters.GetParameterReferences(_engine))
 				{
 					info.ProfileParameters.Add(keyValuePair.Key, keyValuePair.Value);
 				}
@@ -140,8 +147,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 		public void GetValuesFromUser(List<ParameterInfo> infos)
 		{
-			var controller = new InteractiveController(_engine);
-			var dialog = new GetOrchestrationValuesDialog(_engine, infos);
+			InteractiveController controller = new InteractiveController(_engine);
+			GetOrchestrationValuesDialog dialog = new GetOrchestrationValuesDialog(_engine, infos);
 
 			dialog.Button.Pressed += (sender, args) =>
 			{
@@ -154,45 +161,199 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 		public List<ParameterInfo> CreateParameterInfos(ScriptInfo scriptInfo, ValueInfo valueInfo)
 		{
-			var parameterInfos = new List<ParameterInfo>(scriptInfo.ProfileParameters.Count);
+			List<ParameterInfo> parameterInfos = new List<ParameterInfo>(scriptInfo.ProfileParameters.Count);
 
-			foreach (var profileParameter in scriptInfo.ProfileParameters)
+			foreach (KeyValuePair<string, Parameter> profileParameter in scriptInfo.ProfileParameters)
 			{
-				var reference = new ProfileParameterID(profileParameter.Value);
-				var info = new ParameterInfo
+				ProfileParameterID reference = new ProfileParameterID(profileParameter.Value.ID);
+				ParameterInfo info = new ParameterInfo
 				{
 					Id = profileParameter.Key,
 					Reference = reference,
-					Value = valueInfo.ProfileParameterValues.TryGetValue(profileParameter.Value, out var value) ? value : null,
+					Value = valueInfo.ProfileParameterValues.TryGetValue(profileParameter.Value.ID, out object value) ? value : null,
 				};
 
 				parameterInfos.Add(info);
 			}
 
+			LinkParameters(scriptInfo, parameterInfos);
+
 			return parameterInfos;
+		}
+
+		public void LinkParameters(ScriptInfo scriptInfo, List<ParameterInfo> infos)
+		{
+			var profileParameterInfos = infos
+				.Where(x => x.Reference is ProfileParameterID)
+				.ToDictionary(x => (x.Reference as ProfileParameterID).Id);
+
+			var profileParameters = scriptInfo.ProfileParameters.Values;
+
+			foreach (var parameter in profileParameters)
+			{
+				if (!profileParameterInfos.TryGetValue(parameter.ID, out var parameterInfo))
+				{
+					throw new InvalidOperationException($"Parameter {parameter.ID} wasn't requested");
+				}
+
+				parameterInfo.Description = parameter.Name;
+				parameterInfo.Type = "ProfileParameter";
+				switch (parameter.InterpreteType.Type)
+				{
+					case InterpreteType.TypeEnum.Double:
+						parameterInfo.ValueType = typeof(double);
+						break;
+
+					case InterpreteType.TypeEnum.String:
+						parameterInfo.ValueType = typeof(string);
+						break;
+
+					// Tip: the use case for these types is unclear. Perhaps using them should fail.
+					case InterpreteType.TypeEnum.HighNibble:
+					case InterpreteType.TypeEnum.Undefined:
+					default:
+						parameterInfo.ValueType = typeof(object);
+						break;
+				}
+
+				switch (parameter.Type)
+				{
+					case Parameter.ParameterType.Discrete:
+						{
+							var queue = new Queue<string>(parameter.DiscreetDisplayValues);
+							var options = new List<ValueOption>();
+							foreach (var discreet in parameter.Discretes)
+							{
+								if (discreet.GetType() != parameterInfo.ValueType)
+								{
+									// Tip: warn or fail when this happens
+									continue;
+								}
+
+								var display = queue.Dequeue();
+
+								// Tip: make sure the display value is unique
+								options.Add(new ValueOption(display, discreet));
+							}
+
+							parameterInfo.DisplayInfo = new DropdownParameterDisplayInfo
+							{
+								Label = parameterInfo.Id,
+								Options = options,
+							};
+						}
+
+						break;
+
+					case Parameter.ParameterType.Number:
+						{
+							parameterInfo.DisplayInfo = new NumericParameterDisplayInfo()
+							{
+								Label = parameterInfo.Id,
+								Min = parameter.RangeMin,
+								Max = parameter.RangeMax,
+								Step = parameter.Stepsize,
+								Decimals = parameter.Decimals,
+								Unit = parameter.Units,
+							};
+						}
+
+						break;
+
+					default:
+						throw new NotSupportedException($"Unsupported parameter type {parameter.Type}");
+				}
+			}
+
+			// Tip: add checks for missing parameters
+
+			AssignProfileDefinitionGroups(scriptInfo.ProfileDefinitions, profileParameterInfos);
+		}
+
+		private void AssignProfileDefinitionGroups(List<ProfileDefinition> profileDefinitions, Dictionary<Guid, ParameterInfo> parameters)
+		{
+			ProfileHelper profileHelper = new ProfileHelper(_engine.SendSLNetMessages);
+
+			foreach (var definition in profileDefinitions)
+			{
+				// Tip: If there are allot of definitions, getting all instances in one call will be more efficient.
+				var instances = profileHelper.ProfileInstances.Read(ProfileInstanceExposers.AppliesToID.Equal(definition.ID));
+
+				var presets = new List<GroupPresetOption>(instances.Count);
+				foreach (var instance in instances)
+				{
+					var presetInfo = new PresetGroupDisplayInfo.PresetInfo();
+					// Tip: add a check if the option names are unique
+					presets.Add(new GroupPresetOption(instance.Name, presetInfo));
+
+					foreach (var value in instance.Values)
+					{
+						if (!parameters.TryGetValue(value.ParameterID, out var parameter))
+						{
+							continue;
+						}
+
+						switch (value.Value.Type)
+						{
+							case ParameterValue.ValueType.Double:
+								presetInfo.ParameterValues.Add((parameter, value.Value.DoubleValue));
+								break;
+
+							case ParameterValue.ValueType.String:
+								presetInfo.ParameterValues.Add((parameter, value.Value.StringValue));
+								break;
+
+							default:
+								throw new NotSupportedException($"No support for type {value.Value.Type} (Parameter ID: {value.ParameterID}; Profile Instance ID: {instance.ID})");
+						}
+					}
+				}
+
+				var group = new ParameterGroup
+				{
+					Description = definition.Name,
+					Reference = new ProfileDefinitionID(definition.ID),
+					Type = "ProfileDefinition",
+					DisplayInfo = new PresetGroupDisplayInfo
+					{
+						Label = definition.Name,
+						Presets = presets,
+					},
+				};
+
+				foreach (var parameterId in definition.ParameterIDs)
+				{
+					if (!parameters.TryGetValue(parameterId, out var parameter))
+					{
+						continue;
+					}
+
+					parameter.Group = group;
+				}
+			}
 		}
 
 		public IEnumerable<ParameterInfo> GetIncompleteInfos(IEnumerable<ParameterInfo> infos) => infos.Where(x => x.Value is null);
 
 		private ScriptOutput PerformOrchestrationFromEntryPoint(IReadOnlyDictionary<string, string> metaData, bool askMissingValues)
 		{
-			var scriptOutput = new ScriptOutput();
+			ScriptOutput scriptOutput = new ScriptOutput();
 
 			try
 			{
-				var scriptInfo = GetScriptInfo();
+				ScriptInfo scriptInfo = GetScriptInfo();
 
 				ScriptInput scriptInput = null;
-				if (metaData.TryGetValue(ScriptInputRequestScriptInfoKey, out var serializedScriptInputRequestScriptInfo))
+				if (metaData.TryGetValue(ScriptInputRequestScriptInfoKey, out string serializedScriptInputRequestScriptInfo))
 				{
 					scriptInput = JsonConvert.DeserializeObject<ScriptInput>(serializedScriptInputRequestScriptInfo);
 				}
 
-				var parameterInfos = CreateParameterInfos(scriptInfo, scriptInput?.ValueInfo ?? new ValueInfo());
+				List<ParameterInfo> parameterInfos = CreateParameterInfos(scriptInfo, scriptInput?.ValueInfo ?? new ValueInfo());
 
 				if (askMissingValues)
 				{
-					var incompleteInfos = GetIncompleteInfos(parameterInfos).ToList();
+					List<ParameterInfo> incompleteInfos = GetIncompleteInfos(parameterInfos).ToList();
 					if (incompleteInfos.Any())
 					{
 						GetValuesFromUser(incompleteInfos);

@@ -15,8 +15,8 @@
 		private readonly string _profileDefinitionName;
 		private readonly Dictionary<string, string> _orchestrationOverrideNames;
 
-		private Guid _profileDefinitionId;
-		private Dictionary<string, Guid> _parameterInformation;
+		private ProfileDefinition _profileDefinition;
+		private Dictionary<string, Parameter> _parameterReferences;
 		private bool _isLoaded;
 
 		public OrchestrationProfileDefinition(string profileDefinitionName) : this(profileDefinitionName, new Dictionary<string, string>())
@@ -27,7 +27,6 @@
 		{
 			_orchestrationOverrideNames = orchestrationOverrideParameterNames;
 			_profileDefinitionName = profileDefinitionName;
-			_parameterInformation = new Dictionary<string, Guid>();
 			_isLoaded = false;
 		}
 
@@ -35,28 +34,32 @@
 
 		public IDictionary<string, Guid> GetParameterInformation(IEngine engine)
 		{
-			if (!_isLoaded)
-			{
-				LoadInformation(engine);
-				_isLoaded = true;
-			}
+			LoadInformation(engine);
 
-			return _parameterInformation;
+			return _parameterReferences.ToDictionary(kv => kv.Key, kv => kv.Value.ID);
 		}
 
-		public Guid GetDefinition(IEngine engine)
+		public IDictionary<string, Parameter> GetParameterReferences(IEngine engine)
 		{
-			if (!_isLoaded)
-			{
-				LoadInformation(engine);
-				_isLoaded = true;
-			}
+			LoadInformation(engine);
 
-			return _profileDefinitionId;
+			return _parameterReferences;
+		}
+
+		public ProfileDefinition GetDefinitionReference(IEngine engine)
+		{
+			LoadInformation(engine);
+
+			return _profileDefinition;
 		}
 
 		public void LoadInformation(IEngine engine)
 		{
+			if (_isLoaded)
+			{
+				return;
+			}
+
 			ProfileHelper helper = new ProfileHelper(engine.SendSLNetMessages);
 
 			List<ProfileDefinition> profileDefinitions = helper.ProfileDefinitions.Read(ProfileDefinitionExposers.Name.Equal(Name));
@@ -66,21 +69,28 @@
 				throw new InvalidOperationException($"No profile definition found with name {Name}");
 			}
 
+			if (profileDefinitions.Count > 1)
+			{
+				throw new InvalidOperationException($"Multiple profile definitions found with name {Name}");
+			}
+
 			ProfileDefinition definition = profileDefinitions.First();
-			_profileDefinitionId = definition.ID;
 
 			foreach (Parameter parameter in definition.Parameters)
 			{
-				if (_parameterInformation.ContainsKey(parameter.Name))
+				if (_parameterReferences.ContainsKey(parameter.Name))
 				{
 					throw new InvalidOperationException($"Duplicate parameter name found in profile definition '{Name}': {parameter.Name}");
 				}
 
-				_parameterInformation.Add(
-					_orchestrationOverrideNames.TryGetValue(parameter.Name, out string overriddenName)
-						? overriddenName
-						: parameter.Name, parameter.ID);
+				string nameKey = _orchestrationOverrideNames.TryGetValue(parameter.Name, out string overriddenNameInfo)
+					? overriddenNameInfo
+					: parameter.Name;
+
+				_parameterReferences.Add(nameKey, parameter);
 			}
+
+			_isLoaded = true;
 		}
 	}
 }

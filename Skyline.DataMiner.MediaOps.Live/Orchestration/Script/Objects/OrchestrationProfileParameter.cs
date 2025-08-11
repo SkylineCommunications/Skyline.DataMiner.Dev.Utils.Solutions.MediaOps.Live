@@ -15,10 +15,14 @@
 		private readonly string _profileParameterName;
 		private readonly string _orchestrationOverrideName;
 
+		private Parameter _parameterReference;
+		private bool _isLoaded;
+
 		public OrchestrationProfileParameter(string profileParameterName, string orchestrationOverrideName = null)
 		{
 			_profileParameterName = profileParameterName;
 			_orchestrationOverrideName = orchestrationOverrideName;
+			_isLoaded = false;
 		}
 
 		public string Name =>
@@ -26,24 +30,53 @@
 				? _profileParameterName
 				: _orchestrationOverrideName;
 
+		public string ProfileParameterName => _profileParameterName;
+
+		public Parameter ParameterReference
+		{
+			get => _parameterReference;
+			private set => _parameterReference = value;
+		}
+
 		public IDictionary<string, Guid> GetParameterInformation(IEngine engine)
+		{
+			if (!_isLoaded)
+			{
+				LoadInformation(engine);
+			}
+
+			return new Dictionary<string, Guid> { { Name, ParameterReference.ID } };
+		}
+
+		public IDictionary<string, Parameter> GetParameterReferences(IEngine engine)
+		{
+			if (!_isLoaded)
+			{
+				LoadInformation(engine);
+			}
+
+			return new Dictionary<string, Parameter> { { Name, ParameterReference } };
+		}
+
+		private void LoadInformation(IEngine engine)
 		{
 			ProfileHelper helper = new ProfileHelper(engine.SendSLNetMessages);
 
-			List<Parameter> parameters = helper.ProfileParameters.Read(ParameterExposers.Name.Equal(Name));
+			List<Parameter> parameters = helper.ProfileParameters.Read(ParameterExposers.Name.Equal(_profileParameterName));
 
 			if (parameters.Count == 0)
 			{
-				throw new InvalidOperationException($"No profile parameter found with name '{Name}'");
+				throw new InvalidOperationException($"No profile parameter found with name '{_profileParameterName}'");
 			}
 
-			Parameter parameter = parameters.First();
-			return new Dictionary<string, Guid> { { Name, parameter.ID } };
-		}
+			if (parameters.Count > 1)
+			{
+				throw new InvalidOperationException($"Multiple profile parameters found with name '{_profileParameterName}'");
+			}
 
-		public Guid GetDefinition(IEngine engine)
-		{
-			throw new NotImplementedException();
+			ParameterReference = parameters.First();
+
+			_isLoaded = true;
 		}
 	}
 }

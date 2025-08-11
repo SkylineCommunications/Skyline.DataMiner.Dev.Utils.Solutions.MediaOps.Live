@@ -3,10 +3,12 @@
 	using System;
 	using System.Collections.Generic;
 
+	using Skyline.DataMiner.Net.Profiles;
+
 	public class ScriptInfo
 	{
-		public Dictionary<string, Guid> ProfileParameters { get; } = new Dictionary<string, Guid>();
+		public Dictionary<string, Parameter> ProfileParameters { get; } = new Dictionary<string, Parameter>();
 
-		public List<Guid> ProfileDefinitions { get; } = new List<Guid>();
+		public List<ProfileDefinition> ProfileDefinitions { get; } = new List<ProfileDefinition>();
 	}
 }
