@@ -5,6 +5,6 @@
 
 	public class ValueInfo
 	{
-		public Dictionary<Guid, object> ProfileParameterValues { get; } = new Dictionary<Guid, object>();
+		public Dictionary<string, object> ProfileParameterValues { get; } = new Dictionary<string, object>();
 	}
 }

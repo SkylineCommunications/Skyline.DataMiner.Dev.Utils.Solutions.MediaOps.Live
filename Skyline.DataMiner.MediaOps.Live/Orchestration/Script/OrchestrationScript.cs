@@ -173,7 +173,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				{
 					Id = profileParameter.Key,
 					Reference = reference,
-					Value = valueInfo.ProfileParameterValues.TryGetValue(profileParameter.Value.ID, out object value) ? value : null,
+					Value = valueInfo.ProfileParameterValues.TryGetValue(profileParameter.Key, out object value) ? value : null,
 				};
 
 				parameterInfos.Add(info);
