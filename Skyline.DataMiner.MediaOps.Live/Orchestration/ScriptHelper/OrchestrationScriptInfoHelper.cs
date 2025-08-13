@@ -48,12 +48,12 @@
 
 			if (scriptOrchestrationInfo.ProfileDefinitions.Any())
 			{
-				result.ProfileDefinition = scriptOrchestrationInfo.ProfileDefinitions.First().ID;
+				result.ProfileDefinition = scriptOrchestrationInfo.ProfileDefinitions.First();
 			}
 
-			foreach (KeyValuePair<string, Parameter> profileParameter in scriptOrchestrationInfo.ProfileParameters)
+			foreach (KeyValuePair<string, Guid> profileParameter in scriptOrchestrationInfo.ProfileParameters)
 			{
-				var orchestrationParam = new OrchestrationScriptInputParameter(profileParameter.Key, profileParameter.Value.ID);
+				var orchestrationParam = new OrchestrationScriptInputParameter(profileParameter.Key, profileParameter.Value);
 				orchestrationParam.LoadLinkedProfileParameter(_profileHelper);
 				result.Parameters.Add(orchestrationParam);
 			}

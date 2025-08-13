@@ -134,12 +134,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			{
 				if (orchestrationParameters is OrchestrationProfileDefinition)
 				{
-					info.ProfileDefinitions.Add(((OrchestrationProfileDefinition)orchestrationParameters).GetDefinitionReference(_engine));
+					info.ProfileDefinitionReferences.Add(((OrchestrationProfileDefinition)orchestrationParameters).GetDefinitionReference(_engine));
 				}
 
 				foreach (KeyValuePair<string, Parameter> keyValuePair in orchestrationParameters.GetParameterReferences(_engine))
 				{
-					info.ProfileParameters.Add(keyValuePair.Key, keyValuePair.Value);
+					info.ProfileParameterReferences.Add(keyValuePair.Key, keyValuePair.Value);
 				}
 			}
 
@@ -162,9 +162,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 		public List<ParameterInfo> CreateParameterInfos(ScriptInfo scriptInfo, ValueInfo valueInfo)
 		{
-			List<ParameterInfo> parameterInfos = new List<ParameterInfo>(scriptInfo.ProfileParameters.Count);
+			List<ParameterInfo> parameterInfos = new List<ParameterInfo>(scriptInfo.ProfileParameterReferences.Count);
 
-			foreach (KeyValuePair<string, Parameter> profileParameter in scriptInfo.ProfileParameters)
+			foreach (KeyValuePair<string, Parameter> profileParameter in scriptInfo.ProfileParameterReferences)
 			{
 				ProfileParameterID reference = new ProfileParameterID(profileParameter.Value.ID);
 				ParameterInfo info = new ParameterInfo
@@ -188,13 +188,13 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				.Where(x => x.Reference is ProfileParameterID)
 				.ToDictionary(x => (x.Reference as ProfileParameterID).Id);
 
-			var profileParameters = scriptInfo.ProfileParameters.Values;
+			var profileParameters = scriptInfo.ProfileParameterReferences.Values;
 
 			foreach (var parameter in profileParameters)
 			{
 				if (!profileParameterInfos.TryGetValue(parameter.ID, out var parameterInfo))
 				{
-					throw new InvalidOperationException($"Parameter {parameter.ID} wasn't requested");
+					throw new InvalidOperationException($"Parameter {parameter} wasn't requested");
 				}
 
 				parameterInfo.Description = parameter.Name;
@@ -268,7 +268,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 			// Tip: add checks for missing parameters
 
-			AssignProfileDefinitionGroups(scriptInfo.ProfileDefinitions, profileParameterInfos);
+			AssignProfileDefinitionGroups(scriptInfo.ProfileDefinitionReferences, profileParameterInfos);
 		}
 
 		private void AssignProfileDefinitionGroups(List<ProfileDefinition> profileDefinitions, Dictionary<Guid, ParameterInfo> parameters)

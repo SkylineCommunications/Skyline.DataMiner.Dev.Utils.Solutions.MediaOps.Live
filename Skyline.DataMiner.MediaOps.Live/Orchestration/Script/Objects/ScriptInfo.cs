@@ -2,13 +2,22 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Runtime.Serialization;
 
 	using Skyline.DataMiner.Net.Profiles;
 
 	public class ScriptInfo
 	{
-		public Dictionary<string, Parameter> ProfileParameters { get; } = new Dictionary<string, Parameter>();
+		[IgnoreDataMember]
+		public Dictionary<string, Parameter> ProfileParameterReferences { get; } = new Dictionary<string, Parameter>();
 
-		public List<ProfileDefinition> ProfileDefinitions { get; } = new List<ProfileDefinition>();
+		[DataMember]
+		public Dictionary<string, Guid> ProfileParameters { get; } = new Dictionary<string, Guid>();
+
+		[IgnoreDataMember]
+		public List<ProfileDefinition> ProfileDefinitionReferences { get; } = new List<ProfileDefinition>();
+
+		[DataMember]
+		public List<Guid> ProfileDefinitions { get; } = new List<Guid>();
 	}
 }
