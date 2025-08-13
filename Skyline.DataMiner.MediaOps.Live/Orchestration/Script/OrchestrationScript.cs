@@ -135,11 +135,13 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				if (orchestrationParameters is OrchestrationProfileDefinition)
 				{
 					info.ProfileDefinitionReferences.Add(((OrchestrationProfileDefinition)orchestrationParameters).GetDefinitionReference(_engine));
+					info.ProfileDefinitions.Add(((OrchestrationProfileDefinition)orchestrationParameters).GetDefinitionReference(_engine).ID);
 				}
 
 				foreach (KeyValuePair<string, Parameter> keyValuePair in orchestrationParameters.GetParameterReferences(_engine))
 				{
 					info.ProfileParameterReferences.Add(keyValuePair.Key, keyValuePair.Value);
+					info.ProfileParameters.Add(keyValuePair.Key, keyValuePair.Value.ID);
 				}
 			}
 
