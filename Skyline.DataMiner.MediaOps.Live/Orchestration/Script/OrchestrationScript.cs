@@ -28,6 +28,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		public static readonly string ScriptInputRequestScriptInfoKey = "OrchestrationScriptInput";
 		public static readonly string ScriptOutputRequestScriptInfoKey = "OrchestrationScriptOutput";
 
+		public static List<ParameterInfo> _parameterInfos;
+
 		private IEngine _engine;
 
 		public abstract void Orchestrate(IEngine engine);
@@ -81,23 +83,35 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			}
 		}
 
+		public object GetParameterValue(string paramName)
+		{
+			ParameterInfo param = _parameterInfos.FirstOrDefault(paramInfo => paramInfo.Id == paramName);
+
+			if (param == null)
+			{
+				throw new InvalidOperationException($"Parameter with name '{paramName}' is missing");
+			}
+
+			return param.Value;
+		}
+
 		private void RunSafe(IEngine engine)
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
 			ScriptInfo scriptInfo = GetScriptInfo();
 
-			List<ParameterInfo> parameterInfos = CreateParameterInfos(scriptInfo, new ScriptInput());
+			_parameterInfos = CreateParameterInfos(scriptInfo, new ScriptInput());
 
-			if (GetIncompleteInfos(parameterInfos).Any())
+			if (GetIncompleteInfos(_parameterInfos).Any())
 			{
-				GetValuesFromUser(parameterInfos);
+				GetValuesFromUser(_parameterInfos);
 			}
 
 			Orchestrate(engine);
 		}
 
-		public Dictionary<string, string> HandleRequestInfoEntryPoint(IReadOnlyDictionary<string, string> metaData)
+		private Dictionary<string, string> HandleRequestInfoEntryPoint(IReadOnlyDictionary<string, string> metaData)
 		{
 			string unparsedOrchestrationScriptAction = null;
 			if (metaData is null ||
@@ -148,7 +162,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			return info;
 		}
 
-		public void GetValuesFromUser(List<ParameterInfo> infos)
+		private void GetValuesFromUser(List<ParameterInfo> infos)
 		{
 			InteractiveController controller = new InteractiveController(_engine);
 			GetOrchestrationValuesDialog dialog = new GetOrchestrationValuesDialog(_engine, infos);
@@ -162,7 +176,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			controller.ShowDialog(dialog);
 		}
 
-		public List<ParameterInfo> CreateParameterInfos(ScriptInfo scriptInfo, ScriptInput input)
+		private List<ParameterInfo> CreateParameterInfos(ScriptInfo scriptInfo, ScriptInput input)
 		{
 			List<ParameterInfo> parameterInfos = new List<ParameterInfo>(scriptInfo.ProfileParameterReferences.Count);
 
@@ -215,7 +229,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			return parameterInfos;
 		}
 
-		public void LinkParameters(ScriptInfo scriptInfo, List<ParameterInfo> infos)
+		private void LinkParameters(ScriptInfo scriptInfo, List<ParameterInfo> infos)
 		{
 			var profileParameterInfos = infos
 				.Where(x => x.Reference is ProfileParameterID)
@@ -365,7 +379,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			}
 		}
 
-		public IEnumerable<ParameterInfo> GetIncompleteInfos(IEnumerable<ParameterInfo> infos) => infos.Where(x => x.Value is null);
+		private IEnumerable<ParameterInfo> GetIncompleteInfos(IEnumerable<ParameterInfo> infos) => infos.Where(x => x.Value is null);
 
 		private ScriptOutput PerformOrchestrationFromEntryPoint(IReadOnlyDictionary<string, string> metaData, bool askMissingValues)
 		{
@@ -381,11 +395,11 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 					scriptInput = JsonConvert.DeserializeObject<ScriptInput>(serializedScriptInputRequestScriptInfo);
 				}
 
-				List<ParameterInfo> parameterInfos = CreateParameterInfos(scriptInfo, scriptInput);
+				_parameterInfos = CreateParameterInfos(scriptInfo, scriptInput);
 
 				if (askMissingValues)
 				{
-					List<ParameterInfo> incompleteInfos = GetIncompleteInfos(parameterInfos).ToList();
+					List<ParameterInfo> incompleteInfos = GetIncompleteInfos(_parameterInfos).ToList();
 					if (incompleteInfos.Any())
 					{
 						GetValuesFromUser(incompleteInfos);
