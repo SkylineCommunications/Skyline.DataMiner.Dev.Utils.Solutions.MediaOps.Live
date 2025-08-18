@@ -9,21 +9,23 @@
 
 	public sealed class MediationElement
 	{
+		public static string ProtocolName => Constants.MediationProtocolName;
+
 		public static readonly int ConnectionHandlerScriptsTableId = 1000;
 		public static readonly int PendingConnectionActionsTableId = 3000;
 		public static readonly int ConnectionsTableId = 5000;
 
-		private readonly MediaOpsLiveApi _api;
-
 		internal MediationElement(MediaOpsLiveApi api, IDmsElement dmsElement)
 		{
-			_api = api ?? throw new ArgumentNullException(nameof(api));
+			Api = api ?? throw new ArgumentNullException(nameof(api));
 			DmsElement = dmsElement ?? throw new ArgumentNullException(nameof(dmsElement));
 		}
 
+		internal MediaOpsLiveApi Api { get; }
+
 		public IDmsElement DmsElement { get; }
 
-		public DmsElementId Id => DmsElement.DmsElementId;
+		public DmsElementId DmsElementId => DmsElement.DmsElementId;
 
 		public int DmaId => DmsElement.AgentId;
 
@@ -31,41 +33,36 @@
 
 		public string Name => DmsElement.Name;
 
-		public ConnectionSubscription CreateConnectionSubscription()
+		public MediationElementSubscription CreateSubscription()
 		{
-			return new ConnectionSubscription(_api, this);
-		}
-
-		public PendingConnectionActionSubscription CreatePendingActionSubscription()
-		{
-			return new PendingConnectionActionSubscription(_api, this);
+			return new MediationElementSubscription(Api, this);
 		}
 
 		public IEnumerable<PendingConnectionAction> GetPendingConnectionActions()
 		{
-			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			if (DmsElement.State != ElementState.Active)
 			{
 				return [];
 			}
 
 			var tableData = DmsElement.GetTable(PendingConnectionActionsTableId).GetData();
-			return tableData.Values.Select(x => new PendingConnectionAction(x));
+			return tableData.Values.Select(x => new PendingConnectionAction(this, x));
 		}
 
 		public IEnumerable<Connection> GetConnections()
 		{
-			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			if (DmsElement.State != ElementState.Active)
 			{
 				return [];
 			}
 
 			var tableData = DmsElement.GetTable(ConnectionsTableId).GetData();
-			return tableData.Values.Select(x => new Connection(x));
+			return tableData.Values.Select(x => new Connection(this, x));
 		}
 
 		public bool TryGetConnection(Guid destinationEndpointId, out Connection connection)
 		{
-			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			if (DmsElement.State != ElementState.Active)
 			{
 				connection = null;
 				return false;
@@ -79,7 +76,7 @@
 
 				if (row != null)
 				{
-					connection = new Connection(row);
+					connection = new Connection(this, row);
 					return true;
 				}
 			}
@@ -94,7 +91,7 @@
 
 		public bool TryGetPendingConnectionAction(Guid destinationEndpointId, out PendingConnectionAction pendingConnectionAction)
 		{
-			if (DmsElement.State != Core.DataMinerSystem.Common.ElementState.Active)
+			if (DmsElement.State != ElementState.Active)
 			{
 				pendingConnectionAction = null;
 				return false;
@@ -108,7 +105,7 @@
 
 				if (row != null)
 				{
-					pendingConnectionAction = new PendingConnectionAction(row);
+					pendingConnectionAction = new PendingConnectionAction(this, row);
 					return true;
 				}
 			}
@@ -138,6 +135,26 @@
 			}
 
 			return script;
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (ReferenceEquals(this, obj))
+			{
+				return true;
+			}
+
+			if (obj is MediationElement other)
+			{
+				return DmsElementId == other.DmsElementId;
+			}
+
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return DmsElementId.GetHashCode();
 		}
 	}
 }

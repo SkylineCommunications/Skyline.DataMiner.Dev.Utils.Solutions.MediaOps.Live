@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
 {
 	using System;
+	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages;
@@ -8,6 +9,7 @@
 	internal class TrackedSubscriptionUpdate : ITrackedSubscriptionUpdate
 	{
 		private readonly Action _executeAction;
+		private Action _onAfterInitialEventsAction;
 		private Action _onFinishedAction;
 
 		public TrackedSubscriptionUpdate(Action executeAction)
@@ -20,6 +22,7 @@
 		public DMSMessage[] Execute()
 		{
 			_executeAction.Invoke();
+			_onAfterInitialEventsAction?.Invoke();
 			_onFinishedAction?.Invoke();
 
 			return [];
@@ -27,12 +30,15 @@
 
 		public DMSMessage[] ExecuteAndWait(TimeSpan? timeout = null)
 		{
-			throw new NotImplementedException();
+			var task = Task.Factory.StartNew(Execute, TaskCreationOptions.LongRunning);
+			return task.Result;
 		}
 
 		public ITrackedSubscriptionUpdate OnAfterInitialEvents(Action action)
 		{
-			throw new NotImplementedException();
+			_onAfterInitialEventsAction = action ?? throw new ArgumentNullException(nameof(action));
+
+			return this;
 		}
 
 		public ITrackedSubscriptionUpdate OnEndUpdating(Action action)

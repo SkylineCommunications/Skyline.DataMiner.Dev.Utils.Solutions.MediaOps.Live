@@ -88,6 +88,10 @@
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.ShouldBe([source2, destination1], ignoreOrder: true);
 
+			// Create pending action that already exists
+			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination1);
+			receivedEvents.Count.ShouldBe(4); // No new event
+
 			// Create the real connections
 			simulation.CreateTestConnection(audioSource2, audioDestination1);
 			simulation.CreateTestConnection(videoSource2, videoDestination1);
