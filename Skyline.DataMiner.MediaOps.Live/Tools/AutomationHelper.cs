@@ -86,9 +86,11 @@
 			messageBuilder.SetParameters(scriptParams.ToDictionary(param => param.Description, param => param.Value));
 			messageBuilder.SetDummies(scriptDummies.ToDictionary(dummy => dummy.Description, dummy => dummy.Value));
 
-			ScriptInput input = new(profile.Values.ToDictionary(
-				value => value.Name,
-				value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue));
+			ScriptInput input = new(
+				profile.Values.ToDictionary(
+					value => value.Name,
+					value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
+				profile.Instance);
 
 			var metaData = new Dictionary<string, string>();
 			metaData[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.PerformOrchestration);
