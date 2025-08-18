@@ -3,6 +3,8 @@
 	using System;
 	using System.Collections.Generic;
 
+	using Newtonsoft.Json;
+
 	public class ScriptInput
 	{
 		public ScriptInput()
@@ -14,6 +16,7 @@
 		{
 		}
 
+		[JsonConstructor]
 		public ScriptInput(Dictionary<string, object> profileParameterValues, string profileInstance)
 		{
 			ProfileParameterValues = profileParameterValues;
