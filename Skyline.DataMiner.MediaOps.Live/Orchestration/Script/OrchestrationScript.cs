@@ -104,7 +104,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			ScriptInfo scriptInfo = GetScriptInfo();
 
 			_parameterInfos = CreateParameterInfos(scriptInfo, new ScriptInput());
-			_engine.GenerateInformation(JsonConvert.SerializeObject(_parameterInfos));
 
 			if (GetIncompleteInfos(_parameterInfos).Any())
 			{
@@ -407,6 +406,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				}
 
 				_parameterInfos = CreateParameterInfos(scriptInfo, scriptInput);
+
+				_engine.GenerateInformation(JsonConvert.SerializeObject(_parameterInfos));
 
 				if (askMissingValues)
 				{
