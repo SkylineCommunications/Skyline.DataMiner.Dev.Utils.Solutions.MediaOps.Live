@@ -40,6 +40,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		public RequestScriptInfoOutput OnRequestScriptInfoRequest(IEngine engine, RequestScriptInfoInput inputData)
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
+
+			_engine.GenerateInformation(JsonConvert.SerializeObject(inputData));
 			return new RequestScriptInfoOutput
 			{
 				Data = HandleRequestInfoEntryPoint(inputData.Data),
@@ -192,6 +194,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 				parameterInfos.Add(info);
 			}
+
+			_engine.GenerateInformation(JsonConvert.SerializeObject(input));
 
 			if (!String.IsNullOrEmpty(input.ProfileInstance))
 			{
