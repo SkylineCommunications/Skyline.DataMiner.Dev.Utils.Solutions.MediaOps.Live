@@ -195,6 +195,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 			if (!String.IsNullOrEmpty(input.ProfileInstance))
 			{
+				_engine.GenerateInformation("Get Instance Values");
 				ProfileHelper helper = new ProfileHelper(_engine.SendSLNetMessages);
 				List<ProfileInstance> instances = helper.ProfileInstances.Read(ProfileInstanceExposers.Name.Equal(input.ProfileInstance));
 
@@ -207,11 +208,14 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				{
 					throw new InvalidOperationException($"Multiple profile instances found with name {input.ProfileInstance}");
 				}
-
+				
+				_engine.GenerateInformation("Found Instance with " + instances.First().Values.Length + " values");
 				foreach (ProfileParameterEntry profileParameterEntry in instances.First().Values)
 				{
 					string paramName = scriptInfo.ProfileParameters
 						.FirstOrDefault(x => x.Value == profileParameterEntry.ParameterID).Key;
+
+					_engine.GenerateInformation($"Parameter {paramName} with value {profileParameterEntry.Value}");
 
 					ParameterInfo info = new ParameterInfo
 					{
