@@ -23,12 +23,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 	public abstract class OrchestrationScript
 	{
-		public static readonly string OrchestrationScriptActionRequestScriptInfoKey = nameof(OrchestrationScriptAction);
-		public static readonly string OrchestrationScriptInfoRequestScriptInfoKey = "OrchestrationScriptInfo";
-		public static readonly string ScriptInputRequestScriptInfoKey = "OrchestrationScriptInput";
-		public static readonly string ScriptOutputRequestScriptInfoKey = "OrchestrationScriptOutput";
+		internal static readonly string OrchestrationScriptActionRequestScriptInfoKey = nameof(OrchestrationScriptAction);
+		internal static readonly string OrchestrationScriptInfoRequestScriptInfoKey = "OrchestrationScriptInfo";
+		internal static readonly string ScriptInputRequestScriptInfoKey = "OrchestrationScriptInput";
+		internal static readonly string ScriptOutputRequestScriptInfoKey = "OrchestrationScriptOutput";
 
-		public static List<ParameterInfo> _parameterInfos;
+		private List<ParameterInfo> _parameterInfos;
 
 		private IEngine _engine;
 
