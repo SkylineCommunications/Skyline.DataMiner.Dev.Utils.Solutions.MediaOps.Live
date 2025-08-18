@@ -104,6 +104,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			ScriptInfo scriptInfo = GetScriptInfo();
 
 			_parameterInfos = CreateParameterInfos(scriptInfo, new ScriptInput());
+			_engine.GenerateInformation(JsonConvert.SerializeObject(_parameterInfos));
 
 			if (GetIncompleteInfos(_parameterInfos).Any())
 			{
@@ -180,7 +181,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 		private List<ParameterInfo> CreateParameterInfos(ScriptInfo scriptInfo, ScriptInput input)
 		{
-			List<ParameterInfo> parameterInfos = new List<ParameterInfo>(scriptInfo.ProfileParameterReferences.Count);
+			List<ParameterInfo> parameterInfos = new List<ParameterInfo>();
 
 			foreach (KeyValuePair<string, Parameter> profileParameter in scriptInfo.ProfileParameterReferences)
 			{
@@ -212,7 +213,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				{
 					throw new InvalidOperationException($"Multiple profile instances found with name {input.ProfileInstance}");
 				}
-				
+
 				_engine.GenerateInformation("Found Instance with " + instances.First().Values.Length + " values");
 				foreach (ProfileParameterEntry profileParameterEntry in instances.First().Values)
 				{
