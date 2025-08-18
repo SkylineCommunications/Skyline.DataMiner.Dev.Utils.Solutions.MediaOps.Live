@@ -221,6 +221,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 							? profileParameterEntry.Value.DoubleValue
 							: profileParameterEntry.Value.StringValue,
 					};
+
+					parameterInfos.Add(info);
 				}
 			}
 
