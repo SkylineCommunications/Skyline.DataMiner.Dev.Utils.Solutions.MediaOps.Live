@@ -4,10 +4,19 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Newtonsoft.Json;
+
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
+
+	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
 
 	public static class AutomationHelper
 	{
@@ -50,7 +59,7 @@
 			return ExecuteAutomationScript(connection, messageBuilder.Build());
 		}
 
-		public static ExecuteScriptResponseMessage ExecuteGetOrchestrationScriptInfoScript(IConnection connection, string scriptName)
+		public static ExecuteScriptResponseMessage ExecuteGetOrchestrationScriptInfo(IConnection connection, string scriptName)
 		{
 			ExecuteScriptMessageBuilder messageBuilder = new(scriptName);
 			messageBuilder.SetCheckSets(false);
@@ -58,13 +67,40 @@
 			messageBuilder.SetSynchronous(true);
 
 			var metaData = new Dictionary<string, string>();
-			metaData["OrchestrationScriptAction"] = "OrchestrationScriptInfo";
+			metaData[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.OrchestrationScriptInfo);
 			messageBuilder.SetEntryPoint(new AutomationEntryPoint
 			{
 				EntryPointType = AutomationEntryPoint.Types.OnRequestScriptInfo,
 				Parameters = new List<object> { new RequestScriptInfoInput { Data = metaData } },
 			});
 			return ExecuteAutomationScript(connection, messageBuilder.Build());
+		}
+
+		public static ExecuteScriptResponseMessage TryExecuteOrchestrationScript(IConnection connection, string scriptName, List<DmsAutomationScriptParamValue> scriptParams, List<DmsAutomationScriptDummyValue> scriptDummies, OrchestrationProfile profile, out string[] errorMessages)
+		{
+			ExecuteScriptMessageBuilder messageBuilder = new(scriptName);
+			messageBuilder.SetCheckSets(false);
+			messageBuilder.SetInformationEvent(false);
+			messageBuilder.SetSynchronous(true);
+			messageBuilder.SetExtendedErrorInfo(true);
+			messageBuilder.SetParameters(scriptParams.ToDictionary(param => param.Description, param => param.Value));
+			messageBuilder.SetDummies(scriptDummies.ToDictionary(dummy => dummy.Description, dummy => dummy.Value));
+
+			ScriptInput input = new(profile.Values.ToDictionary(
+				value => value.Name,
+				value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue));
+
+			var metaData = new Dictionary<string, string>();
+			metaData[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.PerformOrchestration);
+			metaData[OrchestrationScript.ScriptInputRequestScriptInfoKey] = JsonConvert.SerializeObject(input);
+
+			messageBuilder.SetEntryPoint(new AutomationEntryPoint
+			{
+				EntryPointType = AutomationEntryPoint.Types.OnRequestScriptInfo,
+				Parameters = new List<object> { new RequestScriptInfoInput { Data = metaData } },
+			});
+
+			return ExecuteAutomationScript(connection, messageBuilder.Build(), out errorMessages);
 		}
 
 		public static ExecuteScriptResponseMessage ExecuteAutomationScript(IConnection connection, ExecuteScriptMessage message)
@@ -88,6 +124,33 @@
 			if (response.HadError)
 			{
 				throw new DataMinerException("Script execution failed: " + String.Join(", ", response.ErrorMessages));
+			}
+
+			return response;
+		}
+
+		public static ExecuteScriptResponseMessage ExecuteAutomationScript(IConnection connection, ExecuteScriptMessage message, out string[] errorMessages)
+		{
+			errorMessages = [];
+			var progress = connection.Async.Launch(message);
+
+			var result = progress.WaitForAsyncResponse(timeout: 5 * 60);
+
+			if (result == null)
+			{
+				throw new DataMinerException("No response received");
+			}
+
+			if (result.Failure != null)
+			{
+				throw result.Failure;
+			}
+
+			var response = (ExecuteScriptResponseMessage)result.Messages.Single();
+
+			if (response.HadError)
+			{
+				errorMessages = response.ErrorMessages;
 			}
 
 			return response;

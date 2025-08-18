@@ -14,10 +14,12 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
@@ -30,11 +32,12 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 		private readonly OrchestrationSettings _settings;
+		private readonly ProfileHelper _profileHelper;
 
 		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, OrchestrationSettings settings)
 		{
 			_api = api;
-
+			_profileHelper = new ProfileHelper(api.Connection.HandleMessages);
 			_settings = settings ?? new OrchestrationSettings();
 		}
 
@@ -345,6 +348,7 @@
 							if (TryExecuteOrchestrationScript(
 									nodeConfiguration.OrchestrationScriptName,
 									nodeConfiguration.OrchestrationScriptArguments,
+									nodeConfiguration.Profile,
 									performanceTracker,
 									out string[] errorMessages))
 							{
@@ -376,7 +380,8 @@
 			{
 				if (!TryExecuteOrchestrationScript(
 						orchestrationEventConfiguration.GlobalOrchestrationScript,
-						CombineOrchestrationScriptInputs(orchestrationEventConfiguration.GlobalOrchestrationScriptArguments, orchestrationEventConfiguration.Profile.Values),
+						orchestrationEventConfiguration.GlobalOrchestrationScriptArguments,
+						orchestrationEventConfiguration.Profile,
 						performanceTracker,
 						out string[] errorMessages))
 				{
@@ -386,7 +391,7 @@
 			}
 		}
 
-		private IList<OrchestrationScriptArgument> CombineOrchestrationScriptInputs(IList<OrchestrationScriptArgument> arguments, IList<OrchestrationProfileValue> profileValues)
+		private IList<OrchestrationScriptArgument> CombineOrchestrationScriptArguments(IList<OrchestrationScriptArgument> arguments, IList<OrchestrationProfileValue> profileValues)
 		{
 			List<OrchestrationScriptArgument> results = arguments.ToList();
 
@@ -405,7 +410,7 @@
 			return results;
 		}
 
-		private bool TryExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, PerformanceTracker performanceTracker, out string[] errorMessages)
+		private bool TryExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, PerformanceTracker performanceTracker, out string[] errorMessages)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
@@ -415,17 +420,42 @@
 				List<DmsAutomationScriptParamValue> scriptParams = [];
 				IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments = arguments.ToList();
 
+				Lazy<ProfileInstance> profileInstance = new(() =>
+				{
+					ProfileInstance instance = _profileHelper.ProfileInstances.Read(ProfileInstanceExposers.Name.Equal(profile.Instance)).FirstOrDefault();
+					if (instance == null)
+					{
+						throw new InvalidOperationException($"No profile instance found with name '{profile.Instance}'");
+					}
+
+					return instance;
+				});
+
 				foreach (IDmsAutomationScriptParameter requiredParameter in script.Parameters)
 				{
 					OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredParameter.Description);
-
-					if (matchingArgument == null)
+					if (matchingArgument != null)
 					{
-						errorMessages = [$"Missing required script parameter: {requiredParameter.Description}"];
-						return false;
+						scriptParams.Add(new DmsAutomationScriptParamValue(matchingArgument.Name, matchingArgument.Value));
+						continue;
 					}
 
-					scriptParams.Add(new DmsAutomationScriptParamValue(matchingArgument.Name, matchingArgument.Value));
+					var profileParameter = profile.Values.FirstOrDefault(value => value.Name == requiredParameter.Description);
+					if (profileParameter != null)
+					{
+						scriptParams.Add(new DmsAutomationScriptParamValue(profileParameter.Name, profileParameter.Value.ToString()));
+						continue;
+					}
+
+					var profileInstanceParameter = profileInstance.Value.Values.FirstOrDefault(value => value.Parameter.Name == requiredParameter.Description);
+					if (profileInstanceParameter != null)
+					{
+						scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, profileInstanceParameter.Value.ToString()));
+						continue;
+					}
+
+					errorMessages = [$"Missing required script parameter: {requiredParameter.Description}"];
+					return false;
 				}
 
 				List<DmsAutomationScriptDummyValue> scriptDummies = [];
@@ -453,21 +483,8 @@
 					}
 				}
 
-				DmsAutomationScriptRunOptions scriptOptions = new()
-				{
-					ExtendedErrorInfo = true,
-				};
-
-				DmsAutomationScriptResult scriptResult = script.Execute(scriptParams, scriptDummies, scriptOptions);
-
-				if (scriptResult.HadError)
-				{
-					errorMessages = scriptResult.ErrorMessages;
-					return false;
-				}
-
-				errorMessages = [];
-				return true;
+				var result = AutomationHelper.TryExecuteOrchestrationScript(_api.Connection, scriptName, scriptParams, scriptDummies, profile, out errorMessages);
+				return !result.HadError;
 			}
 		}
 	}

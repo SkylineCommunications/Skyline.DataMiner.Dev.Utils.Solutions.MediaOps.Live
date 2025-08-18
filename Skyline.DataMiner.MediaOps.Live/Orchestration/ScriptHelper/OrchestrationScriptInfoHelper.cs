@@ -14,8 +14,6 @@
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Profiles;
 
-	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
-
 	/// <summary>
 	/// Helper class to retrieve orchestration script input information.
 	/// </summary>
@@ -104,7 +102,7 @@
 
 		private ScriptInfo GetScriptOrchestrationInfo(string scriptName)
 		{
-			var response = AutomationHelper.ExecuteGetOrchestrationScriptInfoScript(_connection, scriptName);
+			var response = AutomationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName);
 
 			if (response?.EntryPointResult?.Result == null || response.HadError)
 			{

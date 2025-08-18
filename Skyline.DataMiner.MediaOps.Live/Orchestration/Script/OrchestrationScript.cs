@@ -87,7 +87,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 			ScriptInfo scriptInfo = GetScriptInfo();
 
-			List<ParameterInfo> parameterInfos = CreateParameterInfos(scriptInfo, new ValueInfo());
+			List<ParameterInfo> parameterInfos = CreateParameterInfos(scriptInfo, new ScriptInput());
 
 			if (GetIncompleteInfos(parameterInfos).Any())
 			{
@@ -162,7 +162,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			controller.ShowDialog(dialog);
 		}
 
-		public List<ParameterInfo> CreateParameterInfos(ScriptInfo scriptInfo, ValueInfo valueInfo)
+		public List<ParameterInfo> CreateParameterInfos(ScriptInfo scriptInfo, ScriptInput input)
 		{
 			List<ParameterInfo> parameterInfos = new List<ParameterInfo>(scriptInfo.ProfileParameterReferences.Count);
 
@@ -173,10 +173,41 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				{
 					Id = profileParameter.Key,
 					Reference = reference,
-					Value = valueInfo.ProfileParameterValues.TryGetValue(profileParameter.Key, out object value) ? value : null,
+					Value = input.ProfileParameterValues.TryGetValue(profileParameter.Key, out object value) ? value : null,
 				};
 
 				parameterInfos.Add(info);
+			}
+
+			if (!String.IsNullOrEmpty(input.ProfileInstance))
+			{
+				ProfileHelper helper = new ProfileHelper(_engine.SendSLNetMessages);
+				List<ProfileInstance> instances = helper.ProfileInstances.Read(ProfileInstanceExposers.Name.Equal(input.ProfileInstance));
+
+				if (instances.Count == 0)
+				{
+					throw new InvalidOperationException($"No profile instance found with name {input.ProfileInstance}");
+				}
+
+				if (instances.Count > 1)
+				{
+					throw new InvalidOperationException($"Multiple profile instances found with name {input.ProfileInstance}");
+				}
+
+				foreach (ProfileParameterEntry profileParameterEntry in instances.First().Values)
+				{
+					string paramName = scriptInfo.ProfileParameters
+						.FirstOrDefault(x => x.Value == profileParameterEntry.ParameterID).Key;
+
+					ParameterInfo info = new ParameterInfo
+					{
+						Id = paramName,
+						Reference = new ProfileParameterID(profileParameterEntry.ParameterID),
+						Value = profileParameterEntry.Value.Type == ParameterValue.ValueType.Double
+							? profileParameterEntry.Value.DoubleValue
+							: profileParameterEntry.Value.StringValue,
+					};
+				}
 			}
 
 			LinkParameters(scriptInfo, parameterInfos);
@@ -268,8 +299,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				}
 			}
 
-			// Tip: add checks for missing parameters
-
 			AssignProfileDefinitionGroups(scriptInfo.ProfileDefinitionReferences, profileParameterInfos);
 		}
 
@@ -346,13 +375,13 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			{
 				ScriptInfo scriptInfo = GetScriptInfo();
 
-				ScriptInput scriptInput = null;
+				ScriptInput scriptInput = new ScriptInput();
 				if (metaData.TryGetValue(ScriptInputRequestScriptInfoKey, out string serializedScriptInputRequestScriptInfo))
 				{
 					scriptInput = JsonConvert.DeserializeObject<ScriptInput>(serializedScriptInputRequestScriptInfo);
 				}
 
-				List<ParameterInfo> parameterInfos = CreateParameterInfos(scriptInfo, scriptInput?.ValueInfo ?? new ValueInfo());
+				List<ParameterInfo> parameterInfos = CreateParameterInfos(scriptInfo, scriptInput);
 
 				if (askMissingValues)
 				{

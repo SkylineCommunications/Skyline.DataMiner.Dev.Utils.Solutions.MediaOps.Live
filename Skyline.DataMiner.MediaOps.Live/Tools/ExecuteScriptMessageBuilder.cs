@@ -2,6 +2,7 @@
 {
 	using System.Collections.Generic;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
 
@@ -57,6 +58,19 @@
 			foreach (var parameter in parameters)
 			{
 				_options.Add($"PARAMETERBYNAME:{parameter.Key}:{parameter.Value}");
+			}
+		}
+
+		public void SetDummies(Dictionary<string, DmsElementId> dummies)
+		{
+			if (dummies == null || dummies.Count == 0)
+			{
+				return;
+			}
+
+			foreach (var dummy in dummies)
+			{
+				_options.Add($"PROTOCOLBYNAME:{dummy.Key}:{dummy.Value.AgentId}:{dummy.Value.ElementId}");
 			}
 		}
 
