@@ -234,6 +234,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				}
 			}
 
+
+			_engine.GenerateInformation(JsonConvert.SerializeObject(parameterInfos));
 			LinkParameters(scriptInfo, parameterInfos);
 
 			return parameterInfos;
