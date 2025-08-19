@@ -422,6 +422,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			}
 			catch (Exception e)
 			{
+				_engine.GenerateInformation(e.ToString());
 				scriptOutput.ExceptionString = e.ToString();
 			}
 
