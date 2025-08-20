@@ -225,14 +225,23 @@
 				throw new ArgumentNullException(nameof(endpoint));
 			}
 
+			// Check if the endpoint's role matches the virtual signal group's role
 			if (endpoint.Role != Role)
 			{
 				throw new InvalidOperationException($"Endpoint and virtual signal group must have the same role.");
 			}
 
+			// Check if the endpoint's transport type matches the level's transport type
 			if (endpoint.TransportType != level.TransportType)
 			{
 				throw new InvalidOperationException($"Endpoint and level must have the same transport type.");
+			}
+
+			// Check if the endpoint is already assigned to another level in this virtual signal group
+			var existingLevelEndpoint = Levels.FirstOrDefault(x => x.Endpoint == endpoint && x.Level != level);
+			if (existingLevelEndpoint != null)
+			{
+				throw new InvalidOperationException($"Endpoint '{endpoint.Name}' is already assigned to another level in this virtual signal group.");
 			}
 
 			var existing = Levels.FirstOrDefault(x => x.Level == level);
