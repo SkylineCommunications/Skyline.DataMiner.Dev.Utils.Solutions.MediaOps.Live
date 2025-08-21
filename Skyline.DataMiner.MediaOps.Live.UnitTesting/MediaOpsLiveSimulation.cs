@@ -13,6 +13,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
 
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
@@ -154,6 +155,24 @@
 
 			Dms.AddScript("Script_Success", new List<string>(), new List<string>());
 			Dms.AddScript("Script_Fail", new List<string>(), new List<string>());
+			Dms.AddScript(
+				"OrchestrationScript",
+				new List<string> { "InputParam"},
+				new List<string> { "InputDummy" },
+				new ScriptInfo
+				{
+					ProfileParameters =
+					{
+						{ "IndividualProfileParam_Int", new Guid("986528dc-78af-4b09-b1c1-11dac21744b1") },
+						{ "IndividualProfileParam_String", new Guid("b0e37ff1-fe56-4bd7-b108-9e8c992eb6d9") },
+						{ "DefinitionProfileParam_Int", new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e") },
+						{ "DefinitionProfileParam_String", new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f") },
+					},
+					ProfileDefinitions =
+					{
+						new Guid("94fa7d96-8cb3-4bdd-a968-dd1192683165"),
+					},
+				});
 
 			if (installDomModules)
 			{

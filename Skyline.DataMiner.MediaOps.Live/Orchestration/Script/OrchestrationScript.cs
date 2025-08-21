@@ -42,7 +42,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
-			_engine.GenerateInformation(JsonConvert.SerializeObject(inputData));
 			return new RequestScriptInfoOutput
 			{
 				Data = HandleRequestInfoEntryPoint(inputData.Data),
@@ -196,12 +195,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				parameterInfos.Add(info);
 			}
 
-			_engine.GenerateInformation(JsonConvert.SerializeObject(input));
-
 			// Add profile instance parameter values from provide instance in input.
 			if (!String.IsNullOrEmpty(input.ProfileInstance))
 			{
-				_engine.GenerateInformation("Get Instance Values");
 				ProfileHelper helper = new ProfileHelper(_engine.SendSLNetMessages);
 				List<ProfileInstance> instances = helper.ProfileInstances.Read(ProfileInstanceExposers.Name.Equal(input.ProfileInstance));
 
@@ -217,8 +213,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 				ProfileInstance instance = instances.First();
 
-				_engine.GenerateInformation("Found instance with " + instance.Values.Length + " values");
-
 				foreach (ProfileParameterEntry profileParameterEntry in instance.Values)
 				{
 					ParameterInfo matchInfo = parameterInfos
@@ -226,8 +220,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 					if (matchInfo != null)
 					{
-						_engine.GenerateInformation($"Parameter {matchInfo.Id} with value {profileParameterEntry.Value} from instance {instance.Name}");
-
 						matchInfo.Value = profileParameterEntry.Value.Type == ParameterValue.ValueType.Double
 							? profileParameterEntry.Value.DoubleValue
 							: profileParameterEntry.Value.StringValue;
@@ -243,12 +235,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 				if (matchInfo != null)
 				{
-					_engine.GenerateInformation($"Standalone parameter {matchInfo.Id} with value {parameterValue.Value}");
 					matchInfo.Value = parameterValue.Value;
 				}
 			}
 
-			_engine.GenerateInformation(JsonConvert.SerializeObject(parameterInfos));
 			LinkParameters(scriptInfo, parameterInfos);
 
 			return parameterInfos;

@@ -6,16 +6,26 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Newtonsoft.Json;
+
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Automation;
+	using Skyline.DataMiner.Net.Automation.CustomEntryPoint;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.Advanced;
+	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
+
+	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
 
 	public sealed class SimulatedDms
 	{
 		private readonly ConcurrentDictionary<int, SimulatedDma> _agents = new();
 		private readonly ConcurrentBag<SimulatedAutomationScript> _scripts = [];
 		private readonly ConcurrentBag<SLNetConnectionMock> _connections = [];
+		private readonly ConcurrentBag<Parameter> _profileParameters = [];
 		private readonly DomSLNetMessageHandler _domSlNetMessageHandler = new();
 
 		public SimulatedDms()
@@ -27,6 +37,8 @@
 
 		public IReadOnlyCollection<SimulatedAutomationScript> Scripts => _scripts;
 
+		public IReadOnlyCollection<Parameter> ProfileParameters => _profileParameters;
+
 		public SimulatedDma GetOrCreateAgent(int dmaId)
 		{
 			return _agents.GetOrAdd(
@@ -34,9 +46,39 @@
 				id => new SimulatedDma(this, id));
 		}
 
-		public void AddScript(string name, List<string> parameters, List<string> dummies)
+		public void AddScript(string name, List<string> parameters, List<string> dummies, ScriptInfo orchestrationScriptInfo = null)
 		{
-			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies));
+			if (orchestrationScriptInfo == null)
+			{
+				_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, new ScriptInfo()));
+				return;
+			}
+
+			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, orchestrationScriptInfo) {Folder = "MediaOps/OrchestrationScripts" });
+			foreach (KeyValuePair<string, Guid> profileParameter in orchestrationScriptInfo.ProfileParameters)
+			{
+				var param = new Parameter(profileParameter.Value)
+				{
+					Name = profileParameter.Key,
+					Categories = ProfileParameterCategory.Monitoring,
+				};
+
+				if (profileParameter.Key.EndsWith("_String"))
+				{
+					param.Type = Parameter.ParameterType.Text;
+				}
+				else
+				{
+					param.Type = Parameter.ParameterType.Number;
+					param.Decimals = 2;
+					param.RangeMax = 1000;
+					param.RangeMin = 0;
+					param.Stepsize = 0.01;
+					param.Units = "Units";
+				}
+
+				_profileParameters.Add(param);
+			}
 		}
 
 		public IEnumerable<SimulatedSchedulerTask> GetAllDmsSchedulerTasks()
@@ -139,10 +181,23 @@
 					responses = HandleMessage(msg);
 					return true;
 
+				case ManagerStoreStartPagingRequest<Parameter> msg:
+					responses = HandleMessage(msg);
+					return true;
+
 				default:
 					responses = [];
 					return false;
 			}
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(ManagerStoreStartPagingRequest<Parameter> msg)
+		{
+			yield return new ManagerStorePagingResponse<Parameter>
+			{
+				IsFinalPage = true,
+				Objects = _profileParameters.Where(msg.Filter.Filter.getLambda()).ToList(),
+			};
 		}
 
 		private IEnumerable<DMSMessage> HandleMessage(GetLiteElementInfo msg)
@@ -310,9 +365,20 @@
 				case InfoType.DataMinerInfo:
 					return HandleDataMinerInfoMessage();
 
+				case InfoType.Scripts:
+					return HandleScriptsInfoMessage();
+
 				default:
 					throw new NotSupportedException("Not Supported");
 			}
+		}
+
+		private IEnumerable<DMSMessage> HandleScriptsInfoMessage()
+		{
+			yield return new GetScriptsResponseMessage
+			{
+				Scripts = _scripts.Select(script => script.Name).ToArray(),
+			};
 		}
 
 		private IEnumerable<DMSMessage> HandleMessage(GetDataMinerByIDMessage msg)
@@ -341,7 +407,7 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(ImpersonateMessage msg)
 		{
-			List<DMSMessage> responses = new List<DMSMessage>();
+			List<DMSMessage> responses = new();
 			foreach (ClientRequestMessage clientRequestMessage in msg.Messages)
 			{
 				TryHandleMessage(clientRequestMessage, out IEnumerable<DMSMessage> msgResponses);
@@ -353,6 +419,8 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(ExecuteScriptMessage msg)
 		{
+			SimulatedAutomationScript script = Scripts.First(s => s.Name == msg.ScriptName);
+
 			int returnCode = msg.ScriptName == "Script_Fail" ? -1 : 0;
 
 			yield return new ExecuteScriptResponseMessage
@@ -361,6 +429,10 @@
 				[
 					returnCode.ToString(), // Return code,
 				]),
+				EntryPointResult = new AutomationEntryPointResult(new RequestScriptInfoOutput
+				{
+					Data = new Dictionary<string, string> { { OrchestrationScript.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(script.OrchestrationScriptInfo) } },
+				}),
 			};
 		}
 
@@ -373,10 +445,17 @@
 			{
 				Parameters = script.Parameters.Select(param => new AutomationParameterInfo { Description = param, ParameterId = id++}).ToArray(),
 				Name = msg.Name,
-				Dummies = script.Dummies.Select(dummy => new AutomationProtocolInfo() { Description = dummy, ProtocolId = id++ }).ToArray(),
+				Dummies = script.Dummies.Select(dummy => new AutomationProtocolInfo { ProtocolName = "Protocol", ProtocolVersion = "Production", Description = dummy, ProtocolId = id++ }).ToArray(),
 				Memories = [],
 				Type = AutomationScriptType.Automation,
-				Exes = [],
+				Exes =
+				[
+					new AutomationExeInfo()
+					{
+						Type = AutomationExeType.CSharpCode,
+					},
+				],
+				Folder = script.Folder,
 			};
 		}
 

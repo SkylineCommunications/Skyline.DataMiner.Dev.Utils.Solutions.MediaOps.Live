@@ -1,0 +1,36 @@
+﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
+{
+	using Newtonsoft.Json;
+
+	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
+
+	[TestClass]
+	public sealed class MediaOps_LiveApi_Tests_OrchestrationScriptInfoHelper
+	{
+		[TestMethod]
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_GetOrchestrationScriptInfo()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+
+			OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("OrchestrationScript");
+
+			Console.WriteLine(JsonConvert.SerializeObject(info));
+			Assert.AreEqual("OrchestrationScript", info.ScriptName);
+			Assert.HasCount(5, info.Parameters);
+			Assert.HasCount(4, info.Parameters.Where(param => param.FromProfile));
+			Assert.HasCount(1, info.Elements);
+		}
+
+		[TestMethod]
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_GetOrchestrationScripts()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+
+			List<string> info = api.Orchestration.Scripts.GetOrchestrationScripts();
+
+			Assert.HasCount(1, info);
+		}
+	}
+}
