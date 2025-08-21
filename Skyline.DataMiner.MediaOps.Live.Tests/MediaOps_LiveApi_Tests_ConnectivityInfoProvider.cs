@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using Shouldly;
+	using FluentAssertions;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
@@ -33,9 +33,9 @@
 				Assert.IsTrue(connectivity.IsConnected(audioSource1));
 			}
 
-			connectionMetrics.NumberOfRequests.ShouldBeLessThan(10UL);
-			connectionMetrics.NumberOfDomRequests.ShouldBeLessThan(10UL);
-			connectionMetrics.NumberOfDomInstancesRetrieved.ShouldBeLessThan(100UL);
+			connectionMetrics.NumberOfRequests.Should().BeLessThan(10UL);
+			connectionMetrics.NumberOfDomRequests.Should().BeLessThan(10UL);
+			connectionMetrics.NumberOfDomInstancesRetrieved.Should().BeLessThan(100UL);
 		}
 
 		[TestMethod]
@@ -62,64 +62,64 @@
 
 			// Create a first connection (VSG partially connected)
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
-			receivedEvents.Count.ShouldBe(1);
-			receivedEvents.Last().Endpoints.Count.ShouldBe(2); // Source and Destination
-			receivedEvents.Last().VirtualSignalGroups.Count.ShouldBe(2);
-			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedState == ConnectionState.Partial);
-			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).ShouldBe([source1, destination1], ignoreOrder: true);
+			receivedEvents.Count.Should().Be(1);
+			receivedEvents.Last().Endpoints.Count.Should().Be(2); // Source and Destination
+			receivedEvents.Last().VirtualSignalGroups.Count.Should().Be(2);
+			receivedEvents.Last().VirtualSignalGroups.Should().OnlyContain(x => x.ConnectedState == ConnectionState.Partial);
+			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup).Should().BeEquivalentTo([source1, destination1]);
 
 			// Create a second connection (VSG fully connected)
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
-			receivedEvents.Count.ShouldBe(2);
-			receivedEvents.Last().Endpoints.Count.ShouldBe(2); // Source and Destination
-			receivedEvents.Last().VirtualSignalGroups.Count.ShouldBe(2);
-			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedState == ConnectionState.Connected);
+			receivedEvents.Count.Should().Be(2);
+			receivedEvents.Last().Endpoints.Count.Should().Be(2); // Source and Destination
+			receivedEvents.Last().VirtualSignalGroups.Count.Should().Be(2);
+			receivedEvents.Last().VirtualSignalGroups.Should().OnlyContain(x => x.ConnectedState == ConnectionState.Connected);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
-				.ShouldBe([source1, destination1], ignoreOrder: true);
+				.Should().BeEquivalentTo([source1, destination1]);
 
 			// Create connection that already exists
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
-			receivedEvents.Count.ShouldBe(2); // No new event, as the connection already exists
+			receivedEvents.Count.Should().Be(2); // No new event, as the connection already exists
 
 			// Create a pending connection action
 			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination1);
 			simulation.CreateTestPendingConnectionAction(videoSource2, videoDestination1);
-			receivedEvents.Count.ShouldBe(4);
+			receivedEvents.Count.Should().Be(4);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
-				.ShouldBe([source2, destination1], ignoreOrder: true);
+				.Should().BeEquivalentTo([source2, destination1]);
 
 			// Create pending action that already exists
 			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination1);
-			receivedEvents.Count.ShouldBe(4); // No new event
+			receivedEvents.Count.Should().Be(4); // No new event
 
 			// Create the real connections
 			simulation.CreateTestConnection(audioSource2, audioDestination1);
 			simulation.CreateTestConnection(videoSource2, videoDestination1);
-			receivedEvents.Count.ShouldBe(8); // 4 new events: 2 to clear the pending actions + 2 for the new connections
+			receivedEvents.Count.Should().Be(8); // 4 new events: 2 to clear the pending actions + 2 for the new connections
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
-				.ShouldBe([source1, source2, destination1], ignoreOrder: true);
+				.Should().BeEquivalentTo([source1, source2, destination1]);
 
 			// Connect to unknown sources
 			simulation.CreateTestConnection(null, audioDestination1);
 			simulation.CreateTestConnection(null, videoDestination1);
-			receivedEvents.Count.ShouldBe(10); // 2 new events
+			receivedEvents.Count.Should().Be(10); // 2 new events
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
-				.ShouldBe([source2, destination1], ignoreOrder: true);
+				.Should().BeEquivalentTo([source2, destination1]);
 
 			// Start disconnecting the connections
 			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination1, PendingConnectionActionType.Disconnect);
 			simulation.CreateTestPendingConnectionAction(videoSource2, videoDestination1, PendingConnectionActionType.Disconnect);
-			receivedEvents.Count.ShouldBe(12); // 2 new events
+			receivedEvents.Count.Should().Be(12); // 2 new events
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
-				.ShouldBe([source2, destination1], ignoreOrder: true);
+				.Should().BeEquivalentTo([source2, destination1]);
 
 			// Disconnecting the connections
 			simulation.TestDisconnectDestination(audioDestination1);
 			simulation.TestDisconnectDestination(videoDestination1);
-			receivedEvents.Count.ShouldBe(16); // 4 new events: 2 to clear the pending actions + 2 for the disconnected connections
-			receivedEvents.Last().VirtualSignalGroups.ShouldAllBe(x => x.ConnectedState == ConnectionState.Disconnected);
+			receivedEvents.Count.Should().Be(16); // 4 new events: 2 to clear the pending actions + 2 for the disconnected connections
+			receivedEvents.Last().VirtualSignalGroups.Should().OnlyContain(x => x.ConnectedState == ConnectionState.Disconnected);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
-				.ShouldBe([destination1], ignoreOrder: true);
+				.Should().BeEquivalentTo([destination1]);
 		}
 
 		#region Endpoints
@@ -166,7 +166,7 @@
 
 			var result = connectivity.IsConnected([audioSource1, audioSource2, audioDestination1, audioDestination2]);
 
-			result.ShouldBe(new Dictionary<Endpoint, bool>
+			result.Should().BeEquivalentTo(new Dictionary<Endpoint, bool>
 			{
 				{ audioSource1, true },
 				{ audioSource2, false },
@@ -210,73 +210,73 @@
 			using var connectivity = new ConnectivityInfoProvider(api);
 
 			var audioSource1Connectivity = connectivity.GetConnectivity(audioSource1);
-			audioSource1Connectivity.ConnectionState.ShouldBe(EndpointConnectionState.Connected);
-			audioSource1Connectivity.IsConnected.ShouldBeTrue();
-			audioSource1Connectivity.IsConnecting.ShouldBeFalse();
-			audioSource1Connectivity.IsDisconnecting.ShouldBeFalse();
-			audioSource1Connectivity.DestinationConnections.ShouldBe([new(audioDestination1, EndpointConnectionState.Connected)]);
-			audioSource1Connectivity.VirtualSignalGroups.ShouldBe([source1]);
+			audioSource1Connectivity.ConnectionState.Should().Be(EndpointConnectionState.Connected);
+			audioSource1Connectivity.IsConnected.Should().BeTrue();
+			audioSource1Connectivity.IsConnecting.Should().BeFalse();
+			audioSource1Connectivity.IsDisconnecting.Should().BeFalse();
+			audioSource1Connectivity.DestinationConnections.Should().BeEquivalentTo([new EndpointConnection(audioDestination1, EndpointConnectionState.Connected)]);
+			audioSource1Connectivity.VirtualSignalGroups.Should().BeEquivalentTo([source1]);
 
 			var audioDestination1Connectivity = connectivity.GetConnectivity(audioDestination1);
-			audioDestination1Connectivity.ConnectionState.ShouldBe(EndpointConnectionState.Connected);
-			audioDestination1Connectivity.IsConnected.ShouldBeTrue();
-			audioDestination1Connectivity.IsConnecting.ShouldBeFalse();
-			audioDestination1Connectivity.IsDisconnecting.ShouldBeFalse();
-			audioDestination1Connectivity.ConnectedSource.ShouldBe(audioSource1);
-			audioDestination1Connectivity.VirtualSignalGroups.ShouldBe([destination1]);
+			audioDestination1Connectivity.ConnectionState.Should().Be(EndpointConnectionState.Connected);
+			audioDestination1Connectivity.IsConnected.Should().BeTrue();
+			audioDestination1Connectivity.IsConnecting.Should().BeFalse();
+			audioDestination1Connectivity.IsDisconnecting.Should().BeFalse();
+			audioDestination1Connectivity.ConnectedSource.Should().Be(audioSource1);
+			audioDestination1Connectivity.VirtualSignalGroups.Should().BeEquivalentTo([destination1]);
 
 			var audioSource2Connectivity = connectivity.GetConnectivity(audioSource2);
-			audioSource2Connectivity.ConnectionState.ShouldBe(EndpointConnectionState.Connecting);
-			audioSource2Connectivity.IsConnected.ShouldBeFalse();
-			audioSource2Connectivity.IsConnecting.ShouldBeTrue();
-			audioSource2Connectivity.IsDisconnecting.ShouldBeFalse();
-			audioSource2Connectivity.PendingConnectedDestinations.ShouldBe([audioDestination2]);
+			audioSource2Connectivity.ConnectionState.Should().Be(EndpointConnectionState.Connecting);
+			audioSource2Connectivity.IsConnected.Should().BeFalse();
+			audioSource2Connectivity.IsConnecting.Should().BeTrue();
+			audioSource2Connectivity.IsDisconnecting.Should().BeFalse();
+			audioSource2Connectivity.PendingConnectedDestinations.Should().BeEquivalentTo([audioDestination2]);
 
 			var audioDestination2Connectivity = connectivity.GetConnectivity(audioDestination2);
-			audioDestination2Connectivity.ConnectionState.ShouldBe(EndpointConnectionState.Connecting);
-			audioDestination2Connectivity.IsConnected.ShouldBeFalse();
-			audioDestination2Connectivity.IsConnecting.ShouldBeTrue();
-			audioDestination2Connectivity.IsDisconnecting.ShouldBeFalse();
-			audioDestination2Connectivity.PendingConnectedSource.ShouldBe(audioSource2);
+			audioDestination2Connectivity.ConnectionState.Should().Be(EndpointConnectionState.Connecting);
+			audioDestination2Connectivity.IsConnected.Should().BeFalse();
+			audioDestination2Connectivity.IsConnecting.Should().BeTrue();
+			audioDestination2Connectivity.IsDisconnecting.Should().BeFalse();
+			audioDestination2Connectivity.PendingConnectedSource.Should().Be(audioSource2);
 
 			var audioSource3Connectivity = connectivity.GetConnectivity(audioSource3);
-			audioSource3Connectivity.ConnectionState.ShouldBe(EndpointConnectionState.Disconnecting);
-			audioSource3Connectivity.IsConnected.ShouldBeTrue();
-			audioSource3Connectivity.IsConnecting.ShouldBeFalse();
-			audioSource3Connectivity.IsDisconnecting.ShouldBeTrue();
-			audioSource3Connectivity.DestinationConnections.ShouldBe([new(audioDestination3, EndpointConnectionState.Disconnecting)]);
+			audioSource3Connectivity.ConnectionState.Should().Be(EndpointConnectionState.Disconnecting);
+			audioSource3Connectivity.IsConnected.Should().BeTrue();
+			audioSource3Connectivity.IsConnecting.Should().BeFalse();
+			audioSource3Connectivity.IsDisconnecting.Should().BeTrue();
+			audioSource3Connectivity.DestinationConnections.Should().BeEquivalentTo([new EndpointConnection(audioDestination3, EndpointConnectionState.Disconnecting)]);
 
 			var audioDestination3Connectivity = connectivity.GetConnectivity(audioDestination3);
-			audioDestination3Connectivity.ConnectionState.ShouldBe(EndpointConnectionState.Disconnecting);
-			audioDestination3Connectivity.IsConnected.ShouldBeTrue();
-			audioDestination3Connectivity.IsConnecting.ShouldBeFalse();
-			audioDestination3Connectivity.IsDisconnecting.ShouldBeTrue();
-			audioDestination3Connectivity.ConnectedSource.ShouldBe(audioSource3);
+			audioDestination3Connectivity.ConnectionState.Should().Be(EndpointConnectionState.Disconnecting);
+			audioDestination3Connectivity.IsConnected.Should().BeTrue();
+			audioDestination3Connectivity.IsConnecting.Should().BeFalse();
+			audioDestination3Connectivity.IsDisconnecting.Should().BeTrue();
+			audioDestination3Connectivity.ConnectedSource.Should().Be(audioSource3);
 
 			var audioSource4Connectivity = connectivity.GetConnectivity(audioSource4);
-			audioSource4Connectivity.ConnectionState.ShouldBe(EndpointConnectionState.Disconnected);
-			audioSource4Connectivity.IsConnected.ShouldBeFalse();
-			audioSource4Connectivity.IsConnecting.ShouldBeFalse();
-			audioSource4Connectivity.IsDisconnecting.ShouldBeFalse();
+			audioSource4Connectivity.ConnectionState.Should().Be(EndpointConnectionState.Disconnected);
+			audioSource4Connectivity.IsConnected.Should().BeFalse();
+			audioSource4Connectivity.IsConnecting.Should().BeFalse();
+			audioSource4Connectivity.IsDisconnecting.Should().BeFalse();
 
 			var audioDestination4Connectivity = connectivity.GetConnectivity(audioDestination4);
-			audioDestination4Connectivity.ConnectionState.ShouldBe(EndpointConnectionState.Connected);
-			audioDestination4Connectivity.ConnectedSource.ShouldBeNull(); // Connected to an unknown source
-			audioDestination4Connectivity.IsConnected.ShouldBeTrue();
-			audioDestination4Connectivity.IsConnecting.ShouldBeFalse();
-			audioDestination4Connectivity.IsDisconnecting.ShouldBeFalse();
+			audioDestination4Connectivity.ConnectionState.Should().Be(EndpointConnectionState.Connected);
+			audioDestination4Connectivity.ConnectedSource.Should().BeNull(); // Connected to an unknown source
+			audioDestination4Connectivity.IsConnected.Should().BeTrue();
+			audioDestination4Connectivity.IsConnecting.Should().BeFalse();
+			audioDestination4Connectivity.IsDisconnecting.Should().BeFalse();
 
 			var audioSource5Connectivity = connectivity.GetConnectivity(audioSource5);
-			audioSource5Connectivity.ConnectionState.ShouldBe(EndpointConnectionState.Disconnected);
-			audioSource5Connectivity.IsConnected.ShouldBeFalse();
-			audioSource5Connectivity.IsConnecting.ShouldBeFalse();
-			audioSource5Connectivity.IsDisconnecting.ShouldBeFalse();
+			audioSource5Connectivity.ConnectionState.Should().Be(EndpointConnectionState.Disconnected);
+			audioSource5Connectivity.IsConnected.Should().BeFalse();
+			audioSource5Connectivity.IsConnecting.Should().BeFalse();
+			audioSource5Connectivity.IsDisconnecting.Should().BeFalse();
 
 			var audioDestination5Connectivity = connectivity.GetConnectivity(audioDestination5);
-			audioDestination5Connectivity.ConnectionState.ShouldBe(EndpointConnectionState.Disconnected);
-			audioDestination5Connectivity.IsConnected.ShouldBeFalse();
-			audioDestination5Connectivity.IsConnecting.ShouldBeFalse();
-			audioDestination5Connectivity.IsDisconnecting.ShouldBeFalse();
+			audioDestination5Connectivity.ConnectionState.Should().Be(EndpointConnectionState.Disconnected);
+			audioDestination5Connectivity.IsConnected.Should().BeFalse();
+			audioDestination5Connectivity.IsConnecting.Should().BeFalse();
+			audioDestination5Connectivity.IsDisconnecting.Should().BeFalse();
 		}
 
 		[TestMethod]
@@ -299,19 +299,19 @@
 
 			var result = connectivity.GetConnectivity([audioSource1, audioDestination1, audioSource2, audioDestination2, audioSource3, audioDestination3]);
 
-			result.Keys.ShouldBe([audioSource1, audioDestination1, audioSource2, audioDestination2, audioSource3, audioDestination3], ignoreOrder: true);
-			result[audioSource1].IsConnected.ShouldBeTrue();
-			result[audioSource1].ConnectedDestinations.ShouldBe([audioDestination1]);
-			result[audioDestination1].IsConnected.ShouldBeTrue();
-			result[audioDestination1].ConnectedSource.ShouldBe(audioSource1);
-			result[audioSource2].IsConnecting.ShouldBeTrue();
-			result[audioSource2].PendingConnectedDestinations.ShouldBe([audioDestination2]);
-			result[audioDestination2].IsConnecting.ShouldBeTrue();
-			result[audioDestination2].PendingConnectedSource.ShouldBe(audioSource2);
-			result[audioSource3].IsConnected.ShouldBeFalse();
-			result[audioSource3].IsConnecting.ShouldBeFalse();
-			result[audioDestination3].IsConnected.ShouldBeFalse();
-			result[audioDestination3].IsConnecting.ShouldBeFalse();
+			result.Keys.Should().BeEquivalentTo([audioSource1, audioDestination1, audioSource2, audioDestination2, audioSource3, audioDestination3]);
+			result[audioSource1].IsConnected.Should().BeTrue();
+			result[audioSource1].ConnectedDestinations.Should().BeEquivalentTo([audioDestination1]);
+			result[audioDestination1].IsConnected.Should().BeTrue();
+			result[audioDestination1].ConnectedSource.Should().Be(audioSource1);
+			result[audioSource2].IsConnecting.Should().BeTrue();
+			result[audioSource2].PendingConnectedDestinations.Should().BeEquivalentTo([audioDestination2]);
+			result[audioDestination2].IsConnecting.Should().BeTrue();
+			result[audioDestination2].PendingConnectedSource.Should().Be(audioSource2);
+			result[audioSource3].IsConnected.Should().BeFalse();
+			result[audioSource3].IsConnecting.Should().BeFalse();
+			result[audioDestination3].IsConnected.Should().BeFalse();
+			result[audioDestination3].IsConnecting.Should().BeFalse();
 		}
 
 		#endregion
@@ -382,7 +382,7 @@
 
 			var result = connectivity.IsConnected([source1, destination1, source2, destination2, source3, destination3]);
 
-			result.ShouldBe(new Dictionary<VirtualSignalGroup, ConnectionState>
+			result.Should().BeEquivalentTo(new Dictionary<VirtualSignalGroup, ConnectionState>
 			{
 				{ source1, ConnectionState.Connected },
 				{ destination1, ConnectionState.Connected },
@@ -439,86 +439,86 @@
 			using var connectivity = new ConnectivityInfoProvider(api);
 
 			var source1Connectivity = connectivity.GetConnectivity(source1);
-			source1Connectivity.IsConnected.ShouldBeTrue();
-			source1Connectivity.IsConnecting.ShouldBeFalse();
-			source1Connectivity.IsDisconnecting.ShouldBeFalse();
-			source1Connectivity.ConnectedState.ShouldBe(ConnectionState.Connected);
-			source1Connectivity.ConnectedSources.ShouldBeEmpty();
-			source1Connectivity.ConnectedDestinations.ShouldBe([destination1, destination2], ignoreOrder: true);
-			source1Connectivity.Levels.Keys.ShouldBe([videoLevel, audioLevel], ignoreOrder: true);
-			source1Connectivity.Levels[videoLevel].ConnectedDestinations.ShouldBe([videoDestination1]);
-			source1Connectivity.Levels[audioLevel].ConnectedDestinations.ShouldBe([audioDestination2]);
+			source1Connectivity.IsConnected.Should().BeTrue();
+			source1Connectivity.IsConnecting.Should().BeFalse();
+			source1Connectivity.IsDisconnecting.Should().BeFalse();
+			source1Connectivity.ConnectedState.Should().Be(ConnectionState.Connected);
+			source1Connectivity.ConnectedSources.Should().BeEmpty();
+			source1Connectivity.ConnectedDestinations.Should().BeEquivalentTo([destination1, destination2]);
+			source1Connectivity.Levels.Keys.Should().BeEquivalentTo([videoLevel, audioLevel]);
+			source1Connectivity.Levels[videoLevel].ConnectedDestinations.Should().BeEquivalentTo([videoDestination1]);
+			source1Connectivity.Levels[audioLevel].ConnectedDestinations.Should().BeEquivalentTo([audioDestination2]);
 
 			var destination1Connectivity = connectivity.GetConnectivity(destination1);
-			destination1Connectivity.IsConnected.ShouldBeTrue();
-			destination1Connectivity.IsConnecting.ShouldBeTrue();
-			destination1Connectivity.IsDisconnecting.ShouldBeFalse();
-			destination1Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
-			destination1Connectivity.ConnectedSources.ShouldBe([source1]);
-			destination1Connectivity.PendingConnectedSources.ShouldBe([source3]);
-			destination1Connectivity.ConnectedDestinations.ShouldBeEmpty();
-			destination1Connectivity.Levels.Keys.ShouldBe([videoLevel, audioLevel], ignoreOrder: true);
-			destination1Connectivity.Levels[videoLevel].ConnectedSource.ShouldBe(videoSource1);
-			destination1Connectivity.Levels[videoLevel].PendingConnectedSource.ShouldBe(videoSource3);
-			destination1Connectivity.Levels[audioLevel].PendingConnectedSource.ShouldBe(audioSource3);
+			destination1Connectivity.IsConnected.Should().BeTrue();
+			destination1Connectivity.IsConnecting.Should().BeTrue();
+			destination1Connectivity.IsDisconnecting.Should().BeFalse();
+			destination1Connectivity.ConnectedState.Should().Be(ConnectionState.Partial);
+			destination1Connectivity.ConnectedSources.Should().BeEquivalentTo([source1]);
+			destination1Connectivity.PendingConnectedSources.Should().BeEquivalentTo([source3]);
+			destination1Connectivity.ConnectedDestinations.Should().BeEmpty();
+			destination1Connectivity.Levels.Keys.Should().BeEquivalentTo([videoLevel, audioLevel]);
+			destination1Connectivity.Levels[videoLevel].ConnectedSource.Should().Be(videoSource1);
+			destination1Connectivity.Levels[videoLevel].PendingConnectedSource.Should().Be(videoSource3);
+			destination1Connectivity.Levels[audioLevel].PendingConnectedSource.Should().Be(audioSource3);
 
 			var source2Connectivity = connectivity.GetConnectivity(source2);
-			source2Connectivity.IsConnected.ShouldBeTrue();
-			source2Connectivity.IsConnecting.ShouldBeFalse();
-			source2Connectivity.IsDisconnecting.ShouldBeFalse();
-			source2Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
-			source2Connectivity.ConnectedSources.ShouldBeEmpty();
-			source2Connectivity.ConnectedDestinations.ShouldBe([destination2]);
-			source2Connectivity.PendingConnectedDestinations.ShouldBeEmpty();
+			source2Connectivity.IsConnected.Should().BeTrue();
+			source2Connectivity.IsConnecting.Should().BeFalse();
+			source2Connectivity.IsDisconnecting.Should().BeFalse();
+			source2Connectivity.ConnectedState.Should().Be(ConnectionState.Partial);
+			source2Connectivity.ConnectedSources.Should().BeEmpty();
+			source2Connectivity.ConnectedDestinations.Should().BeEquivalentTo([destination2]);
+			source2Connectivity.PendingConnectedDestinations.Should().BeEmpty();
 
 			var destination2Connectivity = connectivity.GetConnectivity(destination2);
-			destination2Connectivity.IsConnected.ShouldBeTrue();
-			destination2Connectivity.IsConnecting.ShouldBeFalse();
-			destination2Connectivity.IsDisconnecting.ShouldBeFalse();
-			destination2Connectivity.ConnectedState.ShouldBe(ConnectionState.Connected);
-			destination2Connectivity.ConnectedSources.ShouldBe([source1, source2], ignoreOrder: true);
-			destination2Connectivity.ConnectedDestinations.ShouldBeEmpty();
+			destination2Connectivity.IsConnected.Should().BeTrue();
+			destination2Connectivity.IsConnecting.Should().BeFalse();
+			destination2Connectivity.IsDisconnecting.Should().BeFalse();
+			destination2Connectivity.ConnectedState.Should().Be(ConnectionState.Connected);
+			destination2Connectivity.ConnectedSources.Should().BeEquivalentTo([source1, source2]);
+			destination2Connectivity.ConnectedDestinations.Should().BeEmpty();
 
 			var source3Connectivity = connectivity.GetConnectivity(source3);
-			source3Connectivity.IsConnected.ShouldBeFalse();
-			source3Connectivity.IsConnecting.ShouldBeTrue();
-			source3Connectivity.IsDisconnecting.ShouldBeFalse();
-			source3Connectivity.ConnectedState.ShouldBe(ConnectionState.Disconnected);
-			source3Connectivity.ConnectedSources.ShouldBeEmpty();
-			source3Connectivity.ConnectedDestinations.ShouldBeEmpty();
-			source3Connectivity.PendingConnectedDestinations.ShouldBe([destination1]);
+			source3Connectivity.IsConnected.Should().BeFalse();
+			source3Connectivity.IsConnecting.Should().BeTrue();
+			source3Connectivity.IsDisconnecting.Should().BeFalse();
+			source3Connectivity.ConnectedState.Should().Be(ConnectionState.Disconnected);
+			source3Connectivity.ConnectedSources.Should().BeEmpty();
+			source3Connectivity.ConnectedDestinations.Should().BeEmpty();
+			source3Connectivity.PendingConnectedDestinations.Should().BeEquivalentTo([destination1]);
 
 			var destination3Connectivity = connectivity.GetConnectivity(destination3);
-			destination3Connectivity.IsConnected.ShouldBeFalse();
-			destination3Connectivity.IsConnecting.ShouldBeFalse();
-			destination3Connectivity.IsDisconnecting.ShouldBeFalse();
-			destination3Connectivity.ConnectedState.ShouldBe(ConnectionState.Disconnected);
-			destination3Connectivity.ConnectedSources.ShouldBeEmpty();
-			destination3Connectivity.ConnectedDestinations.ShouldBeEmpty();
+			destination3Connectivity.IsConnected.Should().BeFalse();
+			destination3Connectivity.IsConnecting.Should().BeFalse();
+			destination3Connectivity.IsDisconnecting.Should().BeFalse();
+			destination3Connectivity.ConnectedState.Should().Be(ConnectionState.Disconnected);
+			destination3Connectivity.ConnectedSources.Should().BeEmpty();
+			destination3Connectivity.ConnectedDestinations.Should().BeEmpty();
 
 			var source4Connectivity = connectivity.GetConnectivity(source4);
-			source4Connectivity.IsConnected.ShouldBeTrue();
-			source4Connectivity.IsConnecting.ShouldBeFalse();
-			source4Connectivity.IsDisconnecting.ShouldBeTrue();
-			source4Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
+			source4Connectivity.IsConnected.Should().BeTrue();
+			source4Connectivity.IsConnecting.Should().BeFalse();
+			source4Connectivity.IsDisconnecting.Should().BeTrue();
+			source4Connectivity.ConnectedState.Should().Be(ConnectionState.Partial);
 
 			var destination4Connectivity = connectivity.GetConnectivity(destination4);
-			destination4Connectivity.IsConnected.ShouldBeTrue();
-			destination4Connectivity.IsConnecting.ShouldBeFalse();
-			destination4Connectivity.IsDisconnecting.ShouldBeTrue();
-			destination4Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
+			destination4Connectivity.IsConnected.Should().BeTrue();
+			destination4Connectivity.IsConnecting.Should().BeFalse();
+			destination4Connectivity.IsDisconnecting.Should().BeTrue();
+			destination4Connectivity.ConnectedState.Should().Be(ConnectionState.Partial);
 
 			var source5Connectivity = connectivity.GetConnectivity(source5);
-			source5Connectivity.IsConnected.ShouldBeFalse();
-			source5Connectivity.IsConnecting.ShouldBeFalse();
-			source5Connectivity.IsDisconnecting.ShouldBeFalse();
-			source5Connectivity.ConnectedState.ShouldBe(ConnectionState.Disconnected);
+			source5Connectivity.IsConnected.Should().BeFalse();
+			source5Connectivity.IsConnecting.Should().BeFalse();
+			source5Connectivity.IsDisconnecting.Should().BeFalse();
+			source5Connectivity.ConnectedState.Should().Be(ConnectionState.Disconnected);
 
 			var destination5Connectivity = connectivity.GetConnectivity(destination5);
-			destination5Connectivity.IsConnected.ShouldBeTrue();
-			destination5Connectivity.IsConnecting.ShouldBeFalse();
-			destination5Connectivity.IsDisconnecting.ShouldBeFalse();
-			destination5Connectivity.ConnectedState.ShouldBe(ConnectionState.Partial);
+			destination5Connectivity.IsConnected.Should().BeTrue();
+			destination5Connectivity.IsConnecting.Should().BeFalse();
+			destination5Connectivity.IsDisconnecting.Should().BeFalse();
+			destination5Connectivity.ConnectedState.Should().Be(ConnectionState.Partial);
 		}
 
 		[TestMethod]
@@ -557,56 +557,56 @@
 
 			var result = connectivity.GetConnectivity([source1, destination1, source2, destination2, source3, destination3]);
 
-			result.Keys.ShouldBe([source1, destination1, source2, destination2, source3, destination3], ignoreOrder: true);
+			result.Keys.Should().BeEquivalentTo([source1, destination1, source2, destination2, source3, destination3]);
 
-			result[source1].IsConnected.ShouldBeTrue();
-			result[source1].IsConnecting.ShouldBeFalse();
-			result[source1].IsDisconnecting.ShouldBeFalse();
-			result[source1].ConnectedState.ShouldBe(ConnectionState.Connected);
-			result[source1].ConnectedDestinations.ShouldBe([destination1, destination2], ignoreOrder: true);
-			result[source1].PendingConnectedDestinations.ShouldBeEmpty();
-			result[source1].Levels.Keys.ShouldBe([videoLevel, audioLevel], ignoreOrder: true);
-			result[source1].Levels[videoLevel].ConnectedDestinations.ShouldBe([videoDestination1]);
-			result[source1].Levels[audioLevel].ConnectedDestinations.ShouldBe([audioDestination2]);
+			result[source1].IsConnected.Should().BeTrue();
+			result[source1].IsConnecting.Should().BeFalse();
+			result[source1].IsDisconnecting.Should().BeFalse();
+			result[source1].ConnectedState.Should().Be(ConnectionState.Connected);
+			result[source1].ConnectedDestinations.Should().BeEquivalentTo([destination1, destination2]);
+			result[source1].PendingConnectedDestinations.Should().BeEmpty();
+			result[source1].Levels.Keys.Should().BeEquivalentTo([videoLevel, audioLevel]);
+			result[source1].Levels[videoLevel].ConnectedDestinations.Should().BeEquivalentTo([videoDestination1]);
+			result[source1].Levels[audioLevel].ConnectedDestinations.Should().BeEquivalentTo([audioDestination2]);
 
-			result[destination1].IsConnected.ShouldBeTrue();
-			result[destination1].IsConnecting.ShouldBeTrue();
-			result[destination1].IsDisconnecting.ShouldBeFalse();
-			result[destination1].ConnectedState.ShouldBe(ConnectionState.Partial);
-			result[destination1].ConnectedSources.ShouldBe([source1]);
-			result[destination1].PendingConnectedSources.ShouldBe([source3]);
-			result[destination1].Levels.Keys.ShouldBe([videoLevel, audioLevel], ignoreOrder: true);
-			result[destination1].Levels[videoLevel].ConnectedSource.ShouldBe(videoSource1);
-			result[destination1].Levels[videoLevel].PendingConnectedSource.ShouldBe(videoSource3);
-			result[destination1].Levels[audioLevel].PendingConnectedSource.ShouldBe(audioSource3);
+			result[destination1].IsConnected.Should().BeTrue();
+			result[destination1].IsConnecting.Should().BeTrue();
+			result[destination1].IsDisconnecting.Should().BeFalse();
+			result[destination1].ConnectedState.Should().Be(ConnectionState.Partial);
+			result[destination1].ConnectedSources.Should().BeEquivalentTo([source1]);
+			result[destination1].PendingConnectedSources.Should().BeEquivalentTo([source3]);
+			result[destination1].Levels.Keys.Should().BeEquivalentTo([videoLevel, audioLevel]);
+			result[destination1].Levels[videoLevel].ConnectedSource.Should().Be(videoSource1);
+			result[destination1].Levels[videoLevel].PendingConnectedSource.Should().Be(videoSource3);
+			result[destination1].Levels[audioLevel].PendingConnectedSource.Should().Be(audioSource3);
 
-			result[source2].IsConnected.ShouldBeTrue();
-			result[source2].IsConnecting.ShouldBeFalse();
-			result[source2].IsDisconnecting.ShouldBeFalse();
-			result[source2].ConnectedState.ShouldBe(ConnectionState.Partial);
-			result[source2].ConnectedDestinations.ShouldBe([destination2]);
-			result[source2].PendingConnectedDestinations.ShouldBeEmpty();
+			result[source2].IsConnected.Should().BeTrue();
+			result[source2].IsConnecting.Should().BeFalse();
+			result[source2].IsDisconnecting.Should().BeFalse();
+			result[source2].ConnectedState.Should().Be(ConnectionState.Partial);
+			result[source2].ConnectedDestinations.Should().BeEquivalentTo([destination2]);
+			result[source2].PendingConnectedDestinations.Should().BeEmpty();
 
-			result[destination2].IsConnected.ShouldBeTrue();
-			result[destination2].IsConnecting.ShouldBeFalse();
-			result[destination2].IsDisconnecting.ShouldBeFalse();
-			result[destination2].ConnectedState.ShouldBe(ConnectionState.Connected);
-			result[destination2].ConnectedSources.ShouldBe([source1, source2], ignoreOrder: true);
-			result[destination2].PendingConnectedSources.ShouldBeEmpty();
+			result[destination2].IsConnected.Should().BeTrue();
+			result[destination2].IsConnecting.Should().BeFalse();
+			result[destination2].IsDisconnecting.Should().BeFalse();
+			result[destination2].ConnectedState.Should().Be(ConnectionState.Connected);
+			result[destination2].ConnectedSources.Should().BeEquivalentTo([source1, source2]);
+			result[destination2].PendingConnectedSources.Should().BeEmpty();
 
-			result[source3].IsConnected.ShouldBeFalse();
-			result[source3].IsConnecting.ShouldBeTrue();
-			result[source3].IsDisconnecting.ShouldBeFalse();
-			result[source3].ConnectedState.ShouldBe(ConnectionState.Disconnected);
-			result[source3].ConnectedDestinations.ShouldBeEmpty();
-			result[source3].PendingConnectedDestinations.ShouldBe([destination1]);
+			result[source3].IsConnected.Should().BeFalse();
+			result[source3].IsConnecting.Should().BeTrue();
+			result[source3].IsDisconnecting.Should().BeFalse();
+			result[source3].ConnectedState.Should().Be(ConnectionState.Disconnected);
+			result[source3].ConnectedDestinations.Should().BeEmpty();
+			result[source3].PendingConnectedDestinations.Should().BeEquivalentTo([destination1]);
 
-			result[destination3].IsConnected.ShouldBeFalse();
-			result[destination3].IsConnecting.ShouldBeFalse();
-			result[destination3].IsDisconnecting.ShouldBeFalse();
-			result[destination3].ConnectedState.ShouldBe(ConnectionState.Disconnected);
-			result[destination3].ConnectedSources.ShouldBeEmpty();
-			result[destination3].PendingConnectedSources.ShouldBeEmpty();
+			result[destination3].IsConnected.Should().BeFalse();
+			result[destination3].IsConnecting.Should().BeFalse();
+			result[destination3].IsDisconnecting.Should().BeFalse();
+			result[destination3].ConnectedState.Should().Be(ConnectionState.Disconnected);
+			result[destination3].ConnectedSources.Should().BeEmpty();
+			result[destination3].PendingConnectedSources.Should().BeEmpty();
 		}
 
 		#endregion

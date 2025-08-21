@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using Shouldly;
+	using FluentAssertions;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
@@ -68,43 +68,43 @@
 			var receivedEvents = new List<ICollection<ApiObjectReference<Endpoint>>>();
 			connectivity.EndpointsImpacted += (sender, e) => receivedEvents.Add(e);
 
-			receivedEvents.Count.ShouldBe(0);
+			receivedEvents.Count.Should().Be(0);
 
 			// Create a connection
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
-			receivedEvents.Count.ShouldBe(1);
-			receivedEvents.Last().ShouldBe([audioSource1, audioDestination1], ignoreOrder: true);
-			connectivity.IsConnected(audioDestination1).ShouldBeTrue();
-			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeTrue();
-			connectivity.IsConnected(audioSource2, audioDestination1).ShouldBeFalse();
+			receivedEvents.Count.Should().Be(1);
+			receivedEvents.Last().Should().BeEquivalentTo([audioSource1, audioDestination1]);
+			connectivity.IsConnected(audioDestination1).Should().BeTrue();
+			connectivity.IsConnected(audioSource1, audioDestination1).Should().BeTrue();
+			connectivity.IsConnected(audioSource2, audioDestination1).Should().BeFalse();
 
 			// Connect same source
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
-			receivedEvents.Count.ShouldBe(1); // No change, so no new event
+			receivedEvents.Count.Should().Be(1); // No change, so no new event
 
 			// Connect another source
 			simulation.CreateTestConnection(audioSource2, audioDestination1);
-			receivedEvents.Count.ShouldBe(2);
-			receivedEvents.Last().ShouldBe([audioSource1, audioSource2, audioDestination1], ignoreOrder: true);
-			connectivity.IsConnected(audioDestination1).ShouldBeTrue();
-			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeFalse();
-			connectivity.IsConnected(audioSource2, audioDestination1).ShouldBeTrue();
+			receivedEvents.Count.Should().Be(2);
+			receivedEvents.Last().Should().BeEquivalentTo([audioSource1, audioSource2, audioDestination1]);
+			connectivity.IsConnected(audioDestination1).Should().BeTrue();
+			connectivity.IsConnected(audioSource1, audioDestination1).Should().BeFalse();
+			connectivity.IsConnected(audioSource2, audioDestination1).Should().BeTrue();
 
 			// Connect an unknown source
 			simulation.CreateTestConnection(null, audioDestination1);
-			receivedEvents.Count.ShouldBe(3);
-			receivedEvents.Last().ShouldBe([audioSource2, audioDestination1], ignoreOrder: true);
-			connectivity.IsConnected(audioDestination1).ShouldBeTrue();
-			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeFalse();
-			connectivity.IsConnected(audioSource2, audioDestination1).ShouldBeFalse();
+			receivedEvents.Count.Should().Be(3);
+			receivedEvents.Last().Should().BeEquivalentTo([audioSource2, audioDestination1]);
+			connectivity.IsConnected(audioDestination1).Should().BeTrue();
+			connectivity.IsConnected(audioSource1, audioDestination1).Should().BeFalse();
+			connectivity.IsConnected(audioSource2, audioDestination1).Should().BeFalse();
 
 			// Disconnect
 			simulation.TestDisconnectDestination(audioDestination1);
-			receivedEvents.Count.ShouldBe(4);
-			receivedEvents.Last().ShouldBe([audioDestination1], ignoreOrder: true);
-			connectivity.IsConnected(audioDestination1).ShouldBeFalse();
-			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeFalse();
-			connectivity.IsConnected(audioSource2, audioDestination1).ShouldBeFalse();
+			receivedEvents.Count.Should().Be(4);
+			receivedEvents.Last().Should().BeEquivalentTo([audioDestination1]);
+			connectivity.IsConnected(audioDestination1).Should().BeFalse();
+			connectivity.IsConnected(audioSource1, audioDestination1).Should().BeFalse();
+			connectivity.IsConnected(audioSource2, audioDestination1).Should().BeFalse();
 		}
 
 		[TestMethod]
@@ -126,15 +126,15 @@
 			var receivedEvents = new List<ICollection<ApiObjectReference<Endpoint>>>();
 			connectivity.EndpointsImpacted += (sender, e) => receivedEvents.Add(e);
 
-			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeTrue();
+			connectivity.IsConnected(audioSource1, audioDestination1).Should().BeTrue();
 
 			simulatedMediationElement.Stop();
-			receivedEvents.Count.ShouldBe(1);
-			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeFalse();
+			receivedEvents.Count.Should().Be(1);
+			connectivity.IsConnected(audioSource1, audioDestination1).Should().BeFalse();
 
 			simulatedMediationElement.Start();
-			receivedEvents.Count.ShouldBe(2);
-			connectivity.IsConnected(audioSource1, audioDestination1).ShouldBeTrue();
+			receivedEvents.Count.Should().Be(2);
+			connectivity.IsConnected(audioSource1, audioDestination1).Should().BeTrue();
 		}
 
 		[TestMethod]
@@ -146,12 +146,12 @@
 
 			using (var connectivity = new LiteConnectivityInfoProvider(api, subscribe: true))
 			{
-				connection.SubscriptionCount.ShouldBeGreaterThan(0);
-				connection.HasOnNewMessageSubscribers.ShouldBeTrue();
+				connection.SubscriptionCount.Should().BeGreaterThan(0);
+				connection.HasOnNewMessageSubscribers.Should().BeTrue();
 			}
 
-			connection.SubscriptionCount.ShouldBe(0);
-			connection.HasOnNewMessageSubscribers.ShouldBeFalse();
+			connection.SubscriptionCount.Should().Be(0);
+			connection.HasOnNewMessageSubscribers.Should().BeFalse();
 		}
 	}
 }
