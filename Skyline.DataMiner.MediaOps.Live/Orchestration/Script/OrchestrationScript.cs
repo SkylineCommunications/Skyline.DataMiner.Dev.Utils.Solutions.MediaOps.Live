@@ -422,8 +422,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 				_parameterInfos = CreateParameterInfos(scriptInfo, scriptInput);
 
-				_engine.GenerateInformation(JsonConvert.SerializeObject(_parameterInfos));
-
 				if (askMissingValues)
 				{
 					List<ParameterInfo> incompleteInfos = GetIncompleteInfos(_parameterInfos).ToList();
