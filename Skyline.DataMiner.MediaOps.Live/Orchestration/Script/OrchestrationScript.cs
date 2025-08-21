@@ -182,19 +182,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		{
 			List<ParameterInfo> parameterInfos = new List<ParameterInfo>();
 
-			foreach (KeyValuePair<string, Parameter> profileParameter in scriptInfo.ProfileParameterReferences)
-			{
-				ProfileParameterID reference = new ProfileParameterID(profileParameter.Value.ID);
-				ParameterInfo info = new ParameterInfo
-				{
-					Id = profileParameter.Key,
-					Reference = reference,
-					Value = input.ProfileParameterValues.TryGetValue(profileParameter.Key, out object value) ? value : null,
-				};
-
-				parameterInfos.Add(info);
-			}
-
 			_engine.GenerateInformation(JsonConvert.SerializeObject(input));
 
 			if (!String.IsNullOrEmpty(input.ProfileInstance))
@@ -234,8 +221,24 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				}
 			}
 
+			foreach (var parameterValue in input.ProfileParameterValues)
+			{
+				Guid paramId = new Guid(parameterValue.Key);
+				var paramName = scriptInfo.ProfileParameters
+					.FirstOrDefault(x => x.Value == paramId).Key;
 
-			_engine.GenerateInformation(JsonConvert.SerializeObject(parameterInfos));
+				ProfileParameterID reference = new ProfileParameterID(paramId);
+				ParameterInfo info = new ParameterInfo
+				{
+					Id = paramName,
+					Reference = reference,
+					Value = input.ProfileParameterValues.TryGetValue(paramName, out object value) ? value : null,
+				};
+
+				parameterInfos.Add(info);
+			}
+
+			_engine.GenerateInformation(JsonConvert.SerializeObject(input));
 			LinkParameters(scriptInfo, parameterInfos);
 
 			return parameterInfos;
