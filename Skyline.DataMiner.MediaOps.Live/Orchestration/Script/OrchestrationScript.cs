@@ -7,6 +7,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common.Selectors;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.Dialogs;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.DisplayTypes;
@@ -182,8 +183,26 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		{
 			List<ParameterInfo> parameterInfos = new List<ParameterInfo>();
 
+			// Create objects for all orchestration parameters.
+			if (String.IsNullOrEmpty(input.ProfileInstance))
+			{
+				foreach (KeyValuePair<string, Parameter> profileParameter in scriptInfo.ProfileParameterReferences)
+				{
+					ProfileParameterID reference = new ProfileParameterID(profileParameter.Value.ID);
+					ParameterInfo info = new ParameterInfo
+					{
+						Id = profileParameter.Key,
+						Reference = reference,
+						Value = input.ProfileParameterValues.TryGetValue(profileParameter.Key, out object value) ? value : null,
+					};
+
+					parameterInfos.Add(info);
+				}
+			}
+
 			_engine.GenerateInformation(JsonConvert.SerializeObject(input));
 
+			// Add profile instance parameter values from provide instance in input.
 			if (!String.IsNullOrEmpty(input.ProfileInstance))
 			{
 				_engine.GenerateInformation("Get Instance Values");
@@ -200,45 +219,40 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 					throw new InvalidOperationException($"Multiple profile instances found with name {input.ProfileInstance}");
 				}
 
-				_engine.GenerateInformation("Found Instance with " + instances.First().Values.Length + " values");
-				foreach (ProfileParameterEntry profileParameterEntry in instances.First().Values)
+				ProfileInstance instance = instances.First();
+
+				_engine.GenerateInformation("Found instance with " + instance.Values.Length + " values");
+
+				foreach (ProfileParameterEntry profileParameterEntry in instance.Values)
 				{
-					string paramName = scriptInfo.ProfileParameters
-						.FirstOrDefault(x => x.Value == profileParameterEntry.ParameterID).Key;
+					ParameterInfo matchInfo = parameterInfos
+						.FirstOrDefault(x => (x.Reference as ProfileParameterID).Id == profileParameterEntry.ParameterID);
 
-					_engine.GenerateInformation($"Parameter {paramName} with value {profileParameterEntry.Value}");
-
-					ParameterInfo info = new ParameterInfo
+					if (matchInfo != null)
 					{
-						Id = paramName,
-						Reference = new ProfileParameterID(profileParameterEntry.ParameterID),
-						Value = profileParameterEntry.Value.Type == ParameterValue.ValueType.Double
-							? profileParameterEntry.Value.DoubleValue
-							: profileParameterEntry.Value.StringValue,
-					};
+						_engine.GenerateInformation($"Parameter {matchInfo.Id} with value {profileParameterEntry.Value} from instance {instance.Name}");
 
-					parameterInfos.Add(info);
+						matchInfo.Value = profileParameterEntry.Value.Type == ParameterValue.ValueType.Double
+							? profileParameterEntry.Value.DoubleValue
+							: profileParameterEntry.Value.StringValue;
+					}
 				}
 			}
 
-			foreach (var parameterValue in input.ProfileParameterValues)
+			// Add single parameter values from the input.
+			foreach (KeyValuePair<string, object> parameterValue in input.ProfileParameterValues)
 			{
-				Guid paramId = new Guid(parameterValue.Key);
-				var paramName = scriptInfo.ProfileParameters
-					.FirstOrDefault(x => x.Value == paramId).Key;
+				ParameterInfo matchInfo = parameterInfos
+					.FirstOrDefault(x => x.Id == parameterValue.Key);
 
-				ProfileParameterID reference = new ProfileParameterID(paramId);
-				ParameterInfo info = new ParameterInfo
+				if (matchInfo != null)
 				{
-					Id = paramName,
-					Reference = reference,
-					Value = input.ProfileParameterValues.TryGetValue(paramName, out object value) ? value : null,
-				};
-
-				parameterInfos.Add(info);
+					_engine.GenerateInformation($"Standalone parameter {matchInfo.Id} with value {parameterValue.Value}");
+					matchInfo.Value = parameterValue.Value;
+				}
 			}
 
-			_engine.GenerateInformation(JsonConvert.SerializeObject(parameterInfos));
+			_engine.GenerateInformation(JsonConvert.SerializeObject(input));
 			LinkParameters(scriptInfo, parameterInfos);
 
 			return parameterInfos;
@@ -246,15 +260,15 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 		private void LinkParameters(ScriptInfo scriptInfo, List<ParameterInfo> infos)
 		{
-			var profileParameterInfos = infos
+			Dictionary<Guid, ParameterInfo> profileParameterInfos = infos
 				.Where(x => x.Reference is ProfileParameterID)
 				.ToDictionary(x => (x.Reference as ProfileParameterID).Id);
 
-			var profileParameters = scriptInfo.ProfileParameterReferences.Values;
+			Dictionary<string, Parameter>.ValueCollection profileParameters = scriptInfo.ProfileParameterReferences.Values;
 
-			foreach (var parameter in profileParameters)
+			foreach (Parameter parameter in profileParameters)
 			{
-				if (!profileParameterInfos.TryGetValue(parameter.ID, out var parameterInfo))
+				if (!profileParameterInfos.TryGetValue(parameter.ID, out ParameterInfo parameterInfo))
 				{
 					throw new InvalidOperationException($"Parameter {parameter} wasn't requested");
 				}
@@ -283,9 +297,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				{
 					case Parameter.ParameterType.Discrete:
 						{
-							var queue = new Queue<string>(parameter.DiscreetDisplayValues);
-							var options = new List<ValueOption>();
-							foreach (var discreet in parameter.Discretes)
+							Queue<string> queue = new Queue<string>(parameter.DiscreetDisplayValues);
+							List<ValueOption> options = new List<ValueOption>();
+							foreach (string discreet in parameter.Discretes)
 							{
 								if (discreet.GetType() != parameterInfo.ValueType)
 								{
@@ -293,7 +307,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 									continue;
 								}
 
-								var display = queue.Dequeue();
+								string display = queue.Dequeue();
 
 								// Tip: make sure the display value is unique
 								options.Add(new ValueOption(display, discreet));
@@ -335,21 +349,21 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		{
 			ProfileHelper profileHelper = new ProfileHelper(_engine.SendSLNetMessages);
 
-			foreach (var definition in profileDefinitions)
+			foreach (ProfileDefinition definition in profileDefinitions)
 			{
 				// Tip: If there are allot of definitions, getting all instances in one call will be more efficient.
-				var instances = profileHelper.ProfileInstances.Read(ProfileInstanceExposers.AppliesToID.Equal(definition.ID));
+				List<ProfileInstance> instances = profileHelper.ProfileInstances.Read(ProfileInstanceExposers.AppliesToID.Equal(definition.ID));
 
-				var presets = new List<GroupPresetOption>(instances.Count);
-				foreach (var instance in instances)
+				List<GroupPresetOption> presets = new List<GroupPresetOption>(instances.Count);
+				foreach (ProfileInstance instance in instances)
 				{
-					var presetInfo = new PresetGroupDisplayInfo.PresetInfo();
+					PresetGroupDisplayInfo.PresetInfo presetInfo = new PresetGroupDisplayInfo.PresetInfo();
 					// Tip: add a check if the option names are unique
 					presets.Add(new GroupPresetOption(instance.Name, presetInfo));
 
-					foreach (var value in instance.Values)
+					foreach (ProfileParameterEntry value in instance.Values)
 					{
-						if (!parameters.TryGetValue(value.ParameterID, out var parameter))
+						if (!parameters.TryGetValue(value.ParameterID, out ParameterInfo parameter))
 						{
 							continue;
 						}
@@ -370,7 +384,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 					}
 				}
 
-				var group = new ParameterGroup
+				ParameterGroup group = new ParameterGroup
 				{
 					Description = definition.Name,
 					Reference = new ProfileDefinitionID(definition.ID),
@@ -382,9 +396,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 					},
 				};
 
-				foreach (var parameterId in definition.ParameterIDs)
+				foreach (Guid parameterId in definition.ParameterIDs)
 				{
-					if (!parameters.TryGetValue(parameterId, out var parameter))
+					if (!parameters.TryGetValue(parameterId, out ParameterInfo parameter))
 					{
 						continue;
 					}
