@@ -43,8 +43,6 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			ClearTestPendingConnectionAction(destination);
-
 			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
 			var simulatedElement = Dms
@@ -64,6 +62,9 @@
 			};
 
 			connectionsTable.SetRow(rowKey, row);
+
+			// Also clear any pending action
+			ClearTestPendingConnectionAction(destination);
 		}
 
 		public void TestDisconnectDestination(Endpoint destination)
@@ -72,8 +73,6 @@
 			{
 				throw new ArgumentNullException(nameof(destination));
 			}
-
-			ClearTestPendingConnectionAction(destination);
 
 			var mediationElement = Api.MediationElements.GetMediationElement(destination);
 
@@ -94,6 +93,9 @@
 			};
 
 			connectionsTable.SetRow(rowKey, row);
+
+			// Also clear any pending action
+			ClearTestPendingConnectionAction(destination);
 		}
 
 		public void CreateTestPendingConnectionAction(
