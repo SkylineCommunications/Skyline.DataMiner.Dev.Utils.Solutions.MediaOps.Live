@@ -242,19 +242,8 @@
 
 			foreach (var connection in updated)
 			{
-				if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
-				{
-					if (existingConnection.IsConnected == connection.IsConnected &&
-						existingConnection.ConnectedSource == connection.ConnectedSource)
-					{
-						// No change
-						continue;
-					}
+				impactedEndpoints.UnionWith(DetectImpactedEndpoints(connection));
 
-					impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
-				}
-
-				impactedEndpoints.UnionWith(connection.GetEndpoints());
 				_connectionsByDestination[connection.Destination] = connection;
 				_connectionEndpointsMapping.AddOrUpdate(connection);
 			}
@@ -281,19 +270,11 @@
 
 			foreach (var pendingAction in updated)
 			{
-				if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
+				if (!IsRedundantPendingAction(pendingAction))
 				{
-					if (existingPendingConnectionAction.Action == pendingAction.Action &&
-						existingPendingConnectionAction.PendingSource == pendingAction.PendingSource)
-					{
-						// No change
-						continue;
-					}
-
-					impactedEndpoints.UnionWith(existingPendingConnectionAction.GetEndpoints());
+					impactedEndpoints.UnionWith(DetectImpactedEndpoints(pendingAction));
 				}
 
-				impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
 				_pendingActionsByDestination[pendingAction.Destination] = pendingAction;
 				_pendingConnectionActionsMapping.AddOrUpdate(pendingAction);
 			}
@@ -302,6 +283,68 @@
 			{
 				EndpointsImpacted?.Invoke(this, impactedEndpoints);
 			}
+		}
+
+		private ICollection<ApiObjectReference<Endpoint>> DetectImpactedEndpoints(Connection newConnection)
+		{
+			var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
+
+			if (_connectionsByDestination.TryGetValue(newConnection.Destination, out var existingConnection))
+			{
+				if (existingConnection.IsConnected == newConnection.IsConnected &&
+					existingConnection.ConnectedSource == newConnection.ConnectedSource)
+				{
+					// No change
+					return impactedEndpoints;
+				}
+
+				impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
+			}
+
+			impactedEndpoints.UnionWith(newConnection.GetEndpoints());
+
+			return impactedEndpoints;
+		}
+
+		private ICollection<ApiObjectReference<Endpoint>> DetectImpactedEndpoints(PendingConnectionAction newPendingAction)
+		{
+			var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
+
+			if (_pendingActionsByDestination.TryGetValue(newPendingAction.Destination, out var existingPendingConnectionAction))
+			{
+				if (existingPendingConnectionAction.Action == newPendingAction.Action &&
+					existingPendingConnectionAction.PendingSource == newPendingAction.PendingSource)
+				{
+					// No change
+					return impactedEndpoints;
+				}
+
+				impactedEndpoints.UnionWith(existingPendingConnectionAction.GetEndpoints());
+			}
+
+			impactedEndpoints.UnionWith(newPendingAction.GetEndpoints());
+
+			return impactedEndpoints;
+		}
+
+		private bool IsRedundantPendingAction(PendingConnectionAction newPendingAction)
+		{
+			// Redundant pending "connect": already connected to the same source
+			if (newPendingAction.Action == PendingConnectionActionType.Connect &&
+				newPendingAction.PendingSource.HasValue &&
+				IsConnected(newPendingAction.Destination, newPendingAction.PendingSource.Value))
+			{
+				return true;
+			}
+
+			// Redundant pending "disconnect": nothing connected
+			if (newPendingAction.Action == PendingConnectionActionType.Disconnect &&
+				!IsConnected(newPendingAction.Destination))
+			{
+				return true;
+			}
+
+			return false;
 		}
 
 		private void LoadDataFromMediationElement(MediationElement element)
