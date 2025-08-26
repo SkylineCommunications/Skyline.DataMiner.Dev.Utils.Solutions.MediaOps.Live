@@ -273,7 +273,12 @@
 			{
 				if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingAction))
 				{
-					impactedEndpoints.UnionWith(existingPendingAction.GetEndpoints());
+					if (PendingActionHasImpact(existingPendingAction))
+					{
+						// Only raise event if it actually had impact
+						impactedEndpoints.UnionWith(existingPendingAction.GetEndpoints());
+					}
+
 					_pendingActionsByDestination.Remove(existingPendingAction.Destination);
 					_pendingConnectionActionsMapping.Remove(existingPendingAction);
 				}
@@ -281,6 +286,8 @@
 
 			foreach (var pendingAction in updated)
 			{
+				bool hasImpact = PendingActionHasImpact(pendingAction);
+
 				if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
 				{
 					if (existingPendingConnectionAction.Action == pendingAction.Action &&
@@ -290,18 +297,50 @@
 						continue;
 					}
 
-					impactedEndpoints.UnionWith(existingPendingConnectionAction.GetEndpoints());
+					if (hasImpact)
+					{
+						impactedEndpoints.UnionWith(existingPendingConnectionAction.GetEndpoints());
+					}
 				}
 
-				impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
 				_pendingActionsByDestination[pendingAction.Destination] = pendingAction;
 				_pendingConnectionActionsMapping.AddOrUpdate(pendingAction);
+
+				if (hasImpact)
+				{
+					impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
+				}
 			}
 
 			if (impactedEndpoints.Count > 0)
 			{
 				EndpointsImpacted?.Invoke(this, impactedEndpoints);
 			}
+		}
+
+		/// <summary>
+		/// Determines whether a pending connection action actually impacts the effective connection state.
+		/// </summary>
+		private bool PendingActionHasImpact(PendingConnectionAction pendingAction)
+		{
+			if (!_connectionsByDestination.TryGetValue(pendingAction.Destination, out var existingConnection))
+			{
+				// No existing connection: only connect actions have impact
+				return pendingAction.Action == PendingConnectionActionType.Connect;
+			}
+
+			return pendingAction.Action switch
+			{
+				// Connect: impact if not connected yet or connected to a different source
+				PendingConnectionActionType.Connect =>
+					!existingConnection.IsConnected || existingConnection.ConnectedSource != pendingAction.PendingSource,
+
+				// Disconnect: impact if currently connected
+				PendingConnectionActionType.Disconnect =>
+					existingConnection.IsConnected,
+
+				_ => true
+			};
 		}
 
 		private void LoadDataFromMediationElement(MediationElement element)

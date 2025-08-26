@@ -88,38 +88,38 @@
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.Should().BeEquivalentTo([source2, destination1]);
 
-			// Create pending action that already exists
+			// Create a pending connection action that already exists
 			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination1);
 			receivedEvents.Count.Should().Be(4); // No new event
 
 			// Create the real connections
 			simulation.CreateTestConnection(audioSource2, audioDestination1);
 			simulation.CreateTestConnection(videoSource2, videoDestination1);
-			receivedEvents.Count.Should().Be(8); // 4 new events: 2 for the new connections + 2 to clear the pending actions
+			receivedEvents.Count.Should().Be(6); // 2 new events
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
-				.Should().BeEquivalentTo([source2, destination1]);
-
-			// Connect to unknown sources
-			simulation.CreateTestConnection(null, audioDestination1);
-			simulation.CreateTestConnection(null, videoDestination1);
-			receivedEvents.Count.Should().Be(10); // 2 new events
-			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
-				.Should().BeEquivalentTo([source2, destination1]);
+				.Should().BeEquivalentTo([source1, source2, destination1]);
 
 			// Start disconnecting the connections
 			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination1, PendingConnectionActionType.Disconnect);
 			simulation.CreateTestPendingConnectionAction(videoSource2, videoDestination1, PendingConnectionActionType.Disconnect);
-			receivedEvents.Count.Should().Be(12); // 2 new events
+			receivedEvents.Count.Should().Be(8); // 2 new events
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.Should().BeEquivalentTo([source2, destination1]);
 
 			// Disconnecting the connections
 			simulation.TestDisconnectDestination(audioDestination1);
 			simulation.TestDisconnectDestination(videoDestination1);
-			receivedEvents.Count.Should().Be(16); // 4 new events: 2 for the disconnected connections + 2 to clear the pending actions
+			receivedEvents.Count.Should().Be(10); // 2 new events
 			receivedEvents.Last().VirtualSignalGroups.Should().OnlyContain(x => x.ConnectedState == ConnectionState.Disconnected);
 			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
 				.Should().BeEquivalentTo([source2, destination1]);
+
+			// Connect to unknown sources
+			simulation.CreateTestConnection(null, audioDestination1);
+			simulation.CreateTestConnection(null, videoDestination1);
+			receivedEvents.Count.Should().Be(12); // 2 new events
+			receivedEvents.Last().VirtualSignalGroups.Select(x => x.VirtualSignalGroup)
+				.Should().BeEquivalentTo([destination1]);
 		}
 
 		#region Endpoints

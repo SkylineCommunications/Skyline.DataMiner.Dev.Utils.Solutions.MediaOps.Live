@@ -105,6 +105,10 @@
 			connectivity.IsConnected(audioDestination1).Should().BeFalse();
 			connectivity.IsConnected(audioSource1, audioDestination1).Should().BeFalse();
 			connectivity.IsConnected(audioSource2, audioDestination1).Should().BeFalse();
+
+			// Disconnect again
+			simulation.TestDisconnectDestination(audioDestination1);
+			receivedEvents.Count.Should().Be(4); // No change, so no new event
 		}
 
 		[TestMethod]

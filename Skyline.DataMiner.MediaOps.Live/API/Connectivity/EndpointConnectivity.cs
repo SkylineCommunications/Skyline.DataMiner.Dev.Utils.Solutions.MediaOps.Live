@@ -5,8 +5,9 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.Tools;
 
-	public sealed class EndpointConnectivity
+	public sealed class EndpointConnectivity : IEquatable<EndpointConnectivity>
 	{
 		public EndpointConnectivity(
 			Endpoint endpoint,
@@ -104,9 +105,56 @@
 			IsConnected ? EndpointConnectionState.Connected :
 			EndpointConnectionState.Disconnected;
 
+		public override bool Equals(object obj)
+		{
+			return Equals(obj as EndpointConnectivity);
+		}
+
+		public bool Equals(EndpointConnectivity other)
+		{
+			return other is not null &&
+				   IsConnected == other.IsConnected &&
+				   IsConnecting == other.IsConnecting &&
+				   IsDisconnecting == other.IsDisconnecting &&
+				   EqualityComparer<Endpoint>.Default.Equals(Endpoint, other.Endpoint) &&
+				   EqualityComparer<Endpoint>.Default.Equals(ConnectedSource, other.ConnectedSource) &&
+				   EqualityComparer<Endpoint>.Default.Equals(PendingConnectedSource, other.PendingConnectedSource) &&
+				   CollectionEqualityHelper.Equals(VirtualSignalGroups, other.VirtualSignalGroups, ignoreOrder: true) &&
+				   CollectionEqualityHelper.Equals(DestinationConnections, other.DestinationConnections, ignoreOrder: true);
+		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				int hash = 17;
+
+				hash = (hash * 31) + IsConnected.GetHashCode();
+				hash = (hash * 31) + IsConnecting.GetHashCode();
+				hash = (hash * 31) + IsDisconnecting.GetHashCode();
+				hash = (hash * 31) + EqualityComparer<Endpoint>.Default.GetHashCode(Endpoint);
+				hash = (hash * 31) + EqualityComparer<Endpoint>.Default.GetHashCode(ConnectedSource);
+				hash = (hash * 31) + EqualityComparer<Endpoint>.Default.GetHashCode(PendingConnectedSource);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(VirtualSignalGroups, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(DestinationConnections, ignoreOrder: true);
+
+				return hash;
+			}
+		}
+
 		public override string ToString()
 		{
 			return $"{Endpoint.Name} [{Endpoint.ID}] - State: {ConnectionState}";
+		}
+
+		public static bool operator ==(EndpointConnectivity left, EndpointConnectivity right)
+		{
+			return EqualityComparer<EndpointConnectivity>.Default.Equals(left, right);
+		}
+
+		public static bool operator !=(EndpointConnectivity left, EndpointConnectivity right)
+		{
+			return !(left == right);
 		}
 	}
 }
