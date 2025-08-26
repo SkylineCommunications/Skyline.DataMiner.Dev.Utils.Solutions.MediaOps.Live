@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
@@ -152,6 +153,8 @@
 		{
 			CreateMediationElement(123, 1000, "MediaOps Mediation 1");
 			CreateMediationElement(124, 1000, "MediaOps Mediation 1");
+			Dms.Agents[123].CreateElement(1001, "Orchestration Dummy Instance 1", "Protocol", "Production");
+			Dms.Agents[124].CreateElement(1001, "Orchestration Dummy Instance 2", "Protocol", "Production");
 
 			Dms.AddScript("Script_Success", new List<string>(), new List<string>());
 			Dms.AddScript("Script_Fail", new List<string>(), new List<string>());

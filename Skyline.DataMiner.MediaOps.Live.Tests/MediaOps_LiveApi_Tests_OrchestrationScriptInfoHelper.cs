@@ -16,7 +16,6 @@
 
 			OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("OrchestrationScript");
 
-			Console.WriteLine(JsonConvert.SerializeObject(info));
 			Assert.AreEqual("OrchestrationScript", info.ScriptName);
 			Assert.HasCount(5, info.Parameters);
 			Assert.HasCount(4, info.Parameters.Where(param => param.FromProfile));
@@ -31,6 +30,16 @@
 			List<string> info = api.Orchestration.Scripts.GetOrchestrationScripts();
 
 			Assert.HasCount(1, info);
+		}
+
+		[TestMethod]
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_GetValidElementsForScriptDummy()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+			OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("OrchestrationScript");
+
+			var elements = info.Elements.First().GetApplicableElements(api.Connection);
+			Assert.HasCount(2, elements);
 		}
 	}
 }

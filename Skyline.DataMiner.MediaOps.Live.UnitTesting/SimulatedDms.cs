@@ -368,8 +368,28 @@
 				case InfoType.Scripts:
 					return HandleScriptsInfoMessage();
 
+				case InfoType.ElementInfo:
+					return HandleElementInfoMessage();
+
 				default:
 					throw new NotSupportedException("Not Supported");
+			}
+		}
+
+		private IEnumerable<DMSMessage> HandleElementInfoMessage()
+		{
+			foreach (SimulatedElement element in Agents.Values.SelectMany(agent => agent.Elements.Values))
+			{
+				yield return new ElementInfoEventMessage
+				{
+					Name = element.Name,
+					Protocol = element.ProtocolName,
+					ProtocolVersion = element.ProtocolVersion,
+					DataMinerID = element.DmaId,
+					ElementID = element.ElementId,
+					State = element.State,
+					HostingAgentID = element.HostingDmaId,
+				};
 			}
 		}
 
