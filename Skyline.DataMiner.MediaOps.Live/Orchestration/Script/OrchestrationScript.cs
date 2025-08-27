@@ -8,10 +8,13 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common.Selectors;
+	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.Dialogs;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -30,6 +33,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		internal static readonly string ScriptOutputRequestScriptInfoKey = "OrchestrationScriptOutput";
 
 		private List<ParameterInfo> _parameterInfos;
+		private Dictionary<string, string> _metadata = new Dictionary<string, string>();
+
+		private Lazy<OrchestrationEventConfiguration> _eventConfiguration;
 
 		private IEngine _engine;
 
@@ -41,6 +47,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		public RequestScriptInfoOutput OnRequestScriptInfoRequest(IEngine engine, RequestScriptInfoInput inputData)
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
+			_eventConfiguration = new Lazy<OrchestrationEventConfiguration>(() => LoadEventFromMetaData(engine));
 
 			return new RequestScriptInfoOutput
 			{
@@ -97,13 +104,33 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			return param.Value;
 		}
 
+		public bool TryGetMetadataValue(string metadataParam, out string metadataValue)
+		{
+			return _metadata.TryGetValue(metadataParam, out metadataValue);
+		}
+
+		public NodeConfiguration GetNodeConfiguration(string nodeLabel)
+		{
+			if (_eventConfiguration.Value == null)
+			{
+				throw new InvalidOperationException("No event configuration was found");
+			}
+
+			return _eventConfiguration.Value.Configuration.NodeConfigurations.FirstOrDefault(nc => nc.NodeLabel == nodeLabel);
+		}
+
+		public void OrchestrateNode(NodeConfiguration nodeConfig)
+		{
+			OrchestrationEventExecutionHelper.TryExecuteOrchestrationScript(_engine.GetUserConnection(), Guid.Empty, nodeConfig.OrchestrationScriptName, nodeConfig.OrchestrationScriptArguments, nodeConfig.Profile, out string[] errorMessages);
+		}
+
 		private void RunSafe(IEngine engine)
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
 			ScriptInfo scriptInfo = GetScriptInfo();
 
-			_parameterInfos = CreateParameterInfos(scriptInfo, new ScriptInput());
+			_parameterInfos = CreateParameterInfos(scriptInfo, new OrchestrationScriptInput());
 
 			if (GetIncompleteInfos(_parameterInfos).Any())
 			{
@@ -111,6 +138,25 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			}
 
 			Orchestrate(engine);
+		}
+
+		private OrchestrationEventConfiguration LoadEventFromMetaData(IEngine engine)
+		{
+			MediaOpsLiveApi api = engine.GetMediaOpsLiveApi();
+
+			if (TryGetMetadataValue("Event ID", out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid))
+			{
+				return null;
+			}
+
+			List<OrchestrationEventConfiguration> events = api.Orchestration.GetEventConfigurationsById(new List<Guid> { eventGuid }).ToList();
+
+			if (!events.Any())
+			{
+				return null;
+			}
+
+			return events.First();
 		}
 
 		private Dictionary<string, string> HandleRequestInfoEntryPoint(IReadOnlyDictionary<string, string> metaData)
@@ -178,7 +224,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			controller.ShowDialog(dialog);
 		}
 
-		private List<ParameterInfo> CreateParameterInfos(ScriptInfo scriptInfo, ScriptInput input)
+		private List<ParameterInfo> CreateParameterInfos(ScriptInfo scriptInfo, OrchestrationScriptInput input)
 		{
 			List<ParameterInfo> parameterInfos = new List<ParameterInfo>();
 
@@ -404,13 +450,14 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			{
 				ScriptInfo scriptInfo = GetScriptInfo();
 
-				ScriptInput scriptInput = new ScriptInput();
+				OrchestrationScriptInput orchestrationScriptInput = new OrchestrationScriptInput();
 				if (metaData.TryGetValue(ScriptInputRequestScriptInfoKey, out string serializedScriptInputRequestScriptInfo))
 				{
-					scriptInput = JsonConvert.DeserializeObject<ScriptInput>(serializedScriptInputRequestScriptInfo);
+					orchestrationScriptInput = JsonConvert.DeserializeObject<OrchestrationScriptInput>(serializedScriptInputRequestScriptInfo);
 				}
 
-				_parameterInfos = CreateParameterInfos(scriptInfo, scriptInput);
+				_metadata = orchestrationScriptInput.Metadata;
+				_parameterInfos = CreateParameterInfos(scriptInfo, orchestrationScriptInput);
 
 				if (askMissingValues)
 				{

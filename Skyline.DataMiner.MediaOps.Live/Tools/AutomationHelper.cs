@@ -76,7 +76,13 @@
 			return ExecuteAutomationScript(connection, messageBuilder.Build());
 		}
 
-		public static ExecuteScriptResponseMessage TryExecuteOrchestrationScript(IConnection connection, string scriptName, List<DmsAutomationScriptParamValue> scriptParams, List<DmsAutomationScriptDummyValue> scriptDummies, OrchestrationProfile profile, out string[] errorMessages)
+		public static ExecuteScriptResponseMessage TryExecuteOrchestrationScript(
+			IConnection connection,
+			string scriptName,
+			List<DmsAutomationScriptParamValue> scriptParams,
+			List<DmsAutomationScriptDummyValue> scriptDummies,
+			OrchestrationScriptInput input,
+			out string[] errorMessages)
 		{
 			ExecuteScriptMessageBuilder messageBuilder = new(scriptName);
 			messageBuilder.SetCheckSets(false);
@@ -85,12 +91,6 @@
 			messageBuilder.SetExtendedErrorInfo(true);
 			messageBuilder.SetParameters(scriptParams.ToDictionary(param => param.Description, param => param.Value));
 			messageBuilder.SetDummies(scriptDummies.ToDictionary(dummy => dummy.Description, dummy => dummy.Value));
-
-			ScriptInput input = new(
-				profile.Values.ToDictionary(
-					value => value.Name,
-					value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
-				profile.Instance);
 
 			var metaData = new Dictionary<string, string>();
 			metaData[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.PerformOrchestration);

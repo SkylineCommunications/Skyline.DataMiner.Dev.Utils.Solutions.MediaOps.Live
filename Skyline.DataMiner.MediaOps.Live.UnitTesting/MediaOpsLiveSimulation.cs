@@ -16,6 +16,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Profiles;
 
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
@@ -155,6 +156,20 @@
 			CreateMediationElement(124, 1000, "MediaOps Mediation 1");
 			Dms.Agents[123].CreateElement(1001, "Orchestration Dummy Instance 1", "Protocol", "Production");
 			Dms.Agents[124].CreateElement(1001, "Orchestration Dummy Instance 2", "Protocol", "Production");
+
+			Dms.AddProfileParameter("IndividualProfileParam_Int", new Guid("986528dc-78af-4b09-b1c1-11dac21744b1"), Parameter.ParameterType.Number);
+			Dms.AddProfileParameter("IndividualProfileParam_String", new Guid("b0e37ff1-fe56-4bd7-b108-9e8c992eb6d9"), Parameter.ParameterType.Text);
+			Dms.AddProfileParameter("DefinitionProfileParam_Int", new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e"), Parameter.ParameterType.Number);
+			Dms.AddProfileParameter("DefinitionProfileParam_String", new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f"), Parameter.ParameterType.Text);
+
+			Dms.AddProfileDefinition(
+				"Definition 1",
+				new Guid("94fa7d96-8cb3-4bdd-a968-dd1192683165"),
+				new List<Guid>
+				{
+					new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e"),
+					new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f"),
+				});
 
 			Dms.AddScript("Script_Success", new List<string>(), new List<string>());
 			Dms.AddScript("Script_Fail", new List<string>(), new List<string>());

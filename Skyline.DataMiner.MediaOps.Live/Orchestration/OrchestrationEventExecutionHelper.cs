@@ -17,6 +17,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
@@ -32,12 +33,9 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 		private readonly OrchestrationSettings _settings;
-		private readonly ProfileHelper _profileHelper;
-
 		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, OrchestrationSettings settings)
 		{
 			_api = api;
-			_profileHelper = new ProfileHelper(api.Connection.HandleMessages);
 			_settings = settings ?? new OrchestrationSettings();
 		}
 
@@ -244,7 +242,7 @@
 							continue;
 						}
 
-						requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup, allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID)).ToHashSet())
+						requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup, Enumerable.ToHashSet(allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID))))
 						{
 							MetaData = eventId.ToString(),
 						});
@@ -346,6 +344,7 @@
 						() =>
 						{
 							if (TryExecuteOrchestrationScript(
+									Guid.Empty,
 									nodeConfiguration.OrchestrationScriptName,
 									nodeConfiguration.OrchestrationScriptArguments,
 									nodeConfiguration.Profile,
@@ -379,6 +378,7 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				if (!TryExecuteOrchestrationScript(
+						orchestrationEventConfiguration.ID,
 						orchestrationEventConfiguration.GlobalOrchestrationScript,
 						orchestrationEventConfiguration.GlobalOrchestrationScriptArguments,
 						orchestrationEventConfiguration.Profile,
@@ -391,101 +391,96 @@
 			}
 		}
 
-		private IList<OrchestrationScriptArgument> CombineOrchestrationScriptArguments(IList<OrchestrationScriptArgument> arguments, IList<OrchestrationProfileValue> profileValues)
-		{
-			List<OrchestrationScriptArgument> results = arguments.ToList();
-
-			foreach (OrchestrationProfileValue orchestrationProfileValue in profileValues)
-			{
-				if (results.All(value => value.Name != orchestrationProfileValue.Name))
-				{
-					string value = orchestrationProfileValue.Value.Type == ParameterValue.ValueType.Double
-						? orchestrationProfileValue.Value.DoubleValue.ToString(CultureInfo.InvariantCulture)
-						: orchestrationProfileValue.Value.StringValue;
-
-					results.Add(new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, orchestrationProfileValue.Name, value));
-				}
-			}
-
-			return results;
-		}
-
-		private bool TryExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, PerformanceTracker performanceTracker, out string[] errorMessages)
+		private bool TryExecuteOrchestrationScript(Guid eventId, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, PerformanceTracker performanceTracker, out string[] errorMessages)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				IDms dms = _api.Connection.GetDms();
-				IDmsAutomationScript script = dms.GetScript(scriptName);
+				return TryExecuteOrchestrationScript(_api.Connection, eventId, scriptName, arguments, profile, out errorMessages);
+			}
+		}
 
-				List<DmsAutomationScriptParamValue> scriptParams = [];
-				IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments = arguments.ToList();
+		internal static bool TryExecuteOrchestrationScript(IConnection connection, Guid eventId, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, out string[] errorMessages)
+		{
+			IDms dms = connection.GetDms();
+			ProfileHelper profileHelper = new ProfileHelper(connection.HandleMessages);
 
-				Lazy<ProfileInstance> profileInstance = new(() =>
+			IDmsAutomationScript script = dms.GetScript(scriptName);
+
+			List<DmsAutomationScriptParamValue> scriptParams = [];
+			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments = arguments.ToList();
+
+			Lazy<ProfileInstance> profileInstance = new(() =>
+			{
+				ProfileInstance instance = profileHelper.ProfileInstances.Read(ProfileInstanceExposers.Name.Equal(profile.Instance)).FirstOrDefault();
+				if (instance == null)
 				{
-					ProfileInstance instance = _profileHelper.ProfileInstances.Read(ProfileInstanceExposers.Name.Equal(profile.Instance)).FirstOrDefault();
-					if (instance == null)
-					{
-						throw new InvalidOperationException($"No profile instance found with name '{profile.Instance}'");
-					}
+					throw new InvalidOperationException($"No profile instance found with name '{profile.Instance}'");
+				}
 
-					return instance;
-				});
+				return instance;
+			});
 
-				foreach (IDmsAutomationScriptParameter requiredParameter in script.Parameters)
+			foreach (IDmsAutomationScriptParameter requiredParameter in script.Parameters)
+			{
+				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredParameter.Description);
+				if (matchingArgument != null)
 				{
-					OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredParameter.Description);
-					if (matchingArgument != null)
-					{
-						scriptParams.Add(new DmsAutomationScriptParamValue(matchingArgument.Name, matchingArgument.Value));
-						continue;
-					}
+					scriptParams.Add(new DmsAutomationScriptParamValue(matchingArgument.Name, matchingArgument.Value));
+					continue;
+				}
 
-					var profileParameter = profile.Values.FirstOrDefault(value => value.Name == requiredParameter.Description);
-					if (profileParameter != null)
-					{
-						scriptParams.Add(new DmsAutomationScriptParamValue(profileParameter.Name, profileParameter.Value.ToString()));
-						continue;
-					}
+				var profileParameter = profile.Values.FirstOrDefault(value => value.Name == requiredParameter.Description);
+				if (profileParameter != null)
+				{
+					scriptParams.Add(new DmsAutomationScriptParamValue(profileParameter.Name, profileParameter.Value.ToString()));
+					continue;
+				}
 
-					var profileInstanceParameter = profileInstance.Value.Values.FirstOrDefault(value => value.Parameter.Name == requiredParameter.Description);
-					if (profileInstanceParameter != null)
-					{
-						scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, profileInstanceParameter.Value.ToString()));
-						continue;
-					}
+				var profileInstanceParameter = profileInstance.Value.Values.FirstOrDefault(value => value.Parameter.Name == requiredParameter.Description);
+				if (profileInstanceParameter != null)
+				{
+					scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, profileInstanceParameter.Value.ToString()));
+					continue;
+				}
 
-					errorMessages = [$"Missing required script parameter: {requiredParameter.Description}"];
+				errorMessages = [$"Missing required script parameter: {requiredParameter.Description}"];
+				return false;
+			}
+
+			List<DmsAutomationScriptDummyValue> scriptDummies = [];
+			foreach (IDmsAutomationScriptDummy requiredDummy in script.Dummies)
+			{
+				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredDummy.Description);
+
+				if (matchingArgument == null)
+				{
+					errorMessages = [$"Missing required script dummy: {requiredDummy.Description}"];
 					return false;
 				}
 
-				List<DmsAutomationScriptDummyValue> scriptDummies = [];
-				foreach (IDmsAutomationScriptDummy requiredDummy in script.Dummies)
+				if (matchingArgument.Value.Contains("/")) // By ID
 				{
-					OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredDummy.Description);
-
-					if (matchingArgument == null)
-					{
-						errorMessages = [$"Missing required script dummy: {requiredDummy.Description}"];
-						return false;
-					}
-
-					if (matchingArgument.Value.Contains("/")) // By ID
-					{
-						string[] splittedId = matchingArgument.Value.Split('/');
-						int dmaId = Convert.ToInt32(splittedId[0]);
-						int elementId = Convert.ToInt32(splittedId[1]);
-						scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, new DmsElementId(dmaId, elementId)));
-					}
-					else // By Name
-					{
-						IDmsElement element = dms.GetElement(matchingArgument.Value);
-						scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, element.DmsElementId));
-					}
+					string[] splittedId = matchingArgument.Value.Split('/');
+					int dmaId = Convert.ToInt32(splittedId[0]);
+					int elementId = Convert.ToInt32(splittedId[1]);
+					scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, new DmsElementId(dmaId, elementId)));
 				}
-
-				var result = AutomationHelper.TryExecuteOrchestrationScript(_api.Connection, scriptName, scriptParams, scriptDummies, profile, out errorMessages);
-				return !result.HadError;
+				else // By Name
+				{
+					IDmsElement element = dms.GetElement(matchingArgument.Value);
+					scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, element.DmsElementId));
+				}
 			}
+
+			OrchestrationScriptInput input = new(
+				profile.Values.ToDictionary(
+					value => value.Name,
+					value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
+				profile.Instance);
+			input.Metadata.Add("Event ID", eventId.ToString());
+
+			var result = AutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
+			return !result.HadError;
 		}
 	}
 }

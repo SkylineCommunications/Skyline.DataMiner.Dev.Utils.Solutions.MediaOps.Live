@@ -5,26 +5,29 @@
 
 	using Newtonsoft.Json;
 
-	public class ScriptInput
+	public class OrchestrationScriptInput
 	{
-		public ScriptInput()
+		public OrchestrationScriptInput()
 			: this(new Dictionary<string, object>())
 		{
 		}
 
-		public ScriptInput(Dictionary<string, object> profileParameterValues) : this(profileParameterValues, String.Empty)
+		public OrchestrationScriptInput(Dictionary<string, object> profileParameterValues) : this(profileParameterValues, String.Empty)
 		{
 		}
 
 		[JsonConstructor]
-		public ScriptInput(Dictionary<string, object> profileParameterValues, string profileInstance)
+		public OrchestrationScriptInput(Dictionary<string, object> profileParameterValues, string profileInstance)
 		{
 			ProfileParameterValues = profileParameterValues;
 			ProfileInstance = profileInstance;
+			Metadata = new Dictionary<string, string>();
 		}
 
 		public Dictionary<string, object> ProfileParameterValues { get; }
 
 		public string ProfileInstance { get; }
+
+		public Dictionary<string, string> Metadata { get; }
 	}
 }

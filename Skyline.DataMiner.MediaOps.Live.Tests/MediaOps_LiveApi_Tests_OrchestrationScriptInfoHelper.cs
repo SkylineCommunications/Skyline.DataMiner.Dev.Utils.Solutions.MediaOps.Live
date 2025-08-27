@@ -39,6 +39,7 @@
 			OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("OrchestrationScript");
 
 			var elements = info.Elements.First().GetApplicableElements(api.Connection);
+			Console.WriteLine(JsonConvert.SerializeObject(elements.Select(e => e.Name), Formatting.Indented));
 			Assert.HasCount(2, elements);
 		}
 	}

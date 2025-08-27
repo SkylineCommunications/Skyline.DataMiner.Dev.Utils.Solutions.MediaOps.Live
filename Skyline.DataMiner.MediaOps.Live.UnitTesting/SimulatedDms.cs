@@ -55,30 +55,32 @@
 			}
 
 			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, orchestrationScriptInfo) {Folder = "MediaOps/OrchestrationScripts" });
-			foreach (KeyValuePair<string, Guid> profileParameter in orchestrationScriptInfo.ProfileParameters)
+		}
+
+		public void AddProfileParameter(string parameterName, Guid parameterId, Parameter.ParameterType type)
+		{
+			var param = new Parameter(parameterId)
 			{
-				var param = new Parameter(profileParameter.Value)
-				{
-					Name = profileParameter.Key,
-					Categories = ProfileParameterCategory.Monitoring,
-				};
+				Name = parameterName,
+				Categories = ProfileParameterCategory.Monitoring,
+				Type = type,
+			};
 
-				if (profileParameter.Key.EndsWith("_String"))
-				{
-					param.Type = Parameter.ParameterType.Text;
-				}
-				else
-				{
-					param.Type = Parameter.ParameterType.Number;
-					param.Decimals = 2;
-					param.RangeMax = 1000;
-					param.RangeMin = 0;
-					param.Stepsize = 0.01;
-					param.Units = "Units";
-				}
-
-				_profileParameters.Add(param);
+			if (type == Parameter.ParameterType.Number)
+			{
+				param.Decimals = 2;
+				param.RangeMax = 1000;
+				param.RangeMin = 0;
+				param.Stepsize = 0.01;
+				param.Units = "Units";
 			}
+
+			_profileParameters.Add(param);
+		}
+
+		public void AddProfileDefinition(string name, Guid id, List<Guid> parameterIds)
+		{
+			throw new NotImplementedException();
 		}
 
 		public IEnumerable<SimulatedSchedulerTask> GetAllDmsSchedulerTasks()
