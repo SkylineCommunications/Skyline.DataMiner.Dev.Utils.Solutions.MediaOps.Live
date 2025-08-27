@@ -7,7 +7,6 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
@@ -15,8 +14,6 @@
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
-
-	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
 
 	public static class AutomationHelper
 	{

@@ -2,14 +2,12 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Globalization;
 	using System.Linq;
 	using System.Threading;
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
@@ -476,7 +474,7 @@
 					value => value.Name,
 					value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
 				profile.Instance);
-			input.Metadata.Add("Event ID", eventId.ToString());
+			input.Metadata.Add("{Event ID}", eventId.ToString());
 
 			var result = AutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
 			return !result.HadError;

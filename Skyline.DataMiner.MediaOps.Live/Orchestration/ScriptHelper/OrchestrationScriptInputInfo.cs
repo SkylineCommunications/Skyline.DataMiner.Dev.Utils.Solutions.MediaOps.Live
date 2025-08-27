@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 

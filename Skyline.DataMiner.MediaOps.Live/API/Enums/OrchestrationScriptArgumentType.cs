@@ -5,5 +5,6 @@
 		Element = 0,
 		Parameter = 1,
 		Preset = 2,
+		Metadata = 3,
 	}
 }

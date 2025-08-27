@@ -7,14 +7,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.Core.DataMinerSystem.Common.Selectors;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.Dialogs;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -144,7 +142,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		{
 			MediaOpsLiveApi api = engine.GetMediaOpsLiveApi();
 
-			if (!TryGetMetadataValue("Event ID", out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid))
+			if (!TryGetMetadataValue("{Event ID}", out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid))
 			{
 				return null;
 			}

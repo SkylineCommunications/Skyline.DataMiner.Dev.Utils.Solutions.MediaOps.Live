@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
@@ -169,6 +168,15 @@
 				{
 					new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e"),
 					new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f"),
+				});
+
+			Dms.AddProfileInstance(
+				"Instance 1",
+				new Guid("279eea1b-2702-4710-be01-ad1d80dd4b9d"),
+				new Guid("94fa7d96-8cb3-4bdd-a968-dd1192683165"),
+				new Dictionary<Guid, object>(){
+					{ new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e"), 500},
+					{ new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f"), "Hello"},
 				});
 
 			Dms.AddScript("Script_Success", new List<string>(), new List<string>());

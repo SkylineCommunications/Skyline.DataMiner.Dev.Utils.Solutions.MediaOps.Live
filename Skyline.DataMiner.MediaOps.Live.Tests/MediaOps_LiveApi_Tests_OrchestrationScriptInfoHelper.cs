@@ -5,6 +5,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
+	using Skyline.DataMiner.Net.Profiles;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_OrchestrationScriptInfoHelper
@@ -41,6 +42,18 @@
 			var elements = info.Elements.First().GetApplicableElements(api.Connection);
 			Console.WriteLine(JsonConvert.SerializeObject(elements.Select(e => e.Name), Formatting.Indented));
 			Assert.HasCount(2, elements);
+		}
+
+		[TestMethod]
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_GetValidInstancesForDefinition()
+		{
+
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+
+			OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("OrchestrationScript");
+
+			var instances = info.GetApplicableInstances(new ProfileHelper(api.Connection.HandleMessages));
+			Assert.HasCount(1, instances);
 		}
 	}
 }
