@@ -405,8 +405,6 @@
 			ProfileHelper profileHelper = new ProfileHelper(connection.HandleMessages);
 
 			IDmsAutomationScript script = dms.GetScript(scriptName);
-
-			List<DmsAutomationScriptParamValue> scriptParams = [];
 			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments = arguments.ToList();
 
 			Lazy<ProfileInstance> profileInstance = new(() =>
@@ -420,6 +418,7 @@
 				return instance;
 			});
 
+			List<DmsAutomationScriptParamValue> scriptParams = [];
 			foreach (IDmsAutomationScriptParameter requiredParameter in script.Parameters)
 			{
 				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredParameter.Description);
