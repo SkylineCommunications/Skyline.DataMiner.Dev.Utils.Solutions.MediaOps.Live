@@ -242,6 +242,18 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			}
 
 			// Add profile instance parameter values from provide instance in input.
+			GetParamsFromInstance(input, parameterInfos);
+
+			// Add single parameter values from the input.
+			GetSeparateParams(input, parameterInfos);
+
+			LinkParameters(scriptInfo, parameterInfos);
+
+			return parameterInfos;
+		}
+
+		private void GetParamsFromInstance(OrchestrationScriptInput input, List<ParameterInfo> parameterInfos)
+		{
 			if (!String.IsNullOrEmpty(input.ProfileInstance))
 			{
 				ProfileHelper helper = new ProfileHelper(_engine.SendSLNetMessages);
@@ -272,8 +284,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 					}
 				}
 			}
+		}
 
-			// Add single parameter values from the input.
+		private static void GetSeparateParams(OrchestrationScriptInput input, List<ParameterInfo> parameterInfos)
+		{
 			foreach (KeyValuePair<string, object> parameterValue in input.ProfileParameterValues)
 			{
 				ParameterInfo matchInfo = parameterInfos
@@ -284,10 +298,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 					matchInfo.Value = parameterValue.Value;
 				}
 			}
-
-			LinkParameters(scriptInfo, parameterInfos);
-
-			return parameterInfos;
 		}
 
 		private void LinkParameters(ScriptInfo scriptInfo, List<ParameterInfo> infos)
