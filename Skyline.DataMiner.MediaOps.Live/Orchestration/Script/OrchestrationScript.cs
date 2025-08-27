@@ -35,7 +35,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		private List<ParameterInfo> _parameterInfos;
 		private Dictionary<string, string> _metadata = new Dictionary<string, string>();
 
-		private OrchestrationEventConfiguration _eventConfiguration;
+		private Lazy<OrchestrationEventConfiguration> _eventConfiguration;
 
 		private IEngine _engine;
 
@@ -47,7 +47,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		public RequestScriptInfoOutput OnRequestScriptInfoRequest(IEngine engine, RequestScriptInfoInput inputData)
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
-			_eventConfiguration = LoadEventFromMetaData();
+			_eventConfiguration = new Lazy<OrchestrationEventConfiguration>(() => LoadEventFromMetaData(engine));
 
 			return new RequestScriptInfoOutput
 			{
@@ -111,12 +111,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 		public NodeConfiguration GetNodeConfiguration(string nodeLabel)
 		{
-			if (_eventConfiguration == null)
+			if (_eventConfiguration.Value == null)
 			{
 				throw new InvalidOperationException("No event configuration was found");
 			}
 
-			return _eventConfiguration.Configuration.NodeConfigurations.FirstOrDefault(nc => nc.NodeLabel == nodeLabel);
+			return _eventConfiguration.Value.Configuration.NodeConfigurations.FirstOrDefault(nc => nc.NodeLabel == nodeLabel);
 		}
 
 		public void OrchestrateNode(NodeConfiguration nodeConfig)
@@ -140,11 +140,11 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			Orchestrate(engine);
 		}
 
-		private OrchestrationEventConfiguration LoadEventFromMetaData()
+		private OrchestrationEventConfiguration LoadEventFromMetaData(IEngine engine)
 		{
-			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+			MediaOpsLiveApi api = engine.GetMediaOpsLiveApi();
 
-			if (TryGetMetadataValue("Event ID", out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid))
+			if (!TryGetMetadataValue("Event ID", out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid))
 			{
 				return null;
 			}
