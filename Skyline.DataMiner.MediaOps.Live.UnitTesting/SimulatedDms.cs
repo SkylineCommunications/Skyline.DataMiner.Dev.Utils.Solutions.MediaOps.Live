@@ -80,7 +80,7 @@
 
 		public void AddProfileDefinition(string name, Guid id, List<Guid> parameterIds)
 		{
-			throw new NotImplementedException();
+			//throw new NotImplementedException();
 		}
 
 		public IEnumerable<SimulatedSchedulerTask> GetAllDmsSchedulerTasks()
