@@ -1,12 +1,15 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
 {
 	using System;
+	using System.Collections;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	/// <summary>
 	/// Information about an orchestration event.
@@ -282,5 +285,12 @@
 					throw new ArgumentException($"Event state {state} can not be applied.");
 			}
 		}
+	}
+
+	public static class OrchestrationEventExposers
+	{
+		public static readonly Exposer<OrchestrationEvent, Guid> ID = new Exposer<OrchestrationEvent, Guid>(x => x.ID, nameof(OrchestrationEvent.ID));
+		public static readonly Exposer<OrchestrationEvent, string> Name = new Exposer<OrchestrationEvent, string>(x => x.Name, nameof(OrchestrationEvent.Name));
+		public static readonly Exposer<OrchestrationEvent, DateTimeOffset> EventTime = new Exposer<OrchestrationEvent, DateTimeOffset>(x => x.EventTime.Value, nameof(OrchestrationEvent.EventTime));
 	}
 }
