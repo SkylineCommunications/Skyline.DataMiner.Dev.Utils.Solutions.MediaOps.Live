@@ -8,6 +8,7 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
@@ -419,7 +420,7 @@
 			List<DmsAutomationScriptParamValue> scriptParams = [];
 			foreach (IDmsAutomationScriptParameter requiredParameter in script.Parameters)
 			{
-				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredParameter.Description);
+				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredParameter.Description && arg.Type == OrchestrationScriptArgumentType.Parameter);
 				if (matchingArgument != null)
 				{
 					scriptParams.Add(new DmsAutomationScriptParamValue(matchingArgument.Name, matchingArgument.Value));
@@ -447,7 +448,7 @@
 			List<DmsAutomationScriptDummyValue> scriptDummies = [];
 			foreach (IDmsAutomationScriptDummy requiredDummy in script.Dummies)
 			{
-				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredDummy.Description);
+				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredDummy.Description && arg.Type == OrchestrationScriptArgumentType.Element);
 
 				if (matchingArgument == null)
 				{
@@ -475,6 +476,11 @@
 					value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
 				profile.Instance);
 			input.Metadata.Add("{Event ID}", eventId.ToString());
+
+			foreach (OrchestrationScriptArgument orchestrationScriptArgument in orchestrationScriptArguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata))
+			{
+				input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
+			}
 
 			var result = AutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
 			return !result.HadError;
