@@ -483,7 +483,8 @@
 			}
 
 			var result = AutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
-			return !result.HadError;
+
+			return !result.HadError && !errorMessages.Any();
 		}
 	}
 }
