@@ -171,7 +171,7 @@
 
 			lock (_lock)
 			{
-				var levelsConnectivity = new Dictionary<ApiObjectReference<Level>, EndpointConnectivity>();
+				var levelsConnectivity = new Dictionary<Level, EndpointConnectivity>();
 				var connectedSources = new HashSet<VirtualSignalGroup>();
 				var pendingConnectedSources = new HashSet<VirtualSignalGroup>();
 				var connectedDestinations = new HashSet<VirtualSignalGroup>();
@@ -181,12 +181,17 @@
 				{
 					if (!_endpoints.TryGetEndpoint(levelEndpoint.Endpoint, out var endpoint))
 					{
-						throw new InvalidOperationException($"Endpoint {levelEndpoint.Endpoint.ID} not found for virtual signal group {virtualSignalGroup.ID}");
+						throw new InvalidOperationException($"Endpoint {levelEndpoint.Endpoint.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
+					}
+
+					if (!_endpoints.TryGetLevel(levelEndpoint.Level, out var level))
+					{
+						throw new InvalidOperationException($"Level {levelEndpoint.Level.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
 					}
 
 					var connectivity = GetConnectivity(endpoint);
 
-					levelsConnectivity[levelEndpoint.Level] = connectivity;
+					levelsConnectivity[level] = connectivity;
 
 					if (connectivity.ConnectedSource != null)
 					{

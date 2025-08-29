@@ -12,14 +12,14 @@
 	{
 		public VirtualSignalGroupConnectivity(
 			VirtualSignalGroup virtualSignalGroup,
-			IReadOnlyDictionary<ApiObjectReference<Level>, EndpointConnectivity> levelsConnectivity,
+			IReadOnlyDictionary<Level, EndpointConnectivity> levelsConnectivity,
 			IReadOnlyCollection<VirtualSignalGroup> connectedSources,
 			IReadOnlyCollection<VirtualSignalGroup> pendingConnectedSources,
 			IReadOnlyCollection<VirtualSignalGroup> connectedDestinations,
 			IReadOnlyCollection<VirtualSignalGroup> pendingConnectedDestinations)
 		{
 			VirtualSignalGroup = virtualSignalGroup ?? throw new ArgumentNullException(nameof(virtualSignalGroup));
-			Levels = levelsConnectivity ?? new Dictionary<ApiObjectReference<Level>, EndpointConnectivity>();
+			Levels = levelsConnectivity ?? new Dictionary<Level, EndpointConnectivity>();
 			ConnectedSources = connectedSources ?? [];
 			PendingConnectedSources = pendingConnectedSources ?? [];
 			ConnectedDestinations = connectedDestinations ?? [];
@@ -34,7 +34,7 @@
 		/// <summary>
 		/// Gets the connectivity information for each level.
 		/// </summary>
-		public IReadOnlyDictionary<ApiObjectReference<Level>, EndpointConnectivity> Levels { get; }
+		public IReadOnlyDictionary<Level, EndpointConnectivity> Levels { get; }
 
 		/// <summary>
 		/// Gets the sources this virtual signal group is connected to.

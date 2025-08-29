@@ -33,8 +33,8 @@
 				Assert.IsTrue(connectivity.IsConnected(audioSource1));
 			}
 
-			connectionMetrics.NumberOfRequests.Should().BeLessThan(10UL);
-			connectionMetrics.NumberOfDomRequests.Should().BeLessThan(10UL);
+			connectionMetrics.NumberOfRequests.Should().BeLessThan(15UL);
+			connectionMetrics.NumberOfDomRequests.Should().BeLessThan(15UL);
 			connectionMetrics.NumberOfDomInstancesRetrieved.Should().BeLessThan(100UL);
 		}
 
