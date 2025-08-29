@@ -36,6 +36,11 @@
 			return (Endpoint, State).GetHashCode();
 		}
 
+		public override string ToString()
+		{
+			return $"{Endpoint} - {State}";
+		}
+
 		public static bool operator ==(EndpointConnection left, EndpointConnection right)
 		{
 			return EqualityComparer<EndpointConnection>.Default.Equals(left, right);
