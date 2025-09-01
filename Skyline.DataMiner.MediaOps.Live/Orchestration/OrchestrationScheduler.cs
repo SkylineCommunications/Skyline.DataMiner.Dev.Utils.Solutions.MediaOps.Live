@@ -4,8 +4,6 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Newtonsoft.Json;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;

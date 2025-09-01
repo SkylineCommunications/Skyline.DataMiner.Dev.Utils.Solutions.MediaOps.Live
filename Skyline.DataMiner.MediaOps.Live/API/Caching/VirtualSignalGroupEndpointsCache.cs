@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Tools
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 {
 	using System;
 	using System.Collections.Generic;
@@ -16,13 +16,11 @@
 
 		private readonly Dictionary<ApiObjectReference<Endpoint>, Endpoint> _endpoints = new();
 		private readonly Dictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> _virtualSignalGroups = new();
-		private readonly Dictionary<ApiObjectReference<Level>, Level> _levels = new();
 
 		private readonly VirtualSignalGroupEndpointsMapping _virtualSignalGroupEndpointsMapping = new();
 
 		private RepositorySubscription<Endpoint> _subscriptionEndpoints;
 		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
-		private RepositorySubscription<Level> _subscriptionLevels;
 
 		public VirtualSignalGroupEndpointsCache(MediaOpsLiveApi api, bool subscribe = false)
 		{
@@ -36,8 +34,6 @@
 		public IReadOnlyDictionary<ApiObjectReference<Endpoint>, Endpoint> Endpoints => _endpoints;
 
 		public IReadOnlyDictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> VirtualSignalGroups => _virtualSignalGroups;
-
-		public IReadOnlyDictionary<ApiObjectReference<Level>, Level> Levels => _levels;
 
 		public bool IsSubscribed { get; private set; }
 
@@ -76,21 +72,6 @@
 			return _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint);
 		}
 
-		public Level GetEndpoint(ApiObjectReference<Level> id)
-		{
-			if (!TryGetLevel(id, out var level))
-			{
-				throw new ArgumentException($"Couldn't find level with ID {id.ID}", nameof(id));
-			}
-
-			return level;
-		}
-
-		public bool TryGetLevel(ApiObjectReference<Level> id, out Level level)
-		{
-			return _levels.TryGetValue(id, out level);
-		}
-
 		public void Subscribe()
 		{
 			lock (_lock)
@@ -105,9 +86,6 @@
 
 				_subscriptionVirtualSignalGroups = Api.VirtualSignalGroups.Subscribe();
 				_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
-
-				_subscriptionLevels = Api.Levels.Subscribe();
-				_subscriptionLevels.Changed += Levels_Changed;
 
 				IsSubscribed = true;
 			}
@@ -127,9 +105,6 @@
 
 				_subscriptionVirtualSignalGroups.Changed -= VirtualSignalGroups_Changed;
 				_subscriptionVirtualSignalGroups.Dispose();
-
-				_subscriptionLevels.Changed -= Levels_Changed;
-				_subscriptionLevels.Dispose();
 
 				IsSubscribed = false;
 			}
@@ -155,25 +130,13 @@
 
 		private void LoadInitialData()
 		{
-			var levelsTask = Task.Run(() => Api.Levels.ReadAll());
 			var endpointsTask = Task.Run(() => Api.Endpoints.ReadAll());
 			var virtualSignalGroupsTask = Task.Run(() => Api.VirtualSignalGroups.ReadAll());
 
-			Task.WaitAll(levelsTask, endpointsTask, virtualSignalGroupsTask);
+			Task.WaitAll(endpointsTask, virtualSignalGroupsTask);
 
-			UpdateLevels(levelsTask.Result);
 			UpdateEndpoints(endpointsTask.Result);
 			UpdateVirtualSignalGroups(virtualSignalGroupsTask.Result);
-		}
-
-		private void Levels_Changed(object sender, ApiObjectsChangedEvent<Level> e)
-		{
-			lock (_lock)
-			{
-				Debug.WriteLine($"Levels changed: {e}");
-
-				UpdateLevels(e.Created.Concat(e.Updated), e.Deleted);
-			}
 		}
 
 		private void Endpoints_Changed(object sender, ApiObjectsChangedEvent<Endpoint> e)
@@ -237,28 +200,6 @@
 					{
 						_virtualSignalGroups.Remove(item);
 						_virtualSignalGroupEndpointsMapping.Remove(item);
-					}
-				}
-			}
-		}
-
-		private void UpdateLevels(IEnumerable<Level> updated, IEnumerable<Level> deleted = null)
-		{
-			lock (_lock)
-			{
-				if (updated != null)
-				{
-					foreach (var item in updated)
-					{
-						_levels[item.ID] = item;
-					}
-				}
-
-				if (deleted != null)
-				{
-					foreach (var item in deleted)
-					{
-						_levels.Remove(item);
 					}
 				}
 			}

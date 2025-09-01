@@ -6,17 +6,15 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
-	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
 	public class TakeHelper
@@ -44,7 +42,8 @@
 
 			if (connectionMonitor == null)
 			{
-				connectionMonitor = ServiceProvider.Instance.GetOrAddService(CreateConnectionMonitor);
+				var staticCache = StaticMediaOpsLiveCache.GetOrCreate(_api.Connection);
+				connectionMonitor = staticCache.ConnectionMonitor;
 			}
 
 			_connectionMonitor = connectionMonitor;
@@ -535,33 +534,6 @@
 			{
 				return false;
 			}
-		}
-
-		private ConnectionMonitor CreateConnectionMonitor()
-		{
-			IConnection connection;
-
-			if (ConnectionHelper.IsManagedDataMinerModule(_api.Connection))
-			{
-				// If the connection is a managed DataMiner module (e.g. Engine.SLNetRaw), use the existing connection directly.
-				connection = _api.Connection;
-			}
-			else if (ConnectionHelper.TryCloneConnection(_api.Connection, "MediaOps.Live - Connection monitor", out var clonedConnection))
-			{
-				connection = clonedConnection;
-			}
-			else if (_api.HasEngine && Engine.SLNetRaw != null)
-			{
-				connection = Engine.SLNetRaw;
-			}
-			else
-			{
-				throw new InvalidOperationException("Failed to create a connection.");
-			}
-
-			var staticLiveApi = new MediaOpsLiveApi(connection);
-
-			return new ConnectionMonitor(staticLiveApi);
 		}
 	}
 }

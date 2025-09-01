@@ -12,15 +12,14 @@
 	{
 		private readonly LiteConnectivityInfoProvider _connectivityInfoProvider;
 
-		public ConnectionMonitor(MediaOpsLiveApi api)
+		public ConnectionMonitor(MediaOpsLiveApi api, LiteConnectivityInfoProvider liteConnectivityInfoProvider = null)
 		{
 			if (api is null)
 			{
 				throw new ArgumentNullException(nameof(api));
 			}
 
-			_connectivityInfoProvider = new LiteConnectivityInfoProvider(api);
-			_connectivityInfoProvider.Subscribe();
+			_connectivityInfoProvider = liteConnectivityInfoProvider ?? new LiteConnectivityInfoProvider(api, subscribe: true);
 		}
 
 		public async Task<bool> WaitUntilConnectedAsync(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, CancellationToken cancellationToken)
