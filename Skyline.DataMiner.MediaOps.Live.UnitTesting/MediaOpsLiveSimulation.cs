@@ -13,18 +13,21 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.Net;
 
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
 	public class MediaOpsLiveSimulation
 	{
 		private readonly SimulatedDms _dms;
+		private readonly IConnection _connection;
 
 		public MediaOpsLiveSimulation(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false, bool createElements = true)
 		{
 			_dms = new SimulatedDms();
+			_connection = Dms.CreateConnection();
 
-			Api = new MediaOpsLiveApi(_dms.CreateConnection());
+			Api = new MediaOpsLiveApi(_connection);
 
 			Initialize(installDomModules, createEndpoints, createVsgs, createConnections, createElements);
 		}
@@ -157,10 +160,10 @@
 			if (installDomModules)
 			{
 				var slcConnectivityManagementDomModule = new SlcConnectivityManagementDomModule();
-				DomModuleInstaller.Install(Api.Connection.HandleMessages, slcConnectivityManagementDomModule, x => { });
+				DomModuleInstaller.Install(_connection.HandleMessages, slcConnectivityManagementDomModule, x => { });
 
 				var slcOrchestrationDomModule = new SlcOrchestrationDomModule();
-				DomModuleInstaller.Install(Api.Connection.HandleMessages, slcOrchestrationDomModule, x => { });
+				DomModuleInstaller.Install(_connection.HandleMessages, slcOrchestrationDomModule, x => { });
 			}
 
 			var category = new Category { Name = "Category 1" };
