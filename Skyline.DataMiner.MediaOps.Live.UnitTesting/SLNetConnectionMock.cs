@@ -4,6 +4,7 @@
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Async;
@@ -28,18 +29,30 @@
 
 		internal SimulatedDms Dms { get; }
 
+		public int SubscriptionCount => _subscriptions.Count;
+
 		internal void NotifySubscriptions(EventMessage eventMessage)
 		{
-			switch (eventMessage)
+			if (eventMessage is DomInstancesChangedEventMessage domInstancesChangedEvent)
 			{
-				case DomInstancesChangedEventMessage domInstancesChangedEvent:
-					NotifyDomInstancesChanged(domInstancesChangedEvent);
-					break;
-				case ParameterTableUpdateEventMessage parameterTableUpdateEvent:
-					NotifyTableUpdate(parameterTableUpdateEvent);
-					break;
-				default:
-					throw new NotSupportedException($"Unsupported event message type: {eventMessage.GetType()}");
+				NotifyDomInstancesChanged(domInstancesChangedEvent);
+				return;
+			}
+
+			if (eventMessage is ParameterTableUpdateEventMessage parameterTableUpdateEvent)
+			{
+				NotifyTableUpdate(parameterTableUpdateEvent);
+				return;
+			}
+
+			foreach (var subscription in _subscriptions.Values)
+			{
+				if (!subscription.Filters.Any(f => f.ToTypeObject() == eventMessage.GetType()))
+				{
+					continue;
+				}
+
+				InvokeOnNewMessageEvent(subscription.SetId, eventMessage);
 			}
 		}
 
@@ -123,17 +136,33 @@
 				switch (filter)
 				{
 					case SubscriptionFilterParameter filterParameter:
-						if (filterParameter.ToTypeObject() == typeof(ParameterTableUpdateEventMessage) &&
-							Dms.Agents.TryGetValue(filterParameter.DmaID, out var dma) &&
-							dma.Elements.TryGetValue(filterParameter.ElementID, out var element) &&
-							element.Tables.TryGetValue(filterParameter.ParameterID, out var table))
 						{
-							var initialEvent = new ParameterChangeEventMessage(filterParameter.DmaID, filterParameter.ElementID, filterParameter.ParameterID)
+							if (filterParameter.ToTypeObject() == typeof(ParameterTableUpdateEventMessage) &&
+								Dms.Agents.TryGetValue(filterParameter.DmaID, out var dma) &&
+								dma.Elements.TryGetValue(filterParameter.ElementID, out var element) &&
+								element.Tables.TryGetValue(filterParameter.ParameterID, out var table))
 							{
-								NewValue = table.ToParameterValue(),
-							};
+								var initialEvent = new ParameterChangeEventMessage(filterParameter.DmaID, filterParameter.ElementID, filterParameter.ParameterID)
+								{
+									NewValue = table.ToParameterValue(),
+								};
 
-							InvokeOnNewMessageEvent(subscriptionSetId, initialEvent);
+								InvokeOnNewMessageEvent(subscriptionSetId, initialEvent);
+							}
+						}
+
+						break;
+
+					default:
+						if (filter.ToTypeObject() == typeof(ElementStateEventMessage))
+						{
+							var elements = Dms.Agents.Values.SelectMany(x => x.Elements.Values);
+
+							foreach (var element in elements)
+							{
+								var initialEvent = new ElementStateEventMessage(element.Dma.DmaId, element.ElementId, ElementState.Active, AlarmLevel.Normal);
+								InvokeOnNewMessageEvent(subscriptionSetId, initialEvent);
+							}
 						}
 
 						break;
@@ -215,7 +244,7 @@
 		/// Gets a value indicating whether there are subscribers to the <see cref="OnNewMessage"/> event.
 		/// For unit testing purposes.
 		/// </summary>
-		internal bool HasOnNewMessageSubscribers => OnNewMessage?.GetInvocationList().Any() ?? false;
+		public bool HasOnNewMessageSubscribers => OnNewMessage?.GetInvocationList().Any() ?? false;
 
 		/// <inheritdoc/>
 		public DMSMessage[] HandleMessage(DMSMessage msg)
@@ -334,26 +363,25 @@
 		/// <inheritdoc/>
 		public ITrackedSubscriptionUpdate TrackAddSubscription(string setID, params SubscriptionFilter[] newFilters)
 		{
-			// quick implementation for unit testing
 			return new TrackedSubscriptionUpdate(() => AddSubscription(setID, newFilters));
 		}
 
 		/// <inheritdoc/>
 		public ITrackedSubscriptionUpdate TrackRemoveSubscription(string setID, params SubscriptionFilter[] deletedFilters)
 		{
-			throw new NotImplementedException();
+			return new TrackedSubscriptionUpdate(() => RemoveSubscription(setID, deletedFilters));
 		}
 
 		/// <inheritdoc/>
 		public ITrackedSubscriptionUpdate TrackReplaceSubscription(string setID, params SubscriptionFilter[] newFilters)
 		{
-			throw new NotImplementedException();
+			return new TrackedSubscriptionUpdate(() => ReplaceSubscription(setID, newFilters));
 		}
 
 		/// <inheritdoc/>
 		public ITrackedSubscriptionUpdate TrackClearSubscriptions(string setID)
 		{
-			throw new NotImplementedException();
+			return new TrackedSubscriptionUpdate(() => ClearSubscriptions(setID));
 		}
 
 		/// <inheritdoc/>

@@ -36,7 +36,17 @@
 
 		public override bool Equals(object obj)
 		{
-			return obj is ApiObjectReference<T> reference && Equals(reference);
+			if (obj is ApiObjectReference<T> reference)
+			{
+				return Equals(reference);
+			}
+
+			if (obj is T apiObj)
+			{
+				return Equals(apiObj.Reference);
+			}
+
+			return false;
 		}
 
 		public bool Equals(ApiObjectReference<T> other)

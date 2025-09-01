@@ -176,6 +176,104 @@
 			return false;
 		}
 
+		/// <summary>
+		/// Assigns an endpoint to a level in the virtual signal group. If the level already has an endpoint assigned, it will be replaced.
+		/// If the level does not exist in the virtual signal group, it will be added with the specified endpoint.
+		/// </summary>
+		/// <param name="level">The level to assign the endpoint to.</param>
+		/// <param name="endpoint">The endpoint to assign to the level.</param>
+		/// <exception cref="ArgumentNullException">Thrown when either level or endpoint is null.</exception>
+		public void AssignEndpointToLevel(ApiObjectReference<Level> level, ApiObjectReference<Endpoint> endpoint)
+		{
+			if (level == null)
+			{
+				throw new ArgumentNullException(nameof(level));
+			}
+
+			if (endpoint == null)
+			{
+				throw new ArgumentNullException(nameof(endpoint));
+			}
+
+			var existing = Levels.FirstOrDefault(x => x.Level == level);
+			if (existing != null)
+			{
+				existing.Endpoint = endpoint;
+			}
+			else
+			{
+				Levels.Add(new LevelEndpoint(level, endpoint));
+			}
+		}
+
+		/// <summary>
+		/// Assigns an endpoint to a level in the virtual signal group. If the level already has an endpoint assigned, it will be replaced.
+		/// If the level does not exist in the virtual signal group, it will be added with the specified endpoint.
+		/// </summary>
+		/// <param name="level">The level to assign the endpoint to.</param>
+		/// <param name="endpoint">The endpoint to assign to the level.</param>
+		/// <exception cref="ArgumentNullException">Thrown when either level or endpoint is null.</exception>
+		public void AssignEndpointToLevel(Level level, Endpoint endpoint)
+		{
+			if (level == null)
+			{
+				throw new ArgumentNullException(nameof(level));
+			}
+
+			if (endpoint == null)
+			{
+				throw new ArgumentNullException(nameof(endpoint));
+			}
+
+			// Check if the endpoint's role matches the virtual signal group's role
+			if (endpoint.Role != Role)
+			{
+				throw new InvalidOperationException($"Endpoint and virtual signal group must have the same role.");
+			}
+
+			// Check if the endpoint's transport type matches the level's transport type
+			if (endpoint.TransportType != level.TransportType)
+			{
+				throw new InvalidOperationException($"Endpoint and level must have the same transport type.");
+			}
+
+			// Check if the endpoint is already assigned to another level in this virtual signal group
+			var existingLevelEndpoint = Levels.FirstOrDefault(x => x.Endpoint == endpoint && x.Level != level);
+			if (existingLevelEndpoint != null)
+			{
+				throw new InvalidOperationException($"Endpoint '{endpoint.Name}' is already assigned to another level in this virtual signal group.");
+			}
+
+			var existing = Levels.FirstOrDefault(x => x.Level == level);
+			if (existing != null)
+			{
+				existing.Endpoint = endpoint;
+			}
+			else
+			{
+				Levels.Add(new LevelEndpoint(level, endpoint));
+			}
+		}
+
+		/// <summary>
+		/// Unassigns the endpoint from a level in the virtual signal group. If the level does not have an endpoint assigned, nothing happens.
+		/// </summary>
+		/// <param name="level">The level to unassign the endpoint from.</param>
+		/// <exception cref="ArgumentNullException">Thrown when level is null.</exception>
+		public void RemoveEndpointFromLevel(ApiObjectReference<Level> level)
+		{
+			if (level == null)
+			{
+				throw new ArgumentNullException(nameof(level));
+			}
+
+			var existing = Levels.FirstOrDefault(x => x.Level == level);
+			if (existing != null)
+			{
+				Levels.Remove(existing);
+			}
+		}
+
 		public ValidationResult Validate()
 		{
 			var result = new ValidationResult();

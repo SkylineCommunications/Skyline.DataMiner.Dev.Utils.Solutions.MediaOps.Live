@@ -37,7 +37,7 @@
 			return element;
 		}
 
-		internal void NotifySubscriptions(ParameterTableUpdateEventMessage e)
+		internal void NotifySubscriptions(EventMessage e)
 		{
 			Dms.NotifySubscriptions(e);
 		}

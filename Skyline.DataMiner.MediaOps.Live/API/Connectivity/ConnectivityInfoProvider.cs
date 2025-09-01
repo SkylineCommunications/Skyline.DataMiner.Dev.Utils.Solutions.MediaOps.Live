@@ -17,7 +17,7 @@
 	{
 		private readonly object _lock = new();
 
-		private VirtualSignalGroupEndpointsCache _endpoints;
+		private VirtualSignalGroupEndpointsCache _vsgCache;
 		private LiteConnectivityInfoProvider _liteConnectivityInfoProvider;
 
 		private bool _isDisposed;
@@ -32,6 +32,11 @@
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
 
 		public MediaOpsLiveApi Api { get; }
+
+		/// <summary>
+		/// Gets the cache containing endpoints, levels, and virtual signal groups.
+		/// </summary>
+		public VirtualSignalGroupEndpointsCache VsgCache => _vsgCache;
 
 		public bool IsSubscribed { get; private set; }
 
@@ -153,7 +158,7 @@
 
 			lock (_lock)
 			{
-				if (!_endpoints.TryGetEndpoint(endpointRef, out var endpoint))
+				if (!_vsgCache.TryGetEndpoint(endpointRef, out var endpoint))
 				{
 					throw new InvalidOperationException($"Endpoint {endpointRef.ID} not found");
 				}
@@ -171,7 +176,7 @@
 
 			lock (_lock)
 			{
-				var levelsConnectivity = new Dictionary<ApiObjectReference<Level>, EndpointConnectivity>();
+				var levelsConnectivity = new Dictionary<Level, EndpointConnectivity>();
 				var connectedSources = new HashSet<VirtualSignalGroup>();
 				var pendingConnectedSources = new HashSet<VirtualSignalGroup>();
 				var connectedDestinations = new HashSet<VirtualSignalGroup>();
@@ -179,36 +184,41 @@
 
 				foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
 				{
-					if (!_endpoints.TryGetEndpoint(levelEndpoint.Endpoint, out var endpoint))
+					if (!_vsgCache.TryGetEndpoint(levelEndpoint.Endpoint, out var endpoint))
 					{
-						throw new InvalidOperationException($"Endpoint {levelEndpoint.Endpoint.ID} not found for virtual signal group {virtualSignalGroup.ID}");
+						throw new InvalidOperationException($"Endpoint {levelEndpoint.Endpoint.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
+					}
+
+					if (!_vsgCache.TryGetLevel(levelEndpoint.Level, out var level))
+					{
+						throw new InvalidOperationException($"Level {levelEndpoint.Level.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
 					}
 
 					var connectivity = GetConnectivity(endpoint);
 
-					levelsConnectivity[levelEndpoint.Level] = connectivity;
+					levelsConnectivity[level] = connectivity;
 
 					if (connectivity.ConnectedSource != null)
 					{
-						var virtualSignalGroups = _endpoints.GetVirtualSignalGroupsThatContainEndpoint(connectivity.ConnectedSource);
+						var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(connectivity.ConnectedSource);
 						connectedSources.UnionWith(virtualSignalGroups);
 					}
 
 					if (connectivity.PendingConnectedSource != null)
 					{
-						var virtualSignalGroups = _endpoints.GetVirtualSignalGroupsThatContainEndpoint(connectivity.PendingConnectedSource);
+						var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(connectivity.PendingConnectedSource);
 						pendingConnectedSources.UnionWith(virtualSignalGroups);
 					}
 
 					if (connectivity.ConnectedDestinations.Any())
 					{
-						var virtualSignalGroups = connectivity.ConnectedDestinations.SelectMany(x => _endpoints.GetVirtualSignalGroupsThatContainEndpoint(x));
+						var virtualSignalGroups = connectivity.ConnectedDestinations.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x));
 						connectedDestinations.UnionWith(virtualSignalGroups);
 					}
 
 					if (connectivity.PendingConnectedDestinations.Any())
 					{
-						var virtualSignalGroups = connectivity.PendingConnectedDestinations.SelectMany(x => _endpoints.GetVirtualSignalGroupsThatContainEndpoint(x));
+						var virtualSignalGroups = connectivity.PendingConnectedDestinations.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x));
 						pendingConnectedDestinations.UnionWith(virtualSignalGroups);
 					}
 				}
@@ -273,7 +283,7 @@
 					return;
 				}
 
-				_endpoints.Subscribe();
+				_vsgCache.Subscribe();
 				_liteConnectivityInfoProvider.Subscribe();
 
 				IsSubscribed = true;
@@ -289,7 +299,7 @@
 					return;
 				}
 
-				_endpoints.Unsubscribe();
+				_vsgCache.Unsubscribe();
 				_liteConnectivityInfoProvider.Unsubscribe();
 
 				IsSubscribed = false;
@@ -302,6 +312,7 @@
 			{
 				return;
 			}
+
 			_isDisposed = true;
 
 			_liteConnectivityInfoProvider.EndpointsImpacted -= Endpoints_Impacted;
@@ -320,7 +331,7 @@
 					}),
 					Task.Run(() =>
 					{
-						_endpoints = endpointsCache ?? new VirtualSignalGroupEndpointsCache(Api, subscribe);
+						_vsgCache = endpointsCache ?? new VirtualSignalGroupEndpointsCache(Api, subscribe);
 					}));
 
 				IsSubscribed = subscribe;
@@ -345,7 +356,7 @@
 			}
 
 			var impactedVirtualSignalGroups = impactedEndpoints
-				.SelectMany(x => _endpoints.GetVirtualSignalGroupsThatContainEndpoint(x))
+				.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x))
 				.Distinct()
 				.ToList();
 
@@ -382,7 +393,7 @@
 					isConnected = true;
 
 					if (connection.ConnectedSource.HasValue &&
-						_endpoints.TryGetEndpoint(connection.ConnectedSource.Value, out Endpoint connectedSourceEndpoint))
+						_vsgCache.TryGetEndpoint(connection.ConnectedSource.Value, out Endpoint connectedSourceEndpoint))
 					{
 						connectedSource = connectedSourceEndpoint;
 					}
@@ -393,7 +404,7 @@
 					if (pendingAction.Action == PendingConnectionActionType.Connect)
 					{
 						if (pendingAction.PendingSource.HasValue &&
-							_endpoints.TryGetEndpoint(pendingAction.PendingSource.Value, out var pendingSource) &&
+							_vsgCache.TryGetEndpoint(pendingAction.PendingSource.Value, out var pendingSource) &&
 							pendingSource != connectedSource)
 						{
 							isConnecting = true;
@@ -409,7 +420,7 @@
 					}
 				}
 
-				var virtualSignalGroups = _endpoints.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
+				var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
 
 				return new EndpointConnectivity(
 					endpoint,
@@ -449,7 +460,7 @@
 				{
 					isConnected = true;
 
-					if (_endpoints.TryGetEndpoint(connection.Destination, out var destination))
+					if (_vsgCache.TryGetEndpoint(connection.Destination, out var destination))
 					{
 						destinationStates[destination] = EndpointConnectionState.Connected;
 					}
@@ -457,7 +468,7 @@
 
 				foreach (var pendingAction in pendingActions)
 				{
-					if (!_endpoints.TryGetEndpoint(pendingAction.Destination, out var destination))
+					if (!_vsgCache.TryGetEndpoint(pendingAction.Destination, out var destination))
 					{
 						continue;
 					}
@@ -476,7 +487,7 @@
 					}
 				}
 
-				var virtualSignalGroups = _endpoints.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
+				var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
 				var destinationConnections = destinationStates.Select(x => new EndpointConnection(x.Key, x.Value)).ToList();
 
 				return new EndpointConnectivity(

@@ -8,12 +8,19 @@
 
 	public sealed class Connection : IEquatable<Connection>
 	{
-		internal Connection(object[] row)
+		internal Connection(MediationElement mediationElement, object[] row)
 		{
+			if (mediationElement is null)
+			{
+				throw new ArgumentNullException(nameof(mediationElement));
+			}
+
 			if (row is null)
 			{
 				throw new ArgumentNullException(nameof(row));
 			}
+
+			MediationElement = mediationElement;
 
 			Guid.TryParse(Convert.ToString(row[0]), out var destinationId);
 			Destination = destinationId;
@@ -34,7 +41,10 @@
 			{
 				ConnectedSourceName = connectedSourceNameValue;
 			}
+
 		}
+
+		internal MediationElement MediationElement { get; }
 
 		public ApiObjectReference<Endpoint> Destination { get; }
 
@@ -76,7 +86,8 @@
 				return true;
 			}
 
-			return Destination == other.Destination &&
+			return MediationElement == other.MediationElement &&
+				   Destination == other.Destination &&
 				   DestinationName == other.DestinationName &&
 				   ConnectedSource == other.ConnectedSource &&
 				   ConnectedSourceName == other.ConnectedSourceName &&
@@ -88,6 +99,7 @@
 			unchecked
 			{
 				var hashCode = 17;
+				hashCode = (hashCode * 23) + MediationElement.GetHashCode();
 				hashCode = (hashCode * 23) + Destination.GetHashCode();
 				hashCode = (hashCode * 23) + (DestinationName?.GetHashCode() ?? 0);
 				hashCode = (hashCode * 23) + (ConnectedSource?.GetHashCode() ?? 0);

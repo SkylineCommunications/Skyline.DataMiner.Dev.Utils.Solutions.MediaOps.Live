@@ -9,21 +9,33 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
+	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net.Messages;
 
 	internal sealed class MediationElements
 	{
 		private readonly MediaOpsLiveApi _api;
-		private readonly Lazy<IReadOnlyCollection<MediationElement>> _lazyMediationElements;
+		private readonly ExpiringCache<IReadOnlyCollection<MediationElement>> _elementCache = new(TimeSpan.FromMinutes(10));
 
 		internal MediationElements(MediaOpsLiveApi api)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
-
-			_lazyMediationElements = new Lazy<IReadOnlyCollection<MediationElement>>(LoadMediationElements);
 		}
 
-		public IReadOnlyCollection<MediationElement> AllElements => _lazyMediationElements.Value;
+		public IReadOnlyCollection<MediationElement> GetAllElements()
+		{
+			var elements = LoadMediationElements();
+
+			// Update the cache with the loaded elements
+			_elementCache.SetValue(elements);
+
+			return elements;
+		}
+
+		public IReadOnlyCollection<MediationElement> GetAllElementsCached()
+		{
+			return _elementCache.GetOrRefresh(LoadMediationElements);
+		}
 
 		public IDictionary<EndpointInfo, MediationElement> GetMediationElements(IEnumerable<EndpointInfo> endpoints)
 		{
@@ -38,12 +50,12 @@
 				.GroupBy(e => e.Element)
 				.SelectMany(group =>
 				{
-					var element = dms.GetElementReference(new DmsElementId(group.Key));
+					var element = dms.GetElement(new DmsElementId(group.Key));
 					return group.Select(endpoint => new { endpoint, element });
 				})
 				.ToDictionary(x => x.endpoint, x => x.element);
 
-			var allMediationElements = AllElements.ToDictionary(e => e.DmsElement.Host.Id);
+			var allMediationElements = GetAllElementsCached().ToDictionary(e => e.DmsElement.Host.Id);
 
 			var result = new Dictionary<EndpointInfo, MediationElement>();
 
@@ -105,9 +117,10 @@
 			return GetMediationElement(new EndpointInfo(endpoint));
 		}
 
-		private List<MediationElement> LoadMediationElements()
+		private IReadOnlyCollection<MediationElement> LoadMediationElements()
 		{
 			var elements = new List<MediationElement>();
+			var dms = _api.Connection.GetDms();
 
 			var request = new GetLiteElementInfo
 			{
@@ -116,12 +129,10 @@
 
 			var responses = _api.Connection.HandleMessage(request);
 
-			var dms = _api.Connection.GetDms();
-
 			foreach (var liteElementInfo in responses.OfType<LiteElementInfoEvent>())
 			{
 				var elementId = new DmsElementId(liteElementInfo.DataMinerID, liteElementInfo.ElementID);
-				var dmsElement = dms.GetElementReference(elementId);
+				var dmsElement = dms.GetElement(elementId);
 
 				var element = new MediationElement(_api, dmsElement);
 				elements.Add(element);

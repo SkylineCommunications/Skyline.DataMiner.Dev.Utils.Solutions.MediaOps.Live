@@ -8,12 +8,19 @@
 
 	public sealed class PendingConnectionAction : IEquatable<PendingConnectionAction>
 	{
-		internal PendingConnectionAction(object[] row)
+		internal PendingConnectionAction(MediationElement mediationElement, object[] row)
 		{
+			if (mediationElement is null)
+			{
+				throw new ArgumentNullException(nameof(mediationElement));
+			}
+
 			if (row is null)
 			{
 				throw new ArgumentNullException(nameof(row));
 			}
+
+			MediationElement = mediationElement;
 
 			Guid.TryParse(Convert.ToString(row[0]), out var destinationId);
 			Destination = destinationId;
@@ -39,6 +46,8 @@
 				PendingSourceName = pendingSourceNameValue;
 			}
 		}
+
+		internal MediationElement MediationElement { get; }
 
 		public PendingConnectionActionType Action { get; }
 
@@ -82,7 +91,8 @@
 				return true;
 			}
 
-			return Action == other.Action &&
+			return MediationElement == other.MediationElement &&
+				   Action == other.Action &&
 				   Time == other.Time &&
 				   Destination == other.Destination &&
 				   DestinationName == other.DestinationName &&
@@ -95,6 +105,7 @@
 			unchecked
 			{
 				var hashCode = 17;
+				hashCode = (hashCode * 23) + MediationElement.GetHashCode();
 				hashCode = (hashCode * 23) + Action.GetHashCode();
 				hashCode = (hashCode * 23) + Time.GetHashCode();
 				hashCode = (hashCode * 23) + Destination.GetHashCode();

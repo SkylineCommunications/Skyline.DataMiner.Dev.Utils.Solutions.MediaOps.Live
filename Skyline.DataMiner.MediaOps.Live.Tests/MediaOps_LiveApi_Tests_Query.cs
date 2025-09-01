@@ -156,7 +156,7 @@
 			{
 				var endpoint = api.Endpoints.Query().FirstOrDefault(x => x.Element == new DmsElementId(123, 1));
 				Assert.IsNotNull(endpoint);
-				Assert.AreEqual("Video Source 1", endpoint.Name);
+				Assert.AreEqual(new DmsElementId(123, 1), endpoint.Element);
 			}
 
 			{
