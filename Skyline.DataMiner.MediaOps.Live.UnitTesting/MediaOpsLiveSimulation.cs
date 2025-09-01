@@ -29,7 +29,8 @@
 
 			Api = new MediaOpsLiveApi(_connection);
 
-			Initialize(installDomModules, createEndpoints, createVsgs, createConnections, createElements);
+			InitializeConnectivityManagement(installDomModules, createEndpoints, createVsgs, createConnections, createElements);
+			InitializeOrchestration(installDomModules);
 		}
 
 		public SimulatedDms Dms => _dms;
@@ -149,21 +150,15 @@
 			pendingActionsTable.DeleteRow(rowKey);
 		}
 
-		private void Initialize(bool installDomModules, bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
+		private void InitializeConnectivityManagement(bool installDomModules, bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
 		{
 			CreateMediationElement(123, 1000, "MediaOps Mediation 1");
 			CreateMediationElement(124, 1000, "MediaOps Mediation 1");
-
-			Dms.AddScript("Script_Success", new List<string>(), new List<string>());
-			Dms.AddScript("Script_Fail", new List<string>(), new List<string>());
 
 			if (installDomModules)
 			{
 				var slcConnectivityManagementDomModule = new SlcConnectivityManagementDomModule();
 				DomModuleInstaller.Install(_connection.HandleMessages, slcConnectivityManagementDomModule, x => { });
-
-				var slcOrchestrationDomModule = new SlcOrchestrationDomModule();
-				DomModuleInstaller.Install(_connection.HandleMessages, slcOrchestrationDomModule, x => { });
 			}
 
 			var category = new Category { Name = "Category 1" };
@@ -277,6 +272,18 @@
 						}
 					}
 				}
+			}
+		}
+
+		private void InitializeOrchestration(bool installDomModules)
+		{
+			Dms.AddScript("Script_Success", new List<string>(), new List<string>());
+			Dms.AddScript("Script_Fail", new List<string>(), new List<string>());
+
+			if (installDomModules)
+			{
+				var slcOrchestrationDomModule = new SlcOrchestrationDomModule();
+				DomModuleInstaller.Install(_connection.HandleMessages, slcOrchestrationDomModule, x => { });
 			}
 
 			OrchestrationJobConfiguration job = Api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");

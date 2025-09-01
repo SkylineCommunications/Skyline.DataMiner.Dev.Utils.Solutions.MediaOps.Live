@@ -7,10 +7,9 @@
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
-
+	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 
 	public sealed class ConnectivityInfoProvider : IDisposable
@@ -18,25 +17,26 @@
 		private readonly object _lock = new();
 
 		private VirtualSignalGroupEndpointsCache _vsgCache;
+		private LevelsCache _levelsCache;
 		private LiteConnectivityInfoProvider _liteConnectivityInfoProvider;
 
 		private bool _isDisposed;
 
-		public ConnectivityInfoProvider(MediaOpsLiveApi api, LiteConnectivityInfoProvider liteConnectivityInfoProvider = null, VirtualSignalGroupEndpointsCache endpointsCache = null, bool subscribe = false)
+		public ConnectivityInfoProvider(
+			MediaOpsLiveApi api,
+			LiteConnectivityInfoProvider liteConnectivityInfoProvider = null,
+			VirtualSignalGroupEndpointsCache virtualSignalGroupsCache = null,
+			LevelsCache levelsCache = null,
+			bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 
-			Initialize(liteConnectivityInfoProvider, endpointsCache, subscribe);
+			Initialize(liteConnectivityInfoProvider, virtualSignalGroupsCache, levelsCache, subscribe);
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
 
 		public MediaOpsLiveApi Api { get; }
-
-		/// <summary>
-		/// Gets the cache containing endpoints, levels, and virtual signal groups.
-		/// </summary>
-		public VirtualSignalGroupEndpointsCache VsgCache => _vsgCache;
 
 		public bool IsSubscribed { get; private set; }
 
@@ -189,7 +189,7 @@
 						throw new InvalidOperationException($"Endpoint {levelEndpoint.Endpoint.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
 					}
 
-					if (!_vsgCache.TryGetLevel(levelEndpoint.Level, out var level))
+					if (!_levelsCache.TryGetLevel(levelEndpoint.Level, out var level))
 					{
 						throw new InvalidOperationException($"Level {levelEndpoint.Level.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
 					}
@@ -319,7 +319,7 @@
 			Unsubscribe();
 		}
 
-		private void Initialize(LiteConnectivityInfoProvider liteConnectivityInfoProvider, VirtualSignalGroupEndpointsCache endpointsCache, bool subscribe)
+		private void Initialize(LiteConnectivityInfoProvider liteConnectivityInfoProvider, VirtualSignalGroupEndpointsCache virtualSignalGroupsCache, LevelsCache levelsCache, bool subscribe)
 		{
 			lock (_lock)
 			{
@@ -331,7 +331,11 @@
 					}),
 					Task.Run(() =>
 					{
-						_vsgCache = endpointsCache ?? new VirtualSignalGroupEndpointsCache(Api, subscribe);
+						_vsgCache = virtualSignalGroupsCache ?? new VirtualSignalGroupEndpointsCache(Api, subscribe);
+					}),
+					Task.Run(() =>
+					{
+						_levelsCache = levelsCache ?? new LevelsCache(Api, subscribe);
 					}));
 
 				IsSubscribed = subscribe;
