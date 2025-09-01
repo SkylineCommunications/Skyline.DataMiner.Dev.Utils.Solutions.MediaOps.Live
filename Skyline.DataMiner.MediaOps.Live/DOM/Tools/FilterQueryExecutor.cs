@@ -27,7 +27,9 @@
 
 			var splitted = SplitFilter(ids, filterProvider).ToList();
 
-			return splitted.SelectMany(filterResolver);
+			return splitted
+				.SelectMany(filterResolver)
+				.Distinct();
 		}
 
 		public static long CountFilteredItems<TId, TFilter>(IEnumerable<TId> ids, Func<TId, FilterElement<TFilter>> filterProvider, Func<FilterElement<TFilter>, long> filterCountResolver)

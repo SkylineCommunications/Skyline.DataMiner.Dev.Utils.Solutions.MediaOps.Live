@@ -4,7 +4,6 @@
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
-	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -94,11 +93,8 @@
 
 		private void LoadInitialData()
 		{
-			var levelsTask = Task.Run(() => Api.Levels.ReadAll());
-
-			Task.WaitAll(levelsTask);
-
-			UpdateLevels(levelsTask.Result);
+			var levels = Api.Levels.ReadAll();
+			UpdateLevels(levels);
 		}
 
 		private void Levels_Changed(object sender, ApiObjectsChangedEvent<Level> e)
