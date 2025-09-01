@@ -147,11 +147,6 @@
 				_lazyVirtualSignalGroupsCache.Value.Dispose();
 			}
 
-			if (Connection is IDisposable disposableConnection)
-			{
-				disposableConnection.Dispose();
-			}
-
 			_disposed = true;
 		}
 
