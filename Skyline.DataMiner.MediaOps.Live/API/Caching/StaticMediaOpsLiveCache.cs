@@ -60,7 +60,11 @@
 			{
 				lock (_lock)
 				{
-					_instance ??= GetOrCreate(connectionFactory());
+					if (_instance == null)
+					{
+						var connection = connectionFactory();
+						_instance = GetOrCreate(connection);
+					}
 				}
 			}
 
@@ -94,12 +98,15 @@
 
 		internal static StaticMediaOpsLiveCache Get()
 		{
-			if (_instance == null)
+			lock (_lock)
 			{
-				throw new InvalidOperationException($"The {nameof(StaticMediaOpsLiveCache)} instance has not been created yet. Please call {nameof(GetOrCreate)} first.");
-			}
+				if (_instance == null)
+				{
+					throw new InvalidOperationException($"The {nameof(StaticMediaOpsLiveCache)} instance has not been created yet. Please call {nameof(GetOrCreate)} first.");
+				}
 
-			return _instance;
+				return _instance;
+			}
 		}
 
 		/// <summary>

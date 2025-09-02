@@ -21,6 +21,10 @@
 			}
 
 			var attributes = ConnectionAttributes.AllowMessageThrottling;
+
+			// With ProtoBuf enabled, the first time it takes >10 seconds longer to create the connection (InitProtobuf method).
+			attributes |= ConnectionAttributes.NoProtoBufSerialization;
+
 			try
 			{
 				var ticket = RequestCloneTicket(baseConnection);
