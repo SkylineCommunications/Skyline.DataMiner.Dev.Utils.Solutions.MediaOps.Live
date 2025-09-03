@@ -19,6 +19,10 @@
 
 		public ConnectionMetrics ConnectionMetrics => _connectionMetrics;
 
+		public abstract GQIColumn[] OnGetColumns();
+
+		public abstract GQIPage OnGetNextPage(GetNextPageInputArgs args);
+
 		public virtual OnInitOutputArgs OnInit(OnInitInputArgs args)
 		{
 			_interceptedConnection = new ConnectionInterceptor(args.DMS.GetConnection());
@@ -30,9 +34,15 @@
 			return new OnInitOutputArgs();
 		}
 
-		public abstract GQIColumn[] GetColumns();
+		public virtual GQIColumn[] GetColumns()
+		{
+			return OnGetColumns();
+		}
 
-		public abstract GQIPage GetNextPage(GetNextPageInputArgs args);
+		public virtual GQIPage GetNextPage(GetNextPageInputArgs args)
+		{
+			return OnGetNextPage(args);
+		}
 
 		public virtual OnDestroyOutputArgs OnDestroy(OnDestroyInputArgs args)
 		{
