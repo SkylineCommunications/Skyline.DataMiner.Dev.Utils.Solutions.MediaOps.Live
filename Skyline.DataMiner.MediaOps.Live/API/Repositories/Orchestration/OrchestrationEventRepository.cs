@@ -5,6 +5,8 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -12,6 +14,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Jobs;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
@@ -126,11 +129,14 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
+				_api.Engine.GenerateInformation($"Save Configuration {JsonConvert.SerializeObject(job)}");
 				Delete(job.RemovedIds, performanceTracker);
 
 				job.ValidateEventsBeforeSaving(_api.Connection);
 
+				_api.Engine.GenerateInformation($"After Validate {JsonConvert.SerializeObject(job)}");
 				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
+				_api.Engine.GenerateInformation($"After Scheduling {JsonConvert.SerializeObject(job)}");
 
 				SaveEventConfigurations(job.OrchestrationEvents, performanceTracker);
 			}
@@ -488,6 +494,7 @@
 
 		internal void SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
 		{
+			_api.Engine.GenerateInformation($"Actual Save Configuration {JsonConvert.SerializeObject(events)}");
 			List<Configuration> configsToDelete = [];
 			List<Configuration> configsToWrite = [];
 
@@ -510,6 +517,7 @@
 				_configurationHelper.Delete(configsToDelete);
 			}
 
+			_api.Engine.GenerateInformation($"Configs to save {JsonConvert.SerializeObject(configsToWrite)}");
 			_configurationHelper.CreateOrUpdate(configsToWrite);
 
 			CreateOrUpdate(orchestrationEventConfigurations);

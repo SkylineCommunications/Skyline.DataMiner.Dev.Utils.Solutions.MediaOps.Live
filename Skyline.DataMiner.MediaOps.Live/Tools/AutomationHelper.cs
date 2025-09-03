@@ -130,7 +130,8 @@
 
 		public static ExecuteScriptResponseMessage ExecuteAutomationScript(IConnection connection, ExecuteScriptMessage message, out string[] errorMessages)
 		{
-			errorMessages = [];
+			List<string> errorMessagesList = [];
+
 			var progress = connection.Async.Launch(message);
 
 			var result = progress.WaitForAsyncResponse(timeout: 5 * 60);
@@ -149,9 +150,17 @@
 
 			if (response.HadError)
 			{
-				errorMessages = response.ErrorMessages;
+				errorMessagesList.AddRange(response.ErrorMessages);
 			}
 
+			if (response.EntryPointResult?.Result is RequestScriptInfoOutput requestScriptInfoOutput
+			    && requestScriptInfoOutput.Data.TryGetValue(OrchestrationScript.ScriptOutputRequestScriptInfoKey, out string scriptOutputString))
+			{
+				ScriptOutput scriptOutput = JsonConvert.DeserializeObject<ScriptOutput>(scriptOutputString);
+				errorMessagesList.Add(scriptOutput.ExceptionString);
+			}
+
+			errorMessages = errorMessagesList.ToArray();
 			return response;
 		}
 
