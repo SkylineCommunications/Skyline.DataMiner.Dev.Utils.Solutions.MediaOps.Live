@@ -176,6 +176,13 @@
 			return false;
 		}
 
+		public IEnumerable<ApiObjectReference<Level>> GetLevelsWithEndpoint(ApiObjectReference<Endpoint> endpoint)
+		{
+			return GetLevelEndpoints()
+				.Where(x => x.Endpoint == endpoint)
+				.Select(x => x.Level);
+		}
+
 		/// <summary>
 		/// Assigns an endpoint to a level in the virtual signal group. If the level already has an endpoint assigned, it will be replaced.
 		/// If the level does not exist in the virtual signal group, it will be added with the specified endpoint.
