@@ -47,8 +47,6 @@
 				throw new ArgumentNullException(nameof(connections));
 			}
 
-			Engine.GenerateInformation($"Registering {connections.Count} connections...");
-
 			NotifyConnectionChanges(connections);
 		}
 
