@@ -30,6 +30,16 @@
 
 		public bool IsSubscribed { get; private set; }
 
+		public Level GetLevel(ApiObjectReference<Level> id)
+		{
+			if (!TryGetLevel(id, out var level))
+			{
+				throw new ArgumentException($"Couldn't find level with ID {id.ID}", nameof(id));
+			}
+
+			return level;
+		}
+
 		public bool TryGetLevel(ApiObjectReference<Level> id, out Level level)
 		{
 			return _levels.TryGetValue(id, out level);
