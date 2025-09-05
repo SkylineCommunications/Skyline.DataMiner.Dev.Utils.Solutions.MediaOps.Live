@@ -132,15 +132,13 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				_api.Engine.GenerateInformation($"Save Configuration {JsonConvert.SerializeObject(job)}");
 				Delete(job.RemovedIds, performanceTracker);
 
 				job.ValidateEventsBeforeSaving(_api.Connection);
 
-				_api.Engine.GenerateInformation($"After Validate {JsonConvert.SerializeObject(job)}");
 				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
-				_api.Engine.GenerateInformation($"After Scheduling {JsonConvert.SerializeObject(job)}");
 
+				_jobInfoHelper.CreateOrUpdate(job.JobInfo);
 				SaveEventConfigurations(job.OrchestrationEvents, performanceTracker);
 			}
 		}
@@ -161,6 +159,8 @@
 
 				job.ValidateEventsBeforeSaving(_api.Connection);
 				_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
+
+				_jobInfoHelper.CreateOrUpdate(job.JobInfo);
 				CreateOrUpdateEvents(job.OrchestrationEvents, performanceTracker);
 			}
 		}
@@ -265,6 +265,17 @@
 			_slidingWindowScheduler.DeleteEvents(orchestrationEvents);
 
 			_configurationHelper.Delete(GetConfigurationInstances(configurationsToDelete).Values);
+
+			HashSet<Guid> jobInfosToDelete = new HashSet<Guid>();
+			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
+			{
+				if (orchestrationEvent.JobInfoReference.HasValue)
+				{
+					jobInfosToDelete.Add(orchestrationEvent.JobInfoReference.Value.ID);
+				}
+			}
+
+			_jobInfoHelper.Delete(_jobInfoHelper.Read(jobInfosToDelete).Values);
 
 			base.Delete(orchestrationEvents);
 		}
@@ -504,7 +515,6 @@
 
 		internal void SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
 		{
-			_api.Engine.GenerateInformation($"Actual Save Configuration {JsonConvert.SerializeObject(events)}");
 			List<Configuration> configsToDelete = [];
 			List<Configuration> configsToWrite = [];
 
@@ -527,7 +537,6 @@
 				_configurationHelper.Delete(configsToDelete);
 			}
 
-			_api.Engine.GenerateInformation($"Configs to save {JsonConvert.SerializeObject(configsToWrite)}");
 			_configurationHelper.CreateOrUpdate(configsToWrite);
 
 			CreateOrUpdate(orchestrationEventConfigurations);

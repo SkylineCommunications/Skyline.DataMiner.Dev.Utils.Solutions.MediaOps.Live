@@ -6,6 +6,7 @@
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
@@ -310,9 +311,10 @@
 			}
 
 			OrchestrationJobConfiguration job = Api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");
-			job.OrchestrationEvents.AddRange(WithNodes_CreateEventConfigurationInstances(10, 10));
+			Guid jobInfoReference = job.JobInfo.ID;
+			job.OrchestrationEvents.AddRange(WithNodes_CreateEventConfigurationInstances(10, 10, jobInfoReference));
 
-			Api.Orchestration.SaveEventConfigurations(job.OrchestrationEvents);
+			Api.Orchestration.SaveOrchestrationJobConfiguration(job);
 		}
 
 		private void CreateMediationElement(int dmaId, int elementId, string name)
@@ -325,7 +327,7 @@
 			element.CreateTable(MediationElement.ConnectionsTableId);
 		}
 
-		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)
+		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes, Guid jobReferenceId)
 		{
 			List<API.Objects.Orchestration.Connection> connections = new List<API.Objects.Orchestration.Connection>();
 			List<NodeConfiguration> nodeConfigs = new List<NodeConfiguration>();
@@ -358,8 +360,6 @@
 				{
 					NodeId = "1",
 					NodeLabel = "Node Label",
-					OrchestrationScriptName = "OrchestrationScript",
-					OrchestrationScriptArguments = scriptArguments,
 				});
 			}
 
@@ -372,9 +372,7 @@
 					Name = $"Test Event {i}",
 					EventTime = DateTime.UtcNow + TimeSpan.FromHours(1),
 					EventType = SlcOrchestrationIds.Enums.EventType.Other,
-					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-					GlobalOrchestrationScript = "Test Script",
-					GlobalOrchestrationScriptArguments = scriptArguments,
+					EventState = SlcOrchestrationIds.Enums.EventState.Draft,
 					Configuration =
 					{
 						Connections = connections,
