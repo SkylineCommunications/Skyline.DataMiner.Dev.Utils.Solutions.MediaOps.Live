@@ -14,7 +14,6 @@
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
-	using Skyline.DataMiner.Net.Jobs;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
@@ -30,6 +29,7 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 		private readonly ConfigurationRepository _configurationHelper;
+		private readonly JobInfoRepository _jobInfoHelper;
 		private readonly OrchestrationSlidingWindowScheduler _slidingWindowScheduler;
 		private readonly OrchestrationScriptInfoHelper _orchestrationScriptInfoHelper;
 
@@ -41,6 +41,7 @@
 		internal OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper, api.Connection)
 		{
 			_configurationHelper = new ConfigurationRepository(helper, api.Connection);
+			_jobInfoHelper = new JobInfoRepository(helper, api.Connection);
 			_api = api;
 			_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(
 				this,
@@ -51,6 +52,8 @@
 		}
 
 		public OrchestrationScriptInfoHelper Scripts => _orchestrationScriptInfoHelper;
+
+		internal JobInfoRepository JobInfos => _jobInfoHelper;
 
 		/// <summary>
 		/// Gets the DOM definition GUID.
@@ -319,7 +322,14 @@
 					throw new ArgumentException($"'{nameof(jobReference)}' cannot be null or empty", nameof(jobReference));
 				}
 
-				ManagedFilter<DomInstance, IEnumerable> filter = DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference).Equal(jobReference);
+				var jobInfo = _jobInfoHelper.GetJobInfoByJobReference(jobReference);
+
+				if (jobInfo == null)
+				{
+					return new List<OrchestrationEvent>();
+				}
+
+				ManagedFilter<DomInstance, IEnumerable> filter = DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobInformation).Equal(jobInfo.ID);
 
 				return Read(filter);
 			}
@@ -580,17 +590,14 @@
 				case nameof(OrchestrationEvent.EventTime):
 					return FilterElementFactory.Create<DateTimeOffset>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime), comparer, value);
 
-				case nameof(OrchestrationEvent.ReservationInstance):
-					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance), comparer, value);
+				case nameof(OrchestrationEvent.SchedulerReference):
+					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.SchedulerReference), comparer, value);
 
 				case nameof(OrchestrationEvent.FailureInfo):
 					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.FailureInfo), comparer, value);
 
 				case nameof(OrchestrationEvent.GlobalOrchestrationScript):
 					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptName), comparer, value);
-
-				case nameof(OrchestrationEvent.JobReference):
-					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference), comparer, value);
 			}
 
 			return base.CreateFilter(fieldName, comparer, value);
@@ -612,7 +619,7 @@
 				case nameof(OrchestrationEvent.EventTime):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime), sortOrder, naturalSort);
 
-				case nameof(OrchestrationEvent.ReservationInstance):
+				case nameof(OrchestrationEvent.SchedulerReference):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime), sortOrder, naturalSort);
 
 				case nameof(OrchestrationEvent.FailureInfo):
@@ -620,9 +627,6 @@
 
 				case nameof(OrchestrationEvent.GlobalOrchestrationScript):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationScriptName), sortOrder, naturalSort);
-
-				case nameof(OrchestrationEvent.JobReference):
-					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference), sortOrder, naturalSort);
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);

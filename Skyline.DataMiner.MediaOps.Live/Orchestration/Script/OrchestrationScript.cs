@@ -7,8 +7,11 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.Dialogs;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.DisplayTypes;
@@ -37,9 +40,37 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 		private IEngine _engine;
 
+		public OrchestrationEventConfiguration EventConfiguration => _eventConfiguration.Value;
+
 		public abstract void Orchestrate(IEngine engine);
 
 		public abstract IEnumerable<IOrchestrationParameters> GetParameters();
+
+		public virtual DmsServiceId SetupService()
+		{
+			return default(DmsServiceId);
+		}
+
+		public virtual void TearDownService()
+		{
+			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+			OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
+
+			if (eventJobInfo == null || eventJobInfo.MonitoringService == default)
+			{
+				return;
+			}
+
+			IDms dms = _engine.GetDms();
+			if (dms.ServiceExists(eventJobInfo.MonitoringService))
+			{
+				var service = dms.GetService(eventJobInfo.MonitoringService);
+				service.Delete();
+			}
+
+			eventJobInfo.MonitoringService = default;
+			api.Orchestration.JobInfos.Update(eventJobInfo);
+		}
 
 		[AutomationEntryPoint(AutomationEntryPointType.Types.OnRequestScriptInfo)]
 		public RequestScriptInfoOutput OnRequestScriptInfoRequest(IEngine engine, RequestScriptInfoInput inputData)
@@ -109,12 +140,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 		public NodeConfiguration GetNodeConfiguration(string nodeLabel)
 		{
-			if (_eventConfiguration.Value == null)
+			if (EventConfiguration == null)
 			{
 				throw new InvalidOperationException("No event configuration was found");
 			}
 
-			return _eventConfiguration.Value.Configuration.NodeConfigurations.FirstOrDefault(nc => nc.NodeLabel == nodeLabel);
+			return EventConfiguration.Configuration.NodeConfigurations.FirstOrDefault(nc => nc.NodeLabel == nodeLabel);
 		}
 
 		public void OrchestrateNode(NodeConfiguration nodeConfig)
@@ -454,34 +485,42 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		{
 			ScriptOutput scriptOutput = new ScriptOutput();
 
-			try
+			ScriptInfo scriptInfo = GetScriptInfo();
+
+			OrchestrationScriptInput orchestrationScriptInput = new OrchestrationScriptInput();
+			if (metaData.TryGetValue(ScriptInputRequestScriptInfoKey, out string serializedScriptInputRequestScriptInfo))
 			{
-				ScriptInfo scriptInfo = GetScriptInfo();
-
-				OrchestrationScriptInput orchestrationScriptInput = new OrchestrationScriptInput();
-				if (metaData.TryGetValue(ScriptInputRequestScriptInfoKey, out string serializedScriptInputRequestScriptInfo))
-				{
-					orchestrationScriptInput = JsonConvert.DeserializeObject<OrchestrationScriptInput>(serializedScriptInputRequestScriptInfo);
-				}
-
-				_metadata = orchestrationScriptInput.Metadata;
-				_parameterInfos = CreateParameterInfos(scriptInfo, orchestrationScriptInput);
-
-				if (askMissingValues)
-				{
-					List<ParameterInfo> incompleteInfos = GetIncompleteInfos(_parameterInfos).ToList();
-					if (incompleteInfos.Any())
-					{
-						GetValuesFromUser(incompleteInfos);
-					}
-				}
-
-				Orchestrate(_engine);
+				orchestrationScriptInput = JsonConvert.DeserializeObject<OrchestrationScriptInput>(serializedScriptInputRequestScriptInfo);
 			}
-			catch (Exception e)
+
+			_metadata = orchestrationScriptInput.Metadata;
+			_parameterInfos = CreateParameterInfos(scriptInfo, orchestrationScriptInput);
+
+			if (askMissingValues)
 			{
-				_engine.GenerateInformation(e.ToString());
-				scriptOutput.ExceptionString = e.ToString();
+				List<ParameterInfo> incompleteInfos = GetIncompleteInfos(_parameterInfos).ToList();
+				if (incompleteInfos.Any())
+				{
+					GetValuesFromUser(incompleteInfos);
+				}
+			}
+
+			Orchestrate(_engine);
+
+			if (EventConfiguration.IsStartEvent)
+			{
+				DmsServiceId createdServiceForEvent = SetupService();
+
+				if (createdServiceForEvent != default(DmsServiceId))
+				{
+					scriptOutput.OrchestrationServiceAgentId = createdServiceForEvent.AgentId;
+					scriptOutput.OrchestrationServiceId = createdServiceForEvent.ServiceId;
+				}
+			}
+
+			if (EventConfiguration.IsStopEvent)
+			{
+
 			}
 
 			return scriptOutput;

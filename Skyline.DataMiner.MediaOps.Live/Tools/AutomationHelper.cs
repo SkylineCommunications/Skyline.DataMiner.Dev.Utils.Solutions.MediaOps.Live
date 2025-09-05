@@ -153,13 +153,6 @@
 				errorMessagesList.AddRange(response.ErrorMessages);
 			}
 
-			if (response.EntryPointResult?.Result is RequestScriptInfoOutput requestScriptInfoOutput
-			    && requestScriptInfoOutput.Data.TryGetValue(OrchestrationScript.ScriptOutputRequestScriptInfoKey, out string scriptOutputString))
-			{
-				ScriptOutput scriptOutput = JsonConvert.DeserializeObject<ScriptOutput>(scriptOutputString);
-				errorMessagesList.Add(scriptOutput.ExceptionString);
-			}
-
 			errorMessages = errorMessagesList.ToArray();
 			return response;
 		}

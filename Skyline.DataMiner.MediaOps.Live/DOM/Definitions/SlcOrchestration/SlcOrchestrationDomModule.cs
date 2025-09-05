@@ -30,6 +30,7 @@
 		[
 			new OrchestrationEventDefinition(),
 			new ConfigurationDefinition(),
+			new OrchestrationJobInfoDefinition(),
 		];
 	}
 }

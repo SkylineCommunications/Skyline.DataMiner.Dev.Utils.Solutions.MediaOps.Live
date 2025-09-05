@@ -10,6 +10,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Net.SLConfiguration;
 
 	/// <summary>
 	/// Information about an orchestration event.
@@ -23,7 +24,7 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class.
 		/// </summary>
-		public OrchestrationEvent() : this(domInstance: new OrchestrationEventInstance())
+		public OrchestrationEvent() : this(new OrchestrationEventInstance())
 		{
 			_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
 		}
@@ -33,7 +34,7 @@
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
 		}
 
-		internal OrchestrationEvent(DomInstance domInstance) : this(domInstance: new OrchestrationEventInstance(domInstance))
+		internal OrchestrationEvent(DomInstance eventInstance) : this(domInstance: new OrchestrationEventInstance(eventInstance))
 		{
 		}
 
@@ -90,11 +91,11 @@
 		/// <summary>
 		/// Gets the reference to the DataMiner reservation corresponding to this event.
 		/// </summary>
-		public ScheduledTaskId ReservationInstance
+		public ScheduledTaskId SchedulerReference
 		{
 			get
 			{
-				string taskId = _domInstance.OrchestrationEventInfo.ReservationInstance;
+				string taskId = _domInstance.OrchestrationEventInfo.SchedulerReference;
 				if (String.IsNullOrEmpty(taskId) || !taskId.Contains("/"))
 				{
 					return null;
@@ -107,23 +108,7 @@
 
 			internal set
 			{
-				_domInstance.OrchestrationEventInfo.ReservationInstance = value == null ? null : String.Join("/", value.DmaId, value.TaskId);
-			}
-		}
-
-		/// <summary>
-		/// Gets the string reference to the job that corresponds to this event.
-		/// </summary>
-		public string JobReference
-		{
-			get
-			{
-				return _domInstance.OrchestrationEventInfo.JobReference;
-			}
-
-			internal set
-			{
-				_domInstance.OrchestrationEventInfo.JobReference = value;
+				_domInstance.OrchestrationEventInfo.SchedulerReference = value == null ? null : String.Join("/", value.DmaId, value.TaskId);
 			}
 		}
 
@@ -218,6 +203,19 @@
 			set
 			{
 				_domInstance.ConfigurationInfo.Configuration = value;
+			}
+		}
+
+		internal ApiObjectReference<OrchestrationJobInfo>? JobInfoReference
+		{
+			get
+			{
+				return _domInstance.OrchestrationEventInfo.JobInformation;
+			}
+
+			set
+			{
+				_domInstance.OrchestrationEventInfo.JobInformation = value;
 			}
 		}
 

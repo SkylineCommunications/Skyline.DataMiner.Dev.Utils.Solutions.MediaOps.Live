@@ -33,7 +33,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			Assert.Contains(ev.ID, simulation.Dms.GetAllDmsSchedulerTasks().First().GetOrchestrationSchedulingInputList());
 			Assert.AreEqual(trimmedEventTime, utcScheduledTime);
 
-			Assert.Contains(orchestrationJob.OrchestrationEvents.First().ReservationInstance.DmaId, simulation.Dms.Agents.Keys);
+			Assert.Contains(orchestrationJob.OrchestrationEvents.First().SchedulerReference.DmaId, simulation.Dms.Agents.Keys);
 		}
 
 		[TestMethod]
@@ -99,7 +99,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
-			Assert.IsNull(ev.ReservationInstance);
+			Assert.IsNull(ev.SchedulerReference);
 		}
 
 		[TestMethod]

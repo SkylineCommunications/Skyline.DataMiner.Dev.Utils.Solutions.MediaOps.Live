@@ -375,7 +375,6 @@
 					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
 					GlobalOrchestrationScript = "Test Script",
 					GlobalOrchestrationScriptArguments = scriptArguments,
-					JobReference = "dd2cd5f2-ee7d-42b8-9b96-1e562d472b63",
 					Configuration =
 					{
 						Connections = connections,

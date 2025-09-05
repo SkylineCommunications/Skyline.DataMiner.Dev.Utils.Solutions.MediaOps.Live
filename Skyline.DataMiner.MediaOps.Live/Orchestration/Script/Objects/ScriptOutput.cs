@@ -2,6 +2,8 @@
 {
 	public class ScriptOutput
 	{
-		public string ExceptionString { get; set; }
+		public int OrchestrationServiceAgentId { get; set; }
+
+		public int OrchestrationServiceId { get; set; }
 	}
 }

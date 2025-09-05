@@ -56,7 +56,10 @@
 		/// <param name="orchestrationEvents">The list of events to assign to the job.</param>
 		internal OrchestrationJob(string jobId, IEnumerable<OrchestrationEvent> orchestrationEvents)
 		{
-			JobId = jobId;
+			JobInfo = new OrchestrationJobInfo
+			{
+				JobReference = jobId,
+			};
 
 			IEnumerable<OrchestrationEvent> events = orchestrationEvents.ToList();
 			OrchestrationEvents = events.ToList();
@@ -66,7 +69,9 @@
 		/// <summary>
 		/// Gets the job reference ID.
 		/// </summary>
-		public string JobId { get; }
+		public string JobId => JobInfo.JobReference;
+
+		internal OrchestrationJobInfo JobInfo { get; }
 
 		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
@@ -123,7 +128,7 @@
 
 		internal void ValidateEventsBeforeSaving(IConnection connection)
 		{
-			AssignJobReferencesBeforeSaving(JobId, OrchestrationEvents);
+			AssignJobReferencesBeforeSaving(JobInfo.ID, OrchestrationEvents);
 			ValidateEventInfo(OrchestrationEvents);
 			ValidateOrchestrationScriptInformation(connection, OrchestrationEvents);
 		}
@@ -194,17 +199,17 @@
 			ValidateEventOrderBeforeSaving(orchestrationEvents);
 		}
 
-		internal static void AssignJobReferencesBeforeSaving(string jobId, IList<OrchestrationEvent> orchestrationEvents)
+		internal static void AssignJobReferencesBeforeSaving(Guid jobInfoReference, IList<OrchestrationEvent> orchestrationEvents)
 		{
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
-				if (String.IsNullOrEmpty(orchestrationEvent.JobReference))
+				if (!orchestrationEvent.JobInfoReference.HasValue || orchestrationEvent.JobInfoReference.Value.ID == Guid.Empty)
 				{
-					orchestrationEvent.JobReference = jobId;
+					orchestrationEvent.JobInfoReference = new ApiObjectReference<OrchestrationJobInfo>(jobInfoReference);
 					continue;
 				}
 
-				if (orchestrationEvent.JobReference != jobId)
+				if (orchestrationEvent.JobInfoReference.Value.ID != jobInfoReference)
 				{
 					throw new InvalidOperationException("One of the job events is already part of another job");
 				}

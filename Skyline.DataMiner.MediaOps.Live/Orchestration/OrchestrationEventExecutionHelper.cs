@@ -131,7 +131,7 @@
 
 				foreach (OrchestrationEventConfiguration eventConfigurationsWithConnection in eventConfigurationsWithConnections)
 				{
-					if (eventConfigurationsWithConnection.IsStopEvent)
+					if (eventConfigurationsWithConnection.IsDisconnectEvent)
 					{
 						disconnectsToConfigureByEvent.Add(eventConfigurationsWithConnection.ID, eventConfigurationsWithConnection.Configuration.Connections.ToList());
 					}
