@@ -28,6 +28,8 @@
 		private readonly Dictionary<DmsElementId, MediationElementSubscription> _elementSubscriptions = new();
 		private ElementStateSubscription _elementStateSubscription;
 
+		private bool _isDisposed;
+
 		public LiteConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
@@ -140,14 +142,23 @@
 
 		public void Dispose()
 		{
+			if (_isDisposed)
+			{
+				return;
+			}
+
 			Unsubscribe();
+
+			_isDisposed = true;
 		}
 
 		private void Initialize(bool subscribe)
 		{
+			IReadOnlyCollection<MediationElement> mediationElements;
+
 			lock (_lock)
 			{
-				var mediationElements = Api.MediationElements.GetAllElementsCached();
+				mediationElements = Api.MediationElements.GetAllElementsCached();
 
 				foreach (var element in mediationElements)
 				{
@@ -158,105 +169,105 @@
 				{
 					Subscribe();
 				}
-
-				Parallel.ForEach(mediationElements, LoadDataFromMediationElement);
 			}
+
+			Parallel.ForEach(mediationElements, LoadDataFromMediationElement);
 		}
 
 		private void SubscribeElement(MediationElement element)
 		{
-			if (_elementSubscriptions.ContainsKey(element.DmsElementId))
+			lock (_lock)
 			{
-				// Already subscribed
-				return;
+				if (_elementSubscriptions.ContainsKey(element.DmsElementId))
+				{
+					// Already subscribed
+					return;
+				}
+
+				var subscription = element.CreateSubscription();
+				subscription.ConnectionsChanged += Connections_OnChanged;
+				subscription.PendingConnectionActionsChanged += PendingConnectionActions_OnChanged;
+				subscription.Subscribe();
+
+				_elementSubscriptions[element.DmsElementId] = subscription;
 			}
-
-			var subscription = element.CreateSubscription();
-			subscription.ConnectionsChanged += Connections_OnChanged;
-			subscription.PendingConnectionActionsChanged += PendingConnectionActions_OnChanged;
-			subscription.Subscribe();
-
-			_elementSubscriptions[element.DmsElementId] = subscription;
 		}
 
 		private void UnsubscribeElement(MediationElement element)
 		{
-			if (!_elementSubscriptions.TryGetValue(element.DmsElementId, out var subscription))
+			lock (_lock)
 			{
-				// Already unsubscribed or not found
-				return;
+				if (!_elementSubscriptions.TryGetValue(element.DmsElementId, out var subscription))
+				{
+					// Already unsubscribed or not found
+					return;
+				}
+
+				subscription.Unsubscribe();
+				subscription.ConnectionsChanged -= Connections_OnChanged;
+				subscription.PendingConnectionActionsChanged -= PendingConnectionActions_OnChanged;
+				subscription.Dispose();
+
+				_elementSubscriptions.Remove(element.DmsElementId);
 			}
-
-			subscription.Unsubscribe();
-			subscription.ConnectionsChanged -= Connections_OnChanged;
-			subscription.PendingConnectionActionsChanged -= PendingConnectionActions_OnChanged;
-			subscription.Dispose();
-
-			_elementSubscriptions.Remove(element.DmsElementId);
 		}
 
 		private void Element_OnStateChanged(object sender, ElementStateChangeEvent e)
 		{
-			lock (_lock)
+			if (e.State == ElementState.Active)
 			{
-				if (e.State == ElementState.Active)
-				{
-					MaybeAddNewMediationElement(e.ElementId);
-				}
-				else if (e.State == ElementState.Stopped)
-				{
-					HandleStoppedMediationElement(e.ElementId);
-				}
+				MaybeAddNewMediationElement(e.ElementId);
+			}
+			else if (e.State == ElementState.Stopped)
+			{
+				HandleStoppedMediationElement(e.ElementId);
 			}
 		}
 
 		private void Connections_OnChanged(object sender, ConnectionsChangedEvent e)
 		{
-			lock (_lock)
-			{
-				UpdateConnections(e.UpdatedConnections, e.DeletedConnections);
-			}
+			UpdateConnections(e.UpdatedConnections, e.DeletedConnections);
 		}
 
 		private void PendingConnectionActions_OnChanged(object sender, PendingConnectionActionsChangedEvent e)
 		{
-			lock (_lock)
-			{
-				UpdatePendingConnections(e.UpdatedPendingActions, e.DeletedPendingActions);
-			}
+			UpdatePendingConnections(e.UpdatedPendingActions, e.DeletedPendingActions);
 		}
 
 		private void UpdateConnections(ICollection<Connection> updated, ICollection<Connection> deleted)
 		{
 			var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
 
-			foreach (var connection in deleted)
+			lock (_lock)
 			{
-				if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
+				foreach (var connection in deleted)
 				{
-					impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
-					_connectionsByDestination.Remove(existingConnection.Destination);
-					_connectionEndpointsMapping.Remove(existingConnection);
-				}
-			}
-
-			foreach (var connection in updated)
-			{
-				if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
-				{
-					if (existingConnection.IsConnected == connection.IsConnected &&
-						existingConnection.ConnectedSource == connection.ConnectedSource)
+					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
 					{
-						// No change
-						continue;
+						impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
+						_connectionsByDestination.Remove(existingConnection.Destination);
+						_connectionEndpointsMapping.Remove(existingConnection);
+					}
+				}
+
+				foreach (var connection in updated)
+				{
+					if (_connectionsByDestination.TryGetValue(connection.Destination, out var existingConnection))
+					{
+						if (existingConnection.IsConnected == connection.IsConnected &&
+							existingConnection.ConnectedSource == connection.ConnectedSource)
+						{
+							// No change
+							continue;
+						}
+
+						impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
 					}
 
-					impactedEndpoints.UnionWith(existingConnection.GetEndpoints());
+					impactedEndpoints.UnionWith(connection.GetEndpoints());
+					_connectionsByDestination[connection.Destination] = connection;
+					_connectionEndpointsMapping.AddOrUpdate(connection);
 				}
-
-				impactedEndpoints.UnionWith(connection.GetEndpoints());
-				_connectionsByDestination[connection.Destination] = connection;
-				_connectionEndpointsMapping.AddOrUpdate(connection);
 			}
 
 			if (impactedEndpoints.Count > 0)
@@ -269,46 +280,49 @@
 		{
 			var impactedEndpoints = new HashSet<ApiObjectReference<Endpoint>>();
 
-			foreach (var pendingAction in deleted)
+			lock (_lock)
 			{
-				if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingAction))
+				foreach (var pendingAction in deleted)
 				{
-					if (PendingActionHasImpact(existingPendingAction))
+					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingAction))
 					{
-						// Only raise event if it actually had impact
-						impactedEndpoints.UnionWith(existingPendingAction.GetEndpoints());
-					}
+						if (PendingActionHasImpact(existingPendingAction))
+						{
+							// Only raise event if it actually had impact
+							impactedEndpoints.UnionWith(existingPendingAction.GetEndpoints());
+						}
 
-					_pendingActionsByDestination.Remove(existingPendingAction.Destination);
-					_pendingConnectionActionsMapping.Remove(existingPendingAction);
+						_pendingActionsByDestination.Remove(existingPendingAction.Destination);
+						_pendingConnectionActionsMapping.Remove(existingPendingAction);
+					}
 				}
-			}
 
-			foreach (var pendingAction in updated)
-			{
-				bool hasImpact = PendingActionHasImpact(pendingAction);
-
-				if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
+				foreach (var pendingAction in updated)
 				{
-					if (existingPendingConnectionAction.Action == pendingAction.Action &&
-						existingPendingConnectionAction.PendingSource == pendingAction.PendingSource)
+					bool hasImpact = PendingActionHasImpact(pendingAction);
+
+					if (_pendingActionsByDestination.TryGetValue(pendingAction.Destination, out var existingPendingConnectionAction))
 					{
-						// No change
-						continue;
+						if (existingPendingConnectionAction.Action == pendingAction.Action &&
+							existingPendingConnectionAction.PendingSource == pendingAction.PendingSource)
+						{
+							// No change
+							continue;
+						}
+
+						if (hasImpact)
+						{
+							impactedEndpoints.UnionWith(existingPendingConnectionAction.GetEndpoints());
+						}
 					}
+
+					_pendingActionsByDestination[pendingAction.Destination] = pendingAction;
+					_pendingConnectionActionsMapping.AddOrUpdate(pendingAction);
 
 					if (hasImpact)
 					{
-						impactedEndpoints.UnionWith(existingPendingConnectionAction.GetEndpoints());
+						impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
 					}
-				}
-
-				_pendingActionsByDestination[pendingAction.Destination] = pendingAction;
-				_pendingConnectionActionsMapping.AddOrUpdate(pendingAction);
-
-				if (hasImpact)
-				{
-					impactedEndpoints.UnionWith(pendingAction.GetEndpoints());
 				}
 			}
 
@@ -354,58 +368,70 @@
 
 		private void MaybeAddNewMediationElement(DmsElementId elementId)
 		{
-			if (_elements.ContainsKey(elementId))
+			MediationElement mediationElement;
+
+			lock (_lock)
 			{
-				// Element already exists, nothing to do
-				return;
+				if (_elements.ContainsKey(elementId))
+				{
+					// Element already exists, nothing to do
+					return;
+				}
+
+				var dms = Api.Connection.GetDms();
+
+				var dmsElement = Retry.Do(
+					() => dms.GetElement(elementId),
+					TimeSpan.FromMilliseconds(250),
+					10);
+
+				if (dmsElement.Protocol.Name != MediationElement.ProtocolName)
+				{
+					// not a mediation element, ignore
+					return;
+				}
+
+				mediationElement = new MediationElement(Api, dmsElement);
+				_elements[mediationElement.DmsElementId] = mediationElement;
+
+				SubscribeElement(mediationElement);
 			}
 
-			var dms = Api.Connection.GetDms();
-
-			var dmsElement = Retry.Do(
-				() => dms.GetElement(elementId),
-				TimeSpan.FromMilliseconds(250),
-				10);
-
-			if (dmsElement.Protocol.Name != MediationElement.ProtocolName)
-			{
-				// not a mediation element, ignore
-				return;
-			}
-
-			var mediationElement = new MediationElement(Api, dmsElement);
-			_elements[mediationElement.DmsElementId] = mediationElement;
-
-			SubscribeElement(mediationElement);
 			LoadDataFromMediationElement(mediationElement);
 		}
 
 		private void HandleStoppedMediationElement(DmsElementId elementId)
 		{
-			if (!_elements.ContainsKey(elementId))
+			ICollection<PendingConnectionAction> pendingActions;
+			ICollection<Connection> connections;
+
+			lock (_lock)
 			{
-				// Element not found, nothing to do
-				return;
+				if (!_elements.ContainsKey(elementId))
+				{
+					// Element not found, nothing to do
+					return;
+				}
+
+				if (_elementSubscriptions.TryGetValue(elementId, out var subscription))
+				{
+					UnsubscribeElement(subscription.MediationElement);
+				}
+
+				// Remove all connections and pending actions related to this element
+				pendingActions = _pendingActionsByDestination.Values
+					.Where(x => x.MediationElement.DmsElementId == elementId)
+					.ToList();
+
+				connections = _connectionsByDestination.Values
+					.Where(x => x.MediationElement.DmsElementId == elementId)
+					.ToList();
+
+				_elements.Remove(elementId);
 			}
-
-			if (_elementSubscriptions.TryGetValue(elementId, out var subscription))
-			{
-				UnsubscribeElement(subscription.MediationElement);
-			}
-
-			// Remove all connections and pending actions related to this element
-			var pendingActions = _pendingActionsByDestination.Values
-				.Where(x => x.MediationElement.DmsElementId == elementId)
-				.ToList();
-
-			var connections = _connectionsByDestination.Values
-				.Where(x => x.MediationElement.DmsElementId == elementId)
-				.ToList();
 
 			UpdatePendingConnections([], pendingActions);
 			UpdateConnections([], connections);
-
-			_elements.Remove(elementId);
 		}
 	}
 }
