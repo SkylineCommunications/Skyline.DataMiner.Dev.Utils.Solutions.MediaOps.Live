@@ -362,6 +362,8 @@
 					impactedVirtualSignalGroups.Select(GetConnectivity).ToList());
 			}
 
+			// Invoke event outside lock to prevent potential deadlocks
+			// This could happen when event handlers try to call back into this class
 			ConnectionsUpdated?.Invoke(this, eventArgs);
 		}
 

@@ -2,7 +2,9 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 	using System.Linq;
+	using System.Threading;
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
@@ -270,10 +272,7 @@
 				}
 			}
 
-			if (impactedEndpoints.Count > 0)
-			{
-				EndpointsImpacted?.Invoke(this, impactedEndpoints);
-			}
+			RaiseEndpointsImpacted(impactedEndpoints);
 		}
 
 		private void UpdatePendingConnections(ICollection<PendingConnectionAction> updated, ICollection<PendingConnectionAction> deleted)
@@ -326,10 +325,7 @@
 				}
 			}
 
-			if (impactedEndpoints.Count > 0)
-			{
-				EndpointsImpacted?.Invoke(this, impactedEndpoints);
-			}
+			RaiseEndpointsImpacted(impactedEndpoints);
 		}
 
 		/// <summary>
@@ -355,6 +351,20 @@
 
 				_ => true
 			};
+		}
+
+		private void RaiseEndpointsImpacted(ICollection<ApiObjectReference<Endpoint>> impactedEndpoints)
+		{
+			// Ensure we are not holding the lock when raising events
+			// This could lead to deadlocks if event handlers try to call back into this class
+			Debug.Assert(!Monitor.IsEntered(_lock), "Lock must not be held when raising events to prevent deadlocks from event handlers calling back into this class");
+
+			if (impactedEndpoints.Count == 0)
+			{
+				return;
+			}
+
+			EndpointsImpacted?.Invoke(this, impactedEndpoints);
 		}
 
 		private void LoadDataFromMediationElement(MediationElement element)
