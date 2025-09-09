@@ -72,6 +72,19 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			api.Orchestration.JobInfos.Update(eventJobInfo);
 		}
 
+		public DmsServiceId GetEventMonitoringService()
+		{
+			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+			OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
+
+			if (eventJobInfo == null)
+			{
+				return default;
+			}
+
+			return eventJobInfo.MonitoringService;
+		}
+
 		[AutomationEntryPoint(AutomationEntryPointType.Types.OnRequestScriptInfo)]
 		public RequestScriptInfoOutput OnRequestScriptInfoRequest(IEngine engine, RequestScriptInfoInput inputData)
 		{
@@ -173,7 +186,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		{
 			MediaOpsLiveApi api = engine.GetMediaOpsLiveApi();
 
-			if (!TryGetMetadataValue("{Event ID}", out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid))
+			if (!TryGetMetadataValue("{Event ID}", out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid) || eventGuid == Guid.Empty)
 			{
 				return null;
 			}
@@ -509,18 +522,19 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 			if (EventConfiguration.IsStartEvent)
 			{
-				DmsServiceId createdServiceForEvent = SetupService();
+				MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+				OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
 
-				if (createdServiceForEvent != default(DmsServiceId))
+				if (eventJobInfo != null && eventJobInfo.MonitoringService != default)
 				{
-					scriptOutput.OrchestrationServiceAgentId = createdServiceForEvent.AgentId;
-					scriptOutput.OrchestrationServiceId = createdServiceForEvent.ServiceId;
+					eventJobInfo.MonitoringService = SetupService();
+					api.Orchestration.JobInfos.Update(eventJobInfo);
 				}
 			}
 
 			if (EventConfiguration.IsStopEvent)
 			{
-
+				TearDownService();
 			}
 
 			return scriptOutput;
