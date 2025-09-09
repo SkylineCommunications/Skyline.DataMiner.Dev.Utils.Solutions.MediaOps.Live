@@ -377,56 +377,59 @@
 				throw new ArgumentException("Endpoint must be a destination endpoint.", nameof(endpoint));
 			}
 
-			bool isConnected = false;
-			bool isConnecting = false;
-			bool isDisconnecting = false;
-			Endpoint connectedSource = null;
-			Endpoint pendingConnectedSource = null;
-
-			if (_liteConnectivityInfoProvider.TryGetConnectionForDestination(endpoint, out var connection) &&
-				connection.IsConnected)
+			lock (_lock)
 			{
-				isConnected = true;
+				bool isConnected = false;
+				bool isConnecting = false;
+				bool isDisconnecting = false;
+				Endpoint connectedSource = null;
+				Endpoint pendingConnectedSource = null;
 
-				if (connection.ConnectedSource.HasValue &&
-					_vsgCache.TryGetEndpoint(connection.ConnectedSource.Value, out Endpoint connectedSourceEndpoint))
+				if (_liteConnectivityInfoProvider.TryGetConnectionForDestination(endpoint, out var connection) &&
+					connection.IsConnected)
 				{
-					connectedSource = connectedSourceEndpoint;
-				}
-			}
+					isConnected = true;
 
-			if (_liteConnectivityInfoProvider.TryGetPendingConnectionActionForDestination(endpoint, out var pendingAction))
-			{
-				if (pendingAction.Action == PendingConnectionActionType.Connect)
-				{
-					if (pendingAction.PendingSource.HasValue &&
-						_vsgCache.TryGetEndpoint(pendingAction.PendingSource.Value, out var pendingSource) &&
-						pendingSource != connectedSource)
+					if (connection.ConnectedSource.HasValue &&
+						_vsgCache.TryGetEndpoint(connection.ConnectedSource.Value, out Endpoint connectedSourceEndpoint))
 					{
-						isConnecting = true;
-						pendingConnectedSource = pendingSource;
+						connectedSource = connectedSourceEndpoint;
 					}
 				}
-				else if (pendingAction.Action == PendingConnectionActionType.Disconnect)
+
+				if (_liteConnectivityInfoProvider.TryGetPendingConnectionActionForDestination(endpoint, out var pendingAction))
 				{
-					if (isConnected)
+					if (pendingAction.Action == PendingConnectionActionType.Connect)
 					{
-						isDisconnecting = true;
+						if (pendingAction.PendingSource.HasValue &&
+							_vsgCache.TryGetEndpoint(pendingAction.PendingSource.Value, out var pendingSource) &&
+							pendingSource != connectedSource)
+						{
+							isConnecting = true;
+							pendingConnectedSource = pendingSource;
+						}
+					}
+					else if (pendingAction.Action == PendingConnectionActionType.Disconnect)
+					{
+						if (isConnected)
+						{
+							isDisconnecting = true;
+						}
 					}
 				}
+
+				var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
+
+				return new EndpointConnectivity(
+					endpoint,
+					isConnected,
+					isConnecting,
+					isDisconnecting,
+					connectedSource,
+					pendingConnectedSource,
+					virtualSignalGroups,
+					destinationConnections: null);
 			}
-
-			var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
-
-			return new EndpointConnectivity(
-				endpoint,
-				isConnected,
-				isConnecting,
-				isDisconnecting,
-				connectedSource,
-				pendingConnectedSource,
-				virtualSignalGroups,
-				destinationConnections: null);
 		}
 
 		private EndpointConnectivity GetConnectivityForSource(Endpoint endpoint)
@@ -441,57 +444,60 @@
 				throw new ArgumentException("Endpoint must be a source endpoint.", nameof(endpoint));
 			}
 
-			var isConnected = false;
-			var isConnecting = false;
-			var isDisconnecting = false;
-			var destinationStates = new Dictionary<Endpoint, EndpointConnectionState>();
-
-			var connections = _liteConnectivityInfoProvider.GetConnectionsWithSource(endpoint);
-			var pendingActions = _liteConnectivityInfoProvider.GetPendingConnectionActionsWithSource(endpoint);
-
-			foreach (var connection in connections.Where(c => c.IsConnected))
+			lock (_lock)
 			{
-				isConnected = true;
+				var isConnected = false;
+				var isConnecting = false;
+				var isDisconnecting = false;
+				var destinationStates = new Dictionary<Endpoint, EndpointConnectionState>();
 
-				if (_vsgCache.TryGetEndpoint(connection.Destination, out var destination))
+				var connections = _liteConnectivityInfoProvider.GetConnectionsWithSource(endpoint);
+				var pendingActions = _liteConnectivityInfoProvider.GetPendingConnectionActionsWithSource(endpoint);
+
+				foreach (var connection in connections.Where(c => c.IsConnected))
 				{
-					destinationStates[destination] = EndpointConnectionState.Connected;
+					isConnected = true;
+
+					if (_vsgCache.TryGetEndpoint(connection.Destination, out var destination))
+					{
+						destinationStates[destination] = EndpointConnectionState.Connected;
+					}
 				}
+
+				foreach (var pendingAction in pendingActions)
+				{
+					if (!_vsgCache.TryGetEndpoint(pendingAction.Destination, out var destination))
+					{
+						continue;
+					}
+
+					if (pendingAction.Action == PendingConnectionActionType.Connect &&
+						!_liteConnectivityInfoProvider.IsConnected(endpoint, destination))
+					{
+						isConnecting = true;
+						destinationStates[destination] = EndpointConnectionState.Connecting;
+					}
+					else if (pendingAction.Action == PendingConnectionActionType.Disconnect &&
+						_liteConnectivityInfoProvider.IsConnected(endpoint, destination))
+					{
+						isDisconnecting = true;
+						destinationStates[destination] = EndpointConnectionState.Disconnecting;
+					}
+				}
+
+				var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
+				var destinationConnections = destinationStates.Select(x => new EndpointConnection(x.Key, x.Value)).ToList();
+
+				return new EndpointConnectivity(
+					endpoint,
+					isConnected,
+					isConnecting,
+					isDisconnecting,
+					connectedSource: null,
+					pendingConnectedSource: null,
+					virtualSignalGroups,
+					destinationConnections);
 			}
-
-			foreach (var pendingAction in pendingActions)
-			{
-				if (!_vsgCache.TryGetEndpoint(pendingAction.Destination, out var destination))
-				{
-					continue;
-				}
-
-				if (pendingAction.Action == PendingConnectionActionType.Connect &&
-					!_liteConnectivityInfoProvider.IsConnected(endpoint, destination))
-				{
-					isConnecting = true;
-					destinationStates[destination] = EndpointConnectionState.Connecting;
-				}
-				else if (pendingAction.Action == PendingConnectionActionType.Disconnect &&
-					_liteConnectivityInfoProvider.IsConnected(endpoint, destination))
-				{
-					isDisconnecting = true;
-					destinationStates[destination] = EndpointConnectionState.Disconnecting;
-				}
-			}
-
-			var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
-			var destinationConnections = destinationStates.Select(x => new EndpointConnection(x.Key, x.Value)).ToList();
-
-			return new EndpointConnectivity(
-				endpoint,
-				isConnected,
-				isConnecting,
-				isDisconnecting,
-				connectedSource: null,
-				pendingConnectedSource: null,
-				virtualSignalGroups,
-				destinationConnections);
 		}
 	}
 }
