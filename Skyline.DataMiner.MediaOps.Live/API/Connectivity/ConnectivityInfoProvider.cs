@@ -313,30 +313,22 @@
 				return;
 			}
 
-			_isDisposed = true;
-
 			_liteConnectivityInfoProvider.EndpointsImpacted -= Endpoints_Impacted;
 			Unsubscribe();
+
+			_isDisposed = true;
 		}
 
 		private void Initialize(LiteConnectivityInfoProvider liteConnectivityInfoProvider, VirtualSignalGroupEndpointsCache virtualSignalGroupsCache, LevelsCache levelsCache, bool subscribe)
 		{
 			lock (_lock)
 			{
-				Task.WaitAll(
-					Task.Run(() =>
-					{
-						_liteConnectivityInfoProvider = liteConnectivityInfoProvider ?? new LiteConnectivityInfoProvider(Api, subscribe);
-						_liteConnectivityInfoProvider.EndpointsImpacted += Endpoints_Impacted;
-					}),
-					Task.Run(() =>
-					{
-						_vsgCache = virtualSignalGroupsCache ?? new VirtualSignalGroupEndpointsCache(Api, subscribe);
-					}),
-					Task.Run(() =>
-					{
-						_levelsCache = levelsCache ?? new LevelsCache(Api, subscribe);
-					}));
+				_levelsCache = levelsCache ?? new LevelsCache(Api, subscribe);
+
+				_vsgCache = virtualSignalGroupsCache ?? new VirtualSignalGroupEndpointsCache(Api, subscribe);
+
+				_liteConnectivityInfoProvider = liteConnectivityInfoProvider ?? new LiteConnectivityInfoProvider(Api, subscribe);
+				_liteConnectivityInfoProvider.EndpointsImpacted += Endpoints_Impacted;
 
 				IsSubscribed = subscribe;
 			}
@@ -344,12 +336,9 @@
 
 		private void Endpoints_Impacted(object sender, ICollection<ApiObjectReference<Endpoint>> impactedEndpoints)
 		{
-			lock (_lock)
-			{
-				Debug.WriteLine($"Endpoints impacted: {String.Join(", ", impactedEndpoints)}");
+			Debug.WriteLine($"Endpoints impacted: {String.Join(", ", impactedEndpoints)}");
 
-				RaiseConnectionsUpdated(impactedEndpoints);
-			}
+			RaiseConnectionsUpdated(impactedEndpoints);
 		}
 
 		private void RaiseConnectionsUpdated(ICollection<ApiObjectReference<Endpoint>> impactedEndpoints)
@@ -359,14 +348,19 @@
 				return;
 			}
 
-			var impactedVirtualSignalGroups = impactedEndpoints
-				.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x))
-				.Distinct()
-				.ToList();
+			ConnectionsUpdatedEvent eventArgs;
 
-			var eventArgs = new ConnectionsUpdatedEvent(
-				impactedEndpoints.Select(GetConnectivity).ToList(),
-				impactedVirtualSignalGroups.Select(GetConnectivity).ToList());
+			lock (_lock)
+			{
+				var impactedVirtualSignalGroups = impactedEndpoints
+					.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x))
+					.Distinct()
+					.ToList();
+
+				eventArgs = new ConnectionsUpdatedEvent(
+					impactedEndpoints.Select(GetConnectivity).ToList(),
+					impactedVirtualSignalGroups.Select(GetConnectivity).ToList());
+			}
 
 			ConnectionsUpdated?.Invoke(this, eventArgs);
 		}
