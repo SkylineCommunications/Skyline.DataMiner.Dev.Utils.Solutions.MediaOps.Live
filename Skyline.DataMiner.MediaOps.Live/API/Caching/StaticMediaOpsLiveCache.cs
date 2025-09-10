@@ -3,6 +3,7 @@
 	using System;
 	using System.Threading;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
@@ -171,13 +172,21 @@
 				// If the connection is a managed DataMiner module (e.g. Engine.SLNetRaw), use the existing connection directly.
 				return baseConnection;
 			}
-			else if (ConnectionHelper.TryCloneConnection(baseConnection, "MediaOps.Live - Connection", out var clonedConnection))
+
+			try
 			{
-				return clonedConnection;
+				return ConnectionHelper.CloneConnection(baseConnection, "MediaOps.Live - Connection");
 			}
-			else
+			catch (Exception)
 			{
-				throw new InvalidOperationException("Failed to create a connection.");
+				if (Engine.SLNetRaw != null)
+				{
+					// As a last resort, fall back to Engine.SLNetRaw if available.
+					// This covers the case where the base connection is engine.GetUserConnection()
+					return Engine.SLNetRaw;
+				}
+
+				throw;
 			}
 		}
 	}
