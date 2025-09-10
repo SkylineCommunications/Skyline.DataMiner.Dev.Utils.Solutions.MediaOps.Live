@@ -108,7 +108,7 @@
 
 				if (orchestrationEvent.JobInfoReference.Value.ID != jobInfoReference)
 				{
-					throw new InvalidOperationException("One of the job events is already part of another job");
+					throw new InvalidOperationException($"One of the job events is already part of another job (reference: {orchestrationEvent.JobInfoReference.Value.ID}");
 				}
 			}
 		}
