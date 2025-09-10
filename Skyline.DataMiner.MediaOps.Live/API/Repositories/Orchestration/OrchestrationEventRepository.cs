@@ -92,7 +92,14 @@
 				var jobInfo = _jobInfoHelper.GetJobInfoByJobReference(jobReference);
 				IEnumerable<OrchestrationEvent> events = GetEventsByJobInfoReference(jobInfo, performanceTracker);
 
-				return new OrchestrationJob(jobReference, events) { JobInfo = jobInfo };
+				OrchestrationJob job = new OrchestrationJob(jobReference, events);
+
+				if (jobInfo != null)
+				{
+					job.JobInfo = jobInfo;
+				}
+
+				return job;
 			}
 		}
 
@@ -116,7 +123,14 @@
 				var jobInfo = _jobInfoHelper.GetJobInfoByJobReference(jobReference);
 				IEnumerable<OrchestrationEventConfiguration> events = GetEventConfigurationsByJobReference(jobInfo, performanceTracker);
 
-				return new OrchestrationJobConfiguration(jobReference, events) { JobInfo = jobInfo };
+				OrchestrationJobConfiguration job = new OrchestrationJobConfiguration(jobReference, events);
+
+				if (jobInfo != null)
+				{
+					job.JobInfo = jobInfo;
+				}
+
+				return job;
 			}
 		}
 
