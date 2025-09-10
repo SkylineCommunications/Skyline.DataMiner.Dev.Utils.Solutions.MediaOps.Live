@@ -46,7 +46,7 @@
 		/// </summary>
 		public string JobId => JobInfo.JobReference;
 
-		internal OrchestrationJobInfo JobInfo { get; }
+		internal OrchestrationJobInfo JobInfo { get; set; }
 
 		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
