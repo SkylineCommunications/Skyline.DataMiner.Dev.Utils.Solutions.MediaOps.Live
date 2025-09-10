@@ -1,0 +1,116 @@
+﻿namespace Skyline.DataMiner.MediaOps.Live.Tools
+{
+	using System.Collections.Generic;
+
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.Net.Automation;
+	using Skyline.DataMiner.Net.Messages;
+
+	public class ExecuteScriptMessageBuilder
+	{
+		private readonly ExecuteScriptMessage _message;
+		private readonly List<string> _options;
+
+		public ExecuteScriptMessageBuilder(string scriptName)
+		{
+			_message = new ExecuteScriptMessage
+			{
+				ScriptName = scriptName,
+				DataMinerID = -1,
+				HostingDataMinerID = -1,
+			};
+
+			_options = [];
+		}
+
+		public void SetCheckSets(bool checkSets)
+		{
+			_options.Add($"CHECKSETS:{(checkSets ? "TRUE" : "FALSE")}");
+		}
+
+		public void SetSynchronous(bool synchronous)
+		{
+			_options.Add($"DEFER:{(!synchronous ? "TRUE" : "FALSE")}");
+		}
+
+		public void SetExtendedErrorInfo(bool extendedErrorInfo)
+		{
+			SetOption("EXTENDED_ERROR_INFO", extendedErrorInfo);
+		}
+
+		public void SetInteractive(bool interactive)
+		{
+			SetOption("INTERACTIVE", interactive);
+		}
+
+		public void SetInformationEvent(bool allowInformationEvents)
+		{
+			SetOption("SKIP_STARTED_INFO_EVENT:TRUE", !allowInformationEvents);
+		}
+
+		public void SetParameters(Dictionary<string, string> parameters)
+		{
+			if (parameters == null || parameters.Count == 0)
+			{
+				return;
+			}
+
+			foreach (var parameter in parameters)
+			{
+				_options.Add($"PARAMETERBYNAME:{parameter.Key}:{parameter.Value}");
+			}
+		}
+
+		public void SetDummies(Dictionary<string, DmsElementId> dummies)
+		{
+			if (dummies == null || dummies.Count == 0)
+			{
+				return;
+			}
+
+			foreach (var dummy in dummies)
+			{
+				_options.Add($"PROTOCOLBYNAME:{dummy.Key}:{dummy.Value.AgentId}:{dummy.Value.ElementId}");
+			}
+		}
+
+		public void SetEntryPoint(AutomationEntryPoint entryPoint)
+		{
+			_message.CustomEntryPoint = entryPoint;
+		}
+
+		public ExecuteScriptMessage Build()
+		{
+			_message.Options = new SA(_options.ToArray());
+			return _message;
+		}
+
+		private void SetOption(string option, bool value)
+		{
+			if (value)
+			{
+				AddOption(option);
+			}
+			else
+			{
+				RemoveOption(option);
+			}
+		}
+
+		private void AddOption(string option)
+		{
+			if (!_options.Contains(option))
+			{
+				_options.Add(option);
+			}
+		}
+
+		private void RemoveOption(string option)
+		{
+			if (_options.Contains(option))
+			{
+				_options.Remove(option);
+			}
+		}
+	}
+}

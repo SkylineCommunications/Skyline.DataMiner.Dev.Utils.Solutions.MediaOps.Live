@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages;
@@ -55,7 +56,10 @@
 		/// <param name="orchestrationEvents">The list of events to assign to the job.</param>
 		internal OrchestrationJob(string jobId, IEnumerable<OrchestrationEvent> orchestrationEvents)
 		{
-			JobId = jobId;
+			JobInfo = new OrchestrationJobInfo
+			{
+				JobReference = jobId,
+			};
 
 			IEnumerable<OrchestrationEvent> events = orchestrationEvents.ToList();
 			OrchestrationEvents = events.ToList();
@@ -65,7 +69,9 @@
 		/// <summary>
 		/// Gets the job reference ID.
 		/// </summary>
-		public string JobId { get; }
+		public string JobId => JobInfo.JobReference;
+
+		internal OrchestrationJobInfo JobInfo { get; }
 
 		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
@@ -122,7 +128,7 @@
 
 		internal void ValidateEventsBeforeSaving(IConnection connection)
 		{
-			AssignJobReferencesBeforeSaving(JobId, OrchestrationEvents);
+			AssignJobReferencesBeforeSaving(JobInfo.ID, OrchestrationEvents);
 			ValidateEventInfo(OrchestrationEvents);
 			ValidateOrchestrationScriptInformation(connection, OrchestrationEvents);
 		}
@@ -151,26 +157,39 @@
 
 			GetScriptInfoResponseMessage scriptInfoResponse = (GetScriptInfoResponseMessage)connection.HandleSingleResponseMessage(new GetScriptInfoMessage(scriptName));
 
-			if (scriptInfoResponse?.Parameters == null || !scriptInfoResponse.Parameters.Any())
+			if (scriptInfoResponse == null)
 			{
 				return;
 			}
 
-			List<string> inputParamsRequired = scriptInfoResponse.Parameters.Select(param => param.Description).ToList();
-			List<string> inputDummiesRequired = scriptInfoResponse.Dummies.Select(dummy => dummy.Description).ToList();
-			foreach (string paramDescription in inputDummiesRequired.Union(inputParamsRequired))
+			foreach (string scriptInputParamName in scriptInfoResponse.Parameters.Select(param => param.Description))
 			{
-				if (arguments.Any(arg => arg.Name == paramDescription))
+				if (arguments.Any(arg => arg.Name == scriptInputParamName && arg.Type == OrchestrationScriptArgumentType.Parameter))
 				{
 					continue;
 				}
 
-				if (profileValues.Any(value => value.Name == paramDescription))
+				if (profileValues.Any(value => value.Name == scriptInputParamName))
 				{
 					continue;
 				}
 
-				throw new InvalidOperationException($"Script input missing for confirmed event. Script: {scriptName}. Parameter: {paramDescription}");
+				throw new InvalidOperationException($"Script input parameter missing for confirmed event. Script: {scriptName}. Parameter: {scriptInputParamName}");
+			}
+
+			foreach (string scriptDummyName in scriptInfoResponse.Dummies.Select(param => param.Description))
+			{
+				if (arguments.Any(arg => arg.Name == scriptDummyName && arg.Type == OrchestrationScriptArgumentType.Element))
+				{
+					continue;
+				}
+
+				if (profileValues.Any(value => value.Name == scriptDummyName))
+				{
+					continue;
+				}
+
+				throw new InvalidOperationException($"Script input dummy missing for confirmed event. Script: {scriptName}. Dummy: {scriptDummyName}");
 			}
 		}
 
@@ -180,17 +199,17 @@
 			ValidateEventOrderBeforeSaving(orchestrationEvents);
 		}
 
-		internal static void AssignJobReferencesBeforeSaving(string jobId, IList<OrchestrationEvent> orchestrationEvents)
+		internal static void AssignJobReferencesBeforeSaving(Guid jobInfoReference, IList<OrchestrationEvent> orchestrationEvents)
 		{
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
-				if (String.IsNullOrEmpty(orchestrationEvent.JobReference))
+				if (!orchestrationEvent.JobInfoReference.HasValue || orchestrationEvent.JobInfoReference.Value.ID == Guid.Empty)
 				{
-					orchestrationEvent.JobReference = jobId;
+					orchestrationEvent.JobInfoReference = new ApiObjectReference<OrchestrationJobInfo>(jobInfoReference);
 					continue;
 				}
 
-				if (orchestrationEvent.JobReference != jobId)
+				if (orchestrationEvent.JobInfoReference.Value.ID != jobInfoReference)
 				{
 					throw new InvalidOperationException("One of the job events is already part of another job");
 				}

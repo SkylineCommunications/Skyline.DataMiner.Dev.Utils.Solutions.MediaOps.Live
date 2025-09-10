@@ -13,7 +13,9 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Profiles;
 
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
@@ -277,8 +279,52 @@
 
 		private void InitializeOrchestration(bool installDomModules)
 		{
+			Dms.Agents[123].CreateElement(1001, "Orchestration Dummy Instance 1", "Protocol", "Production");
+			Dms.Agents[124].CreateElement(1001, "Orchestration Dummy Instance 2", "Protocol", "Production");
+
+			Dms.AddProfileParameter("IndividualProfileParam_Int", new Guid("986528dc-78af-4b09-b1c1-11dac21744b1"), Parameter.ParameterType.Number);
+			Dms.AddProfileParameter("IndividualProfileParam_String", new Guid("b0e37ff1-fe56-4bd7-b108-9e8c992eb6d9"), Parameter.ParameterType.Text);
+			Dms.AddProfileParameter("DefinitionProfileParam_Int", new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e"), Parameter.ParameterType.Number);
+			Dms.AddProfileParameter("DefinitionProfileParam_String", new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f"), Parameter.ParameterType.Text);
+
+			Dms.AddProfileDefinition(
+				"Definition 1",
+				new Guid("94fa7d96-8cb3-4bdd-a968-dd1192683165"),
+				new List<Guid>
+				{
+					new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e"),
+					new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f"),
+				});
+
+			Dms.AddProfileInstance(
+				"Instance 1",
+				new Guid("279eea1b-2702-4710-be01-ad1d80dd4b9d"),
+				new Guid("94fa7d96-8cb3-4bdd-a968-dd1192683165"),
+				new Dictionary<Guid, object>(){
+					{ new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e"), 500},
+					{ new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f"), "Hello"},
+				});
+
 			Dms.AddScript("Script_Success", new List<string>(), new List<string>());
 			Dms.AddScript("Script_Fail", new List<string>(), new List<string>());
+			Dms.AddScript(
+				"OrchestrationScript",
+				new List<string> { "InputParam" },
+				new List<string> { "InputDummy" },
+				new ScriptInfo
+				{
+					ProfileParameters =
+					{
+						{ "IndividualProfileParam_Int", new Guid("986528dc-78af-4b09-b1c1-11dac21744b1") },
+						{ "IndividualProfileParam_String", new Guid("b0e37ff1-fe56-4bd7-b108-9e8c992eb6d9") },
+						{ "DefinitionProfileParam_Int", new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e") },
+						{ "DefinitionProfileParam_String", new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f") },
+					},
+					ProfileDefinitions =
+					{
+						new Guid("94fa7d96-8cb3-4bdd-a968-dd1192683165"),
+					},
+				});
 
 			if (installDomModules)
 			{
@@ -287,9 +333,10 @@
 			}
 
 			OrchestrationJobConfiguration job = Api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");
-			job.OrchestrationEvents.AddRange(WithNodes_CreateEventConfigurationInstances(10, 10));
+			Guid jobInfoReference = job.JobInfo.ID;
+			job.OrchestrationEvents.AddRange(WithNodes_CreateEventConfigurationInstances(10, 10, jobInfoReference));
 
-			Api.Orchestration.SaveEventConfigurations(job.OrchestrationEvents);
+			Api.Orchestration.SaveOrchestrationJobConfiguration(job);
 		}
 
 		private void CreateMediationElement(int dmaId, int elementId, string name)
@@ -302,7 +349,7 @@
 			element.CreateTable(MediationElement.ConnectionsTableId);
 		}
 
-		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes)
+		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes, Guid jobReferenceId)
 		{
 			List<API.Objects.Orchestration.Connection> connections = new List<API.Objects.Orchestration.Connection>();
 			List<NodeConfiguration> nodeConfigs = new List<NodeConfiguration>();
@@ -335,8 +382,6 @@
 				{
 					NodeId = "1",
 					NodeLabel = "Node Label",
-					OrchestrationScriptName = "OrchestrationScript",
-					OrchestrationScriptArguments = scriptArguments,
 				});
 			}
 
@@ -349,10 +394,7 @@
 					Name = $"Test Event {i}",
 					EventTime = DateTime.UtcNow + TimeSpan.FromHours(1),
 					EventType = SlcOrchestrationIds.Enums.EventType.Other,
-					EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-					GlobalOrchestrationScript = "Test Script",
-					GlobalOrchestrationScriptArguments = scriptArguments,
-					JobReference = "dd2cd5f2-ee7d-42b8-9b96-1e562d472b63",
+					EventState = SlcOrchestrationIds.Enums.EventState.Draft,
 					Configuration =
 					{
 						Connections = connections,

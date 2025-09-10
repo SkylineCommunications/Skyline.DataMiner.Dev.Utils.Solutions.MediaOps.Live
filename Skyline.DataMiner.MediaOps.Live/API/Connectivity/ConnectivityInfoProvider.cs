@@ -4,7 +4,6 @@
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
-	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;

@@ -123,7 +123,7 @@
 				{
 					case SlcOrchestrationIds.Enums.EventState.Cancelled:
 					case SlcOrchestrationIds.Enums.EventState.Draft:
-						DeleteEventTasks(groupedByStateEvent.Where(e => e.ReservationInstance != null));
+						DeleteEventTasks(groupedByStateEvent.Where(e => e.SchedulerReference != null));
 						continue;
 
 					case SlcOrchestrationIds.Enums.EventState.Confirmed:
@@ -180,20 +180,20 @@
 					IDma dma = SelectRandomDma();
 					int newTaskId = dma.Scheduler.CreateTask(taskForTimeStamp.GenerateSchedulerTaskData());
 					taskForTimeStamp.ScheduledTaskId = new ScheduledTaskId(dma.Id, newTaskId);
-					orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
+					orchestrationEvent.SchedulerReference = taskForTimeStamp.ScheduledTaskId;
 					_internalTaskList.Value.Add(taskForTimeStamp);
 					continue;
 				}
 
 				// Event already added to correct task
-				if (orchestrationEvent.ReservationInstance == taskForTimeStamp.ScheduledTaskId)
+				if (orchestrationEvent.SchedulerReference == taskForTimeStamp.ScheduledTaskId)
 				{
 					continue;
 				}
 
 				DeleteEventTaskForEvent(orchestrationEvent);
 				taskForTimeStamp.OrchestrationEventIds.Add(orchestrationEvent.ID);
-				orchestrationEvent.ReservationInstance = taskForTimeStamp.ScheduledTaskId;
+				orchestrationEvent.SchedulerReference = taskForTimeStamp.ScheduledTaskId;
 				taskUpdated = true;
 			}
 
@@ -211,7 +211,7 @@
 			{
 				foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 				{
-					orchestrationEvent.ReservationInstance = null;
+					orchestrationEvent.SchedulerReference = null;
 				}
 
 				return;
@@ -231,18 +231,18 @@
 
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
-				orchestrationEvent.ReservationInstance = null;
+				orchestrationEvent.SchedulerReference = null;
 			}
 		}
 
 		private void DeleteEventTaskForEvent(OrchestrationEvent orchestrationEvent)
 		{
-			if (orchestrationEvent.ReservationInstance == null)
+			if (orchestrationEvent.SchedulerReference == null)
 			{
 				return;
 			}
 
-			OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.ReservationInstance);
+			OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.SchedulerReference);
 
 			task.OrchestrationEventIds.Remove(orchestrationEvent.ID);
 
@@ -256,7 +256,7 @@
 				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.UpdateTask(task.GenerateSchedulerTaskData());
 			}
 
-			orchestrationEvent.ReservationInstance = null;
+			orchestrationEvent.SchedulerReference = null;
 		}
 
 		private IDma SelectRandomDma()

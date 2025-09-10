@@ -23,6 +23,11 @@
 			return InstanceFactory.ReadAndCreateInstances(DomHelper, filter, x => new OrchestrationEventInstance(x));
 		}
 
+		private IEnumerable<OrchestrationJobInfoInstance> GetJobInfoIterator(FilterElement<DomInstance> filter)
+		{
+			return InstanceFactory.ReadAndCreateInstances(DomHelper, filter, x => new OrchestrationJobInfoInstance(x));
+		}
+
 		#endregion
 
 		#region Orchestration Events
@@ -36,10 +41,26 @@
 
 		public IEnumerable<OrchestrationEventInstance> GetAllOrchestrationEvents(string jobReference)
 		{
+			OrchestrationJobInfoInstance jobInfoInstance = GetJobInfoById(jobReference);
+
+			if (jobInfoInstance == null)
+			{
+				return new List<OrchestrationEventInstance>();
+			}
+
 			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
-				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference).Equal(jobReference));
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobInformation).Equal(jobInfoInstance.ID));
 
 			return GetOrchestrationEventIterator(filter);
+		}
+
+		public OrchestrationJobInfoInstance GetJobInfoById(string jobReference)
+		{
+			FilterElement<DomInstance> jobInfoFilter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationJobInfo.Id)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.JobInfo.JobReference).Equal(jobReference));
+
+			OrchestrationJobInfoInstance jobInfoInstance = GetJobInfoIterator(jobInfoFilter).FirstOrDefault();
+			return jobInfoInstance;
 		}
 
 		public IEnumerable<OrchestrationEventInstance> GetOrchestrationEvents(FilterElement<DomInstance> filter)
@@ -50,6 +71,16 @@
 			}
 
 			return GetOrchestrationEventIterator(filter);
+		}
+
+		public IEnumerable<OrchestrationJobInfoInstance> GetJobInfos(FilterElement<DomInstance> filter)
+		{
+			if (filter == null)
+			{
+				throw new ArgumentNullException(nameof(filter));
+			}
+
+			return GetJobInfoIterator(filter);
 		}
 
 		public IEnumerable<OrchestrationEventInstance> GetOrchestrationEventsInTimeRange(DateTime start, DateTime end)

@@ -95,12 +95,13 @@
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
-				new FieldDescriptor
+				new DomInstanceFieldDescriptor(SlcOrchestrationIds.ModuleId)
 				{
-					FieldType = typeof(string),
-					ID = SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobReference,
-					Name = "Job Reference",
+					FieldType = typeof(Guid),
+					ID = SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobInformation,
+					Name = "Job Information",
 					IsOptional = false,
+					DomDefinitionIds = { SlcOrchestrationIds.Definitions.OrchestrationJobInfo },
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
@@ -116,8 +117,8 @@
 				new FieldDescriptor
 				{
 					FieldType = typeof(string),
-					ID = SlcOrchestrationIds.Sections.OrchestrationEventInfo.ReservationInstance,
-					Name = "Reservation Instance",
+					ID = SlcOrchestrationIds.Sections.OrchestrationEventInfo.SchedulerReference,
+					Name = "Scheduler Reference",
 					IsOptional = true,
 				});
 

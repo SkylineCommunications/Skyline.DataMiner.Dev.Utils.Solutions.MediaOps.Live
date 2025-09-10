@@ -7,6 +7,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	/// <summary>
 	/// Information about an orchestration event.
@@ -20,7 +21,7 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class.
 		/// </summary>
-		public OrchestrationEvent() : this(domInstance: new OrchestrationEventInstance())
+		public OrchestrationEvent() : this(new OrchestrationEventInstance())
 		{
 			_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
 		}
@@ -30,7 +31,7 @@
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
 		}
 
-		internal OrchestrationEvent(DomInstance domInstance) : this(domInstance: new OrchestrationEventInstance(domInstance))
+		internal OrchestrationEvent(DomInstance eventInstance) : this(domInstance: new OrchestrationEventInstance(eventInstance))
 		{
 		}
 
@@ -87,11 +88,11 @@
 		/// <summary>
 		/// Gets the reference to the DataMiner reservation corresponding to this event.
 		/// </summary>
-		public ScheduledTaskId ReservationInstance
+		public ScheduledTaskId SchedulerReference
 		{
 			get
 			{
-				string taskId = _domInstance.OrchestrationEventInfo.ReservationInstance;
+				string taskId = _domInstance.OrchestrationEventInfo.SchedulerReference;
 				if (String.IsNullOrEmpty(taskId) || !taskId.Contains("/"))
 				{
 					return null;
@@ -104,23 +105,7 @@
 
 			internal set
 			{
-				_domInstance.OrchestrationEventInfo.ReservationInstance = value == null ? null : String.Join("/", value.DmaId, value.TaskId);
-			}
-		}
-
-		/// <summary>
-		/// Gets the string reference to the job that corresponds to this event.
-		/// </summary>
-		public string JobReference
-		{
-			get
-			{
-				return _domInstance.OrchestrationEventInfo.JobReference;
-			}
-
-			internal set
-			{
-				_domInstance.OrchestrationEventInfo.JobReference = value;
+				_domInstance.OrchestrationEventInfo.SchedulerReference = value == null ? null : String.Join("/", value.DmaId, value.TaskId);
 			}
 		}
 
@@ -163,7 +148,7 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the actual time at which the event has started.
+		/// Gets the actual time at which the event has started.
 		/// </summary>
 		public DateTimeOffset? ActualStartTime
 		{
@@ -185,7 +170,7 @@
 		}
 
 		/// <summary>
-		/// Gets or sets the total duration of the orchestration.
+		/// Gets the total duration of the orchestration.
 		/// </summary>
 		public TimeSpan? OrchestrationDuration
 		{
@@ -215,6 +200,19 @@
 			set
 			{
 				_domInstance.ConfigurationInfo.Configuration = value;
+			}
+		}
+
+		internal ApiObjectReference<OrchestrationJobInfo>? JobInfoReference
+		{
+			get
+			{
+				return _domInstance.OrchestrationEventInfo.JobInformation;
+			}
+
+			set
+			{
+				_domInstance.OrchestrationEventInfo.JobInformation = value;
 			}
 		}
 
@@ -282,5 +280,12 @@
 					throw new ArgumentException($"Event state {state} can not be applied.");
 			}
 		}
+	}
+
+	public static class OrchestrationEventExposers
+	{
+		public static readonly Exposer<OrchestrationEvent, Guid> ID = new Exposer<OrchestrationEvent, Guid>(x => x.ID, nameof(OrchestrationEvent.ID));
+		public static readonly Exposer<OrchestrationEvent, string> Name = new Exposer<OrchestrationEvent, string>(x => x.Name, nameof(OrchestrationEvent.Name));
+		public static readonly Exposer<OrchestrationEvent, DateTimeOffset> EventTime = new Exposer<OrchestrationEvent, DateTimeOffset>(x => x.EventTime.Value, nameof(OrchestrationEvent.EventTime));
 	}
 }
