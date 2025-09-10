@@ -31,16 +31,22 @@
 		/// <param name="orchestrationEventConfigurations">The list of events to assign to the job.</param>
 		internal OrchestrationJobConfiguration(string jobId, IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations)
 		{
-			JobId = jobId;
+			JobInfo = new OrchestrationJobInfo
+			{
+				JobReference = jobId,
+			};
+
 			List<OrchestrationEventConfiguration> events = orchestrationEventConfigurations.ToList();
 			OrchestrationEvents = events;
 			_initialEventIds = events.Select(e => e.ID).ToList();
 		}
 
 		/// <summary>
-		///     Gets the job reference ID.
+		/// Gets the job reference ID.
 		/// </summary>
-		public string JobId { get; }
+		public string JobId => JobInfo.JobReference;
+
+		internal OrchestrationJobInfo JobInfo { get; }
 
 		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
@@ -57,7 +63,7 @@
 
 		internal void ValidateEventsBeforeSaving(IConnection connection)
 		{
-			AssignJobReferencesBeforeSaving(JobId, OrchestrationEvents.ToList());
+			AssignJobReferencesBeforeSaving(JobInfo.ID, OrchestrationEvents.ToList());
 			IEnumerable<OrchestrationEvent> events = OrchestrationEvents.ToList();
 			OrchestrationJob.ValidateEventInfo(events.ToList());
 			ValidateConfigurationsBeforeSaving(OrchestrationEvents);
@@ -90,17 +96,17 @@
 			}
 		}
 
-		internal static void AssignJobReferencesBeforeSaving(string jobId, IList<OrchestrationEventConfiguration> orchestrationEvents)
+		internal static void AssignJobReferencesBeforeSaving(Guid jobInfoReference, IList<OrchestrationEventConfiguration> orchestrationEvents)
 		{
 			foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
 			{
-				if (String.IsNullOrEmpty(orchestrationEvent.JobReference))
+				if (!orchestrationEvent.JobInfoReference.HasValue || orchestrationEvent.JobInfoReference.Value.ID == Guid.Empty)
 				{
-					orchestrationEvent.JobReference = jobId;
+					orchestrationEvent.JobInfoReference = new ApiObjectReference<OrchestrationJobInfo>(jobInfoReference);
 					continue;
 				}
 
-				if (orchestrationEvent.JobReference != jobId)
+				if (orchestrationEvent.JobInfoReference.Value.ID != jobInfoReference)
 				{
 					throw new InvalidOperationException("One of the job events is already part of another job");
 				}

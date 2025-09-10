@@ -34,7 +34,6 @@
 			LevelMappings = levelMappings;
 		}
 
-
 		public VirtualSignalGroup Source { get; }
 
 		public VirtualSignalGroup Destination { get; }

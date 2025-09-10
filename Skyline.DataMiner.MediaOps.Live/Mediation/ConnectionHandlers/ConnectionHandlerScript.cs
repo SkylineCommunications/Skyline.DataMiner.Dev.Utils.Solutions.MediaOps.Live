@@ -22,7 +22,7 @@
 				throw new ArgumentNullException(nameof(connection));
 			}
 
-			if (string.IsNullOrEmpty(scriptName))
+			if (String.IsNullOrEmpty(scriptName))
 			{
 				throw new ArgumentException($"'{nameof(scriptName)}' cannot be null or empty.", nameof(scriptName));
 			}
@@ -50,7 +50,7 @@
 					{ "Input Data", inputData },
 				};
 
-				AutomationHelper.ExecuteAutomationScript(connection, scriptName, parameters);
+				AutomationHelper.ExecuteConnectionHandlerScript(connection, scriptName, parameters);
 			}
 		}
 
@@ -61,7 +61,7 @@
 				throw new ArgumentNullException(nameof(engine));
 			}
 
-			if (string.IsNullOrEmpty(scriptName))
+			if (String.IsNullOrEmpty(scriptName))
 			{
 				throw new ArgumentException($"'{nameof(scriptName)}' cannot be null or empty.", nameof(scriptName));
 			}
@@ -93,7 +93,7 @@
 
 				if (subScript.HadError)
 				{
-					throw new InvalidOperationException(string.Join(@"\r\n", subScript.GetErrorMessages()));
+					throw new InvalidOperationException(String.Join(@"\r\n", subScript.GetErrorMessages()));
 				}
 			}
 		}
@@ -123,7 +123,7 @@
 			var elementKey = element.DmsElementId.Value;
 			var script = Convert.ToString(mediationElement.GetParameterByPrimaryKey(1003, elementKey));
 
-			if (string.IsNullOrEmpty(script))
+			if (String.IsNullOrEmpty(script))
 			{
 				throw new InvalidOperationException($"No connection handler script found for element '{elementKey}'.");
 			}

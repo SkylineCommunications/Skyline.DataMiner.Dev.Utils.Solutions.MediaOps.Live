@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Globalization;
 	using System.Linq;
 	using System.Threading;
 	using System.Threading.Tasks;
@@ -14,10 +13,13 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
@@ -30,11 +32,9 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 		private readonly OrchestrationSettings _settings;
-
 		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, OrchestrationSettings settings)
 		{
 			_api = api;
-
 			_settings = settings ?? new OrchestrationSettings();
 		}
 
@@ -131,7 +131,7 @@
 
 				foreach (OrchestrationEventConfiguration eventConfigurationsWithConnection in eventConfigurationsWithConnections)
 				{
-					if (eventConfigurationsWithConnection.IsStopEvent)
+					if (eventConfigurationsWithConnection.IsDisconnectEvent)
 					{
 						disconnectsToConfigureByEvent.Add(eventConfigurationsWithConnection.ID, eventConfigurationsWithConnection.Configuration.Connections.ToList());
 					}
@@ -241,7 +241,7 @@
 							continue;
 						}
 
-						requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup, allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID)).ToHashSet())
+						requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup, Enumerable.ToHashSet(allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID))))
 						{
 							MetaData = eventId.ToString(),
 						});
@@ -343,8 +343,10 @@
 						() =>
 						{
 							if (TryExecuteOrchestrationScript(
+									Guid.Empty,
 									nodeConfiguration.OrchestrationScriptName,
 									nodeConfiguration.OrchestrationScriptArguments,
+									nodeConfiguration.Profile,
 									performanceTracker,
 									out string[] errorMessages))
 							{
@@ -375,8 +377,10 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				if (!TryExecuteOrchestrationScript(
+						orchestrationEventConfiguration.ID,
 						orchestrationEventConfiguration.GlobalOrchestrationScript,
-						CombineOrchestrationScriptInputs(orchestrationEventConfiguration.GlobalOrchestrationScriptArguments, orchestrationEventConfiguration.Profile.Values),
+						orchestrationEventConfiguration.GlobalOrchestrationScriptArguments,
+						orchestrationEventConfiguration.Profile,
 						performanceTracker,
 						out string[] errorMessages))
 				{
@@ -386,89 +390,101 @@
 			}
 		}
 
-		private IList<OrchestrationScriptArgument> CombineOrchestrationScriptInputs(IList<OrchestrationScriptArgument> arguments, IList<OrchestrationProfileValue> profileValues)
-		{
-			List<OrchestrationScriptArgument> results = arguments.ToList();
-
-			foreach (OrchestrationProfileValue orchestrationProfileValue in profileValues)
-			{
-				if (results.All(value => value.Name != orchestrationProfileValue.Name))
-				{
-					string value = orchestrationProfileValue.Value.Type == ParameterValue.ValueType.Double
-						? orchestrationProfileValue.Value.DoubleValue.ToString(CultureInfo.InvariantCulture)
-						: orchestrationProfileValue.Value.StringValue;
-
-					results.Add(new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, orchestrationProfileValue.Name, value));
-				}
-			}
-
-			return results;
-		}
-
-		private bool TryExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, PerformanceTracker performanceTracker, out string[] errorMessages)
+		private bool TryExecuteOrchestrationScript(Guid eventId, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, PerformanceTracker performanceTracker, out string[] errorMessages)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				IDms dms = _api.Connection.GetDms();
-				IDmsAutomationScript script = dms.GetScript(scriptName);
+				return TryExecuteOrchestrationScript(_api.Connection, eventId, scriptName, arguments, profile, out errorMessages);
+			}
+		}
 
-				List<DmsAutomationScriptParamValue> scriptParams = [];
-				IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments = arguments.ToList();
+		internal static bool TryExecuteOrchestrationScript(IConnection connection, Guid eventId, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, out string[] errorMessages)
+		{
+			IDms dms = connection.GetDms();
+			ProfileHelper profileHelper = new ProfileHelper(connection.HandleMessages);
 
-				foreach (IDmsAutomationScriptParameter requiredParameter in script.Parameters)
+			IDmsAutomationScript script = dms.GetScript(scriptName);
+			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments = arguments.ToList();
+
+			Lazy<ProfileInstance> profileInstance = new(() =>
+			{
+				ProfileInstance instance = profileHelper.ProfileInstances.Read(ProfileInstanceExposers.Name.Equal(profile.Instance)).FirstOrDefault();
+				if (instance == null)
 				{
-					OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredParameter.Description);
+					throw new InvalidOperationException($"No profile instance found with name '{profile.Instance}'");
+				}
 
-					if (matchingArgument == null)
-					{
-						errorMessages = [$"Missing required script parameter: {requiredParameter.Description}"];
-						return false;
-					}
+				return instance;
+			});
 
+			List<DmsAutomationScriptParamValue> scriptParams = [];
+			foreach (IDmsAutomationScriptParameter requiredParameter in script.Parameters)
+			{
+				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredParameter.Description && arg.Type == OrchestrationScriptArgumentType.Parameter);
+				if (matchingArgument != null)
+				{
 					scriptParams.Add(new DmsAutomationScriptParamValue(matchingArgument.Name, matchingArgument.Value));
+					continue;
 				}
 
-				List<DmsAutomationScriptDummyValue> scriptDummies = [];
-				foreach (IDmsAutomationScriptDummy requiredDummy in script.Dummies)
+				var profileParameter = profile.Values.FirstOrDefault(value => value.Name == requiredParameter.Description);
+				if (profileParameter != null)
 				{
-					OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredDummy.Description);
-
-					if (matchingArgument == null)
-					{
-						errorMessages = [$"Missing required script dummy: {requiredDummy.Description}"];
-						return false;
-					}
-
-					if (matchingArgument.Value.Contains("/")) // By ID
-					{
-						string[] splittedId = matchingArgument.Value.Split('/');
-						int dmaId = Convert.ToInt32(splittedId[0]);
-						int elementId = Convert.ToInt32(splittedId[1]);
-						scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, new DmsElementId(dmaId, elementId)));
-					}
-					else // By Name
-					{
-						IDmsElement element = dms.GetElement(matchingArgument.Value);
-						scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, element.DmsElementId));
-					}
+					scriptParams.Add(new DmsAutomationScriptParamValue(profileParameter.Name, profileParameter.Value.ToString()));
+					continue;
 				}
 
-				DmsAutomationScriptRunOptions scriptOptions = new()
+				var profileInstanceParameter = profileInstance.Value.Values.FirstOrDefault(value => value.Parameter.Name == requiredParameter.Description);
+				if (profileInstanceParameter != null)
 				{
-					ExtendedErrorInfo = true,
-				};
+					scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, profileInstanceParameter.Value.ToString()));
+					continue;
+				}
 
-				DmsAutomationScriptResult scriptResult = script.Execute(scriptParams, scriptDummies, scriptOptions);
+				errorMessages = [$"Missing required script parameter: {requiredParameter.Description}"];
+				return false;
+			}
 
-				if (scriptResult.HadError)
+			List<DmsAutomationScriptDummyValue> scriptDummies = [];
+			foreach (IDmsAutomationScriptDummy requiredDummy in script.Dummies)
+			{
+				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredDummy.Description && arg.Type == OrchestrationScriptArgumentType.Element);
+
+				if (matchingArgument == null)
 				{
-					errorMessages = scriptResult.ErrorMessages;
+					errorMessages = [$"Missing required script dummy: {requiredDummy.Description}"];
 					return false;
 				}
 
-				errorMessages = [];
-				return true;
+				if (matchingArgument.Value.Contains("/")) // By ID
+				{
+					string[] splittedId = matchingArgument.Value.Split('/');
+					int dmaId = Convert.ToInt32(splittedId[0]);
+					int elementId = Convert.ToInt32(splittedId[1]);
+					scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, new DmsElementId(dmaId, elementId)));
+				}
+				else // By Name
+				{
+					IDmsElement element = dms.GetElement(matchingArgument.Value);
+					scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, element.DmsElementId));
+				}
 			}
+
+			OrchestrationScriptInput input = new(
+				profile.Values.ToDictionary(
+					value => value.Name,
+					value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
+				profile.Instance);
+			input.Metadata.Add("{Event ID}", eventId.ToString());
+
+			foreach (OrchestrationScriptArgument orchestrationScriptArgument in orchestrationScriptArguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata))
+			{
+				input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
+			}
+
+			var result = AutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
+
+			return !result.HadError && !errorMessages.Any();
 		}
 	}
 }

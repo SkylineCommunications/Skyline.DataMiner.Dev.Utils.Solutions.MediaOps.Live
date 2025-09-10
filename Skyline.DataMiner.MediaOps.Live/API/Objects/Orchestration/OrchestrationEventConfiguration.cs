@@ -21,13 +21,15 @@
 		{
 		}
 
-		internal OrchestrationEventConfiguration(OrchestrationEventInstance domInstance, ConfigurationInstance configurationInstance) : base(domInstance: domInstance)
+		internal OrchestrationEventConfiguration(OrchestrationEventInstance domInstance, ConfigurationInstance configurationInstance)
+			: base(domInstance)
 		{
 			_configuration = new Configuration(configurationInstance);
 			ConfigurationReference = configurationInstance.ID.Id;
 		}
 
-		internal OrchestrationEventConfiguration(DomInstance eventInstance, DomInstance configurationInstance) : this(new OrchestrationEventInstance(eventInstance), new ConfigurationInstance(configurationInstance))
+		internal OrchestrationEventConfiguration(DomInstance eventInstance, DomInstance configurationInstance)
+			: this(new OrchestrationEventInstance(eventInstance), new ConfigurationInstance(configurationInstance))
 		{
 		}
 
@@ -92,7 +94,6 @@
 				{
 					SlcOrchestrationIds.Enums.EventType.Start,
 					SlcOrchestrationIds.Enums.EventType.Prerollstart,
-					SlcOrchestrationIds.Enums.EventType.Prerollstop,
 				};
 
 				return startingEvents.Contains(EventType);
@@ -106,11 +107,40 @@
 				var stoppingEvents = new List<SlcOrchestrationIds.Enums.EventType>
 				{
 					SlcOrchestrationIds.Enums.EventType.Stop,
-					SlcOrchestrationIds.Enums.EventType.Postrollstart,
 					SlcOrchestrationIds.Enums.EventType.Postrollstop,
 				};
 
 				return stoppingEvents.Contains(EventType);
+			}
+		}
+
+		internal bool IsConnectEvent
+		{
+			get
+			{
+				var connectEvents = new List<SlcOrchestrationIds.Enums.EventType>
+				{
+					SlcOrchestrationIds.Enums.EventType.Start,
+					SlcOrchestrationIds.Enums.EventType.Prerollstart,
+					SlcOrchestrationIds.Enums.EventType.Prerollstop,
+				};
+
+				return connectEvents.Contains(EventType);
+			}
+		}
+
+		internal bool IsDisconnectEvent
+		{
+			get
+			{
+				var disconnectEvents = new List<SlcOrchestrationIds.Enums.EventType>
+				{
+					SlcOrchestrationIds.Enums.EventType.Stop,
+					SlcOrchestrationIds.Enums.EventType.Postrollstart,
+					SlcOrchestrationIds.Enums.EventType.Postrollstop,
+				};
+
+				return disconnectEvents.Contains(EventType);
 			}
 		}
 

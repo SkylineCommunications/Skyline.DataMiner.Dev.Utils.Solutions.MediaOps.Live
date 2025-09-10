@@ -6,26 +6,45 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Newtonsoft.Json;
+
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Automation;
+	using Skyline.DataMiner.Net.Automation.CustomEntryPoint;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.Advanced;
+	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
+
+	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
+	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
 
 	public sealed class SimulatedDms
 	{
 		private readonly ConcurrentDictionary<int, SimulatedDma> _agents = new();
 		private readonly ConcurrentBag<SimulatedAutomationScript> _scripts = [];
 		private readonly ConcurrentBag<SLNetConnectionMock> _connections = [];
-		private readonly DomSLNetMessageHandler _domSLNetMessageHandler = new();
+		private readonly ConcurrentBag<Parameter> _profileParameters = [];
+		private readonly ConcurrentBag<ProfileDefinition> _profileDefinitions = [];
+		private readonly ConcurrentBag<ProfileInstance> _profileInstances = [];
+		private readonly DomSLNetMessageHandler _domSlNetMessageHandler = new();
 
 		public SimulatedDms()
 		{
-			_domSLNetMessageHandler.OnInstancesChanged += (s, e) => NotifySubscriptions(e);
+			_domSlNetMessageHandler.OnInstancesChanged += (s, e) => NotifySubscriptions(e);
 		}
 
 		public IReadOnlyDictionary<int, SimulatedDma> Agents => _agents;
 
 		public IReadOnlyCollection<SimulatedAutomationScript> Scripts => _scripts;
+
+		public IReadOnlyCollection<Parameter> ProfileParameters => _profileParameters;
+
+		public IReadOnlyCollection<ProfileDefinition> ProfileDefinitions => _profileDefinitions;
+
+		public IReadOnlyCollection<ProfileInstance> ProfileInstances => _profileInstances;
 
 		public SimulatedDma GetOrCreateAgent(int dmaId)
 		{
@@ -34,9 +53,81 @@
 				id => new SimulatedDma(this, id));
 		}
 
-		public void AddScript(string name, List<string> parameters, List<string> dummies)
+		public void AddScript(string name, List<string> parameters, List<string> dummies, ScriptInfo orchestrationScriptInfo = null)
 		{
-			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies));
+			if (orchestrationScriptInfo == null)
+			{
+				_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, new ScriptInfo()));
+				return;
+			}
+
+			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, orchestrationScriptInfo) {Folder = "MediaOps/OrchestrationScripts" });
+		}
+
+		public void AddProfileParameter(string parameterName, Guid parameterId, Parameter.ParameterType type)
+		{
+			Parameter param = new Parameter(parameterId)
+			{
+				Name = parameterName,
+				Categories = ProfileParameterCategory.Monitoring,
+				Type = type,
+			};
+
+			if (type == Parameter.ParameterType.Number)
+			{
+				param.Decimals = 2;
+				param.RangeMax = 1000;
+				param.RangeMin = 0;
+				param.Stepsize = 0.01;
+				param.Units = "Units";
+			}
+
+			_profileParameters.Add(param);
+		}
+
+		public void AddProfileDefinition(string name, Guid id, List<Guid> parameterIds)
+		{
+			ProfileDefinition definition = new ProfileDefinition(id)
+			{
+				Name = name,
+			};
+
+			foreach (Guid parameterId in parameterIds)
+			{
+				definition.Parameters.Add(_profileParameters.FirstOrDefault(param => param.ID == parameterId));
+			}
+
+			_profileDefinitions.Add(definition);
+		}
+
+		public void AddProfileInstance(string name, Guid id, Guid definition, Dictionary<Guid, object> parameterValues)
+		{
+			ProfileInstance instance = new ProfileInstance(id)
+			{
+				Name = name,
+				AppliesToID = definition,
+				AppliesTo = _profileDefinitions.FirstOrDefault(def => def.ID == definition),
+			};
+
+			List<ProfileParameterEntry> values = new List<ProfileParameterEntry>();
+			foreach (Parameter parameter in instance.AppliesTo.Parameters)
+			{
+				ParameterValue paramValue = new ParameterValue
+				{
+					Type = parameter.Type == Parameter.ParameterType.Number ? ParameterValue.ValueType.Double : ParameterValue.ValueType.String,
+				};
+
+				if (paramValue.Type == ParameterValue.ValueType.Double)
+				{
+					paramValue.DoubleValue = Convert.ToDouble(parameterValues[parameter.ID]);
+				}
+				else
+				{
+					paramValue.StringValue = Convert.ToString(parameterValues[parameter.ID]);
+				}
+			}
+
+			_profileInstances.Add(instance);
 		}
 
 		public IEnumerable<SimulatedSchedulerTask> GetAllDmsSchedulerTasks()
@@ -53,7 +144,7 @@
 
 		public IConnection CreateConnection()
 		{
-			var connection = new SLNetConnectionMock(this);
+			SLNetConnectionMock connection = new SLNetConnectionMock(this);
 			_connections.Add(connection);
 
 			return connection;
@@ -66,7 +157,7 @@
 				throw new ArgumentNullException(nameof(eventMessage));
 			}
 
-			foreach (var connection in _connections)
+			foreach (SLNetConnectionMock connection in _connections)
 			{
 				connection.NotifySubscriptions(eventMessage);
 			}
@@ -79,7 +170,7 @@
 				throw new ArgumentNullException(nameof(message));
 			}
 
-			if (_domSLNetMessageHandler.TryHandleMessage(message, out var response))
+			if (_domSlNetMessageHandler.TryHandleMessage(message, out DMSMessage response))
 			{
 				responses = [response];
 				return true;
@@ -139,22 +230,48 @@
 					responses = HandleMessage(msg);
 					return true;
 
+				case ManagerStoreStartPagingRequest<Parameter> msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				case ManagerStoreStartPagingRequest<ProfileInstance> msg:
+					responses = HandleMessage(msg);
+					return true;
+
 				default:
 					responses = [];
 					return false;
 			}
 		}
 
+		private IEnumerable<DMSMessage> HandleMessage(ManagerStoreStartPagingRequest<Parameter> msg)
+		{
+			yield return new ManagerStorePagingResponse<Parameter>
+			{
+				IsFinalPage = true,
+				Objects = _profileParameters.Where(msg.Filter.Filter.getLambda()).ToList(),
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(ManagerStoreStartPagingRequest<ProfileInstance> msg)
+		{
+			yield return new ManagerStorePagingResponse<ProfileInstance>
+			{
+				IsFinalPage = true,
+				Objects = _profileInstances.Where(msg.Filter.Filter.getLambda()).ToList(),
+			};
+		}
+
 		private IEnumerable<DMSMessage> HandleMessage(GetLiteElementInfo msg)
 		{
-			var elements = Agents.Values.SelectMany(x => x.Elements.Values);
+			IEnumerable<SimulatedElement> elements = Agents.Values.SelectMany(x => x.Elements.Values);
 
 			if (!String.IsNullOrEmpty(msg.ProtocolName))
 			{
 				elements = elements.Where(x => String.Equals(x.ProtocolName, msg.ProtocolName));
 			}
 
-			foreach (var element in elements)
+			foreach (SimulatedElement element in elements)
 			{
 				yield return element.ToLiteElementInfo();
 			}
@@ -162,8 +279,8 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(GetElementByIDMessage msg)
 		{
-			if (Agents.TryGetValue(msg.DataMinerID, out var dma) &&
-				dma.Elements.TryGetValue(msg.ElementID, out var element))
+			if (Agents.TryGetValue(msg.DataMinerID, out SimulatedDma dma) &&
+				dma.Elements.TryGetValue(msg.ElementID, out SimulatedElement element))
 			{
 				yield return element.ToElementInfo();
 			}
@@ -171,8 +288,8 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(GetElementByNameMessage msg)
 		{
-			var elements = Agents.Values.SelectMany(x => x.Elements.Values);
-			var element = elements.FirstOrDefault(x => String.Equals(x.Name, msg.ElementName));
+			IEnumerable<SimulatedElement> elements = Agents.Values.SelectMany(x => x.Elements.Values);
+			SimulatedElement element = elements.FirstOrDefault(x => String.Equals(x.Name, msg.ElementName));
 
 			if (element != null)
 			{
@@ -182,9 +299,9 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(GetPartialTableMessage msg)
 		{
-			if (Agents.TryGetValue(msg.DataMinerID, out var dma) &&
-				dma.Elements.TryGetValue(msg.ElementID, out var element) &&
-				element.Tables.TryGetValue(msg.ParameterID, out var table))
+			if (Agents.TryGetValue(msg.DataMinerID, out SimulatedDma dma) &&
+				dma.Elements.TryGetValue(msg.ElementID, out SimulatedElement element) &&
+				element.Tables.TryGetValue(msg.ParameterID, out TableParameter table))
 			{
 				yield return new ParameterChangeEventMessage(msg.DataMinerID, msg.ElementID, msg.ParameterID)
 				{
@@ -199,7 +316,7 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(SetSchedulerInfoMessage msg)
 		{
-			if (Agents.TryGetValue(msg.DataMinerID, out var dma))
+			if (Agents.TryGetValue(msg.DataMinerID, out SimulatedDma dma))
 			{
 				int returnId;
 				if (msg.What == 3) // Delete
@@ -209,9 +326,9 @@
 				}
 				else
 				{
-					var info = msg.Ppsa.Ppsa;
-					var generalInfo = info[0].Psa;
-					var firstArgument = Convert.ToString(generalInfo[0].Sa[0]);
+					PSA[] info = msg.Ppsa.Ppsa;
+					SA[] generalInfo = info[0].Psa;
+					string firstArgument = Convert.ToString(generalInfo[0].Sa[0]);
 
 					returnId = !Int32.TryParse(firstArgument, out int taskId) ? dma.Scheduler.GetFirstAvailableId() : taskId;
 					dma.Scheduler.Tasks[returnId] = new SimulatedSchedulerTask(dma.Scheduler, msg);
@@ -226,9 +343,9 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(GetParameterMessage msg)
 		{
-			if (Agents.TryGetValue(msg.DataMinerID, out var dma) &&
-				dma.Elements.TryGetValue(msg.ElId, out var element) &&
-				element.Parameters.TryGetValue(msg.ParameterId, out var param))
+			if (Agents.TryGetValue(msg.DataMinerID, out SimulatedDma dma) &&
+				dma.Elements.TryGetValue(msg.ElId, out SimulatedElement element) &&
+				element.Parameters.TryGetValue(msg.ParameterId, out StandaloneParameter param))
 			{
 				yield return new GetParameterResponseMessage
 				{
@@ -250,14 +367,14 @@
 			{
 				case NotifyType.GetKeyPosition:
 					{
-						var ids = (int[])msg.Var1;
-						var key = (string)msg.Var2;
+						int[] ids = (int[])msg.Var1;
+						string key = (string)msg.Var2;
 
-						if (Agents.TryGetValue(ids[0], out var dma) &&
-							dma.Elements.TryGetValue(ids[1], out var element) &&
-							element.Tables.TryGetValue(ids[2], out var table))
+						if (Agents.TryGetValue(ids[0], out SimulatedDma dma) &&
+							dma.Elements.TryGetValue(ids[1], out SimulatedElement element) &&
+							element.Tables.TryGetValue(ids[2], out TableParameter table))
 						{
-							var index = table.Rows.Keys.ToList().IndexOf(key);
+							int index = table.Rows.Keys.ToList().IndexOf(key);
 
 							yield return new SetDataMinerInfoResponseMessage
 							{
@@ -274,13 +391,13 @@
 
 				case NotifyType.NT_GET_ROW:
 					{
-						var var1 = (object[])msg.Var1;
+						object[] var1 = (object[])msg.Var1;
 
-						if (Agents.TryGetValue((int)var1[0], out var dma) &&
-							dma.Elements.TryGetValue((int)var1[1], out var element) &&
-							element.Tables.TryGetValue((int)var1[2], out var table))
+						if (Agents.TryGetValue((int)var1[0], out SimulatedDma dma) &&
+							dma.Elements.TryGetValue((int)var1[1], out SimulatedElement element) &&
+							element.Tables.TryGetValue((int)var1[2], out TableParameter table))
 						{
-							table.Rows.TryGetValue((string)var1[3], out var row);
+							table.Rows.TryGetValue((string)var1[3], out object[] row);
 
 							yield return new SetDataMinerInfoResponseMessage
 							{
@@ -310,9 +427,40 @@
 				case InfoType.DataMinerInfo:
 					return HandleDataMinerInfoMessage();
 
+				case InfoType.Scripts:
+					return HandleScriptsInfoMessage();
+
+				case InfoType.ElementInfo:
+					return HandleElementInfoMessage();
+
 				default:
 					throw new NotSupportedException("Not Supported");
 			}
+		}
+
+		private IEnumerable<DMSMessage> HandleElementInfoMessage()
+		{
+			foreach (SimulatedElement element in Agents.Values.SelectMany(agent => agent.Elements.Values))
+			{
+				yield return new ElementInfoEventMessage
+				{
+					Name = element.Name,
+					Protocol = element.ProtocolName,
+					ProtocolVersion = element.ProtocolVersion,
+					DataMinerID = element.DmaId,
+					ElementID = element.ElementId,
+					State = element.State,
+					HostingAgentID = element.HostingDmaId,
+				};
+			}
+		}
+
+		private IEnumerable<DMSMessage> HandleScriptsInfoMessage()
+		{
+			yield return new GetScriptsResponseMessage
+			{
+				Scripts = _scripts.Select(script => script.Name).ToArray(),
+			};
 		}
 
 		private IEnumerable<DMSMessage> HandleMessage(GetDataMinerByIDMessage msg)
@@ -341,7 +489,7 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(ImpersonateMessage msg)
 		{
-			List<DMSMessage> responses = new List<DMSMessage>();
+			List<DMSMessage> responses = new();
 			foreach (ClientRequestMessage clientRequestMessage in msg.Messages)
 			{
 				TryHandleMessage(clientRequestMessage, out IEnumerable<DMSMessage> msgResponses);
@@ -353,6 +501,8 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(ExecuteScriptMessage msg)
 		{
+			SimulatedAutomationScript script = Scripts.First(s => s.Name == msg.ScriptName);
+
 			int returnCode = msg.ScriptName == "Script_Fail" ? -1 : 0;
 
 			yield return new ExecuteScriptResponseMessage
@@ -361,19 +511,33 @@
 				[
 					returnCode.ToString(), // Return code,
 				]),
+				EntryPointResult = new AutomationEntryPointResult(new RequestScriptInfoOutput
+				{
+					Data = new Dictionary<string, string> { { OrchestrationScript.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(script.OrchestrationScriptInfo) } },
+				}),
 			};
 		}
 
 		private IEnumerable<DMSMessage> HandleMessage(GetScriptInfoMessage msg)
 		{
+			SimulatedAutomationScript script = Scripts.First(s => s.Name == msg.Name);
+
+			int id = 1;
 			yield return new GetScriptInfoResponseMessage
 			{
-				Parameters = [],
+				Parameters = script.Parameters.Select(param => new AutomationParameterInfo { Description = param, ParameterId = id++}).ToArray(),
 				Name = msg.Name,
-				Dummies = [],
+				Dummies = script.Dummies.Select(dummy => new AutomationProtocolInfo { ProtocolName = "Protocol", ProtocolVersion = "Production", Description = dummy, ProtocolId = id++ }).ToArray(),
 				Memories = [],
 				Type = AutomationScriptType.Automation,
-				Exes = [],
+				Exes =
+				[
+					new AutomationExeInfo()
+					{
+						Type = AutomationExeType.CSharpCode,
+					},
+				],
+				Folder = script.Folder,
 			};
 		}
 
