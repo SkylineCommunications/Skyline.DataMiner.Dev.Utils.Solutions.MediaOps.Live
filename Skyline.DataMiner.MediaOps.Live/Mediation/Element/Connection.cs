@@ -41,7 +41,6 @@
 			{
 				ConnectedSourceName = connectedSourceNameValue;
 			}
-
 		}
 
 		internal MediationElement MediationElement { get; }
