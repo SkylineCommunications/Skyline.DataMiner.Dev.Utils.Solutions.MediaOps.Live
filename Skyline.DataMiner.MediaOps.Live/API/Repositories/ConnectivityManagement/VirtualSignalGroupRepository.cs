@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -112,19 +113,21 @@
 
 		private void CheckDuplicatesBeforeSave(ICollection<VirtualSignalGroup> instances)
 		{
-			FilterElement<DomInstance> CreateFilter(VirtualSignalGroup vsg) =>
-				new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.Id.NotEqual(vsg.ID),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Name).Equal(vsg.Name));
+			var cache = StaticMediaOpsLiveCache.GetOrCreate(Connection);
 
-			var count = FilterQueryExecutor.CountFilteredItems(
-				instances,
-				x => CreateFilter(x),
-				x => Count(x));
+			var conflicts = instances
+				.Where(x =>
+					cache.VirtualSignalGroupsCache.TryGetVirtualSignalGroup(x.Name, out var vsg) &&
+					vsg.ID != x.ID)
+				.Select(x=> x.Name)
+				.Distinct()
+				.ToList();
 
-			if (count > 0)
+			if (conflicts.Count > 0)
 			{
-				throw new InvalidOperationException($"Virtual signal group with same name already exists.");
+				var names = String.Join(", ", conflicts.OrderBy(x => x, new NaturalSortComparer()));
+
+				throw new InvalidOperationException($"One or more VSG names are already in use: {names}");
 			}
 		}
 	}

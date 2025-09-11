@@ -10,7 +10,6 @@
 
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
-	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Automation.CustomEntryPoint;
 	using Skyline.DataMiner.Net.Messages;
@@ -142,9 +141,9 @@
 			return tasks;
 		}
 
-		public IConnection CreateConnection()
+		public SLNetConnectionMock CreateConnection()
 		{
-			SLNetConnectionMock connection = new SLNetConnectionMock(this);
+			var connection = new SLNetConnectionMock(this);
 			_connections.Add(connection);
 
 			return connection;

@@ -145,8 +145,8 @@
 		public void MediaOps_LiveApi_Tests_LiteConnectivityInfoProvider_Dispose()
 		{
 			var simulation = new MediaOpsLiveSimulation();
-			var api = simulation.Api;
-			var connection = (SLNetConnectionMock)api.Connection;
+			var connection = simulation.Dms.CreateConnection();
+			var api = new API.MediaOpsLiveApi(connection);
 
 			using (var connectivity = new LiteConnectivityInfoProvider(api, subscribe: true))
 			{

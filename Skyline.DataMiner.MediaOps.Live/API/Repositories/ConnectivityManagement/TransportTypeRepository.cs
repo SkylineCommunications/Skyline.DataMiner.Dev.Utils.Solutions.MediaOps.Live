@@ -122,11 +122,7 @@
 
 			if (count > 0)
 			{
-				var message = instances.Count == 1
-					? $"Cannot delete transport type '{instances.First().Name}' because it is still in use."
-					: "Cannot delete one or more transport types because they are still in use.";
-
-				throw new InvalidOperationException(message);
+				throw new InvalidOperationException("One or more transport types are still in use.");
 			}
 		}
 	}

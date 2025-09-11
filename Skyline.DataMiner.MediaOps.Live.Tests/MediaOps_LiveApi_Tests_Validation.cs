@@ -1,12 +1,21 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
+	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
 	[TestClass]
+	[DoNotParallelize]
 	public sealed class MediaOps_LiveApi_Tests_Validation
 	{
+		[TestInitialize]
+		public void TestInitialize()
+		{
+			// Clear the cached data before each test
+			StaticMediaOpsLiveCache.Reset();
+		}
+
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Validation_TransportTypes_CheckDuplicates()
 		{
@@ -35,7 +44,7 @@
 			// deleting transport type that is still in use throws exception
 			var ex = Assert.Throws<Exception>(
 				() => { api.TransportTypes.Delete(transportType); });
-			Assert.AreEqual("Cannot delete transport type 'IP' because it is still in use.", ex.Message);
+			Assert.AreEqual("One or more transport types are still in use.", ex.Message);
 		}
 
 		[TestMethod]
@@ -69,7 +78,7 @@
 			// deleting level that is still in use throws exception
 			var ex = Assert.Throws<Exception>(
 				() => { api.Levels.Delete(level); });
-			Assert.AreEqual("Cannot delete level 'Video' because it is still in use.", ex.Message);
+			Assert.AreEqual("One or more levels are still in use.", ex.Message);
 		}
 
 		[TestMethod]
@@ -87,7 +96,7 @@
 			// create item with same name
 			var ex = Assert.Throws<Exception>(
 				() => { api.Endpoints.Create(new Endpoint { Name = "E2", Role = Role.Destination }); });
-			Assert.AreEqual("Endpoint with same name already exists.", ex.Message);
+			Assert.AreEqual("One or more endpoint names are already in use: E2", ex.Message);
 		}
 
 		[TestMethod]
@@ -100,7 +109,7 @@
 			// deleting endpoint that is still in use throws exception
 			var ex = Assert.Throws<Exception>(
 				() => { api.Endpoints.Delete(endpoint); });
-			Assert.AreEqual("Cannot delete endpoint 'Video Source 1' because it is still in use.", ex.Message);
+			Assert.AreEqual("Endpoints are still in use in the following virtual signal groups: Source 1", ex.Message);
 		}
 
 		[TestMethod]
@@ -118,7 +127,7 @@
 			// create item with same name
 			var ex = Assert.Throws<Exception>(
 				() => { api.VirtualSignalGroups.Create(new VirtualSignalGroup { Name = "VSG2", Role = Role.Destination }); });
-			Assert.AreEqual("Virtual signal group with same name already exists.", ex.Message);
+			Assert.AreEqual("One or more VSG names are already in use: VSG2", ex.Message);
 		}
 
 		[TestMethod]
@@ -149,7 +158,7 @@
 			// deleting category that is still in use throws exception
 			var ex = Assert.Throws<Exception>(
 				() => { api.Categories.Delete(category); });
-			Assert.AreEqual("Cannot delete category 'Category 1' because it is still in use.", ex.Message);
+			Assert.AreEqual("One or more categories are still in use.", ex.Message);
 		}
 	}
 }

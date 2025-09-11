@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -101,11 +100,7 @@
 
 			if (count > 0)
 			{
-				var message = instances.Count == 1
-					? $"Cannot delete category '{instances.First().Name}' because it is still in use."
-					: "Cannot delete one or more categories because they are still in use.";
-
-				throw new InvalidOperationException(message);
+				throw new InvalidOperationException("One or more categories are still in use.");
 			}
 		}
 	}

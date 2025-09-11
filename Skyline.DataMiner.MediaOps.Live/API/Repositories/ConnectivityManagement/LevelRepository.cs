@@ -2,7 +2,6 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -107,11 +106,7 @@
 
 			if (count > 0)
 			{
-				var message = instances.Count == 1
-					? $"Cannot delete level '{instances.First().Name}' because it is still in use."
-					: "Cannot delete one or more levels because they are still in use.";
-
-				throw new InvalidOperationException(message);
+				throw new InvalidOperationException("One or more levels are still in use.");
 			}
 		}
 	}

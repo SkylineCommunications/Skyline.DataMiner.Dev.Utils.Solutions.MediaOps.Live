@@ -15,7 +15,9 @@
 		private readonly object _lock = new();
 
 		private readonly Dictionary<ApiObjectReference<Endpoint>, Endpoint> _endpoints = new();
+		private readonly Dictionary<string, Endpoint> _endpointsByName = new();
 		private readonly Dictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> _virtualSignalGroups = new();
+		private readonly Dictionary<string, VirtualSignalGroup> _virtualSignalGroupsByName = new();
 
 		private readonly VirtualSignalGroupEndpointsMapping _virtualSignalGroupEndpointsMapping = new();
 
@@ -33,7 +35,11 @@
 
 		public IReadOnlyDictionary<ApiObjectReference<Endpoint>, Endpoint> Endpoints => _endpoints;
 
+		public IReadOnlyDictionary<string, Endpoint> EndpointsByName => _endpointsByName;
+
 		public IReadOnlyDictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> VirtualSignalGroups => _virtualSignalGroups;
+
+		public IReadOnlyDictionary<string, VirtualSignalGroup> VirtualSignalGroupsByName => _virtualSignalGroupsByName;
 
 		public bool IsSubscribed { get; private set; }
 
@@ -47,9 +53,24 @@
 			return endpoint;
 		}
 
+		public Endpoint GetEndpoint(string name)
+		{
+			if (!TryGetEndpoint(name, out var endpoint))
+			{
+				throw new ArgumentException($"Couldn't find endpoint with name '{name}'", nameof(name));
+			}
+
+			return endpoint;
+		}
+
 		public bool TryGetEndpoint(ApiObjectReference<Endpoint> id, out Endpoint endpoint)
 		{
 			return _endpoints.TryGetValue(id, out endpoint);
+		}
+
+		public bool TryGetEndpoint(string name, out Endpoint endpoint)
+		{
+			return _endpointsByName.TryGetValue(name, out endpoint);
 		}
 
 		public VirtualSignalGroup GetVirtualSignalGroup(ApiObjectReference<VirtualSignalGroup> id)
@@ -62,9 +83,24 @@
 			return virtualSignalGroup;
 		}
 
+		public VirtualSignalGroup GetVirtualSignalGroup(string name)
+		{
+			if (!TryGetVirtualSignalGroup(name, out var virtualSignalGroup))
+			{
+				throw new ArgumentException($"Couldn't find virtual signal group with name '{name}'", nameof(name));
+			}
+
+			return virtualSignalGroup;
+		}
+
 		public bool TryGetVirtualSignalGroup(ApiObjectReference<VirtualSignalGroup> id, out VirtualSignalGroup virtualSignalGroup)
 		{
 			return _virtualSignalGroups.TryGetValue(id, out virtualSignalGroup);
+		}
+
+		public bool TryGetVirtualSignalGroup(string name, out VirtualSignalGroup virtualSignalGroup)
+		{
+			return _virtualSignalGroupsByName.TryGetValue(name, out virtualSignalGroup);
 		}
 
 		public IReadOnlyCollection<VirtualSignalGroup> GetVirtualSignalGroupsThatContainEndpoint(ApiObjectReference<Endpoint> endpoint)
@@ -173,7 +209,14 @@
 				{
 					foreach (var item in updated)
 					{
+						// Remove old name if it exists
+						if (_endpoints.TryGetValue(item.ID, out var existing))
+						{
+							_endpointsByName.Remove(existing.Name);
+						}
+
 						_endpoints[item.ID] = item;
+						_endpointsByName[item.Name] = item;
 					}
 				}
 
@@ -181,7 +224,8 @@
 				{
 					foreach (var item in deleted)
 					{
-						_endpoints.Remove(item);
+						_endpoints.Remove(item.ID);
+						_endpointsByName.Remove(item.Name);
 					}
 				}
 			}
@@ -195,7 +239,14 @@
 				{
 					foreach (var item in updated)
 					{
+						// Remove old name if it exists
+						if (_virtualSignalGroups.TryGetValue(item.ID, out var existing))
+						{
+							_virtualSignalGroupsByName.Remove(existing.Name);
+						}
+
 						_virtualSignalGroups[item.ID] = item;
+						_virtualSignalGroupsByName[item.Name] = item;
 						_virtualSignalGroupEndpointsMapping.AddOrUpdate(item);
 					}
 				}
@@ -204,7 +255,8 @@
 				{
 					foreach (var item in deleted)
 					{
-						_virtualSignalGroups.Remove(item);
+						_virtualSignalGroups.Remove(item.ID);
+						_virtualSignalGroupsByName.Remove(item.Name);
 						_virtualSignalGroupEndpointsMapping.Remove(item);
 					}
 				}
