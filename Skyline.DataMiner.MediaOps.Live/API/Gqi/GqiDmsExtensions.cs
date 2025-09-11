@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Gqi
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.GQI
 {
 	using System;
 
