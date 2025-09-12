@@ -21,13 +21,13 @@
 			}
 
 			Destination = destination;
-			Levels = levels;
+			Levels = levels ?? [];
 		}
-
-		public object MetaData { get; set; }
 
 		public VirtualSignalGroup Destination { get; }
 
 		public ICollection<ApiObjectReference<Level>> Levels { get; }
+
+		public object MetaData { get; set; }
 	}
 }

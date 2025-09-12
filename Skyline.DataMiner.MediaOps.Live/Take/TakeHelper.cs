@@ -13,6 +13,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
@@ -37,6 +38,8 @@
 				throw new ArgumentException("Timeout cannot be negative.", nameof(timeout));
 			}
 
+			_api.Logger?.Information($"Enabling wait for completion with timeout of {timeout.TotalSeconds} seconds.");
+
 			_waitForCompletion = true;
 			_timeout = timeout;
 
@@ -51,6 +54,8 @@
 
 		public void DisableWaitForCompletion()
 		{
+			_api.Logger?.Information("Disabling wait for completion.");
+
 			_waitForCompletion = false;
 			_connectionMonitor = null;
 		}
@@ -67,9 +72,33 @@
 				throw new ArgumentNullException(nameof(performanceTracker));
 			}
 
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			try
 			{
-				TakeInternal(connectionRequests, performanceTracker);
+				_api.Logger?.Information($"Start connecing VSGs with {connectionRequests.Count} requests:\n{FormatConnectionRequests(connectionRequests)}");
+
+				using (performanceTracker = new PerformanceTracker(performanceTracker))
+				{
+					var takeContexts = connectionRequests
+						.Select(x => new ConnectionOperationContext(x))
+						.ToList();
+
+					PrepareData(takeContexts, performanceTracker);
+
+					NotifyPendingConnectionActions(ScriptAction.Connect, takeContexts, performanceTracker);
+					ExecuteConnectionHandlerScripts(ScriptAction.Connect, takeContexts, performanceTracker);
+
+					if (_waitForCompletion)
+					{
+						WaitUntilAllConnected(takeContexts, performanceTracker);
+					}
+				}
+
+				_api.Logger?.Information("Take finished successfully.");
+			}
+			catch (Exception ex)
+			{
+				_api.Logger?.Error("Take failed", ex);
+				throw;
 			}
 		}
 
@@ -85,8 +114,107 @@
 				throw new ArgumentNullException(nameof(performanceTracker));
 			}
 
+			try
+			{
+				_api.Logger?.Information($"Start connecing VSGs with {vsgConnectionRequests.Count} requests:\n{FormatConnectionRequests(vsgConnectionRequests)}");
+
+				using (performanceTracker = new PerformanceTracker(performanceTracker))
+				{
+					var connectionRequests = ConvertConnectionRequestsFromVsg(vsgConnectionRequests, performanceTracker);
+
+					Take(connectionRequests, performanceTracker);
+				}
+
+				_api.Logger?.Information("Take VSGs finished successfully.");
+			}
+			catch (Exception ex)
+			{
+				_api.Logger?.Error("Take VSGs failed", ex);
+				throw;
+			}
+		}
+
+		public void Disconnect(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
+		{
+			if (disconnectRequests == null)
+			{
+				throw new ArgumentNullException(nameof(disconnectRequests));
+			}
+
+			if (performanceTracker == null)
+			{
+				throw new ArgumentNullException(nameof(performanceTracker));
+			}
+
+			try
+			{
+				_api.Logger?.Information($"Start disconnecting with {disconnectRequests.Count} requests:\n{FormatDisconnectRequests(disconnectRequests)}");
+
+				using (performanceTracker = new PerformanceTracker(performanceTracker))
+				{
+					var takeContexts = disconnectRequests
+						.Select(x => new ConnectionOperationContext(x))
+						.ToList();
+
+					PrepareData(takeContexts, performanceTracker);
+
+					NotifyPendingConnectionActions(ScriptAction.Disconnect, takeContexts, performanceTracker);
+					ExecuteConnectionHandlerScripts(ScriptAction.Disconnect, takeContexts, performanceTracker);
+
+					if (_waitForCompletion)
+					{
+						WaitUntilAllDisconnected(takeContexts, performanceTracker);
+					}
+				}
+
+				_api.Logger?.Information("Disconnecting finished successfully.");
+			}
+			catch (Exception ex)
+			{
+				_api.Logger?.Error("Disconnecting failed", ex);
+				throw;
+			}
+		}
+
+		public void Disconnect(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
+		{
+			if (vsgDisconnectRequests == null)
+			{
+				throw new ArgumentNullException(nameof(vsgDisconnectRequests));
+			}
+
+			if (performanceTracker == null)
+			{
+				throw new ArgumentNullException(nameof(performanceTracker));
+			}
+
+			try
+			{
+				_api.Logger?.Information($"Start disconnecting VSGs with {vsgDisconnectRequests.Count} requests:\n{FormatDisconnectRequests(vsgDisconnectRequests)}");
+
+				using (performanceTracker = new PerformanceTracker(performanceTracker))
+				{
+					var disconnectRequests = ConvertDisconnectRequestsFromVsg(vsgDisconnectRequests, performanceTracker);
+
+					Disconnect(disconnectRequests, performanceTracker);
+				}
+
+				_api.Logger?.Information("Disconnecting VSGs finished successfully.");
+			}
+			catch (Exception ex)
+			{
+				_api.Logger?.Error("Disconnecting VSGs failed", ex);
+				throw;
+			}
+		}
+
+		private ICollection<ConnectionRequest> ConvertConnectionRequestsFromVsg(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
+		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
+				// create connection requests between endpoints
+				var connectionRequests = new List<ConnectionRequest>();
+
 				// load all endpoints
 				var endpointIds = vsgConnectionRequests
 					.SelectMany(x => x.Source.GetLevelEndpoints().Concat(x.Destination.GetLevelEndpoints()))
@@ -95,9 +223,7 @@
 
 				var endpoints = LoadEndpoints(endpointIds, performanceTracker);
 
-				// create connection requests between endpoints
-				var connectionRequests = new List<ConnectionRequest>();
-
+				// do the conversion
 				foreach (var vsgConnectionRequest in vsgConnectionRequests)
 				{
 					var source = vsgConnectionRequest.Source;
@@ -130,67 +256,26 @@
 							throw new InvalidOperationException($"Couldn't find destination endpoint for level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
 						}
 
-						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint);
+						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint)
+						{
+							MetaData = vsgConnectionRequest.MetaData,
+						};
+
 						connectionRequests.Add(request);
 					}
 				}
 
-				TakeInternal(connectionRequests, performanceTracker);
+				return connectionRequests;
 			}
 		}
 
-		private void TakeInternal(ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker)
+		private ICollection<DisconnectRequest> ConvertDisconnectRequestsFromVsg(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var takeContexts = connectionRequests
-					.Select(x => new ConnectionOperationContext(x))
-					.ToList();
+				// create disconnect requests
+				var disconnectRequests = new List<DisconnectRequest>();
 
-				PrepareData(takeContexts, performanceTracker);
-
-				NotifyPendingConnectionActions(ScriptAction.Connect, takeContexts, performanceTracker);
-				ExecuteConnectionHandlerScripts(ScriptAction.Connect, takeContexts, performanceTracker);
-
-				if (_waitForCompletion)
-				{
-					WaitUntilAllConnected(takeContexts, performanceTracker);
-				}
-			}
-		}
-
-		public void Disconnect(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
-		{
-			if (disconnectRequests == null)
-			{
-				throw new ArgumentNullException(nameof(disconnectRequests));
-			}
-
-			if (performanceTracker == null)
-			{
-				throw new ArgumentNullException(nameof(performanceTracker));
-			}
-
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				DisconnectInternal(disconnectRequests, performanceTracker);
-			}
-		}
-
-		public void Disconnect(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
-		{
-			if (vsgDisconnectRequests == null)
-			{
-				throw new ArgumentNullException(nameof(vsgDisconnectRequests));
-			}
-
-			if (performanceTracker == null)
-			{
-				throw new ArgumentNullException(nameof(performanceTracker));
-			}
-
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
 				// load all endpoints
 				var endpointIds = vsgDisconnectRequests
 					.SelectMany(x => x.Destination.GetLevelEndpoints())
@@ -199,9 +284,7 @@
 
 				var endpoints = LoadEndpoints(endpointIds, performanceTracker);
 
-				// create disconnect requests
-				var disconnectRequests = new List<DisconnectRequest>();
-
+				// do the conversion
 				foreach (var vsgDisconnectRequest in vsgDisconnectRequests)
 				{
 					var destination = vsgDisconnectRequest.Destination;
@@ -219,32 +302,16 @@
 							throw new InvalidOperationException($"Couldn't find endpoint with ID '{levelEndpoint.Endpoint.ID}'");
 						}
 
-						var request = new DisconnectRequest(destinationEndpoint);
+						var request = new DisconnectRequest(destinationEndpoint)
+						{
+							MetaData = vsgDisconnectRequest.MetaData,
+						};
+
 						disconnectRequests.Add(request);
 					}
 				}
 
-				DisconnectInternal(disconnectRequests, performanceTracker);
-			}
-		}
-
-		private void DisconnectInternal(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				var takeContexts = disconnectRequests
-					.Select(x => new ConnectionOperationContext(x))
-					.ToList();
-
-				PrepareData(takeContexts, performanceTracker);
-
-				NotifyPendingConnectionActions(ScriptAction.Disconnect, takeContexts, performanceTracker);
-				ExecuteConnectionHandlerScripts(ScriptAction.Disconnect, takeContexts, performanceTracker);
-
-				if (_waitForCompletion)
-				{
-					WaitUntilAllDisconnected(takeContexts, performanceTracker);
-				}
+				return disconnectRequests;
 			}
 		}
 
@@ -380,6 +447,8 @@
 						requests.Add(request);
 					}
 
+					_api.Logger?.Information($"Notifying {requests.Count} pending connection actions to mediation element '{mediationElement.DmsElementId}'");
+
 					var commands = InterAppCallFactory.CreateNew();
 
 					var message = new Mediation.InterApp.Messages.NotifyPendingConnectionActionMessage { Actions = requests };
@@ -403,44 +472,34 @@
 				{
 					var script = group.Key;
 
-					IConnectionHandlerRequest request;
+					IConnectionHandlerRequest request = action switch
+					{
+						ScriptAction.Connect => new CreateConnectionsRequest
+						{
+							Connections = group
+								.Select(x => new Mediation.Data.ConnectionInfo(x.Source, x.Destination))
+								.ToArray(),
+						},
+						ScriptAction.Disconnect => new DisconnectDestinationsRequest
+						{
+							Destinations = group
+								.Select(x => new Mediation.Data.EndpointInfo(x.Destination))
+								.ToArray(),
+						},
+						_ => throw new InvalidOperationException($"Invalid action: {action}"),
+					};
 
-					switch (action)
-					{
-						case ScriptAction.Connect:
-							request = new CreateConnectionsRequest
-							{
-								Connections = group
-									.Select(x => new Mediation.Data.ConnectionInfo(x.Source, x.Destination))
-									.ToArray(),
-							};
-							break;
-						case ScriptAction.Disconnect:
-							request = new DisconnectDestinationsRequest
-							{
-								Destinations = group
-									.Select(x => new Mediation.Data.EndpointInfo(x.Destination))
-									.ToArray(),
-							};
-							break;
-						default:
-							throw new InvalidOperationException($"Invalid action: {action}");
-					}
+					_api.Logger?.Information($"Executing connection handler script '{script}' for {group.Count()} connections");
 
-					if (_api.HasEngine)
-					{
-						ConnectionHandlerScript.Execute(_api.Engine, script, request, performanceTracker);
-					}
-					else
-					{
-						ConnectionHandlerScript.Execute(_api.Connection, script, request, performanceTracker);
-					}
+					ConnectionHandlerScript.Execute(_api, script, request, performanceTracker);
 				}
 			}
 		}
 
 		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
+			_api.Logger?.Information("Waiting for all connections to be established...");
+
 			using (new PerformanceTracker(performanceTracker))
 			using (var cts = new CancellationTokenSource(_timeout))
 			using (var semaphore = new SemaphoreSlim(100))
@@ -494,6 +553,8 @@
 			using (var cts = new CancellationTokenSource(_timeout))
 			using (var semaphore = new SemaphoreSlim(100))
 			{
+				_api.Logger?.Information("Waiting for all disconnections to complete...");
+
 				var tasks = takeContexts
 					.Select(async takeContext =>
 					{
@@ -534,6 +595,52 @@
 			{
 				return false;
 			}
+		}
+
+		private static string FormatConnectionRequests(ICollection<ConnectionRequest> requests)
+		{
+			return String.Join(
+				Environment.NewLine,
+				requests
+					.Select(r => $" - {r.Source.Name} [{r.Source.ID}] -> {r.Destination.Name} [{r.Destination.ID}]"));
+		}
+
+		private static string FormatConnectionRequests(ICollection<VsgConnectionRequest> requests)
+		{
+			return String.Join(
+				Environment.NewLine,
+				requests
+					.Select(r =>
+					{
+						var levels = r.LevelMappings == null || r.LevelMappings.Count == 0
+							? $"all levels"
+							: $"{r.LevelMappings.Count} level(s)";
+
+						return $" - {r.Source.Name} [{r.Source.ID}] -> {r.Destination.Name} [{r.Destination.ID}] ({levels})";
+					}));
+		}
+
+		private static string FormatDisconnectRequests(ICollection<DisconnectRequest> requests)
+		{
+			return String.Join(
+				Environment.NewLine,
+				requests
+					.Select(r => $" - {r.Destination.Name} [{r.Destination.ID}]"));
+		}
+
+		private static string FormatDisconnectRequests(ICollection<VsgDisconnectRequest> requests)
+		{
+			return String.Join(
+				Environment.NewLine,
+				requests
+					.Select(r =>
+					{
+						var levels = r.Levels == null || r.Levels.Count == 0
+							? $"all levels"
+							: $"{r.Levels.Count} level(s)";
+
+						return $" - {r.Destination.Name} [{r.Destination.ID}] ({levels})";
+					}));
 		}
 	}
 }

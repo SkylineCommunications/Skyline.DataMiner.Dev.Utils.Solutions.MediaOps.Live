@@ -21,8 +21,8 @@
 			Destination = destination;
 		}
 
-		public object MetaData { get; set; }
-
 		public Endpoint Destination { get; }
+
+		public object MetaData { get; set; }
 	}
 }

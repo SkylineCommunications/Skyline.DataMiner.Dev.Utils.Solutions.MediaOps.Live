@@ -9,6 +9,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.Modules;
@@ -37,7 +38,14 @@
 			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
 		}
 
+		public MediaOpsLiveApi(IConnection connection, ILogger logger) : this(connection)
+		{
+			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+		}
+
 		protected internal IConnection Connection { get; }
+
+		protected internal ILogger Logger { get; }
 
 		protected internal IEngine Engine
 		{
