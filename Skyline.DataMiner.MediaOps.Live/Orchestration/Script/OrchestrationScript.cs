@@ -533,7 +533,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 					MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
 					OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
 
-					if (eventJobInfo != null && eventJobInfo.MonitoringService != default)
+					if (eventJobInfo != null)
 					{
 						eventJobInfo.MonitoringService = SetupService(_engine);
 						api.Orchestration.JobInfos.Update(eventJobInfo);
