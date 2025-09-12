@@ -4,7 +4,7 @@
 
 	using Skyline.DataMiner.Automation;
 
-	public class InformationEventLogger : LoggerBase, ILogger
+	public class InformationEventLogger : LoggerBase
 	{
 		private readonly IEngine _engine;
 
@@ -15,7 +15,7 @@
 
 		public override void LogInternal(string message)
 		{
-			// Intentionally left blank.
+			_engine.GenerateInformation(message);
 		}
 	}
 }

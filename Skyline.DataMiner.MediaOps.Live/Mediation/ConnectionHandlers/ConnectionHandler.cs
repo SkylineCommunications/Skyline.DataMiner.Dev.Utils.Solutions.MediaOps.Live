@@ -7,6 +7,7 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 
 	public abstract class ConnectionHandler
@@ -27,24 +28,26 @@
 				throw new ArgumentNullException(nameof(engine));
 			}
 
+			var logger = new InformationEventLogger(engine);
+
 			var inputData = ConnectionHandlerInputData.Load(engine);
 
 			switch (inputData.Action)
 			{
 				case ScriptAction.GetSupportedElements:
-					HandleGetSupportedElements(engine, inputData);
+					HandleGetSupportedElements(engine, inputData, logger);
 					break;
 				case ScriptAction.GetSubscriptionInfo:
-					HandleGetSubscriptionInfo(engine, inputData);
+					HandleGetSubscriptionInfo(engine, inputData, logger);
 					break;
 				case ScriptAction.HandleParameterUpdate:
-					HandleParameterUpdate(engine, inputData);
+					HandleParameterUpdate(engine, inputData, logger);
 					break;
 				case ScriptAction.Connect:
-					HandleConnect(engine, inputData);
+					HandleConnect(engine, inputData, logger);
 					break;
 				case ScriptAction.Disconnect:
-					HandleDisconnect(engine, inputData);
+					HandleDisconnect(engine, inputData, logger);
 					break;
 				default:
 					throw new InvalidOperationException($"Unknown action: '{inputData.Action}'");
@@ -61,48 +64,123 @@
 
 		public abstract void Disconnect(IEngine engine, IConnectionHandlerEngine connectionEngine, DisconnectDestinationsRequest disconnectDestinationsRequest);
 
-		private void HandleGetSupportedElements(IEngine engine, ConnectionHandlerInputData inputData)
+		private void HandleGetSupportedElements(IEngine engine, ConnectionHandlerInputData inputData, ILogger logger)
 		{
-			var elementInfos = inputData.Deserialize<ICollection<ElementInfo>>();
+			try
+			{
+				var elementInfos = inputData.Deserialize<ICollection<ElementInfo>>();
 
-			elementInfos = GetSupportedElements(engine, elementInfos).ToList();
+				elementInfos = GetSupportedElements(engine, elementInfos).ToList();
 
-			var serialized = JsonConvert.SerializeObject(elementInfos, _jsonSerializerSettings);
+				var serialized = JsonConvert.SerializeObject(elementInfos, _jsonSerializerSettings);
 
-			engine.AddScriptOutput("output", serialized);
+				engine.AddScriptOutput("output", serialized);
+			}
+			catch (Exception ex)
+			{
+				logger.Error(
+					$"Exception in {GetConnectionHandlerName()}.{nameof(HandleGetSupportedElements)}",
+					ex);
+
+				throw;
+			}
 		}
 
-		private void HandleGetSubscriptionInfo(IEngine engine, ConnectionHandlerInputData inputData)
+		private void HandleGetSubscriptionInfo(IEngine engine, ConnectionHandlerInputData inputData, ILogger logger)
 		{
-			var subscriptionInfo = GetSubscriptionInfo(engine);
+			try
+			{
+				var subscriptionInfo = GetSubscriptionInfo(engine);
 
-			var serialized = JsonConvert.SerializeObject(subscriptionInfo, _jsonSerializerSettings);
+				var serialized = JsonConvert.SerializeObject(subscriptionInfo, _jsonSerializerSettings);
 
-			engine.AddScriptOutput("output", serialized);
+				engine.AddScriptOutput("output", serialized);
+			}
+			catch (Exception ex)
+			{
+				logger.Error(
+					$"Exception in {GetConnectionHandlerName()}.{nameof(HandleGetSubscriptionInfo)}",
+					ex);
+
+				throw;
+			}
 		}
 
-		private void HandleParameterUpdate(IEngine engine, ConnectionHandlerInputData inputData)
+		private void HandleParameterUpdate(IEngine engine, ConnectionHandlerInputData inputData, ILogger logger)
 		{
-			var parameterUpdate = inputData.Deserialize<ParameterUpdate>();
-			var connectionHandlerEngine = new ConnectionHandlerEngine(engine);
+			try
+			{
+				var parameterUpdate = inputData.Deserialize<ParameterUpdate>();
 
-			ProcessParameterUpdate(engine, connectionHandlerEngine, parameterUpdate);
+				logger.Information($"Starting processing parameter update.");
+				logger.Debug($"Data: {JsonConvert.SerializeObject(parameterUpdate, Formatting.Indented)}");
+
+				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
+				ProcessParameterUpdate(engine, connectionHandlerEngine, parameterUpdate);
+
+				logger.Information("Done processing parameter update.");
+			}
+			catch (Exception ex)
+			{
+				logger.Error(
+					$"Exception in {GetConnectionHandlerName()}.{nameof(HandleParameterUpdate)}",
+					ex);
+
+				throw;
+			}
 		}
 
-		private void HandleConnect(IEngine engine, ConnectionHandlerInputData inputData)
+		private void HandleConnect(IEngine engine, ConnectionHandlerInputData inputData, ILogger logger)
 		{
-			var createConnectionRequest = inputData.Deserialize<CreateConnectionsRequest>();
-			var connectionHandlerEngine = new ConnectionHandlerEngine(engine);
+			try
+			{
+				var createConnectionRequest = inputData.Deserialize<CreateConnectionsRequest>();
 
-			Connect(engine, connectionHandlerEngine, createConnectionRequest);
+				logger.Information($"Starting processing connect request for {createConnectionRequest.Connections.Count} connections.");
+				logger.Debug($"Data: {JsonConvert.SerializeObject(createConnectionRequest, Formatting.Indented)}");
+
+				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
+				Connect(engine, connectionHandlerEngine, createConnectionRequest);
+
+				logger.Information("Done processing connect request.");
+			}
+			catch (Exception ex)
+			{
+				logger.Error(
+					$"Exception in {GetConnectionHandlerName()}.{nameof(HandleConnect)}",
+					ex);
+
+				throw;
+			}
 		}
 
-		private void HandleDisconnect(IEngine engine, ConnectionHandlerInputData inputData)
+		private void HandleDisconnect(IEngine engine, ConnectionHandlerInputData inputData, ILogger logger)
 		{
-			var disconnectDestinationsRequest = inputData.Deserialize<DisconnectDestinationsRequest>();
-			var connectionHandlerEngine = new ConnectionHandlerEngine(engine);
+			try
+			{
+				var disconnectDestinationsRequest = inputData.Deserialize<DisconnectDestinationsRequest>();
 
-			Disconnect(engine, connectionHandlerEngine, disconnectDestinationsRequest);
+				logger.Information($"Starting processing disconnect request for {disconnectDestinationsRequest.Destinations.Count} destinations.");
+				logger.Debug($"Data: {JsonConvert.SerializeObject(disconnectDestinationsRequest, Formatting.Indented)}");
+
+				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
+				Disconnect(engine, connectionHandlerEngine, disconnectDestinationsRequest);
+
+				logger.Information("Done processing disconnect request.");
+			}
+			catch (Exception ex)
+			{
+				logger.Error(
+					$"Exception in {GetConnectionHandlerName()}.{nameof(HandleDisconnect)}",
+					ex);
+
+				throw;
+			}
+		}
+
+		private string GetConnectionHandlerName()
+		{
+			return GetType().FullName;
 		}
 	}
 }

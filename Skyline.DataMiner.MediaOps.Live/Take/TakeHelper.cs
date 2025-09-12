@@ -13,7 +13,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
@@ -40,16 +39,11 @@
 
 			_api.Logger?.Information($"Enabling wait for completion with timeout of {timeout.TotalSeconds} seconds.");
 
+			_connectionMonitor = connectionMonitor ??
+				StaticMediaOpsLiveCache.GetOrCreate(_api.Connection).ConnectionMonitor;
+
 			_waitForCompletion = true;
 			_timeout = timeout;
-
-			if (connectionMonitor == null)
-			{
-				var staticCache = StaticMediaOpsLiveCache.GetOrCreate(_api.Connection);
-				connectionMonitor = staticCache.ConnectionMonitor;
-			}
-
-			_connectionMonitor = connectionMonitor;
 		}
 
 		public void DisableWaitForCompletion()
@@ -116,7 +110,7 @@
 
 			try
 			{
-				_api.Logger?.Information($"Start connecing VSGs with {vsgConnectionRequests.Count} requests:\n{FormatConnectionRequests(vsgConnectionRequests)}");
+				_api.Logger?.Information($"Start connecting VSGs with {vsgConnectionRequests.Count} requests:\n{FormatConnectionRequests(vsgConnectionRequests)}");
 
 				using (performanceTracker = new PerformanceTracker(performanceTracker))
 				{

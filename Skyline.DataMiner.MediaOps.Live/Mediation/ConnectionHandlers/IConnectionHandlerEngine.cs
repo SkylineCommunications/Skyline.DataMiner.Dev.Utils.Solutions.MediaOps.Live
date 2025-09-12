@@ -5,6 +5,7 @@
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.Logging;
 
 	public interface IConnectionHandlerEngine
 	{
@@ -12,7 +13,11 @@
 
 		MediaOpsLiveApi Api { get; }
 
+		ILogger Logger { get; }
+
 		IDms Dms { get; }
+
+		void Log(string message, LogLevel logLevel = LogLevel.Information);
 
 		void RegisterConnection(ConnectionUpdate connection);
 

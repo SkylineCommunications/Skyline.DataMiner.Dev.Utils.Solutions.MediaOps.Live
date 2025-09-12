@@ -25,12 +25,7 @@
 			Log(message, LogLevel.Warning);
 		}
 
-		public virtual void Error(string message)
-		{
-			Log(message, LogLevel.Error);
-		}
-
-		public virtual void Error(string message, Exception exception)
+		public virtual void Error(string message, Exception exception = null)
 		{
 			var fullMessage = message;
 

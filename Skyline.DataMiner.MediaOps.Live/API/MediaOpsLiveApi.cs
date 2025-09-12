@@ -11,6 +11,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
@@ -27,6 +28,7 @@
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
 
+			ConnectionsHelper = new TakeHelper(this);
 			MediationElements = new MediationElements(this);
 
 			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper, connection);
@@ -65,6 +67,8 @@
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+
+		internal TakeHelper ConnectionsHelper { get; }
 
 		internal MediationElements MediationElements { get; }
 
