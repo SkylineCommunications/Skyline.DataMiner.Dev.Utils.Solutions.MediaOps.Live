@@ -48,14 +48,14 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 		public abstract IEnumerable<IOrchestrationParameters> GetParameters();
 
-		public virtual DmsServiceId SetupService()
+		public virtual DmsServiceId SetupService(IEngine engine)
 		{
 			return default(DmsServiceId);
 		}
 
-		public virtual void TearDownService()
+		public virtual void TearDownService(IEngine engine)
 		{
-			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+			MediaOpsLiveApi api = engine.GetMediaOpsLiveApi();
 			OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
 
 			if (eventJobInfo == null || eventJobInfo.MonitoringService == default)
@@ -63,7 +63,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				return;
 			}
 
-			IDms dms = _engine.GetDms();
+			IDms dms = engine.GetDms();
 			if (dms.ServiceExists(eventJobInfo.MonitoringService))
 			{
 				var service = dms.GetService(eventJobInfo.MonitoringService);
@@ -535,14 +535,14 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 					if (eventJobInfo != null && eventJobInfo.MonitoringService != default)
 					{
-						eventJobInfo.MonitoringService = SetupService();
+						eventJobInfo.MonitoringService = SetupService(_engine);
 						api.Orchestration.JobInfos.Update(eventJobInfo);
 					}
 				}
 
 				if (EventConfiguration.IsStopEvent)
 				{
-					TearDownService();
+					TearDownService(_engine);
 				}
 			}
 
