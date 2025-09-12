@@ -31,7 +31,7 @@
 
 			Source = source;
 			Destination = destination;
-			LevelMappings = levelMappings;
+			LevelMappings = levelMappings ?? [];
 		}
 
 		public VirtualSignalGroup Source { get; }

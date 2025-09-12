@@ -37,16 +37,11 @@
 				throw new ArgumentException("Timeout cannot be negative.", nameof(timeout));
 			}
 
+			_connectionMonitor = connectionMonitor ??
+				StaticMediaOpsLiveCache.GetOrCreate(_api.Connection).ConnectionMonitor;
+
 			_waitForCompletion = true;
 			_timeout = timeout;
-
-			if (connectionMonitor == null)
-			{
-				var staticCache = StaticMediaOpsLiveCache.GetOrCreate(_api.Connection);
-				connectionMonitor = staticCache.ConnectionMonitor;
-			}
-
-			_connectionMonitor = connectionMonitor;
 		}
 
 		public void DisableWaitForCompletion()
@@ -69,7 +64,19 @@
 
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				TakeInternal(connectionRequests, performanceTracker);
+				var takeContexts = connectionRequests
+					.Select(x => new ConnectionOperationContext(x))
+					.ToList();
+
+				PrepareData(takeContexts, performanceTracker);
+
+				NotifyPendingConnectionActions(ScriptAction.Connect, takeContexts, performanceTracker);
+				ExecuteConnectionHandlerScripts(ScriptAction.Connect, takeContexts, performanceTracker);
+
+				if (_waitForCompletion)
+				{
+					WaitUntilAllConnected(takeContexts, performanceTracker);
+				}
 			}
 		}
 
@@ -87,6 +94,69 @@
 
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
+				var connectionRequests = ConvertConnectionRequestsFromVsg(vsgConnectionRequests, performanceTracker);
+
+				Take(connectionRequests, performanceTracker);
+			}
+		}
+
+		public void Disconnect(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
+		{
+			if (disconnectRequests == null)
+			{
+				throw new ArgumentNullException(nameof(disconnectRequests));
+			}
+
+			if (performanceTracker == null)
+			{
+				throw new ArgumentNullException(nameof(performanceTracker));
+			}
+
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				var takeContexts = disconnectRequests
+					.Select(x => new ConnectionOperationContext(x))
+					.ToList();
+
+				PrepareData(takeContexts, performanceTracker);
+
+				NotifyPendingConnectionActions(ScriptAction.Disconnect, takeContexts, performanceTracker);
+				ExecuteConnectionHandlerScripts(ScriptAction.Disconnect, takeContexts, performanceTracker);
+
+				if (_waitForCompletion)
+				{
+					WaitUntilAllDisconnected(takeContexts, performanceTracker);
+				}
+			}
+		}
+
+		public void Disconnect(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
+		{
+			if (vsgDisconnectRequests == null)
+			{
+				throw new ArgumentNullException(nameof(vsgDisconnectRequests));
+			}
+
+			if (performanceTracker == null)
+			{
+				throw new ArgumentNullException(nameof(performanceTracker));
+			}
+
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				var disconnectRequests = ConvertDisconnectRequestsFromVsg(vsgDisconnectRequests, performanceTracker);
+
+				Disconnect(disconnectRequests, performanceTracker);
+			}
+		}
+
+		private ICollection<ConnectionRequest> ConvertConnectionRequestsFromVsg(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				// create connection requests between endpoints
+				var connectionRequests = new List<ConnectionRequest>();
+
 				// load all endpoints
 				var endpointIds = vsgConnectionRequests
 					.SelectMany(x => x.Source.GetLevelEndpoints().Concat(x.Destination.GetLevelEndpoints()))
@@ -95,9 +165,7 @@
 
 				var endpoints = LoadEndpoints(endpointIds, performanceTracker);
 
-				// create connection requests between endpoints
-				var connectionRequests = new List<ConnectionRequest>();
-
+				// do the conversion
 				foreach (var vsgConnectionRequest in vsgConnectionRequests)
 				{
 					var source = vsgConnectionRequest.Source;
@@ -130,67 +198,26 @@
 							throw new InvalidOperationException($"Couldn't find destination endpoint for level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
 						}
 
-						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint);
+						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint)
+						{
+							MetaData = vsgConnectionRequest.MetaData,
+						};
+
 						connectionRequests.Add(request);
 					}
 				}
 
-				TakeInternal(connectionRequests, performanceTracker);
+				return connectionRequests;
 			}
 		}
 
-		private void TakeInternal(ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker)
+		private ICollection<DisconnectRequest> ConvertDisconnectRequestsFromVsg(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var takeContexts = connectionRequests
-					.Select(x => new ConnectionOperationContext(x))
-					.ToList();
+				// create disconnect requests
+				var disconnectRequests = new List<DisconnectRequest>();
 
-				PrepareData(takeContexts, performanceTracker);
-
-				NotifyPendingConnectionActions(ScriptAction.Connect, takeContexts, performanceTracker);
-				ExecuteConnectionHandlerScripts(ScriptAction.Connect, takeContexts, performanceTracker);
-
-				if (_waitForCompletion)
-				{
-					WaitUntilAllConnected(takeContexts, performanceTracker);
-				}
-			}
-		}
-
-		public void Disconnect(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
-		{
-			if (disconnectRequests == null)
-			{
-				throw new ArgumentNullException(nameof(disconnectRequests));
-			}
-
-			if (performanceTracker == null)
-			{
-				throw new ArgumentNullException(nameof(performanceTracker));
-			}
-
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				DisconnectInternal(disconnectRequests, performanceTracker);
-			}
-		}
-
-		public void Disconnect(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
-		{
-			if (vsgDisconnectRequests == null)
-			{
-				throw new ArgumentNullException(nameof(vsgDisconnectRequests));
-			}
-
-			if (performanceTracker == null)
-			{
-				throw new ArgumentNullException(nameof(performanceTracker));
-			}
-
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
 				// load all endpoints
 				var endpointIds = vsgDisconnectRequests
 					.SelectMany(x => x.Destination.GetLevelEndpoints())
@@ -199,9 +226,7 @@
 
 				var endpoints = LoadEndpoints(endpointIds, performanceTracker);
 
-				// create disconnect requests
-				var disconnectRequests = new List<DisconnectRequest>();
-
+				// do the conversion
 				foreach (var vsgDisconnectRequest in vsgDisconnectRequests)
 				{
 					var destination = vsgDisconnectRequest.Destination;
@@ -219,32 +244,16 @@
 							throw new InvalidOperationException($"Couldn't find endpoint with ID '{levelEndpoint.Endpoint.ID}'");
 						}
 
-						var request = new DisconnectRequest(destinationEndpoint);
+						var request = new DisconnectRequest(destinationEndpoint)
+						{
+							MetaData = vsgDisconnectRequest.MetaData,
+						};
+
 						disconnectRequests.Add(request);
 					}
 				}
 
-				DisconnectInternal(disconnectRequests, performanceTracker);
-			}
-		}
-
-		private void DisconnectInternal(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				var takeContexts = disconnectRequests
-					.Select(x => new ConnectionOperationContext(x))
-					.ToList();
-
-				PrepareData(takeContexts, performanceTracker);
-
-				NotifyPendingConnectionActions(ScriptAction.Disconnect, takeContexts, performanceTracker);
-				ExecuteConnectionHandlerScripts(ScriptAction.Disconnect, takeContexts, performanceTracker);
-
-				if (_waitForCompletion)
-				{
-					WaitUntilAllDisconnected(takeContexts, performanceTracker);
-				}
+				return disconnectRequests;
 			}
 		}
 
