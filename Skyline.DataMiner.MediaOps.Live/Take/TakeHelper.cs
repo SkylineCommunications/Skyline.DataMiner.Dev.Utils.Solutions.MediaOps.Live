@@ -129,7 +129,7 @@
 							throw new InvalidOperationException($"Couldn't find destination endpoint for level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
 						}
 
-						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint);
+						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint) { MetaData = vsgConnectionRequest.MetaData };
 						connectionRequests.Add(request);
 					}
 				}
@@ -218,7 +218,7 @@
 							throw new InvalidOperationException($"Couldn't find endpoint with ID '{levelEndpoint.Endpoint.ID}'");
 						}
 
-						var request = new DisconnectRequest(destinationEndpoint);
+						var request = new DisconnectRequest(destinationEndpoint) { MetaData = vsgDisconnectRequest.MetaData }; ;
 						disconnectRequests.Add(request);
 					}
 				}
