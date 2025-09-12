@@ -18,7 +18,7 @@
 		internal ConnectionHandlerEngine(IEngine engine, ILogger logger)
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
-			Logger = logger ?? throw new ArgumentNullException(nameof(engine));
+			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
 			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw, logger);
 			Api.SetEngine(engine);

@@ -68,7 +68,7 @@
 
 			try
 			{
-				_api.Logger?.Information($"Start connecing VSGs with {connectionRequests.Count} requests:\n{FormatConnectionRequests(connectionRequests)}");
+				_api.Logger?.Information($"Start connecting VSGs with {connectionRequests.Count} requests:\n{FormatConnectionRequests(connectionRequests)}");
 
 				using (performanceTracker = new PerformanceTracker(performanceTracker))
 				{
