@@ -155,7 +155,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 		public NodeConfiguration GetNodeConfiguration(string nodeLabel)
 		{
-			if (EventConfiguration == null)
+			if (EventConfiguration?.Configuration == null)
 			{
 				throw new InvalidOperationException("No event configuration was found");
 			}
