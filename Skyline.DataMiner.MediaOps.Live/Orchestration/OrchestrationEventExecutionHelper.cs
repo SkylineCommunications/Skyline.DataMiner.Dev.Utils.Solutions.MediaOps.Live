@@ -501,7 +501,7 @@
 			OrchestrationScriptResult scriptResult = new OrchestrationScriptResult
 			{
 				ErrorMessages = errorMessages,
-				HadError = !result.HadError && !errorMessages.Any(),
+				HadError = result.HadError || errorMessages.Any(),
 			};
 
 			if (result.ScriptOutput.TryGetValue(OrchestrationScript.ScriptOutputRequestScriptInfoKey, out string orchestrationOutputString))
