@@ -137,18 +137,25 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			return _metadata.TryGetValue(metadataParam, out metadataValue);
 		}
 
-		public NodeConfiguration GetNodeConfiguration(string nodeLabel)
+		public bool TryGetNodeConfiguration(string nodeLabel, out NodeConfiguration nodeConfiguration)
 		{
 			if (EventConfiguration?.Configuration == null)
 			{
 				throw new InvalidOperationException("No event configuration was found");
 			}
 
-			return EventConfiguration.Configuration.NodeConfigurations.FirstOrDefault(nc => nc.NodeLabel == nodeLabel);
+			nodeConfiguration = EventConfiguration.Configuration.NodeConfigurations.FirstOrDefault(nc => nc.NodeLabel == nodeLabel);
+
+			return nodeConfiguration != null;
 		}
 
 		public void OrchestrateNode(NodeConfiguration nodeConfig)
 		{
+			if (nodeConfig == null)
+			{
+				throw new ArgumentNullException(nameof(nodeConfig));
+			}
+
 			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
 
 			OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(_engine.GetUserConnection(), nodeConfig.OrchestrationScriptName, nodeConfig.OrchestrationScriptArguments.Union(addedInputParams), nodeConfig.Profile);

@@ -228,6 +228,11 @@
 
 				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
 
+				if (allInvolvedVsgIds.Count != allInvolvedVsgs.Count)
+				{
+					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
+				}
+
 				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
 
@@ -292,6 +297,11 @@
 				}
 
 				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
+
+				if (allInvolvedVsgIds.Count != allInvolvedVsgs.Count)
+				{
+					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
+				}
 
 				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
