@@ -13,11 +13,21 @@
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 		}
 
-		public override void LogInternal(string message, LogType type)
+		public override void Log(string message, LogType type = LogType.Information)
 		{
-			message += $" (User: {_engine.UserDisplayName})";
+			var formatted = FormatMessage(message, type);
 
-			_engine.Log(message, ConvertLogType(type), -1);
+			_engine.Log(formatted, ConvertLogType(type), -1);
+		}
+
+		private string FormatMessage(string message, LogType type)
+		{
+			var date = FormatDateTimeNow();
+			var thread = System.Threading.Thread.CurrentThread.ManagedThreadId;
+			var abr = GetLogTypeAbbreviation(type);
+			var user = _engine.UserDisplayName;
+
+			return $"{date}|{thread}|{abr}|{user}|{message}";
 		}
 
 		private Automation.LogType ConvertLogType(LogType type)

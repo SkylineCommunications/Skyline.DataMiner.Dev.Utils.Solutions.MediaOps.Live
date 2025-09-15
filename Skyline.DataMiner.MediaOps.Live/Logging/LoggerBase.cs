@@ -4,11 +4,7 @@
 
 	public abstract class LoggerBase : ILogger
 	{
-		public virtual void Log(string message, LogType type = LogType.Information)
-		{
-			var formattedMessage = FormatMessage(message, type);
-			LogInternal(formattedMessage, type);
-		}
+		public abstract void Log(string message, LogType type = LogType.Information);
 
 		public virtual void Debug(string message)
 		{
@@ -36,17 +32,6 @@
 			}
 
 			Log(fullMessage, LogType.Error);
-		}
-
-		public abstract void LogInternal(string message, LogType type);
-
-		protected string FormatMessage(string message, LogType type)
-		{
-			var date = FormatDateTimeNow();
-			var thread = System.Threading.Thread.CurrentThread.ManagedThreadId;
-			var abr = GetLogTypeAbbreviation(type);
-
-			return $"{date}|{thread}|{abr}|{message}";
 		}
 
 		protected string FormatDateTime(DateTime dateTime)
