@@ -140,7 +140,7 @@
 
 				var createConnectionRequest = inputData.Deserialize<CreateConnectionsRequest>();
 
-				logger.Information($"Starting processing connect request for {createConnectionRequest.Connections.Count} connections.");
+				logger.Information($"Start processing connect request for {createConnectionRequest.Connections.Count} connections.");
 				logger.Debug($"Data: {JsonConvert.SerializeObject(createConnectionRequest, Formatting.Indented)}");
 
 				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
@@ -166,7 +166,7 @@
 
 				var disconnectDestinationsRequest = inputData.Deserialize<DisconnectDestinationsRequest>();
 
-				logger.Information($"Starting processing disconnect request for {disconnectDestinationsRequest.Destinations.Count} destinations.");
+				logger.Information($"Start processing disconnect request for {disconnectDestinationsRequest.Destinations.Count} destinations.");
 				logger.Debug($"Data: {JsonConvert.SerializeObject(disconnectDestinationsRequest, Formatting.Indented)}");
 
 				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
