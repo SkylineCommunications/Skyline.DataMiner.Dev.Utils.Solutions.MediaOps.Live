@@ -109,9 +109,9 @@
 				_orderBy.Clear();
 			}
 
-			if (ExpressionTools.TryGetMember(arguments[1], out var member))
+			if (ExpressionTools.TryGetMember(arguments[1], out _, out var memberName))
 			{
-				var orderBy = _provider.Repository.CreateOrderBy(member.Name, sortOrder);
+				var orderBy = _provider.Repository.CreateOrderBy(memberName, sortOrder);
 				if (orderBy != null)
 				{
 					_orderBy.Add(orderBy);

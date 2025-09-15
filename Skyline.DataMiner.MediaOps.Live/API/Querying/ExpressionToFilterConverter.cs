@@ -65,11 +65,11 @@
 			}
 
 			// Handle comparisons
-			if ((ExpressionTools.TryGetMember(node.Left, out var memberInfo) && ExpressionTools.TryGetValue(node.Right, out var value)) ||
-				(ExpressionTools.TryGetMember(node.Right, out memberInfo) && ExpressionTools.TryGetValue(node.Left, out value)))
+			if ((ExpressionTools.TryGetMember(node.Left, out _, out var memberName) && ExpressionTools.TryGetValue(node.Right, out var value)) ||
+				(ExpressionTools.TryGetMember(node.Right, out _, out memberName) && ExpressionTools.TryGetValue(node.Left, out value)))
 			{
 				var comparer = ExpressionTypeToComparer(node.NodeType);
-				return _repository.CreateFilter(memberInfo.Name, comparer, value);
+				return _repository.CreateFilter(memberName, comparer, value);
 			}
 
 			throw new NotSupportedException($"Unsupported comparison expression: {node}");
@@ -105,17 +105,17 @@
 		{
 			if (node.Method.DeclaringType == typeof(String) &&
 				node.Method.Name == nameof(string.Contains) &&
-				ExpressionTools.TryGetMember(node.Object, out var memberInfo) &&
+				ExpressionTools.TryGetMember(node.Object, out _, out var memberName) &&
 				ExpressionTools.TryGetValue(node.Arguments[0], out var value))
 			{
-				return _repository.CreateFilter(memberInfo.Name, Comparer.Contains, value);
+				return _repository.CreateFilter(memberName, Comparer.Contains, value);
 			}
 
 			// Handle .Where(x => x.Levels.Any(l => l.Endpoint == videoSource1))
 			if (node.Method.DeclaringType == typeof(System.Linq.Enumerable) &&
 				node.Method.Name == nameof(System.Linq.Enumerable.Any) &&
 				node.Arguments.Count == 2 &&
-				ExpressionTools.TryGetMember(node.Arguments[0], out var collectionMemberInfo))
+				ExpressionTools.TryGetMember(node.Arguments[0], out _, out _))
 			{
 				return ConvertInternal(node.Arguments[1]);
 			}

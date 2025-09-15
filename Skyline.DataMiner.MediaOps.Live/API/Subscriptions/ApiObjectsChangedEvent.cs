@@ -22,7 +22,7 @@
 
 		public override string ToString()
 		{
-			return $"{nameof(ApiObjectsChangedEvent<T>)}: {Created.Count} created, {Updated.Count} updated, {Deleted.Count} deleted";
+			return $"{nameof(ApiObjectsChangedEvent<>)}: {Created.Count} created, {Updated.Count} updated, {Deleted.Count} deleted";
 		}
 	}
 }
