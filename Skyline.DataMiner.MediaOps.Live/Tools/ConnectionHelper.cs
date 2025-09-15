@@ -6,7 +6,7 @@
 	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
 
-	public static class ConnectionHelper
+	internal static class ConnectionHelper
 	{
 		public static Connection CloneConnection(IConnection baseConnection, string clientName)
 		{

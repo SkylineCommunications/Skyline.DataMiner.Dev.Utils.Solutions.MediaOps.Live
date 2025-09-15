@@ -4,7 +4,7 @@
 	using System.Collections.Generic;
 	using System.Threading;
 
-	public static class Retry
+	internal static class Retry
 	{
 		public static void Do(Action action, TimeSpan retryInterval, int maxAttemptCount = 3)
 		{
