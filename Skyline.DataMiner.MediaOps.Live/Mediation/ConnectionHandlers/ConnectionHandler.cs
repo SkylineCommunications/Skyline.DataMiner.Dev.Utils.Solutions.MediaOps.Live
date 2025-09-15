@@ -110,15 +110,17 @@
 		{
 			try
 			{
+				var sw = System.Diagnostics.Stopwatch.StartNew();
+
 				var parameterUpdate = inputData.Deserialize<ParameterUpdate>();
 
-				logger.Information($"Starting processing parameter update.");
+				logger.Information($"Start processing parameter update.");
 				logger.Debug($"Data: {JsonConvert.SerializeObject(parameterUpdate, Formatting.Indented)}");
 
 				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
 				ProcessParameterUpdate(engine, connectionHandlerEngine, parameterUpdate);
 
-				logger.Information("Done processing parameter update.");
+				logger.Information($"Done processing parameter update ({sw.ElapsedMilliseconds} ms).");
 			}
 			catch (Exception ex)
 			{
@@ -134,6 +136,8 @@
 		{
 			try
 			{
+				var sw = System.Diagnostics.Stopwatch.StartNew();
+
 				var createConnectionRequest = inputData.Deserialize<CreateConnectionsRequest>();
 
 				logger.Information($"Starting processing connect request for {createConnectionRequest.Connections.Count} connections.");
@@ -142,7 +146,7 @@
 				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
 				Connect(engine, connectionHandlerEngine, createConnectionRequest);
 
-				logger.Information("Done processing connect request.");
+				logger.Information($"Done processing connect request ({sw.ElapsedMilliseconds} ms).");
 			}
 			catch (Exception ex)
 			{
@@ -158,6 +162,8 @@
 		{
 			try
 			{
+				var sw = System.Diagnostics.Stopwatch.StartNew();
+
 				var disconnectDestinationsRequest = inputData.Deserialize<DisconnectDestinationsRequest>();
 
 				logger.Information($"Starting processing disconnect request for {disconnectDestinationsRequest.Destinations.Count} destinations.");
@@ -166,7 +172,7 @@
 				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
 				Disconnect(engine, connectionHandlerEngine, disconnectDestinationsRequest);
 
-				logger.Information("Done processing disconnect request.");
+				logger.Information($"Done processing disconnect request ({sw.ElapsedMilliseconds} ms).");
 			}
 			catch (Exception ex)
 			{
