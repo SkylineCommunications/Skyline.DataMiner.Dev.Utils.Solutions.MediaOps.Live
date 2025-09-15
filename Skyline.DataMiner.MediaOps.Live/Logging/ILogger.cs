@@ -4,7 +4,7 @@
 
 	public interface ILogger
 	{
-		void Log(string message, LogLevel level = LogLevel.Information);
+		void Log(string message, LogType type = LogType.Information);
 
 		void Debug(string message);
 

@@ -17,7 +17,7 @@
 
 		IDms Dms { get; }
 
-		void Log(string message, LogLevel logLevel = LogLevel.Information);
+		void Log(string message, Logging.LogType logLevel = Logging.LogType.Information);
 
 		void RegisterConnection(ConnectionUpdate connection);
 

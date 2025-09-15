@@ -4,25 +4,25 @@
 
 	public abstract class LoggerBase : ILogger
 	{
-		public virtual void Log(string message, LogLevel level = LogLevel.Information)
+		public virtual void Log(string message, LogType type = LogType.Information)
 		{
-			var formattedMessage = FormatMessage(message, level);
-			LogInternal(formattedMessage);
+			var formattedMessage = FormatMessage(message, type);
+			LogInternal(formattedMessage, type);
 		}
 
 		public virtual void Debug(string message)
 		{
-			Log(message, LogLevel.Debug);
+			Log(message, LogType.Debug);
 		}
 
 		public virtual void Information(string message)
 		{
-			Log(message, LogLevel.Information);
+			Log(message, LogType.Information);
 		}
 
 		public virtual void Warning(string message)
 		{
-			Log(message, LogLevel.Warning);
+			Log(message, LogType.Warning);
 		}
 
 		public virtual void Error(string message, Exception exception = null)
@@ -35,16 +35,16 @@
 					"Exception: " + exception;
 			}
 
-			Log(fullMessage, LogLevel.Error);
+			Log(fullMessage, LogType.Error);
 		}
 
-		public abstract void LogInternal(string message);
+		public abstract void LogInternal(string message, LogType type);
 
-		protected string FormatMessage(string message, LogLevel level)
+		protected string FormatMessage(string message, LogType type)
 		{
 			var date = FormatDateTimeNow();
 			var thread = System.Threading.Thread.CurrentThread.ManagedThreadId;
-			var abr = GetLogLevelAbbreviation(level);
+			var abr = GetLogTypeAbbreviation(type);
 
 			return $"{date}|{thread}|{abr}|{message}";
 		}
@@ -59,15 +59,15 @@
 			return FormatDateTime(DateTime.Now);
 		}
 
-		protected string GetLogLevelAbbreviation(LogLevel level)
+		protected string GetLogTypeAbbreviation(LogType type)
 		{
-			return level switch
+			return type switch
 			{
-				LogLevel.Debug => "DBG",
-				LogLevel.Information => "INF",
-				LogLevel.Warning => "WRN",
-				LogLevel.Error => "ERR",
-				_ => throw new InvalidOperationException($"Unknown log level: {level}"),
+				LogType.Debug => "DBG",
+				LogType.Information => "INF",
+				LogType.Warning => "WRN",
+				LogType.Error => "ERR",
+				_ => throw new InvalidOperationException($"Unknown log type: {type}"),
 			};
 		}
 	}

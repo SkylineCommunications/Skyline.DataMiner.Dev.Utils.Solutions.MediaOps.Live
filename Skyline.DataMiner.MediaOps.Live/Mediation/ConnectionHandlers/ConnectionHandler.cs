@@ -28,7 +28,7 @@
 				throw new ArgumentNullException(nameof(engine));
 			}
 
-			var logger = new InformationEventLogger(engine);
+			var logger = new EngineLogger(engine);
 
 			var inputData = ConnectionHandlerInputData.Load(engine);
 

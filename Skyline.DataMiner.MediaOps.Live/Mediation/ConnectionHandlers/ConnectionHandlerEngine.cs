@@ -20,8 +20,9 @@
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw, logger);
+			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw);
 			Api.SetEngine(engine);
+			Api.SetLogger(logger);
 
 			_lazyDms = new Lazy<IDms>(engine.GetDms);
 		}
@@ -34,7 +35,7 @@
 
 		public IDms Dms => _lazyDms.Value;
 
-		public void Log(string message, LogLevel logLevel = LogLevel.Information)
+		public void Log(string message, Logging.LogType logLevel = Logging.LogType.Information)
 		{
 			Logger?.Log(message, logLevel);
 		}

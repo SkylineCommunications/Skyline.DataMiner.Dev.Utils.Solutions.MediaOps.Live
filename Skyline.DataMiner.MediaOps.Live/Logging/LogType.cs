@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Logging
 {
-	public enum LogLevel
+	public enum LogType
 	{
 		Debug = 0,
 		Information = 1,

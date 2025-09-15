@@ -4,6 +4,7 @@
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.MediaOps.Live.Logging;
 
 	public static class IEngineExtensions
 	{
@@ -16,6 +17,7 @@
 
 			var api = new MediaOpsLiveApi(engine.GetUserConnection());
 			api.SetEngine(engine);
+			api.SetLogger(new EngineLogger(engine));
 
 			return api;
 		}

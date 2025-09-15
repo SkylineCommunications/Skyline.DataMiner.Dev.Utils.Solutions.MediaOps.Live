@@ -40,14 +40,9 @@
 			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
 		}
 
-		public MediaOpsLiveApi(IConnection connection, ILogger logger) : this(connection)
-		{
-			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
-		}
-
 		protected internal IConnection Connection { get; }
 
-		protected internal ILogger Logger { get; }
+		protected internal ILogger Logger { get; private set; }
 
 		protected internal IEngine Engine
 		{
@@ -87,6 +82,11 @@
 		public void SetEngine(IEngine engine)
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
+		}
+
+		public void SetLogger(ILogger logger)
+		{
+			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		}
 
 		public bool IsInstalled()
