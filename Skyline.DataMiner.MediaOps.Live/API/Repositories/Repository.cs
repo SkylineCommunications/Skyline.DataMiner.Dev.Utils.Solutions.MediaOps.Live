@@ -487,10 +487,10 @@
 		{
 			switch (fieldName)
 			{
-				case nameof(ApiObject<T>.ID):
+				case nameof(ApiObject<>.ID):
 					return FilterElementFactory.Create<Guid>(DomInstanceExposers.Id, comparer, value);
 				default:
-					throw new NotImplementedException();
+					throw new NotImplementedException($"Creating a filter for field '{fieldName}' is not implemented.");
 			}
 		}
 
@@ -498,10 +498,10 @@
 		{
 			switch (fieldName)
 			{
-				case nameof(ApiObject<T>.ID):
+				case nameof(ApiObject<>.ID):
 					return OrderByElementFactory.Create(DomInstanceExposers.Id, sortOrder, naturalSort);
 				default:
-					throw new NotImplementedException();
+					throw new NotImplementedException($"Creating an order by for field '{fieldName}' is not implemented.");
 			}
 		}
 

@@ -1,32 +1,33 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Querying
 {
 	using System;
+	using System.Collections.Generic;
 	using System.Linq.Expressions;
 	using System.Reflection;
 
 	internal static class ExpressionTools
 	{
-		public static bool TryGetMember(Expression expression, out MemberInfo memberInfo)
+		public static bool TryGetMember(Expression expression, out MemberInfo memberInfo, out string propertyPath)
 		{
-			expression = StripQuotes(expression);
-
-			if (expression is UnaryExpression unary && unary.NodeType == ExpressionType.Convert)
+			if (expression is UnaryExpression unary)
 			{
-				expression = unary.Operand;
+				return TryGetMember(unary.Operand, out memberInfo, out propertyPath);
 			}
 
 			if (expression is LambdaExpression lambda)
 			{
-				expression = lambda.Body;
+				return TryGetMember(lambda.Body, out memberInfo, out propertyPath);
 			}
 
 			if (expression is MemberExpression memberExpression)
 			{
 				memberInfo = memberExpression.Member;
+				propertyPath = GetPropertyPath(memberExpression);
 				return true;
 			}
 
 			memberInfo = null;
+			propertyPath = null;
 			return false;
 		}
 
@@ -34,6 +35,12 @@
 		{
 			switch (expression)
 			{
+				case UnaryExpression unary:
+					return TryGetValue(unary.Operand, out value);
+
+				case LambdaExpression lambda:
+					return TryGetValue(lambda.Body, out value);
+
 				case ConstantExpression constant:
 					value = constant.Value;
 					return true;
@@ -45,15 +52,12 @@
 				case MemberExpression member when member.Member is PropertyInfo propertyInfo && propertyInfo.GetGetMethod().IsStatic:
 					value = propertyInfo.GetValue(null);
 					return true;
-
-				case UnaryExpression unary when unary.NodeType == ExpressionType.Convert:
-					return TryGetValue(unary.Operand, out value);
 			}
 
 			try
 			{
-				var lambda = Expression.Lambda(expression).Compile();
-				value = lambda.DynamicInvoke();
+				var compiledLambda = Expression.Lambda(expression).Compile();
+				value = compiledLambda.DynamicInvoke();
 				return true;
 			}
 			catch (Exception)
@@ -63,14 +67,17 @@
 			}
 		}
 
-		public static Expression StripQuotes(Expression expression)
+		private static string GetPropertyPath(Expression expr)
 		{
-			while (expression.NodeType == ExpressionType.Quote)
+			var memberNames = new Stack<string>();
+
+			while (expr is MemberExpression memberExpr)
 			{
-				expression = ((UnaryExpression)expression).Operand;
+				memberNames.Push(memberExpr.Member.Name);
+				expr = memberExpr.Expression;
 			}
 
-			return expression;
+			return String.Join(".", memberNames);
 		}
 	}
 }
