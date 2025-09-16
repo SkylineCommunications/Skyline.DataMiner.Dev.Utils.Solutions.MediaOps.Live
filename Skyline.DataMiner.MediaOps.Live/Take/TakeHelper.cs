@@ -171,8 +171,9 @@
 					var source = vsgConnectionRequest.Source;
 					var destination = vsgConnectionRequest.Destination;
 
-					var levelMappings = vsgConnectionRequest.LevelMappings;
-					if (levelMappings == null || levelMappings.Count == 0)
+					ICollection<LevelMapping> levelMappings;
+
+					if (vsgConnectionRequest.IsConnectAllLevels)
 					{
 						// create default level mappings
 						// connect same levels between source and destination
@@ -180,6 +181,10 @@
 							.Intersect(destination.GetLevelEndpoints().Select(x => x.Level))
 							.Select(x => new LevelMapping(x))
 							.ToList();
+					}
+					else
+					{
+						levelMappings = vsgConnectionRequest.LevelMappings;
 					}
 
 					foreach (var levelMapping in levelMappings)
@@ -230,11 +235,10 @@
 				foreach (var vsgDisconnectRequest in vsgDisconnectRequests)
 				{
 					var destination = vsgDisconnectRequest.Destination;
-					var allLevels = vsgDisconnectRequest.Levels == null || vsgDisconnectRequest.Levels.Count == 0;
 
 					foreach (var levelEndpoint in destination.GetLevelEndpoints())
 					{
-						if (!allLevels &&
+						if (!vsgDisconnectRequest.IsDisconnectAllLevels &&
 							!vsgDisconnectRequest.Levels.Contains(levelEndpoint.Level))
 						{
 							continue; // skip this level if it is not in the disconnect request

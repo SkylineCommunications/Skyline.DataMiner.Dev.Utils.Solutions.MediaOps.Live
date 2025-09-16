@@ -28,6 +28,8 @@
 
 		public ICollection<ApiObjectReference<Level>> Levels { get; }
 
+		public bool IsDisconnectAllLevels => Levels == null || Levels.Count == 0;
+
 		public object MetaData { get; set; }
 	}
 }

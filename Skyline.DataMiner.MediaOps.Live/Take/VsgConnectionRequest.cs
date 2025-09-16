@@ -40,6 +40,8 @@
 
 		public ICollection<LevelMapping> LevelMappings { get; }
 
+		public bool IsConnectAllLevels => LevelMappings == null || LevelMappings.Count == 0;
+
 		public object MetaData { get; set; }
 	}
 }
