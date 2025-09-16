@@ -12,30 +12,9 @@
 	{
 		public static ExecuteScriptResponseMessage ExecuteAutomationScript(IConnection connection, string scriptName, Dictionary<string, string> parameters, bool checkSets = true, bool extendedErrorInfo = true, bool interactive = false, bool synchronous = true, bool informationEvent = false)
 		{
-			var request = BuildExecuteScriptMessage(scriptName, parameters, checkSets, extendedErrorInfo, interactive, synchronous, informationEvent);
+			var message = BuildExecuteScriptMessage(scriptName, parameters, checkSets, extendedErrorInfo, interactive, synchronous, informationEvent);
 
-			var progress = connection.Async.Launch(request);
-
-			var result = progress.WaitForAsyncResponse(timeout: 5 * 60);
-
-			if (result == null)
-			{
-				throw new DataMinerException("No response received");
-			}
-
-			if (result.Failure != null)
-			{
-				throw result.Failure;
-			}
-
-			var response = (ExecuteScriptResponseMessage)result.Messages.Single();
-
-			if (response.HadError)
-			{
-				throw new DataMinerException("Script execution failed: " + String.Join(", ", response.ErrorMessages));
-			}
-
-			return response;
+			return ExecuteAutomationScript(connection, message);
 		}
 
 		public static ExecuteScriptResponseMessage ExecuteAutomationScript(IConnection connection, ExecuteScriptMessage message)
