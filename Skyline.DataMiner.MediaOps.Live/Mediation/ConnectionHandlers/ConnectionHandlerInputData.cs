@@ -3,6 +3,7 @@
 	using System;
 
 	using Newtonsoft.Json;
+	using Newtonsoft.Json.Converters;
 
 	using Skyline.DataMiner.Automation;
 

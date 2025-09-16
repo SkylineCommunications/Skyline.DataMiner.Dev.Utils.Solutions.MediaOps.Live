@@ -3,6 +3,8 @@
 	using System.Collections.Generic;
 	using System.Text;
 
+	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 
 	public class ParameterUpdate
@@ -11,18 +13,24 @@
 
 		public int ElementId { get; set; }
 
+		[JsonIgnore]
 		public DmsElementId DmsElementId => new(AgentId, ElementId);
 
 		public int ParameterId { get; set; }
 
-		public object OldValue { get; set; }
-
-		public object NewValue { get; set; }
-
+		[JsonProperty(DefaultValueHandling = DefaultValueHandling.Ignore)]
 		public bool IsForcePush { get; }
 
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+		public object OldValue { get; set; }
+
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+		public object NewValue { get; set; }
+
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public IDictionary<string, object[]> UpdatedRows { get; set; }
 
+		[JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
 		public IDictionary<string, object[]> DeletedRows { get; set; }
 
 		public override string ToString()

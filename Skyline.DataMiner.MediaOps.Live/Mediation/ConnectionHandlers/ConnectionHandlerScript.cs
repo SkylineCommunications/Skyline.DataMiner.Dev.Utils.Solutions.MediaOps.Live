@@ -8,6 +8,7 @@
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
@@ -15,6 +16,23 @@
 
 	internal static class ConnectionHandlerScript
 	{
+		internal static void Execute(MediaOpsLiveApi api, string scriptName, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
+		{
+			if (api is null)
+			{
+				throw new ArgumentNullException(nameof(api));
+			}
+
+			if (api.HasEngine)
+			{
+				Execute(api.Engine, scriptName, request, performanceTracker);
+			}
+			else
+			{
+				Execute(api.Connection, scriptName, request, performanceTracker);
+			}
+		}
+
 		internal static void Execute(IConnection connection, string scriptName, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
 		{
 			if (connection is null)

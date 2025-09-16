@@ -9,7 +9,9 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
@@ -26,6 +28,7 @@
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
 
+			ConnectionsHelper = new TakeHelper(this);
 			MediationElements = new MediationElements(this);
 
 			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper, connection);
@@ -38,6 +41,8 @@
 		}
 
 		protected internal IConnection Connection { get; }
+
+		protected internal ILogger Logger { get; private set; }
 
 		protected internal IEngine Engine
 		{
@@ -58,6 +63,8 @@
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
 
+		internal TakeHelper ConnectionsHelper { get; }
+
 		internal MediationElements MediationElements { get; }
 
 		public EndpointRepository Endpoints { get; }
@@ -75,6 +82,11 @@
 		public void SetEngine(IEngine engine)
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
+		}
+
+		public void SetLogger(ILogger logger)
+		{
+			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 		}
 
 		public bool IsInstalled()
