@@ -4,6 +4,8 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
@@ -57,6 +59,8 @@
 				throw new ArgumentNullException(nameof(connections));
 			}
 
+			Log($"Registering {connections.Count} connection updates.");
+
 			NotifyConnectionChanges(connections);
 		}
 
@@ -73,11 +77,12 @@
 			{
 				var mediationElement = group.Key;
 
-				var requests = new List<InterApp.Messages.ConnectionChange>();
+				// Build list with active connections to register
+				var connectionChanges = new List<InterApp.Messages.ConnectionChange>();
 
 				foreach (var connection in group)
 				{
-					var request = new InterApp.Messages.ConnectionChange
+					var connectionChange = new InterApp.Messages.ConnectionChange
 					{
 						Time = now,
 						Destination = new InterApp.Messages.EndpointInfo(connection.DestinationEndpoint),
@@ -86,15 +91,20 @@
 
 					if (connection.SourceEndpoint != null)
 					{
-						request.ConnectedSource = new InterApp.Messages.EndpointInfo(connection.SourceEndpoint);
+						connectionChange.ConnectedSource = new InterApp.Messages.EndpointInfo(connection.SourceEndpoint);
 					}
 
-					requests.Add(request);
+					connectionChanges.Add(connectionChange);
 				}
 
+				// Log
+				Log($"Notifying {connectionChanges.Count} connection changes to mediation element '{mediationElement.Name}' [{mediationElement.DmsElementId}]:\n" +
+					JsonConvert.SerializeObject(connectionChanges, Formatting.Indented));
+
+				// Send message
 				var commands = InterAppCallFactory.CreateNew();
 
-				var message = new InterApp.Messages.NotifyConnectionChangesMessage { Changes = requests };
+				var message = new InterApp.Messages.NotifyConnectionChangesMessage { Changes = connectionChanges };
 				commands.Messages.Add(message);
 
 				commands.Send(
