@@ -15,19 +15,9 @@
 
 		public override void Log(string message, LogType type = LogType.Information)
 		{
-			var formatted = FormatMessage(message, type);
+			var logLevel = type == LogType.Debug ? 1 : -1;
 
-			_engine.Log(formatted, ConvertLogType(type), -1);
-		}
-
-		private string FormatMessage(string message, LogType type)
-		{
-			var date = FormatDateTimeNow();
-			var thread = System.Threading.Thread.CurrentThread.ManagedThreadId;
-			var abr = GetLogTypeAbbreviation(type);
-			var user = _engine.UserDisplayName;
-
-			return $"{date}|{thread}|{abr}|{user}|{message}";
+			_engine.Log(message, ConvertLogType(type), logLevel);
 		}
 
 		private Automation.LogType ConvertLogType(LogType type)
