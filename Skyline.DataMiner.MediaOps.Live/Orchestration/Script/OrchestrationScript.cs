@@ -6,11 +6,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.Dialogs;
@@ -20,7 +17,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
-	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
 	using GroupPresetOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<Mvc.DisplayTypes.PresetGroupDisplayInfo.PresetInfo>;
 	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;

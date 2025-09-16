@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers
+﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Data
 {
 	public enum ScriptAction
 	{

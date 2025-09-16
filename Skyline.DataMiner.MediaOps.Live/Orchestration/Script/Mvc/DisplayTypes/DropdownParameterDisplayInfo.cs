@@ -3,7 +3,6 @@
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.Sections;
-	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
 	internal class DropdownParameterDisplayInfo : IParameterDisplayInfo
 	{

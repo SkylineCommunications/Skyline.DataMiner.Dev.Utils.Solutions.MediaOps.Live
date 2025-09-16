@@ -3,7 +3,6 @@
 	using System;
 	using System.Threading;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
@@ -89,7 +88,7 @@
 						// This prevents potential conflicts when the base connection would be closed or unsubscribed elsewhere.
 						var connection = CloneConnection(baseConnection);
 
-						_instance = new StaticMediaOpsLiveCache(connection);
+						Initialize(connection);
 					}
 				}
 			}
@@ -107,6 +106,24 @@
 				}
 
 				return _instance;
+			}
+		}
+
+		internal static void Initialize(IConnection connection)
+		{
+			if (connection == null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			lock (_lock)
+			{
+				if (_instance != null)
+				{
+					throw new InvalidOperationException($"The {nameof(StaticMediaOpsLiveCache)} instance has already been created.");
+				}
+
+				_instance = new StaticMediaOpsLiveCache(connection);
 			}
 		}
 
@@ -173,21 +190,12 @@
 				return baseConnection;
 			}
 
-			try
+			if (!ConnectionHelper.TryCloneConnection(baseConnection, "MediaOps.Live - Connection", out var clonedConnection))
 			{
-				return ConnectionHelper.CloneConnection(baseConnection, "MediaOps.Live - Connection");
+				throw new Exception("Failed to clone the provided connection. Use the Initialize() method to provide a custom connection.");
 			}
-			catch (Exception)
-			{
-				if (Engine.SLNetRaw != null)
-				{
-					// As a last resort, fall back to Engine.SLNetRaw if available.
-					// This covers the case where the base connection is engine.GetUserConnection()
-					return Engine.SLNetRaw;
-				}
 
-				throw;
-			}
+			return clonedConnection;
 		}
 	}
 }

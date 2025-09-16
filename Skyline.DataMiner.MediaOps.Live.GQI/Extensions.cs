@@ -1,11 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.GQI
+﻿namespace Skyline.DataMiner.MediaOps.Live.GQI
 {
 	using System;
 
 	using Skyline.DataMiner.Analytics.GenericInterface;
+	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 
-	public static class GqiDmsExtensions
+	public static class Extensions
 	{
 		public static MediaOpsLiveApi GetMediaOpsLiveApi(this GQIDMS gqiDms)
 		{

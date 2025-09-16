@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tools
+﻿namespace Skyline.DataMiner.MediaOps.Live.Automation
 {
 	using System;
 	using System.Collections.Generic;
@@ -6,9 +6,35 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Logging;
 
-	public static class ScriptExtensions
+	public static class Extensions
 	{
+		public static MediaOpsLiveApi GetMediaOpsLiveApi(this IEngine engine)
+		{
+			if (engine is null)
+			{
+				throw new ArgumentNullException(nameof(engine));
+			}
+
+			var api = new MediaOpsLiveApi(engine.GetUserConnection());
+			api.SetLogger(new EngineLogger(engine));
+
+			return api;
+		}
+
+		public static StaticMediaOpsLiveCache GetStaticMediaOpsLiveApiCache(this IEngine engine)
+		{
+			if (engine is null)
+			{
+				throw new ArgumentNullException(nameof(engine));
+			}
+
+			return StaticMediaOpsLiveCache.GetOrCreate(Engine.SLNetRaw);
+		}
+
 		public static IList<T> ReadScriptParamListFromApp<T>(this IEngine engine, string name)
 		{
 			if (String.IsNullOrWhiteSpace(name))

@@ -3,7 +3,6 @@
 	using System;
 
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.DisplayTypes;
-	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
 	internal class NumericParameterSection : ParameterSection
 	{

@@ -3,7 +3,6 @@
 	using System;
 	using System.Linq;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
@@ -20,8 +19,6 @@
 
 	public class MediaOpsLiveApi
 	{
-		private IEngine _engine;
-
 		public MediaOpsLiveApi(IConnection connection)
 		{
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -45,21 +42,6 @@
 
 		protected internal ILogger Logger { get; private set; }
 
-		protected internal IEngine Engine
-		{
-			get
-			{
-				if (_engine == null)
-				{
-					throw new InvalidOperationException("Engine is not set. Please call SetEngine before accessing the Engine property.");
-				}
-
-				return _engine;
-			}
-		}
-
-		public bool HasEngine => _engine != null;
-
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
@@ -79,11 +61,6 @@
 		public TransportTypeRepository TransportTypes { get; }
 
 		public OrchestrationEventRepository Orchestration { get; }
-
-		public void SetEngine(IEngine engine)
-		{
-			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
-		}
 
 		public void SetLogger(ILogger logger)
 		{

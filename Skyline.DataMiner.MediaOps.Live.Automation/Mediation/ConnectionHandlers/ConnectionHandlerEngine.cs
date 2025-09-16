@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers
+﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers
 {
 	using System;
 	using System.Collections.Generic;
@@ -10,6 +10,9 @@
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.Logging;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages;
+
+	using LogType = Skyline.DataMiner.MediaOps.Live.Logging.LogType;
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
@@ -18,8 +21,7 @@
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw);
-			Api.SetEngine(engine);
+			Api = new MediaOpsLiveApi(Skyline.DataMiner.Automation.Engine.SLNetRaw);
 			Api.SetLogger(logger);
 		}
 
@@ -29,7 +31,7 @@
 
 		public MediaOpsLiveApi Api { get; }
 
-		public void Log(string message, Logging.LogType logLevel = Logging.LogType.Information)
+		public void Log(string message, LogType logLevel = LogType.Information)
 		{
 			Logger?.Log(message, logLevel);
 		}
@@ -70,20 +72,20 @@
 				var mediationElement = group.Key;
 
 				// Build list with active connections to register
-				var connectionChanges = new List<InterApp.Messages.ConnectionChange>();
+				var connectionChanges = new List<ConnectionChange>();
 
 				foreach (var connection in group)
 				{
-					var connectionChange = new InterApp.Messages.ConnectionChange
+					var connectionChange = new ConnectionChange
 					{
 						Time = now,
-						Destination = new InterApp.Messages.EndpointInfo(connection.DestinationEndpoint),
+						Destination = new EndpointInfo(connection.DestinationEndpoint),
 						IsConnected = connection.IsConnected,
 					};
 
 					if (connection.SourceEndpoint != null)
 					{
-						connectionChange.ConnectedSource = new InterApp.Messages.EndpointInfo(connection.SourceEndpoint);
+						connectionChange.ConnectedSource = new EndpointInfo(connection.SourceEndpoint);
 					}
 
 					connectionChanges.Add(connectionChange);
@@ -96,7 +98,7 @@
 				// Send message
 				var commands = InterAppCallFactory.CreateNew();
 
-				var message = new InterApp.Messages.NotifyConnectionChangesMessage { Changes = connectionChanges };
+				var message = new NotifyConnectionChangesMessage { Changes = connectionChanges };
 				commands.Messages.Add(message);
 
 				commands.Send(
@@ -104,7 +106,7 @@
 					mediationElement.DmaId,
 					mediationElement.ElementId,
 					9000000,
-					[typeof(InterApp.Messages.NotifyPendingConnectionActionMessage)]);
+					[typeof(NotifyPendingConnectionActionMessage)]);
 			}
 		}
 	}

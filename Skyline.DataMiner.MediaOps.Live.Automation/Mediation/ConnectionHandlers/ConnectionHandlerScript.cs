@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers
+﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers
 {
 	using System;
 	using System.Collections.Generic;
@@ -8,7 +8,6 @@
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
@@ -16,23 +15,6 @@
 
 	internal static class ConnectionHandlerScript
 	{
-		internal static void Execute(MediaOpsLiveApi api, string scriptName, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
-		{
-			if (api is null)
-			{
-				throw new ArgumentNullException(nameof(api));
-			}
-
-			if (api.HasEngine)
-			{
-				Execute(api.Engine, scriptName, request, performanceTracker);
-			}
-			else
-			{
-				Execute(api.Connection, scriptName, request, performanceTracker);
-			}
-		}
-
 		internal static void Execute(IConnection connection, string scriptName, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
 		{
 			if (connection is null)
@@ -40,7 +22,7 @@
 				throw new ArgumentNullException(nameof(connection));
 			}
 
-			if (String.IsNullOrEmpty(scriptName))
+			if (string.IsNullOrEmpty(scriptName))
 			{
 				throw new ArgumentException($"'{nameof(scriptName)}' cannot be null or empty.", nameof(scriptName));
 			}
@@ -68,7 +50,7 @@
 					{ "Input Data", inputData },
 				};
 
-				AutomationHelper.ExecuteConnectionHandlerScript(connection, scriptName, parameters);
+				AutomationHelper.ExecuteAutomationScript(connection, scriptName, parameters);
 			}
 		}
 
@@ -79,7 +61,7 @@
 				throw new ArgumentNullException(nameof(engine));
 			}
 
-			if (String.IsNullOrEmpty(scriptName))
+			if (string.IsNullOrEmpty(scriptName))
 			{
 				throw new ArgumentException($"'{nameof(scriptName)}' cannot be null or empty.", nameof(scriptName));
 			}
@@ -111,7 +93,7 @@
 
 				if (subScript.HadError)
 				{
-					throw new InvalidOperationException(String.Join(@"\r\n", subScript.GetErrorMessages()));
+					throw new InvalidOperationException(string.Join(@"\r\n", subScript.GetErrorMessages()));
 				}
 			}
 		}
@@ -141,7 +123,7 @@
 			var elementKey = element.DmsElementId.Value;
 			var script = Convert.ToString(mediationElement.GetParameterByPrimaryKey(1003, elementKey));
 
-			if (String.IsNullOrEmpty(script))
+			if (string.IsNullOrEmpty(script))
 			{
 				throw new InvalidOperationException($"No connection handler script found for element '{elementKey}'.");
 			}

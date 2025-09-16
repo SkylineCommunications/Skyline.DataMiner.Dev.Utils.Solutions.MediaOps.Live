@@ -1,8 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Logging
+﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Logging
 {
 	using System;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.MediaOps.Live.Logging;
+
+	using Automation = Skyline.DataMiner.Automation;
+	using LogType = Skyline.DataMiner.MediaOps.Live.Logging.LogType;
 
 	public class EngineLogger : LoggerBase
 	{

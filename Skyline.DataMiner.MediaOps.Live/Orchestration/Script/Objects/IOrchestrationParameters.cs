@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Net.Profiles;
 
 	public interface IOrchestrationParameters

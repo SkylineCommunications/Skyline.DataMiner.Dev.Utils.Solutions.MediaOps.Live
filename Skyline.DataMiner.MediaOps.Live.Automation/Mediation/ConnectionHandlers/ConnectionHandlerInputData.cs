@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers
+﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers
 {
 	using System;
 
 	using Newtonsoft.Json;
-	using Newtonsoft.Json.Converters;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 
 	internal class ConnectionHandlerInputData
 	{

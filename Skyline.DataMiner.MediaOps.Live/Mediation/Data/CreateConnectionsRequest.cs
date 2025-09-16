@@ -5,8 +5,6 @@
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Converters;
 
-	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
-
 	public class CreateConnectionsRequest : IConnectionHandlerRequest
 	{
 		[JsonConverter(typeof(StringEnumConverter))]

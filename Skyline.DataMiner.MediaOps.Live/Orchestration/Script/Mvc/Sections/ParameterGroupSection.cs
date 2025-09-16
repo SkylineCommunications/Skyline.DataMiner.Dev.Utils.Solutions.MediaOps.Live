@@ -5,7 +5,6 @@
 
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
-	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
 	public abstract class ParameterGroupSection : Section
 	{

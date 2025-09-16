@@ -4,7 +4,6 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.DisplayTypes;
-	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
 	internal class DropdownParameterSection : ParameterSection
 	{
