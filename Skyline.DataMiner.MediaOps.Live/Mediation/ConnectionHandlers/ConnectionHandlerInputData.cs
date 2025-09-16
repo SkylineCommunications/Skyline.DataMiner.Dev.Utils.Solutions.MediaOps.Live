@@ -34,7 +34,6 @@
 			};
 		}
 
-		[JsonConverter(typeof(StringEnumConverter))]
 		public ScriptAction Action { get; private set; }
 
 		public string InputData { get; private set; }

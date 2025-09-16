@@ -68,13 +68,16 @@
 		{
 			try
 			{
-				var elementInfos = inputData.Deserialize<ICollection<ElementInfo>>();
+				logger.Debug($"Start processing get supported elements request.");
 
+				var elementInfos = inputData.Deserialize<ICollection<ElementInfo>>();
 				elementInfos = GetSupportedElements(engine, elementInfos).ToList();
 
 				var serialized = JsonConvert.SerializeObject(elementInfos, _jsonSerializerSettings);
 
 				engine.AddScriptOutput("output", serialized);
+
+				logger.Debug($"Done processing get supported elements request.\nOutput: {serialized}");
 			}
 			catch (Exception ex)
 			{
@@ -90,11 +93,14 @@
 		{
 			try
 			{
-				var subscriptionInfo = GetSubscriptionInfo(engine);
+				logger.Debug($"Start processing subscription info request.");
 
+				var subscriptionInfo = GetSubscriptionInfo(engine);
 				var serialized = JsonConvert.SerializeObject(subscriptionInfo, _jsonSerializerSettings);
 
 				engine.AddScriptOutput("output", serialized);
+
+				logger.Debug($"Done processing subscription info request.\nOutput: {serialized}");
 			}
 			catch (Exception ex)
 			{
@@ -111,10 +117,9 @@
 			try
 			{
 				var sw = System.Diagnostics.Stopwatch.StartNew();
+				logger.Information($"Start processing parameter update.");
 
 				var parameterUpdate = inputData.Deserialize<ParameterUpdate>();
-
-				logger.Information($"Start processing parameter update.");
 				logger.Debug($"Data: {JsonConvert.SerializeObject(parameterUpdate, Formatting.Indented)}");
 
 				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
@@ -137,10 +142,9 @@
 			try
 			{
 				var sw = System.Diagnostics.Stopwatch.StartNew();
+				logger.Information($"Start processing connect request.");
 
 				var createConnectionRequest = inputData.Deserialize<CreateConnectionsRequest>();
-
-				logger.Information($"Start processing connect request for {createConnectionRequest.Connections.Count} connections.");
 				logger.Debug($"Data: {JsonConvert.SerializeObject(createConnectionRequest, Formatting.Indented)}");
 
 				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
@@ -163,10 +167,9 @@
 			try
 			{
 				var sw = System.Diagnostics.Stopwatch.StartNew();
+				logger.Information($"Start processing disconnect request.");
 
 				var disconnectDestinationsRequest = inputData.Deserialize<DisconnectDestinationsRequest>();
-
-				logger.Information($"Start processing disconnect request for {disconnectDestinationsRequest.Destinations.Count} destinations.");
 				logger.Debug($"Data: {JsonConvert.SerializeObject(disconnectDestinationsRequest, Formatting.Indented)}");
 
 				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
