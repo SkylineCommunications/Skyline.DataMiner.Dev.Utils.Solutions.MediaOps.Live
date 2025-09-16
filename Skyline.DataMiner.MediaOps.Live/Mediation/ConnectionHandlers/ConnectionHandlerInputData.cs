@@ -3,6 +3,7 @@
 	using System;
 
 	using Newtonsoft.Json;
+	using Newtonsoft.Json.Converters;
 
 	using Skyline.DataMiner.Automation;
 
@@ -33,6 +34,7 @@
 			};
 		}
 
+		[JsonConverter(typeof(StringEnumConverter))]
 		public ScriptAction Action { get; private set; }
 
 		public string InputData { get; private set; }
