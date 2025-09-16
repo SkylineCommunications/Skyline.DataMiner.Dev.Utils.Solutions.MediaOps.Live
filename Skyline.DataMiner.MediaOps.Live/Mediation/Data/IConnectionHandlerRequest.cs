@@ -3,7 +3,7 @@
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Converters;
 
-	internal interface IConnectionHandlerRequest
+	public interface IConnectionHandlerRequest
 	{
 		[JsonConverter(typeof(StringEnumConverter))]
 		ScriptAction Action { get; }

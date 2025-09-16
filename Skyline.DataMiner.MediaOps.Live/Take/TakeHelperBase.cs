@@ -15,7 +15,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
-	public class TakeHelper
+	public abstract class TakeHelperBase
 	{
 		private readonly MediaOpsLiveApi _api;
 
@@ -23,10 +23,12 @@
 		private TimeSpan _timeout;
 		private ConnectionMonitor _connectionMonitor;
 
-		public TakeHelper(MediaOpsLiveApi api)
+		protected TakeHelperBase(MediaOpsLiveApi api)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
+
+		protected abstract void ExecuteConnectionHandlerScript(string script, IConnectionHandlerRequest request, PerformanceTracker performanceTracker);
 
 		public void EnableWaitForCompletion(TimeSpan timeout, ConnectionMonitor connectionMonitor = null)
 		{
@@ -488,7 +490,7 @@
 
 					_api.Logger?.Information($"Executing connection handler script '{script}' for {group.Count()} connections");
 
-					ConnectionHandlerScript.Execute(_api, script, request, performanceTracker);
+					ExecuteConnectionHandlerScript(script, request, performanceTracker);
 				}
 			}
 		}
