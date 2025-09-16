@@ -388,7 +388,7 @@
 					return;
 				}
 
-				var dms = Api.Connection.GetDms();
+				var dms = Api.GetDms();
 
 				var dmsElement = Retry.Do(
 					() => dms.GetElement(elementId),

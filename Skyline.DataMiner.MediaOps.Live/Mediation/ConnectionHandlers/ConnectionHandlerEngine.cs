@@ -7,16 +7,12 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.Logging;
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
-		private readonly Lazy<IDms> _lazyDms;
-
 		internal ConnectionHandlerEngine(IEngine engine, ILogger logger)
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
@@ -25,8 +21,6 @@
 			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw);
 			Api.SetEngine(engine);
 			Api.SetLogger(logger);
-
-			_lazyDms = new Lazy<IDms>(engine.GetDms);
 		}
 
 		public IEngine Engine { get; }
@@ -34,8 +28,6 @@
 		public ILogger Logger { get; }
 
 		public MediaOpsLiveApi Api { get; }
-
-		public IDms Dms => _lazyDms.Value;
 
 		public void Log(string message, Logging.LogType logLevel = Logging.LogType.Information)
 		{

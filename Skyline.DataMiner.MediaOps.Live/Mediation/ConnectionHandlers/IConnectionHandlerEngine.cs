@@ -3,7 +3,6 @@
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.Logging;
 
@@ -14,8 +13,6 @@
 		MediaOpsLiveApi Api { get; }
 
 		ILogger Logger { get; }
-
-		IDms Dms { get; }
 
 		void Log(string message, Logging.LogType logLevel = Logging.LogType.Information);
 

@@ -44,7 +44,7 @@
 				throw new ArgumentNullException(nameof(endpoints));
 			}
 
-			var dms = _api.Connection.GetDms();
+			var dms = _api.GetDms();
 
 			var endpointToElement = endpoints
 				.GroupBy(e => e.Element)
@@ -120,7 +120,7 @@
 		private IReadOnlyCollection<MediationElement> LoadMediationElements()
 		{
 			var elements = new List<MediationElement>();
-			var dms = _api.Connection.GetDms();
+			var dms = _api.GetDms();
 
 			var request = new GetLiteElementInfo
 			{
