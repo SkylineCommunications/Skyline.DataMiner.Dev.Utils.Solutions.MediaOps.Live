@@ -15,9 +15,15 @@
 
 		public override void Log(string message, LogType type = LogType.Information)
 		{
+			// Hide debug messages from the log by default.
 			var logLevel = type == LogType.Debug ? 1 : -1;
 
 			_engine.Log(message, ConvertLogType(type), logLevel);
+
+			if (type == LogType.Error)
+			{
+				_engine.GenerateInformation($"An error occurred: {message}");
+			}
 		}
 
 		private Automation.LogType ConvertLogType(LogType type)
