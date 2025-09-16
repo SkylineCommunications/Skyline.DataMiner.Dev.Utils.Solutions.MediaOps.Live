@@ -282,10 +282,11 @@
 				foreach (var vsgDisconnectRequest in vsgDisconnectRequests)
 				{
 					var destination = vsgDisconnectRequest.Destination;
+					var allLevels = vsgDisconnectRequest.Levels == null || vsgDisconnectRequest.Levels.Count == 0;
 
 					foreach (var levelEndpoint in destination.GetLevelEndpoints())
 					{
-						if (vsgDisconnectRequest.Levels != null &&
+						if (!allLevels &&
 							!vsgDisconnectRequest.Levels.Contains(levelEndpoint.Level))
 						{
 							continue; // skip this level if it is not in the disconnect request
