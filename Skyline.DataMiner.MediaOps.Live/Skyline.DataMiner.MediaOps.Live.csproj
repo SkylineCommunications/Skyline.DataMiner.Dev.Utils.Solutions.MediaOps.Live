@@ -39,6 +39,9 @@
 	</ItemGroup>
 	<ItemGroup>
 		<InternalsVisibleTo Include="$(MSBuildProjectName).UnitTesting" />
+		<InternalsVisibleTo Include="$(MSBuildProjectName).Automation" />
+		<InternalsVisibleTo Include="$(MSBuildProjectName).Protocol" />
+		<InternalsVisibleTo Include="$(MSBuildProjectName).GQI" />
 		<InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
 		<InternalsVisibleTo Include="SLC-AS-MediaOps.LIVE.Tests" />
 	</ItemGroup>

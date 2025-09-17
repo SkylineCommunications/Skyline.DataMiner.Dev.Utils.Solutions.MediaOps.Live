@@ -2,11 +2,11 @@
 {
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
 
-	internal class OrchestrationScriptConstants
+	internal static class OrchestrationScriptConstants
 	{
-		public static readonly string OrchestrationScriptActionRequestScriptInfoKey = nameof(OrchestrationScriptAction);
-		public static readonly string OrchestrationScriptInfoRequestScriptInfoKey = "OrchestrationScriptInfo";
-		public static readonly string ScriptInputRequestScriptInfoKey = "OrchestrationScriptInput";
-		public static readonly string ScriptOutputRequestScriptInfoKey = "OrchestrationScriptOutput";
+		internal static readonly string OrchestrationScriptActionRequestScriptInfoKey = nameof(OrchestrationScriptAction);
+		internal static readonly string OrchestrationScriptInfoRequestScriptInfoKey = "OrchestrationScriptInfo";
+		internal static readonly string ScriptInputRequestScriptInfoKey = "OrchestrationScriptInput";
+		internal static readonly string ScriptOutputRequestScriptInfoKey = "OrchestrationScriptOutput";
 	}
 }
