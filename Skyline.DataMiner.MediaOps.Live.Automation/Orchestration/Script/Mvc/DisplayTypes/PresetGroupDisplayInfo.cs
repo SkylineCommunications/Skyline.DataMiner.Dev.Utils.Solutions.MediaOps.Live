@@ -1,9 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.DisplayTypes
+﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes
 {
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.Sections;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
 	internal class PresetGroupDisplayInfo : IParameterGroupDisplayInfo
 	{

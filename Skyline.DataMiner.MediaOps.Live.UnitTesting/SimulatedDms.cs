@@ -8,6 +8,7 @@
 
 	using Newtonsoft.Json;
 
+	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net.Automation;
@@ -512,7 +513,7 @@
 				]),
 				EntryPointResult = new AutomationEntryPointResult(new RequestScriptInfoOutput
 				{
-					Data = new Dictionary<string, string> { { OrchestrationScript.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(script.OrchestrationScriptInfo) } },
+					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(script.OrchestrationScriptInfo) } },
 				}),
 			};
 		}

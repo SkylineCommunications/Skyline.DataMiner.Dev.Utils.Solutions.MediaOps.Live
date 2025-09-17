@@ -1,9 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.Dialogs
+﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs
 {
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.Sections;
+	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
 	public class GetOrchestrationValuesDialog : Dialog
 	{

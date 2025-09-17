@@ -1,6 +1,6 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects
+﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects
 {
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.DisplayTypes;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.Net;
 
 	public class ParameterGroup

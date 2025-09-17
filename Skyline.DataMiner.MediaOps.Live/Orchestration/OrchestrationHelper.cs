@@ -51,7 +51,7 @@
 
 			var metaData = new Dictionary<string, string>();
 			metaData[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.PerformOrchestration);
-			metaData[OrchestrationScript.ScriptInputRequestScriptInfoKey] = JsonConvert.SerializeObject(input);
+			metaData[OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey] = JsonConvert.SerializeObject(input);
 
 			messageBuilder.SetEntryPoint(new AutomationEntryPoint
 			{

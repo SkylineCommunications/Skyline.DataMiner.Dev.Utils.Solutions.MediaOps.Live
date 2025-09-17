@@ -1,4 +1,4 @@
-namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
+namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 {
 	using System;
 	using System.Collections.Generic;
@@ -6,29 +6,33 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 
 	using Newtonsoft.Json;
 
+	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.Automation;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.Dialogs;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
+	using DropdownParameterDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.DropdownParameterDisplayInfo;
 	using GroupPresetOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<Mvc.DisplayTypes.PresetGroupDisplayInfo.PresetInfo>;
+	using NumericParameterDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.NumericParameterDisplayInfo;
 	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
+	using PresetGroupDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.PresetGroupDisplayInfo;
 	using ValueOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<object>;
 
 	public abstract class OrchestrationScript
 	{
-		internal static readonly string OrchestrationScriptActionRequestScriptInfoKey = nameof(OrchestrationScriptAction);
-		internal static readonly string OrchestrationScriptInfoRequestScriptInfoKey = "OrchestrationScriptInfo";
-		internal static readonly string ScriptInputRequestScriptInfoKey = "OrchestrationScriptInput";
-		internal static readonly string ScriptOutputRequestScriptInfoKey = "OrchestrationScriptOutput";
-
 		private List<ParameterInfo> _parameterInfos;
 		private Dictionary<string, string> _metadata = new Dictionary<string, string>();
 
@@ -201,7 +205,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 		{
 			string unparsedOrchestrationScriptAction = null;
 			if (metaData is null ||
-			    !metaData.TryGetValue(OrchestrationScriptActionRequestScriptInfoKey, out unparsedOrchestrationScriptAction) ||
+			    !metaData.TryGetValue(OrchestrationScriptConstants.OrchestrationScriptActionRequestScriptInfoKey, out unparsedOrchestrationScriptAction) ||
 			    !Enum.TryParse(unparsedOrchestrationScriptAction, out OrchestrationScriptAction orchestrationScriptAction))
 			{
 				throw new InvalidOperationException($"No orchestration script action was provided (got {unparsedOrchestrationScriptAction}");
@@ -212,14 +216,14 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 				case OrchestrationScriptAction.OrchestrationScriptInfo:
 				{
 					ScriptInfo scriptInfo = GetScriptInfo();
-					return new Dictionary<string, string> { { OrchestrationScriptInfoRequestScriptInfoKey, scriptInfo == null ? null : JsonConvert.SerializeObject(scriptInfo) } };
+					return new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, scriptInfo == null ? null : JsonConvert.SerializeObject(scriptInfo) } };
 				}
 
 				case OrchestrationScriptAction.PerformOrchestration:
 				case OrchestrationScriptAction.PerformOrchestrationAskMissingValues:
 				{
 					ScriptOutput scriptOutput = PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
-					return new Dictionary<string, string> { { ScriptOutputRequestScriptInfoKey, scriptOutput == null ? null : JsonConvert.SerializeObject(scriptOutput) } };
+					return new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, scriptOutput == null ? null : JsonConvert.SerializeObject(scriptOutput) } };
 				}
 
 				default:
@@ -497,7 +501,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
 			ScriptInfo scriptInfo = GetScriptInfo();
 
 			OrchestrationScriptInput orchestrationScriptInput = new OrchestrationScriptInput();
-			if (metaData.TryGetValue(ScriptInputRequestScriptInfoKey, out string serializedScriptInputRequestScriptInfo))
+			if (metaData.TryGetValue(OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey, out string serializedScriptInputRequestScriptInfo))
 			{
 				orchestrationScriptInput = JsonConvert.DeserializeObject<OrchestrationScriptInput>(serializedScriptInputRequestScriptInfo);
 			}
