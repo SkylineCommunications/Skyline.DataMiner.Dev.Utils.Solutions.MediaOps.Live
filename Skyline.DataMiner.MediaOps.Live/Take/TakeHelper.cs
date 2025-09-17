@@ -6,6 +6,8 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
+	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
@@ -14,6 +16,8 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp;
+	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
 	public class TakeHelper
@@ -24,7 +28,7 @@
 		private TimeSpan _timeout;
 		private ConnectionMonitor _connectionMonitor;
 
-		public TakeHelper(MediaOpsLiveApi api)
+		protected internal TakeHelper(MediaOpsLiveApi api)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
@@ -77,8 +81,8 @@
 
 					PrepareData(takeContexts, performanceTracker);
 
-					NotifyPendingConnectionActions(ScriptAction.Connect, takeContexts, performanceTracker);
-					ExecuteConnectionHandlerScripts(ScriptAction.Connect, takeContexts, performanceTracker);
+					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
+					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 
 					if (_waitForCompletion)
 					{
@@ -151,8 +155,8 @@
 
 					PrepareData(takeContexts, performanceTracker);
 
-					NotifyPendingConnectionActions(ScriptAction.Disconnect, takeContexts, performanceTracker);
-					ExecuteConnectionHandlerScripts(ScriptAction.Disconnect, takeContexts, performanceTracker);
+					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
+					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 
 					if (_waitForCompletion)
 					{
@@ -409,7 +413,7 @@
 			}
 		}
 
-		private void NotifyPendingConnectionActions(ScriptAction action, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void NotifyPendingConnectionActions(ConnectionHandlerScriptAction action, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -419,24 +423,24 @@
 				{
 					var mediationElement = group.Key;
 
-					var requests = new List<Mediation.InterApp.Messages.PendingConnectionAction>();
+					var requests = new List<PendingConnectionAction>();
 
 					foreach (var connection in group)
 					{
-						var request = new Mediation.InterApp.Messages.PendingConnectionAction
+						var request = new PendingConnectionAction
 						{
 							Time = now,
-							Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
+							Destination = new Mediation.InterApp.EndpointInfo(connection.Destination),
 						};
 
 						switch (action)
 						{
-							case ScriptAction.Connect:
-								request.Action = Mediation.InterApp.Messages.ConnectionAction.Connect;
-								request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(connection.Source);
+							case ConnectionHandlerScriptAction.Connect:
+								request.Action = ConnectionAction.Connect;
+								request.PendingSource = new Mediation.InterApp.EndpointInfo(connection.Source);
 								break;
-							case ScriptAction.Disconnect:
-								request.Action = Mediation.InterApp.Messages.ConnectionAction.Disconnect;
+							case ConnectionHandlerScriptAction.Disconnect:
+								request.Action = ConnectionAction.Disconnect;
 								break;
 							default:
 								throw new InvalidOperationException($"Invalid action: {action}");
@@ -449,7 +453,7 @@
 
 					var commands = InterAppCallFactory.CreateNew();
 
-					var message = new Mediation.InterApp.Messages.NotifyPendingConnectionActionMessage { Actions = requests };
+					var message = new NotifyPendingConnectionActionMessage { Actions = requests };
 					commands.Messages.Add(message);
 
 					commands.Send(
@@ -457,12 +461,12 @@
 						mediationElement.DmaId,
 						mediationElement.ElementId,
 						9000000,
-						[typeof(Mediation.InterApp.Messages.NotifyPendingConnectionActionMessage)]);
+						[typeof(NotifyPendingConnectionActionMessage)]);
 				}
 			}
 		}
 
-		private void ExecuteConnectionHandlerScripts(ScriptAction action, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction action, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -472,13 +476,13 @@
 
 					IConnectionHandlerRequest request = action switch
 					{
-						ScriptAction.Connect => new CreateConnectionsRequest
+						ConnectionHandlerScriptAction.Connect => new CreateConnectionsRequest
 						{
 							Connections = group
 								.Select(x => new Mediation.Data.ConnectionInfo(x.Source, x.Destination))
 								.ToArray(),
 						},
-						ScriptAction.Disconnect => new DisconnectDestinationsRequest
+						ConnectionHandlerScriptAction.Disconnect => new DisconnectDestinationsRequest
 						{
 							Destinations = group
 								.Select(x => new Mediation.Data.EndpointInfo(x.Destination))
@@ -487,10 +491,29 @@
 						_ => throw new InvalidOperationException($"Invalid action: {action}"),
 					};
 
-					_api.Logger?.Information($"Executing connection handler script '{script}' for {group.Count()} connections");
+					_api.Logger?.Information($"Executing connection handler script '{script}' ({action}) for {group.Count()} connections");
 
-					ConnectionHandlerScript.Execute(_api, script, request, performanceTracker);
+					ExecuteConnectionHandlerScript(script, action, request, performanceTracker);
 				}
+			}
+		}
+
+		protected virtual void ExecuteConnectionHandlerScript(string script, ConnectionHandlerScriptAction action, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				var inputData = JsonConvert.SerializeObject(request);
+
+				performanceTracker.AddMetadata("Script", script);
+				performanceTracker.AddMetadata("Input Data", inputData);
+
+				var parameters = new Dictionary<string, string>
+				{
+					{ "Action", Convert.ToString(action) },
+					{ "Input Data", inputData },
+				};
+
+				AutomationHelper.ExecuteAutomationScript(_api.Connection, script, parameters);
 			}
 		}
 

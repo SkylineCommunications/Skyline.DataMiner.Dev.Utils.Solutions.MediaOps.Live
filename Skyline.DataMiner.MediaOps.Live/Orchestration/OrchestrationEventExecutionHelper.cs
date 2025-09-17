@@ -248,7 +248,7 @@
 					}
 				}
 
-				TakeHelper takeHelper = new TakeHelper(_api);
+				var takeHelper = _api.GetConnectionHandler();
 				takeHelper.EnableWaitForCompletion(_settings.Timeout);
 
 				takeHelper.Disconnect(requests, performanceTracker);
@@ -318,7 +318,7 @@
 					}
 				}
 
-				TakeHelper takeHelper = new TakeHelper(_api);
+				var takeHelper = _api.GetConnectionHandler();
 				takeHelper.EnableWaitForCompletion(_settings.Timeout);
 
 				takeHelper.Take(requests, performanceTracker);
@@ -482,7 +482,7 @@
 				input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
 			}
 
-			var result = AutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
+			var result = OrchestrationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
 
 			return !result.HadError && !errorMessages.Any();
 		}

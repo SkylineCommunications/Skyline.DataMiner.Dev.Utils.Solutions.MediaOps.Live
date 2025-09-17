@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects
+﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	using System;
 

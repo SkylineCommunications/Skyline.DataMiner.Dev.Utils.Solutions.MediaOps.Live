@@ -45,8 +45,12 @@
 		<PackageReference Include="Skyline.DataMiner.Utils.DOM" Version="10.5.2.4" />
 		<PackageReference Include="Skyline.DataMiner.Utils.PerformanceAnalyzer" Version="3.0.2" />
 	</ItemGroup>
+	
 	<ItemGroup>
-	  <ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live\Skyline.DataMiner.MediaOps.Live.csproj" />
+		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live\Skyline.DataMiner.MediaOps.Live.csproj" />
+		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live.Automation\Skyline.DataMiner.MediaOps.Live.Automation.csproj" />
+		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live.GQI\Skyline.DataMiner.MediaOps.Live.GQI.csproj" />
+		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live.Protocol\Skyline.DataMiner.MediaOps.Live.Protocol.csproj" />
 	</ItemGroup>
 
 	<Target Name="CopyNuGetPackage" AfterTargets="Pack" Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

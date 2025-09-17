@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration
+﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling
 {
 	using System;
 	using System.Collections.Generic;
@@ -118,16 +118,16 @@
 			return
 			[
 				Constants.OrchestrationSlidingWindowSchedulerTaskNaming,
-				String.Empty,
-				String.Empty,
+				string.Empty,
+				string.Empty,
 				"00:00:00",
 				"daily",
 				$"{Constants.SlidingWindowSchedulerExecutionFrequencyInMinutes}",
-				String.Empty,
+				string.Empty,
 				Constants.OrchestrationSlidingWindowSchedulerTaskNaming,
 				"TRUE",
-				String.Empty,
-				String.Empty,
+				string.Empty,
+				string.Empty,
 			];
 		}
 

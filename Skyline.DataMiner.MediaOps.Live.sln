@@ -9,6 +9,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skyline.DataMiner.MediaOps.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skyline.DataMiner.MediaOps.Live.UnitTesting", "Skyline.DataMiner.MediaOps.Live.UnitTesting\Skyline.DataMiner.MediaOps.Live.UnitTesting.csproj", "{653C9CDA-4207-0AE6-7AD5-86D5EF6D69FE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skyline.DataMiner.MediaOps.Live.Automation", "Skyline.DataMiner.MediaOps.Live.Automation\Skyline.DataMiner.MediaOps.Live.Automation.csproj", "{8721FA7B-B581-A070-23A9-E9CE9638623D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skyline.DataMiner.MediaOps.Live.Protocol", "Skyline.DataMiner.MediaOps.Live.Protocol\Skyline.DataMiner.MediaOps.Live.Protocol.csproj", "{DCD85D81-FE03-C54C-585F-1905EC747C15}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skyline.DataMiner.MediaOps.Live.GQI", "Skyline.DataMiner.MediaOps.Live.GQI\Skyline.DataMiner.MediaOps.Live.GQI.csproj", "{1C507AB0-3D8B-F644-1165-2C08C582F8E6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +33,18 @@ Global
 		{653C9CDA-4207-0AE6-7AD5-86D5EF6D69FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{653C9CDA-4207-0AE6-7AD5-86D5EF6D69FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{653C9CDA-4207-0AE6-7AD5-86D5EF6D69FE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8721FA7B-B581-A070-23A9-E9CE9638623D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8721FA7B-B581-A070-23A9-E9CE9638623D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8721FA7B-B581-A070-23A9-E9CE9638623D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8721FA7B-B581-A070-23A9-E9CE9638623D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCD85D81-FE03-C54C-585F-1905EC747C15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCD85D81-FE03-C54C-585F-1905EC747C15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCD85D81-FE03-C54C-585F-1905EC747C15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCD85D81-FE03-C54C-585F-1905EC747C15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1C507AB0-3D8B-F644-1165-2C08C582F8E6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C507AB0-3D8B-F644-1165-2C08C582F8E6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C507AB0-3D8B-F644-1165-2C08C582F8E6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C507AB0-3D8B-F644-1165-2C08C582F8E6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

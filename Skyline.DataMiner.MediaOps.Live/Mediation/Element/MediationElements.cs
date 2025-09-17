@@ -8,11 +8,10 @@
 	using Skyline.DataMiner.MediaOps.Live;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net.Messages;
 
-	internal sealed class MediationElements
+	public sealed class MediationElements
 	{
 		private readonly MediaOpsLiveApi _api;
 		private readonly ExpiringCache<IReadOnlyCollection<MediationElement>> _elementCache = new(TimeSpan.FromMinutes(10));
@@ -37,7 +36,7 @@
 			return _elementCache.GetOrRefresh(LoadMediationElements);
 		}
 
-		public IDictionary<EndpointInfo, MediationElement> GetMediationElements(IEnumerable<EndpointInfo> endpoints)
+		public IDictionary<Endpoint, MediationElement> GetMediationElements(IEnumerable<Endpoint> endpoints)
 		{
 			if (endpoints is null)
 			{
@@ -47,26 +46,28 @@
 			var dms = _api.GetDms();
 
 			var endpointToElement = endpoints
-				.GroupBy(e => e.Element)
+				.Where(e => e.Element.HasValue)
+				.GroupBy(e => e.Element.Value)
 				.SelectMany(group =>
 				{
-					var element = dms.GetElement(new DmsElementId(group.Key));
+					var element = dms.GetElement(group.Key);
 					return group.Select(endpoint => new { endpoint, element });
 				})
 				.ToDictionary(x => x.endpoint, x => x.element);
 
-			var allMediationElements = GetAllElementsCached().ToDictionary(e => e.DmsElement.Host.Id);
+			var allMediationElements = GetAllElementsCached()
+				.ToDictionary(e => e.DmsElement.Host.Id);
 
-			var result = new Dictionary<EndpointInfo, MediationElement>();
+			var result = new Dictionary<Endpoint, MediationElement>();
 
-			foreach (var group in endpointToElement.GroupBy(kvp => kvp.Value.Host.Id))
+			foreach (var hostGroup in endpointToElement.GroupBy(kvp => kvp.Value.Host.Id))
 			{
-				if (!allMediationElements.TryGetValue(group.Key, out var mediationElement))
+				if (!allMediationElements.TryGetValue(hostGroup.Key, out var mediationElement))
 				{
-					throw new InvalidOperationException($"Couldn't find MediaOps mediation element on hosting agent {group.Key}");
+					throw new InvalidOperationException($"Couldn't find MediaOps mediation element on hosting agent {hostGroup.Key}");
 				}
 
-				foreach (var kvp in group)
+				foreach (var kvp in hostGroup)
 				{
 					result[kvp.Key] = mediationElement;
 				}
@@ -75,22 +76,7 @@
 			return result;
 		}
 
-		public IDictionary<Endpoint, MediationElement> GetMediationElements(IEnumerable<Endpoint> endpoints)
-		{
-			if (endpoints is null)
-			{
-				throw new ArgumentNullException(nameof(endpoints));
-			}
-
-			var endpointInfoMap = endpoints.ToDictionary(x => new EndpointInfo(x));
-			var mediationElementMap = GetMediationElements(endpointInfoMap.Keys);
-
-			return endpointInfoMap.ToDictionary(
-				kvp => kvp.Value,
-				kvp => mediationElementMap[kvp.Key]);
-		}
-
-		public MediationElement GetMediationElement(EndpointInfo endpoint)
+		public MediationElement GetMediationElement(Endpoint endpoint)
 		{
 			if (endpoint is null)
 			{
@@ -105,16 +91,6 @@
 			}
 
 			return mediationElements[endpoint];
-		}
-
-		public MediationElement GetMediationElement(Endpoint endpoint)
-		{
-			if (endpoint is null)
-			{
-				throw new ArgumentNullException(nameof(endpoint));
-			}
-
-			return GetMediationElement(new EndpointInfo(endpoint));
 		}
 
 		private IReadOnlyCollection<MediationElement> LoadMediationElements()

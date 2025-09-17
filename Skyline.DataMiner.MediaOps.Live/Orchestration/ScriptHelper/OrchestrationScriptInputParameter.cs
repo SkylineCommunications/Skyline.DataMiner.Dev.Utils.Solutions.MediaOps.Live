@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration
+﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
 {
 	using System;
 	using System.Collections.Generic;
@@ -7,7 +7,7 @@
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 
-	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
+	using Parameter = Net.Profiles.Parameter;
 
 	public class OrchestrationScriptInputParameter
 	{

@@ -8,7 +8,6 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
@@ -102,7 +101,7 @@
 
 		private ScriptInfo GetScriptOrchestrationInfo(string scriptName)
 		{
-			var response = AutomationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName);
+			var response = OrchestrationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName);
 
 			if (response?.EntryPointResult?.Result == null || response.HadError)
 			{
