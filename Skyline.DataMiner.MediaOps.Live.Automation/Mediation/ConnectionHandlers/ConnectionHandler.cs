@@ -9,6 +9,7 @@
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Logging;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 
 	public abstract class ConnectionHandler
@@ -35,19 +36,19 @@
 
 			switch (inputData.Action)
 			{
-				case ScriptAction.GetSupportedElements:
+				case ConnectionHandlerScriptAction.GetSupportedElements:
 					HandleGetSupportedElements(engine, inputData, logger);
 					break;
-				case ScriptAction.GetSubscriptionInfo:
+				case ConnectionHandlerScriptAction.GetSubscriptionInfo:
 					HandleGetSubscriptionInfo(engine, inputData, logger);
 					break;
-				case ScriptAction.HandleParameterUpdate:
+				case ConnectionHandlerScriptAction.HandleParameterUpdate:
 					HandleParameterUpdate(engine, inputData, logger);
 					break;
-				case ScriptAction.Connect:
+				case ConnectionHandlerScriptAction.Connect:
 					HandleConnect(engine, inputData, logger);
 					break;
-				case ScriptAction.Disconnect:
+				case ConnectionHandlerScriptAction.Disconnect:
 					HandleDisconnect(engine, inputData, logger);
 					break;
 				default:

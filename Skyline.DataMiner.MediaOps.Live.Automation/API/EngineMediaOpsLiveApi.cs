@@ -4,20 +4,26 @@
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Take;
+	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net;
 
 	public class EngineMediaOpsLiveApi : MediaOpsLiveApi
 	{
+		private readonly IEngine _engine;
+
 		public EngineMediaOpsLiveApi(IEngine engine, IConnection connection) : base(connection)
 		{
-			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
+			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 		}
 
-		public EngineMediaOpsLiveApi(IEngine engine) : base(engine.GetUserConnection())
+		public EngineMediaOpsLiveApi(IEngine engine) : this(engine, engine.GetUserConnection())
 		{
-			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 		}
 
-		public IEngine Engine { get; }
+		public override TakeHelper GetConnectionHandler()
+		{
+			return new EngineTakeHelper(_engine, this);
+		}
 	}
 }

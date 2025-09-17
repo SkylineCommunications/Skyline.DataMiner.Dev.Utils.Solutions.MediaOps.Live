@@ -19,10 +19,6 @@
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 		}
 
-		internal EngineTakeHelper(IEngine engine) : this(engine, engine.GetMediaOpsLiveApi())
-		{
-		}
-
 		protected override void ExecuteConnectionHandlerScript(string script, ConnectionHandlerScriptAction action, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))

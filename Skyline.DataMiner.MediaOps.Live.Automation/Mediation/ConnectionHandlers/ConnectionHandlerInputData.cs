@@ -5,6 +5,7 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 
 	internal class ConnectionHandlerInputData
 	{
@@ -21,7 +22,7 @@
 
 			var actionInput = engine.GetScriptParam("Action").Value;
 
-			if (!Enum.TryParse<ScriptAction>(actionInput, out var action))
+			if (!Enum.TryParse<ConnectionHandlerScriptAction>(actionInput, out var action))
 			{
 				throw new InvalidOperationException($"Invalid action: {actionInput}");
 			}
@@ -33,7 +34,7 @@
 			};
 		}
 
-		public ScriptAction Action { get; private set; }
+		public ConnectionHandlerScriptAction Action { get; private set; }
 
 		public string InputData { get; private set; }
 

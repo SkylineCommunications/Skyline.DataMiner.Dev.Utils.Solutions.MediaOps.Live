@@ -26,7 +26,6 @@
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
 
-			ConnectionHandler = new TakeHelper(this);
 			MediationElements = new MediationElements(this);
 
 			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper, connection);
@@ -46,9 +45,7 @@
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
 
-		internal TakeHelper ConnectionHandler { get; }
-
-		internal MediationElements MediationElements { get; }
+		public MediationElements MediationElements { get; }
 
 		public EndpointRepository Endpoints { get; }
 
@@ -70,6 +67,11 @@
 		public IDms GetDms()
 		{
 			return Connection.GetDms();
+		}
+
+		public virtual TakeHelper GetConnectionHandler()
+		{
+			return new TakeHelper(this);
 		}
 
 		public bool IsInstalled()

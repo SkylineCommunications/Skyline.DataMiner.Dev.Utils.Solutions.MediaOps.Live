@@ -28,7 +28,7 @@
 		private TimeSpan _timeout;
 		private ConnectionMonitor _connectionMonitor;
 
-		public TakeHelper(MediaOpsLiveApi api)
+		protected internal TakeHelper(MediaOpsLiveApi api)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
