@@ -3,7 +3,7 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 	using Skyline.DataMiner.Net.Profiles;
 

@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration
+﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-
+	using Skyline.DataMiner.MediaOps.Live;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net;

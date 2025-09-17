@@ -8,7 +8,7 @@
 
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.Advanced;
 

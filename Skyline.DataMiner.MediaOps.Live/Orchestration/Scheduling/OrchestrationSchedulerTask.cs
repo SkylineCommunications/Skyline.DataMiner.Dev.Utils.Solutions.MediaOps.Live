@@ -1,10 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration
+﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
 	using Newtonsoft.Json;
+
+	using Skyline.DataMiner.MediaOps.Live;
 
 	using Skyline.DataMiner.Net.Messages;
 
@@ -110,11 +112,11 @@
 				DateTime.LocalDateTime.ToString("HH:mm:ss"),
 				"once",
 				"1",
-				String.Empty,
+				string.Empty,
 				Constants.OrchestrationTaskNaming,
 				"TRUE",
-				String.Empty,
-				String.Empty,
+				string.Empty,
+				string.Empty,
 			]);
 
 			return generalInfoTaskData.ToArray();

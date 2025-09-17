@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages
+﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.InterApp
 {
 	public enum ConnectionAction
 	{

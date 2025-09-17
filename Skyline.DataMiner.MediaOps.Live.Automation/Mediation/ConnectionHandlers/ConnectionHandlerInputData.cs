@@ -5,7 +5,6 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 
 	internal class ConnectionHandlerInputData
 	{

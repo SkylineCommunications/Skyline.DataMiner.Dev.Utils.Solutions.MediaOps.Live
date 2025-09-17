@@ -8,6 +8,7 @@
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.MediaOps.Live.Automation.API;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Logging;
 
 	public static class Extensions
@@ -19,7 +20,7 @@
 				throw new ArgumentNullException(nameof(engine));
 			}
 
-			var api = new MediaOpsLiveApi(engine.GetUserConnection());
+			var api = new EngineMediaOpsLiveApi(engine);
 			api.SetLogger(new EngineLogger(engine));
 
 			return api;

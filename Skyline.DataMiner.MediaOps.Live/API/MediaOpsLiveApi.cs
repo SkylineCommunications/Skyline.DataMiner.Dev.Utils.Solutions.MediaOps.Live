@@ -26,7 +26,7 @@
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
 
-			ConnectionsHelper = new TakeHelper(this);
+			ConnectionHandler = new TakeHelper(this);
 			MediationElements = new MediationElements(this);
 
 			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper, connection);
@@ -46,7 +46,7 @@
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
 
-		internal TakeHelper ConnectionsHelper { get; }
+		internal TakeHelper ConnectionHandler { get; }
 
 		internal MediationElements MediationElements { get; }
 
