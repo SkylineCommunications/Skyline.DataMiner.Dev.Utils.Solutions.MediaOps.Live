@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs
 {
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections;
@@ -35,46 +36,20 @@
 		{
 			parameterSections = new List<(ParameterInfo info, ParameterSection section)>(parameterInfos.Count);
 			sectionsToDisplay = new List<Section>(parameterInfos.Count);
-			ParameterGroup lastGroup = null;
-			List<ParameterInfo> infosForLastGroup = null;
-			foreach (var parameterInfo in parameterInfos)
+
+			foreach (IGrouping<ParameterGroup, ParameterInfo> grouping in parameterInfos.Where(paramInfo => paramInfo.Group != null).GroupBy(paramInfo => paramInfo.Group))
 			{
-				if (lastGroup != parameterInfo.Group)
-				{
-					if (lastGroup != null)
-					{
-						InitializeGroupSection(lastGroup, infosForLastGroup, parameterSections, sectionsToDisplay);
-					}
-
-					lastGroup = parameterInfo.Group;
-					if (lastGroup != null)
-					{
-						infosForLastGroup = new List<ParameterInfo>();
-					}
-				}
-
-				if (parameterInfo.Group is null)
-				{
-					var section = InitializeParameterSection(parameterInfo);
-					parameterSections.Add((parameterInfo, section));
-					sectionsToDisplay.Add(section);
-					continue;
-				}
-
-				infosForLastGroup.Add(parameterInfo);
+				var section = grouping.Key.DisplayInfo.CreateParameterGroupSection();
+				parameterSections.AddRange(section.InitializeSection(parameterInfos));
+				sectionsToDisplay.Add(section);
 			}
 
-			if (lastGroup != null)
+			foreach (ParameterInfo parameterInfo in parameterInfos.Where(paramInfo => paramInfo.Group == null))
 			{
-				InitializeGroupSection(lastGroup, infosForLastGroup, parameterSections, sectionsToDisplay);
+				var section = InitializeParameterSection(parameterInfo);
+				parameterSections.Add((parameterInfo, section));
+				sectionsToDisplay.Add(section);
 			}
-		}
-
-		private static void InitializeGroupSection(ParameterGroup group, IEnumerable<ParameterInfo> parameterInfos, List<(ParameterInfo info, ParameterSection section)> parameterSections, List<Section> sectionsToDisplay)
-		{
-			var section = group.DisplayInfo.CreateParameterGroupSection();
-			parameterSections.AddRange(section.InitializeSection(parameterInfos));
-			sectionsToDisplay.Add(section);
 		}
 
 		private static ParameterSection InitializeParameterSection(ParameterInfo info)
