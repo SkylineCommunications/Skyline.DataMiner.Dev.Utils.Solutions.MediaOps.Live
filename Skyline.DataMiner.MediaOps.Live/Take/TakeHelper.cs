@@ -16,7 +16,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
@@ -430,14 +430,14 @@
 						var request = new PendingConnectionAction
 						{
 							Time = now,
-							Destination = new Mediation.InterApp.EndpointInfo(connection.Destination),
+							Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
 						};
 
 						switch (action)
 						{
 							case ConnectionHandlerScriptAction.Connect:
 								request.Action = ConnectionAction.Connect;
-								request.PendingSource = new Mediation.InterApp.EndpointInfo(connection.Source);
+								request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(connection.Source);
 								break;
 							case ConnectionHandlerScriptAction.Disconnect:
 								request.Action = ConnectionAction.Disconnect;

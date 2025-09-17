@@ -9,7 +9,7 @@
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.Logging;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages;
 
 	using Automation = Skyline.DataMiner.Automation;
 	using LogType = Skyline.DataMiner.MediaOps.Live.Logging.LogType;
