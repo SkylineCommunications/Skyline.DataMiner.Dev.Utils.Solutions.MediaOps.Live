@@ -177,8 +177,7 @@
 				return clonedConnection;
 			}
 
-			throw new InvalidOperationException(
-				"Failed to clone the provided connection. Use the Initialize() method to provide a custom connection.");
+			throw new InvalidOperationException("Failed to clone the provided connection.");
 		}
 	}
 }

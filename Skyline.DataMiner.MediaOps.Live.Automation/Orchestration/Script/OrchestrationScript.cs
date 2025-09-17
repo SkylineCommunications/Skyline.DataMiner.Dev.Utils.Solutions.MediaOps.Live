@@ -236,10 +236,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			ScriptInfo info = new ScriptInfo();
 			foreach (IOrchestrationParameters orchestrationParameters in GetParameters())
 			{
-				if (orchestrationParameters is OrchestrationProfileDefinition)
+				if (orchestrationParameters is OrchestrationProfileDefinition definition)
 				{
-					info.ProfileDefinitionReferences.Add(((OrchestrationProfileDefinition)orchestrationParameters).GetDefinitionReference(_engine));
-					info.ProfileDefinitions.Add(((OrchestrationProfileDefinition)orchestrationParameters).GetDefinitionReference(_engine).ID);
+					info.ProfileDefinitionReferences.Add(definition.GetDefinitionReference(_engine));
+					info.ProfileDefinitions.Add(definition.GetDefinitionReference(_engine).ID);
 				}
 
 				foreach (KeyValuePair<string, Parameter> keyValuePair in orchestrationParameters.GetParameterReferences(_engine))
