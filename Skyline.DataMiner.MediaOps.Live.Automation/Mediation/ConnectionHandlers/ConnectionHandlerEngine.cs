@@ -6,26 +6,26 @@
 
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp;
 
+	using Automation = Skyline.DataMiner.Automation;
 	using LogType = Skyline.DataMiner.MediaOps.Live.Logging.LogType;
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
-		internal ConnectionHandlerEngine(IEngine engine, ILogger logger)
+		internal ConnectionHandlerEngine(Automation.IEngine engine, ILogger logger)
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-			Api = new MediaOpsLiveApi(Skyline.DataMiner.Automation.Engine.SLNetRaw);
+			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw);
 			Api.SetLogger(logger);
 		}
 
-		public IEngine Engine { get; }
+		public Automation.IEngine Engine { get; }
 
 		public ILogger Logger { get; }
 
