@@ -157,7 +157,7 @@
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e}";
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
 				catch (Exception e)
@@ -165,7 +165,7 @@
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e}";
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
 
@@ -179,7 +179,7 @@
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e}";
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
 				catch (Exception e)
@@ -187,7 +187,7 @@
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e}";
+						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
 
