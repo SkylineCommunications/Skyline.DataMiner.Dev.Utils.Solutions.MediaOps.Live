@@ -20,6 +20,9 @@
 				throw new ArgumentNullException(nameof(engine));
 			}
 
+			// Ensure the cache is initialized with Engine.SLNetRaw
+			_ = StaticMediaOpsLiveCache.GetOrCreate(Engine.SLNetRaw);
+
 			var api = new EngineMediaOpsLiveApi(engine);
 			api.SetLogger(new EngineLogger(engine));
 

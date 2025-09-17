@@ -14,7 +14,6 @@
 		private static readonly object _lock = new();
 		private static volatile StaticMediaOpsLiveCache _instance;
 
-		private readonly Lazy<MediaOpsLiveApi> _lazyApi;
 		private readonly Lazy<VirtualSignalGroupEndpointsCache> _lazyVirtualSignalGroupsCache;
 		private readonly Lazy<LevelsCache> _lazyLevelsCache;
 		private readonly Lazy<LiteConnectivityInfoProvider> _lazyLiteConnectivityInfoProvider;
@@ -27,7 +26,8 @@
 		{
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
-			_lazyApi = new(() => new MediaOpsLiveApi(Connection));
+			Api = new MediaOpsLiveApi(Connection);
+
 			_lazyVirtualSignalGroupsCache = new(() => new VirtualSignalGroupEndpointsCache(Api, subscribe: true));
 			_lazyLevelsCache = new(() => new LevelsCache(Api, subscribe: true));
 			_lazyLiteConnectivityInfoProvider = new(() => new LiteConnectivityInfoProvider(Api, subscribe: true));
@@ -35,9 +35,9 @@
 			_lazyConnectionMonitor = new(() => new ConnectionMonitor(Api, LiteConnectivityInfoProvider));
 		}
 
-		internal IConnection Connection { get; }
+		private IConnection Connection { get; }
 
-		internal MediaOpsLiveApi Api => _lazyApi.Value;
+		private MediaOpsLiveApi Api { get; }
 
 		public VirtualSignalGroupEndpointsCache VirtualSignalGroupsCache => _lazyVirtualSignalGroupsCache.Value;
 
@@ -49,7 +49,7 @@
 
 		public ConnectionMonitor ConnectionMonitor => _lazyConnectionMonitor.Value;
 
-		internal static StaticMediaOpsLiveCache GetOrCreate(Func<IConnection> connectionFactory)
+		public static StaticMediaOpsLiveCache GetOrCreate(Func<IConnection> connectionFactory)
 		{
 			if (connectionFactory == null)
 			{
@@ -71,7 +71,7 @@
 			return _instance;
 		}
 
-		internal static StaticMediaOpsLiveCache GetOrCreate(IConnection baseConnection)
+		public static StaticMediaOpsLiveCache GetOrCreate(IConnection baseConnection)
 		{
 			if (baseConnection is null)
 			{
@@ -88,7 +88,7 @@
 						// This prevents potential conflicts when the base connection would be closed or unsubscribed elsewhere.
 						var connection = CloneConnection(baseConnection);
 
-						Initialize(connection);
+						_instance = new StaticMediaOpsLiveCache(connection);
 					}
 				}
 			}
@@ -96,7 +96,7 @@
 			return _instance;
 		}
 
-		internal static StaticMediaOpsLiveCache Get()
+		public static StaticMediaOpsLiveCache Get()
 		{
 			lock (_lock)
 			{
@@ -109,29 +109,11 @@
 			}
 		}
 
-		internal static void Initialize(IConnection connection)
-		{
-			if (connection == null)
-			{
-				throw new ArgumentNullException(nameof(connection));
-			}
-
-			lock (_lock)
-			{
-				if (_instance != null)
-				{
-					throw new InvalidOperationException($"The {nameof(StaticMediaOpsLiveCache)} instance has already been created.");
-				}
-
-				_instance = new StaticMediaOpsLiveCache(connection);
-			}
-		}
-
 		/// <summary>
 		/// Resets the singleton instance, disposing of the existing instance if necessary.
 		/// For testing purposes only.
 		/// </summary>
-		internal static void Reset()
+		public static void Reset()
 		{
 			// Replace the instance with null in a thread-safe manner
 			var oldInstance = Interlocked.Exchange(ref _instance, null);
@@ -190,12 +172,13 @@
 				return baseConnection;
 			}
 
-			if (!ConnectionHelper.TryCloneConnection(baseConnection, "MediaOps.Live - Connection", out var clonedConnection))
+			if (ConnectionHelper.TryCloneConnection(baseConnection, "MediaOps.Live - Connection", out var clonedConnection))
 			{
-				throw new Exception("Failed to clone the provided connection. Use the Initialize() method to provide a custom connection.");
+				return clonedConnection;
 			}
 
-			return clonedConnection;
+			throw new InvalidOperationException(
+				"Failed to clone the provided connection. Use the Initialize() method to provide a custom connection.");
 		}
 	}
 }
