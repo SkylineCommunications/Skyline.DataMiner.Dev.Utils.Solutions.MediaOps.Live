@@ -5,7 +5,6 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Data;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -205,43 +204,36 @@
 
 		private void CheckDuplicatesBeforeSave(ICollection<Endpoint> instances)
 		{
-			var cache = StaticMediaOpsLiveCache.GetOrCreate(Connection);
+			FilterElement<DomInstance> CreateFilter(Endpoint e) =>
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.Id.NotEqual(e.ID),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Name).Equal(e.Name));
 
-			var conflicts = instances
-				.Where(x =>
-					cache.VirtualSignalGroupsCache.TryGetEndpoint(x.Name, out var endpoint) &&
-					endpoint.ID != x.ID)
-				.Select(x => x.Name)
-				.Distinct()
-				.ToList();
+			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Read).ToList();
 
 			if (conflicts.Count > 0)
 			{
-				var names = String.Join(", ", conflicts.OrderBy(x => x, new NaturalSortComparer()));
+				var names = String.Join(", ", conflicts
+					.Select(x => x.Name)
+					.OrderBy(x => x, new NaturalSortComparer()));
 
-				throw new InvalidOperationException($"One or more endpoint names are already in use: {names}");
+				throw new InvalidOperationException($"Cannot save endpoints. The following names are already in use: {names}");
 			}
 		}
 
 		private void CheckIfStillInUse(ICollection<Endpoint> instances)
 		{
-			var cache = StaticMediaOpsLiveCache.GetOrCreate(Connection);
+			FilterElement<DomInstance> CreateFilter(Endpoint e) =>
+				new ORFilterElement<DomInstance>(
+					new ANDFilterElement<DomInstance>(
+						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
+						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint).Equal(e.ID)));
 
-			var virtualSignalGroups = instances
-				.SelectMany(x => cache.VirtualSignalGroupsCache.GetVirtualSignalGroupsThatContainEndpoint(x))
-				.Distinct()
-				.ToList();
+			var count = FilterQueryExecutor.CountFilteredItems(instances, CreateFilter, Helper.DomInstances.Count);
 
-			if (virtualSignalGroups.Count > 0)
+			if (count > 0)
 			{
-				var virtualSignalGroupNames = String.Join(
-					", ",
-					virtualSignalGroups
-						.Select(x => x.Name)
-						.OrderBy(x => x, new NaturalSortComparer()));
-
-				throw new InvalidOperationException(
-					$"Endpoints are still in use in the following virtual signal groups: {virtualSignalGroupNames}");
+				throw new InvalidOperationException("One or more endpoints are still in use");
 			}
 		}
 	}

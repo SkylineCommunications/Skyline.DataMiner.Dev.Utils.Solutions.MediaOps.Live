@@ -29,9 +29,9 @@
 			api.TransportTypes.Update(tt);
 
 			// create item with same name
-			var ex = Assert.Throws<Exception>(
+			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.TransportTypes.Create(new TransportType { Name = "IP3" }); });
-			Assert.AreEqual("Transport type with same name already exists.", ex.Message);
+			Assert.AreEqual("Cannot save transport types. The following names are already in use: IP3", ex.Message);
 		}
 
 		[TestMethod]
@@ -42,9 +42,9 @@
 			var transportType = api.TransportTypes.Query().First(x => x.Name == "IP");
 
 			// deleting transport type that is still in use throws exception
-			var ex = Assert.Throws<Exception>(
+			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.TransportTypes.Delete(transportType); });
-			Assert.AreEqual("One or more transport types are still in use.", ex.Message);
+			Assert.AreEqual("One or more transport types are still in use", ex.Message);
 		}
 
 		[TestMethod]
@@ -63,9 +63,9 @@
 			api.Levels.Update(l);
 
 			// create item with same name
-			var ex = Assert.Throws<Exception>(
+			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.Levels.Create(new Level { Name = "L2", Number = 102, TransportType = transportType }); });
-			Assert.AreEqual("Level with same name or number already exists.", ex.Message);
+			Assert.AreEqual("Cannot save levels. The following names are already in use: L2", ex.Message);
 		}
 
 		[TestMethod]
@@ -76,9 +76,9 @@
 			var level = api.Levels.Query().First(x => x.Name == "Video");
 
 			// deleting level that is still in use throws exception
-			var ex = Assert.Throws<Exception>(
+			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.Levels.Delete(level); });
-			Assert.AreEqual("One or more levels are still in use.", ex.Message);
+			Assert.AreEqual("One or more levels are still in use", ex.Message);
 		}
 
 		[TestMethod]
@@ -94,9 +94,9 @@
 			api.Endpoints.Update(c);
 
 			// create item with same name
-			var ex = Assert.Throws<Exception>(
+			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.Endpoints.Create(new Endpoint { Name = "E2", Role = Role.Destination }); });
-			Assert.AreEqual("One or more endpoint names are already in use: E2", ex.Message);
+			Assert.AreEqual("Cannot save endpoints. The following names are already in use: E2", ex.Message);
 		}
 
 		[TestMethod]
@@ -107,9 +107,9 @@
 			var endpoint = api.Endpoints.Query().First(x => x.Name == "Video Source 1");
 
 			// deleting endpoint that is still in use throws exception
-			var ex = Assert.Throws<Exception>(
+			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.Endpoints.Delete(endpoint); });
-			Assert.AreEqual("Endpoints are still in use in the following virtual signal groups: Source 1", ex.Message);
+			Assert.AreEqual("One or more endpoints are still in use", ex.Message);
 		}
 
 		[TestMethod]
@@ -125,9 +125,9 @@
 			api.VirtualSignalGroups.Update(c);
 
 			// create item with same name
-			var ex = Assert.Throws<Exception>(
+			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.VirtualSignalGroups.Create(new VirtualSignalGroup { Name = "VSG2", Role = Role.Destination }); });
-			Assert.AreEqual("One or more VSG names are already in use: VSG2", ex.Message);
+			Assert.AreEqual("Cannot save VSGs. The following names are already in use: VSG2", ex.Message);
 		}
 
 		[TestMethod]
@@ -143,9 +143,9 @@
 			api.Categories.Update(c);
 
 			// create item with same name
-			var ex = Assert.Throws<Exception>(
+			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.Categories.Create(new Category { Name = "C2" }); });
-			Assert.AreEqual("Category with same name already exists.", ex.Message);
+			Assert.AreEqual("Cannot save categories. The following names are already in use: C2", ex.Message);
 		}
 
 		[TestMethod]
@@ -156,9 +156,9 @@
 			var category = api.Categories.Query().First(x => x.Name == "Category 1");
 
 			// deleting category that is still in use throws exception
-			var ex = Assert.Throws<Exception>(
+			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.Categories.Delete(category); });
-			Assert.AreEqual("One or more categories are still in use.", ex.Message);
+			Assert.AreEqual("One or more categories are still in use", ex.Message);
 		}
 	}
 }

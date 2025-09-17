@@ -93,14 +93,15 @@
 					DomInstanceExposers.Id.NotEqual(tt.ID),
 					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name).Equal(tt.Name));
 
-			var count = FilterQueryExecutor.CountFilteredItems(
-				instances,
-				x => CreateFilter(x),
-				x => Count(x));
+			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Read).ToList();
 
-			if (count > 0)
+			if (conflicts.Count > 0)
 			{
-				throw new InvalidOperationException($"Transport type with same name already exists.");
+				var names = String.Join(", ", conflicts
+					.Select(x => x.Name)
+					.OrderBy(x => x, new NaturalSortComparer()));
+
+				throw new InvalidOperationException($"Cannot save transport types. The following names are already in use: {names}");
 			}
 		}
 
@@ -115,14 +116,11 @@
 						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
 						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType).Equal(tt.ID)));
 
-			var count = FilterQueryExecutor.CountFilteredItems(
-				instances,
-				x => CreateFilter(x),
-				x => Helper.DomInstances.Count(x));
+			var count = FilterQueryExecutor.CountFilteredItems(instances, CreateFilter, Helper.DomInstances.Count);
 
 			if (count > 0)
 			{
-				throw new InvalidOperationException("One or more transport types are still in use.");
+				throw new InvalidOperationException("One or more transport types are still in use");
 			}
 		}
 	}

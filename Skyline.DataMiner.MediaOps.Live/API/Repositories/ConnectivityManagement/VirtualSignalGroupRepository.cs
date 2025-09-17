@@ -4,7 +4,6 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -113,21 +112,20 @@
 
 		private void CheckDuplicatesBeforeSave(ICollection<VirtualSignalGroup> instances)
 		{
-			var cache = StaticMediaOpsLiveCache.GetOrCreate(Connection);
+			FilterElement<DomInstance> CreateFilter(VirtualSignalGroup vsg) =>
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.Id.NotEqual(vsg.ID),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Name).Equal(vsg.Name));
 
-			var conflicts = instances
-				.Where(x =>
-					cache.VirtualSignalGroupsCache.TryGetVirtualSignalGroup(x.Name, out var vsg) &&
-					vsg.ID != x.ID)
-				.Select(x=> x.Name)
-				.Distinct()
-				.ToList();
+			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Read).ToList();
 
 			if (conflicts.Count > 0)
 			{
-				var names = String.Join(", ", conflicts.OrderBy(x => x, new NaturalSortComparer()));
+				var names = String.Join(", ", conflicts
+					.Select(x => x.Name)
+					.OrderBy(x => x, new NaturalSortComparer()));
 
-				throw new InvalidOperationException($"One or more VSG names are already in use: {names}");
+				throw new InvalidOperationException($"Cannot save VSGs. The following names are already in use: {names}");
 			}
 		}
 	}

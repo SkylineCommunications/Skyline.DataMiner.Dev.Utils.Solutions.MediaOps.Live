@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -75,14 +76,15 @@
 					DomInstanceExposers.Id.NotEqual(c.ID),
 					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.CategoryInfo.Name).Equal(c.Name));
 
-			var count = FilterQueryExecutor.CountFilteredItems(
-				instances,
-				x => CreateFilter(x),
-				x => Count(x));
+			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Read).ToList();
 
-			if (count > 0)
+			if (conflicts.Count > 0)
 			{
-				throw new InvalidOperationException($"Category with same name already exists.");
+				var names = String.Join(", ", conflicts
+					.Select(x => x.Name)
+					.OrderBy(x => x, new NaturalSortComparer()));
+
+				throw new InvalidOperationException($"Cannot save categories. The following names are already in use: {names}");
 			}
 		}
 
@@ -93,14 +95,11 @@
 					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
 					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Categories).Equal(c.ID));
 
-			var count = FilterQueryExecutor.CountFilteredItems(
-				instances,
-				x => CreateFilter(x),
-				x => Helper.DomInstances.Count(x));
+			var count = FilterQueryExecutor.CountFilteredItems(instances, CreateFilter, Helper.DomInstances.Count);
 
 			if (count > 0)
 			{
-				throw new InvalidOperationException("One or more categories are still in use.");
+				throw new InvalidOperationException("One or more categories are still in use");
 			}
 		}
 	}
