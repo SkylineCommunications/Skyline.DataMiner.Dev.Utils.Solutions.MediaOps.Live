@@ -134,7 +134,7 @@ api.Orchestration.ExecuteEventsNow(new List<OrchestrationEventConfiguration> { o
 > [!NOTE]
 > Executing events that already executed in the past is not allowed.
 
-## Orchestration Actions
+## Orchestration Configurations
 
 ### Add nodes to an event
 To specify a collection of resources that require orchestration actions, nodes can be added to an event configuration.
@@ -225,7 +225,132 @@ Any other signals will not be connected.
 
 ### Add orchestration scripts to an event
 For more custom actions, scripts can be added to an event configuration.
-Furthermore, scripts can be added on either an event (global) level or on the node level.
+Furthermore, scripts can be added on either an event (global) level or on the node configuration level.
+When executing an event, the orchestration will only consider 1) the global script or 2) the scripts of the nodes.
+When both global and node scripts are required, the node scripts can be orchestrated from the global script.
 
+```
+OrchestrationEventConfiguration orchestrationEventConfiguration = new OrchestrationEventConfiguration
+{
+	Name = "Event Name",
+	EventType = SlcOrchestrationIds.Enums.EventType.Other,
+	EventState = SlcOrchestrationIds.Enums.EventState.Draft,
+	EventTime = DateTimeOffset.Now + TimeSpan.FromHours(1),
+	GlobalOrchestrationScript = "NameOfMyOrchestrationScript",
+}
+```
 
+### Provide input to an orchestration script
+When the orchestration script requires input parameters these can be provided via the OrchestrationScriptParameters property.
+```
+	GlobalOrchestrationScriptArguments =
+	{
+		new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "ScriptParameter1Name", "ScriptParameter1Value"),
+		new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "ScriptParameter2Name", "ScriptParameter2Value"),
+	},
+```
 
+To add script dummies, the OrchestrationScriptArgumentType.Dummy type can be used.
+As value, either the name or the ID of the dummy can be used (AgentId/ElementId).
+```
+	GlobalOrchestrationScriptArguments =
+	{
+		new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Element, "ScriptDummyName", "ElementNameOrId"),
+	}
+```
+
+Lastly, custom metadata information can be forwarded to the script.
+This information is not critical for the script to run, but can provide additional information to be used inside of the script.
+```
+	GlobalOrchestrationScriptArguments =
+	{
+		new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Metadata, "MetadataParameterName", "MetadataParameterValue"),
+	}
+```
+
+### Use a profile as input to an orchestration script
+Some orchestration script need specific profile instances or profile parameters as input. (See Orchestration Scripts)
+Additionally, profiles can also be used to provide values for script input parameters. In this case, matching is done based on the parameter names.
+
+Profile information can be provided as a whole profile instance
+```
+	Profile = 
+	{
+		Definition = "NameOfProfileDefinition",
+		Instance = "NameOfProfileInstance",
+	}
+```
+
+or as a list of profile parameters. In this case, the profile definition and instance are not required.
+```	
+	Profile =
+	{
+		Values =
+		{
+			new OrchestrationProfileValue
+			{
+				Name = "Integer Parameter Name",
+				Value = new ParameterValue
+				{
+					DoubleValue = 123,
+					Type = ParameterValue.ValueType.Double,
+				},
+			},
+			new OrchestrationProfileValue
+			{
+				Name = "String Parameter Name",
+				Value = new ParameterValue
+				{
+					StringValue = "StringValue",
+					Type = ParameterValue.ValueType.String,
+				},
+			},
+		},
+	},
+```
+
+Both options can also be combined, in which case additional parameters can be provided next to the profile instance.
+
+> [!NOTE]
+> Only a single profile instance can be provided per orchestration script configuration.
+> If multiple profile instances are required, the configuration should be split up in different events.
+> Alternatively, the profile instance can also be loaded from within the script itself.
+
+## Orchestration Scripts
+
+### Get available orchestration scripts
+The Orchestration module provides a way to retrieve all available orchestration scripts in the system.
+
+```
+List<string> orchestrationScripts = api.Orchestration.Scripts.GetOrchestrationScripts();
+```
+
+### Request script input information
+It is possible to request all required input information for a specific orchestration script.
+This will return the following information:
+- ProfileDefinition: The GUID of the profile definition that is required for the script.
+- Parameters: A list of input parameters that are required by the script.
+This is a combination of profile parameters that are not part of the profile definition and script parameters and the script parameters.
+- Elements: A list of script dummies that are required by the script. The required protocol and version is also provided.
+
+```
+OrchestrationScriptInputInfo scriptInputInformation = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("NameOfOrchestrationScript");
+
+Guid definition = scriptInputInformation.ProfileDefinition;
+List<OrchestrationScriptInputParameter> parameters = scriptInputInformation.Parameters;
+List<OrchestrationScriptInputElement> elements = scriptInputInformation.Elements;
+```
+
+### Get a list of available script input profile instances
+From the requested script input information, all available profile instances can be retrieved. A profile helper is required to perform this action.
+```
+ProfileHelper profileHelper = new ProfileHelper(engine.SendSLNetMessages);
+List<ProfileInstance> availableInstances = scriptInputInformation.GetApplicableInstances(profileHelper);
+```
+
+### Get a list of available elements for a script dummy
+Although the script input information provides all the element requirements, it is also possible to immediately retrieve a list of valid elements.
+```
+OrchestrationScriptInputElement orchestrationScriptInputElement = elements.First();
+orchestrationScriptInputElement.GetApplicableElements(engine.GetUserConnection());
+```
