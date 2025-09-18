@@ -1,0 +1,114 @@
+﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.MediaOps.Live")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SLC-AS-MediaOps.LIVE.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.MediaOps.Live.GQI.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.MediaOps.Live.GQI.UnitTesting")]
+[assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8", FrameworkDisplayName=".NET Framework 4.8")]
+namespace Skyline.DataMiner.MediaOps.Live.GQI
+{
+    public static class Extensions
+    {
+        public static Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi GetMediaOpsLiveApi(this Skyline.DataMiner.Analytics.GenericInterface.GQIDMS gqiDms) { }
+        public static Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetStaticMediaOpsLiveCache(this Skyline.DataMiner.Analytics.GenericInterface.GQIDMS gqiDms) { }
+    }
+    public abstract class GQIDataSourceBase : Skyline.DataMiner.Analytics.GenericInterface.IGQIDataSource, Skyline.DataMiner.Analytics.GenericInterface.IGQIOnDestroy, Skyline.DataMiner.Analytics.GenericInterface.IGQIOnInit
+    {
+        protected GQIDataSourceBase() { }
+        public Skyline.DataMiner.Net.IConnection Connection { get; }
+        public Skyline.DataMiner.MediaOps.Live.GQI.Metrics.ConnectionMetrics ConnectionMetrics { get; }
+        public Skyline.DataMiner.Analytics.GenericInterface.GQIDMS Dms { get; }
+        public Skyline.DataMiner.Analytics.GenericInterface.IGQILogger Logger { get; }
+        public virtual Skyline.DataMiner.Analytics.GenericInterface.GQIColumn[] GetColumns() { }
+        public virtual Skyline.DataMiner.Analytics.GenericInterface.GQIPage GetNextPage(Skyline.DataMiner.Analytics.GenericInterface.GetNextPageInputArgs args) { }
+        public virtual Skyline.DataMiner.Analytics.GenericInterface.OnDestroyOutputArgs OnDestroy(Skyline.DataMiner.Analytics.GenericInterface.OnDestroyInputArgs args) { }
+        public abstract Skyline.DataMiner.Analytics.GenericInterface.GQIColumn[] OnGetColumns();
+        public abstract Skyline.DataMiner.Analytics.GenericInterface.GQIPage OnGetNextPage(Skyline.DataMiner.Analytics.GenericInterface.GetNextPageInputArgs args);
+        public virtual Skyline.DataMiner.Analytics.GenericInterface.OnInitOutputArgs OnInit(Skyline.DataMiner.Analytics.GenericInterface.OnInitInputArgs args) { }
+    }
+    public class GQIEnumDropdownArgument<T> : Skyline.DataMiner.Analytics.GenericInterface.GQIStringDropdownArgument
+        where T : System.Enum
+    {
+        public GQIEnumDropdownArgument(string name) { }
+        public T GetArgumentValue(Skyline.DataMiner.Analytics.GenericInterface.OnArgumentsProcessedInputArgs args) { }
+        public bool TryGetArgumentValue(Skyline.DataMiner.Analytics.GenericInterface.OnArgumentsProcessedInputArgs args, out T value) { }
+    }
+    public class GQIPageEnumerator : System.IDisposable
+    {
+        public GQIPageEnumerator(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Analytics.GenericInterface.GQIRow> rows) { }
+        public void Dispose() { }
+        protected virtual void Dispose(bool disposing) { }
+        public Skyline.DataMiner.Analytics.GenericInterface.GQIPage GetNextPage(int pageSize) { }
+    }
+    public abstract class GQIUpdateableDataSource : Skyline.DataMiner.MediaOps.Live.GQI.GQIDataSourceBase, Skyline.DataMiner.Analytics.GenericInterface.IGQIUpdateable
+    {
+        protected GQIUpdateableDataSource() { }
+        public void AddOrUpdateRow(Skyline.DataMiner.Analytics.GenericInterface.GQIRow row) { }
+        public void AddRow(Skyline.DataMiner.Analytics.GenericInterface.GQIRow row) { }
+        public override sealed Skyline.DataMiner.Analytics.GenericInterface.GQIPage GetNextPage(Skyline.DataMiner.Analytics.GenericInterface.GetNextPageInputArgs args) { }
+        public abstract void OnStartUpdates(Skyline.DataMiner.Analytics.GenericInterface.IGQIUpdater updater);
+        public abstract void OnStopUpdates();
+        public void RemoveRow(string rowKey) { }
+        public void UpdateRow(Skyline.DataMiner.Analytics.GenericInterface.GQIRow row) { }
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.GQI.Metrics
+{
+    public class ConnectionInterceptor : Skyline.DataMiner.Net.IConnection, System.IDisposable
+    {
+        public ConnectionInterceptor(Skyline.DataMiner.Net.IConnection connection) { }
+        public Skyline.DataMiner.Net.Async.IAsyncMessageHandler Async { get; }
+        public System.Guid ConnectionID { get; }
+        public bool IsReceiving { get; }
+        public bool IsShuttingDown { get; }
+        public Skyline.DataMiner.Net.ServerDetails ServerDetails { get; }
+        public string UserDomainName { get; }
+        public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.GQI.Metrics.ProcessedMessages> MessagesProcessed;
+        public event Skyline.DataMiner.Net.AbnormalCloseEventHandler OnAbnormalClose;
+        public event Skyline.DataMiner.Net.AuthenticationChallengeEventHandler OnAuthenticationChallenge;
+        public event Skyline.DataMiner.Net.ConnectionClosedHandler OnClose;
+        public event Skyline.DataMiner.Net.EventsDroppedEventHandler OnEventsDropped;
+        public event Skyline.DataMiner.Net.NewMessageEventHandler OnNewMessage;
+        public event Skyline.DataMiner.Net.SubscriptionCompleteEventHandler OnSubscriptionComplete;
+        public event System.EventHandler<Skyline.DataMiner.Net.SubscriptionStateEventArgs> OnSubscriptionState;
+        public void AddSubscription(string setID, params Skyline.DataMiner.Net.SubscriptionFilter[] newFilters) { }
+        public void ClearSubscriptions(string setID) { }
+        public void Dispose() { }
+        public void FireOnAsyncResponse(Skyline.DataMiner.Net.Messages.AsyncResponseEvent responseEvent, ref bool handled) { }
+        public Skyline.DataMiner.Net.Messages.GetElementProtocolResponseMessage GetElementProtocol(int dmaid, int eid) { }
+        public Skyline.DataMiner.Net.Messages.GetProtocolInfoResponseMessage GetProtocol(string name, string version) { }
+        public Skyline.DataMiner.Net.Messages.DMSMessage[] HandleMessage(Skyline.DataMiner.Net.Messages.DMSMessage msg) { }
+        public Skyline.DataMiner.Net.Messages.DMSMessage[] HandleMessages(Skyline.DataMiner.Net.Messages.DMSMessage[] msgs) { }
+        public Skyline.DataMiner.Net.Messages.DMSMessage HandleSingleResponseMessage(Skyline.DataMiner.Net.Messages.DMSMessage msg) { }
+        public void RemoveSubscription(string setID, params Skyline.DataMiner.Net.SubscriptionFilter[] deletedFilters) { }
+        public void ReplaceSubscription(string setID, params Skyline.DataMiner.Net.SubscriptionFilter[] newFilters) { }
+        public void SafeWait(int timeout) { }
+        public Skyline.DataMiner.Net.Messages.CreateSubscriptionResponseMessage Subscribe(params Skyline.DataMiner.Net.SubscriptionFilter[] filters) { }
+        public bool SupportsFeature(Skyline.DataMiner.Net.Messages.CompatibilityFlags flags) { }
+        public bool SupportsFeature(string name) { }
+        public Skyline.DataMiner.Net.ITrackedSubscriptionUpdate TrackAddSubscription(string setID, params Skyline.DataMiner.Net.SubscriptionFilter[] newFilters) { }
+        public Skyline.DataMiner.Net.ITrackedSubscriptionUpdate TrackClearSubscriptions(string setID) { }
+        public Skyline.DataMiner.Net.ITrackedSubscriptionUpdate TrackRemoveSubscription(string setID, params Skyline.DataMiner.Net.SubscriptionFilter[] deletedFilters) { }
+        public Skyline.DataMiner.Net.ITrackedSubscriptionUpdate TrackReplaceSubscription(string setID, params Skyline.DataMiner.Net.SubscriptionFilter[] newFilters) { }
+        public Skyline.DataMiner.Net.ITrackedSubscriptionUpdate TrackSubscribe(params Skyline.DataMiner.Net.SubscriptionFilter[] filters) { }
+        public Skyline.DataMiner.Net.ITrackedSubscriptionUpdate TrackUpdateSubscription(Skyline.DataMiner.Net.Messages.UpdateSubscriptionMultiMessage multi) { }
+        public Skyline.DataMiner.Net.Messages.DMSMessage[] UnPack(Skyline.DataMiner.Net.Messages.DMSMessage[] messages) { }
+        public void Unsubscribe() { }
+    }
+    public class ConnectionMetrics : System.IDisposable
+    {
+        public ConnectionMetrics(Skyline.DataMiner.MediaOps.Live.GQI.Metrics.ConnectionInterceptor connection) { }
+        public System.TimeSpan AvgRequestDuration { get; }
+        public System.TimeSpan MaxRequestDuration { get; }
+        public ulong NumberOfDomInstancesRetrieved { get; }
+        public ulong NumberOfDomRequests { get; }
+        public ulong NumberOfRequests { get; }
+        public System.TimeSpan TotalRequestDuration { get; }
+        public void Dispose() { }
+    }
+    public class ProcessedMessages
+    {
+        public ProcessedMessages(System.Collections.Generic.ICollection<Skyline.DataMiner.Net.Messages.DMSMessage> requests, System.Collections.Generic.ICollection<Skyline.DataMiner.Net.Messages.DMSMessage> responses, System.TimeSpan duration) { }
+        public System.TimeSpan Duration { get; }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.Net.Messages.DMSMessage> Requests { get; }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.Net.Messages.DMSMessage> Responses { get; }
+    }
+}

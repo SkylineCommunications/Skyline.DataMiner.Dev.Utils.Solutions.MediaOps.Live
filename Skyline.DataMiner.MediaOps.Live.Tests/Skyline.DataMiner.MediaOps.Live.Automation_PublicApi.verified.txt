@@ -1,0 +1,199 @@
+﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.MediaOps.Live")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SLC-AS-MediaOps.LIVE.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.MediaOps.Live.Automation.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.MediaOps.Live.Automation.UnitTesting")]
+[assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8", FrameworkDisplayName=".NET Framework 4.8")]
+namespace Skyline.DataMiner.MediaOps.Live.Automation.API
+{
+    public class EngineMediaOpsLiveApi : Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi
+    {
+        public EngineMediaOpsLiveApi(Skyline.DataMiner.Automation.IEngine engine) { }
+        public EngineMediaOpsLiveApi(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Net.IConnection connection) { }
+        public override Skyline.DataMiner.MediaOps.Live.Take.TakeHelper GetConnectionHandler() { }
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.Automation
+{
+    public static class Extensions
+    {
+        public static Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi GetMediaOpsLiveApi(this Skyline.DataMiner.Automation.IEngine engine) { }
+        public static Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetStaticMediaOpsLiveApiCache(this Skyline.DataMiner.Automation.IEngine engine) { }
+        public static System.Collections.Generic.IList<T> ReadScriptParamListFromApp<T>(this Skyline.DataMiner.Automation.IEngine engine, string name) { }
+        public static T ReadScriptParamSingleFromApp<T>(this Skyline.DataMiner.Automation.IEngine engine, string name) { }
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.Automation.Logging
+{
+    public class EngineLogger : Skyline.DataMiner.MediaOps.Live.Logging.LoggerBase
+    {
+        public EngineLogger(Skyline.DataMiner.Automation.IEngine engine) { }
+        public override void Log(string message, Skyline.DataMiner.MediaOps.Live.Logging.LogType type = 1) { }
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers
+{
+    public abstract class ConnectionHandler
+    {
+        protected ConnectionHandler() { }
+        public abstract void Connect(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers.IConnectionHandlerEngine connectionEngine, Skyline.DataMiner.MediaOps.Live.Mediation.Data.CreateConnectionsRequest createConnectionsRequest);
+        public abstract void Disconnect(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers.IConnectionHandlerEngine connectionEngine, Skyline.DataMiner.MediaOps.Live.Mediation.Data.DisconnectDestinationsRequest disconnectDestinationsRequest);
+        public virtual void Execute(Skyline.DataMiner.Automation.IEngine engine) { }
+        public abstract System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.Mediation.Data.SubscriptionInfo> GetSubscriptionInfo(Skyline.DataMiner.Automation.IEngine engine);
+        public abstract System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.Mediation.Data.ElementInfo> GetSupportedElements(Skyline.DataMiner.Automation.IEngine engine, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.Mediation.Data.ElementInfo> elements);
+        public abstract void ProcessParameterUpdate(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers.IConnectionHandlerEngine connectionEngine, Skyline.DataMiner.MediaOps.Live.Mediation.Data.ParameterUpdate update);
+    }
+    public abstract class ConnectionHandlerScript : Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers.ConnectionHandler
+    {
+        protected ConnectionHandlerScript() { }
+        public void Run(Skyline.DataMiner.Automation.IEngine engine) { }
+    }
+    public class ConnectionUpdate
+    {
+        public ConnectionUpdate(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint destination, bool isConnected) { }
+        public ConnectionUpdate(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint source, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint destination) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint DestinationEndpoint { get; }
+        public bool IsConnected { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint SourceEndpoint { get; }
+    }
+    public interface IConnectionHandlerEngine
+    {
+        Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi Api { get; }
+        Skyline.DataMiner.MediaOps.Live.Logging.ILogger Logger { get; }
+        void Log(string message, Skyline.DataMiner.MediaOps.Live.Logging.LogType logLevel = 1);
+        void RegisterConnection(Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers.ConnectionUpdate connection);
+        void RegisterConnections(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers.ConnectionUpdate> connections);
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs
+{
+    public class GetOrchestrationValuesDialog : Skyline.DataMiner.Utils.InteractiveAutomationScript.Dialog
+    {
+        public GetOrchestrationValuesDialog(Skyline.DataMiner.Automation.IEngine engine, System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.ParameterInfo> parameterInfos) { }
+        public Skyline.DataMiner.Utils.InteractiveAutomationScript.Button Button { get; }
+        [System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "info",
+                "section"})]
+        public System.Collections.Generic.IReadOnlyCollection<System.ValueTuple<Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.ParameterInfo, Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections.ParameterSection>> Sections { get; }
+        public void UpdateValues() { }
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes
+{
+    public interface IParameterDisplayInfo
+    {
+        string Label { get; }
+        Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections.ParameterSection CreateParameterSection();
+    }
+    public interface IParameterGroupDisplayInfo
+    {
+        string Label { get; }
+        Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections.ParameterGroupSection CreateParameterGroupSection();
+    }
+    public class NumericParameterDisplayInfo : Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.IParameterDisplayInfo
+    {
+        public NumericParameterDisplayInfo() { }
+        public int Decimals { get; set; }
+        public string Label { get; set; }
+        public double Max { get; set; }
+        public double Min { get; set; }
+        public double Step { get; set; }
+        public string Unit { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections.ParameterSection CreateParameterSection() { }
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections
+{
+    public abstract class ParameterGroupSection : Skyline.DataMiner.Utils.InteractiveAutomationScript.Section
+    {
+        protected ParameterGroupSection(Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.IParameterGroupDisplayInfo displayInfo) { }
+        public Skyline.DataMiner.Utils.InteractiveAutomationScript.Label Label { get; }
+        public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.ParameterInfo, Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections.ParameterSection> ParameterSections { get; }
+        protected virtual void DefineHeaderLayout(int row) { }
+        public System.Collections.Generic.IEnumerable<System.ValueTuple<Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.ParameterInfo, Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections.ParameterSection>> InitializeSection(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.ParameterInfo> parameters) { }
+    }
+    public abstract class ParameterSection : Skyline.DataMiner.Utils.InteractiveAutomationScript.Section
+    {
+        protected ParameterSection(Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.IParameterDisplayInfo displayInfo) { }
+        public Skyline.DataMiner.Utils.InteractiveAutomationScript.Label Label { get; }
+        protected virtual void DefineLayout() { }
+        public abstract object GetValue();
+        public void InitializeSection() { }
+        public abstract void SetValue(object value);
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects
+{
+    public interface IOrchestrationParameters
+    {
+        System.Collections.Generic.IDictionary<string, System.Guid> GetParameterInformation(Skyline.DataMiner.Automation.IEngine engine);
+        System.Collections.Generic.IDictionary<string, Skyline.DataMiner.Net.Profiles.Parameter> GetParameterReferences(Skyline.DataMiner.Automation.IEngine engine);
+    }
+    public class OrchestrationProfileDefinition : Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.IOrchestrationParameters
+    {
+        public OrchestrationProfileDefinition(string profileDefinitionName) { }
+        public OrchestrationProfileDefinition(string profileDefinitionName, System.Collections.Generic.Dictionary<string, string> orchestrationOverrideParameterNames) { }
+        public string Name { get; }
+        public Skyline.DataMiner.Net.Profiles.ProfileDefinition GetDefinitionReference(Skyline.DataMiner.Automation.IEngine engine) { }
+        public System.Collections.Generic.IDictionary<string, System.Guid> GetParameterInformation(Skyline.DataMiner.Automation.IEngine engine) { }
+        public System.Collections.Generic.IDictionary<string, Skyline.DataMiner.Net.Profiles.Parameter> GetParameterReferences(Skyline.DataMiner.Automation.IEngine engine) { }
+        public void LoadInformation(Skyline.DataMiner.Automation.IEngine engine) { }
+    }
+    public class OrchestrationProfileParameter : Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.IOrchestrationParameters
+    {
+        public OrchestrationProfileParameter(string profileParameterName, string orchestrationOverrideName = null) { }
+        public string Name { get; }
+        public Skyline.DataMiner.Net.Profiles.Parameter ParameterReference { get; }
+        public string ProfileParameterName { get; }
+        public System.Collections.Generic.IDictionary<string, System.Guid> GetParameterInformation(Skyline.DataMiner.Automation.IEngine engine) { }
+        public System.Collections.Generic.IDictionary<string, Skyline.DataMiner.Net.Profiles.Parameter> GetParameterReferences(Skyline.DataMiner.Automation.IEngine engine) { }
+    }
+    public class ParameterGroup
+    {
+        public ParameterGroup() { }
+        public string Description { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.IParameterGroupDisplayInfo DisplayInfo { get; set; }
+        public Skyline.DataMiner.Net.IDMAObjectRef Reference { get; set; }
+        public string Type { get; set; }
+        public override string ToString() { }
+    }
+    public class ParameterInfo
+    {
+        public ParameterInfo() { }
+        public string Description { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.IParameterDisplayInfo DisplayInfo { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.ParameterGroup Group { get; set; }
+        public string Id { get; set; }
+        public Skyline.DataMiner.Net.IDMAObjectRef Reference { get; set; }
+        public string Type { get; set; }
+        public object Value { get; set; }
+        public System.Type ValueType { get; set; }
+        public override string ToString() { }
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
+{
+    public abstract class OrchestrationScript
+    {
+        protected OrchestrationScript() { }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventConfiguration EventConfiguration { get; }
+        public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId GetEventMonitoringService() { }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration GetNodeConfiguration(string nodeLabel) { }
+        public object GetParameterValue(string paramName) { }
+        public abstract System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.IOrchestrationParameters> GetParameters();
+        [Skyline.DataMiner.Automation.AutomationEntryPoint(Skyline.DataMiner.Automation.AutomationEntryPointType.Types.OnRequestScriptInfo)]
+        public Skyline.DataMiner.Net.Automation.RequestScriptInfoOutput OnRequestScriptInfoRequest(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Net.Automation.RequestScriptInfoInput inputData) { }
+        public abstract void Orchestrate(Skyline.DataMiner.Automation.IEngine engine);
+        public void OrchestrateNode(Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfig) { }
+        public void Run(Skyline.DataMiner.Automation.IEngine engine) { }
+        public virtual Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId SetupService() { }
+        public virtual void TearDownService() { }
+        public bool TryGetMetadataValue(string metadataParam, out string metadataValue) { }
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.Automation.Take
+{
+    public class EngineTakeHelper : Skyline.DataMiner.MediaOps.Live.Take.TakeHelper
+    {
+        protected override void ExecuteConnectionHandlerScript(string script, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.ConnectionHandlerScriptAction action, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerRequest request, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
+    }
+}

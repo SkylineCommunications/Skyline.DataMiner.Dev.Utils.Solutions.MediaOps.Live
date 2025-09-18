@@ -1,0 +1,29 @@
+﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.MediaOps.Live")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SLC-AS-MediaOps.LIVE.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.MediaOps.Live.Protocol.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.MediaOps.Live.Protocol.UnitTesting")]
+[assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8", FrameworkDisplayName=".NET Framework 4.8")]
+namespace Skyline.DataMiner.MediaOps.Live.Protocol.API
+{
+    public class ProtocolMediaOpsLiveApi : Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi
+    {
+        public ProtocolMediaOpsLiveApi(Skyline.DataMiner.Scripting.SLProtocol protocol) { }
+        public ProtocolMediaOpsLiveApi(Skyline.DataMiner.Scripting.SLProtocol protocol, Skyline.DataMiner.Net.IConnection connection) { }
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.Protocol
+{
+    public static class Extensions
+    {
+        public static Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi GetMediaOpsLiveApi(this Skyline.DataMiner.Scripting.SLProtocol protocol) { }
+        public static Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetStaticMediaOpsLiveCache(this Skyline.DataMiner.Scripting.SLProtocol protocol) { }
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.Protocol.Logging
+{
+    public class ProtocolLogger : Skyline.DataMiner.MediaOps.Live.Logging.LoggerBase
+    {
+        public ProtocolLogger(Skyline.DataMiner.Scripting.SLProtocol protocol) { }
+        public override void Log(string message, Skyline.DataMiner.MediaOps.Live.Logging.LogType type = 1) { }
+    }
+}
