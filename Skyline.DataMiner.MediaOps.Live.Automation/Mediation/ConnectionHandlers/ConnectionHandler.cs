@@ -23,7 +23,7 @@
 		{
 		}
 
-		public void Execute(IEngine engine)
+		public virtual void Execute(IEngine engine)
 		{
 			if (engine == null)
 			{
