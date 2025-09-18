@@ -12,6 +12,10 @@
 		/// <param name="engine">Link with SLAutomation process.</param>
 		public void Run(IEngine engine)
 		{
+			engine.Timeout = TimeSpan.FromHours(1);
+			engine.SetFlag(RunTimeFlags.AllowUndef);
+			engine.SetFlag(RunTimeFlags.NoInformationEvents);
+
 			try
 			{
 				RunSafe(engine);
