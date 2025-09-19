@@ -28,7 +28,7 @@
 			api.Categories.Create(categoryY); // does not match filter
 
 			// Assert
-			Assert.AreEqual(1, receivedEvents.Count);
+			Assert.HasCount(1, receivedEvents);
 
 			var receivedEvent = receivedEvents[0];
 			CollectionAssert.AreEquivalent(new[] { categoryX }, receivedEvent.Created.ToArray());
@@ -55,7 +55,7 @@
 			api.Categories.Create(categoryY);
 
 			// Assert
-			Assert.AreEqual(2, receivedEvents.Count);
+			Assert.HasCount(2, receivedEvents);
 
 			var receivedEvent1 = receivedEvents[0];
 			CollectionAssert.AreEquivalent(new[] { categoryX }, receivedEvent1.Created.ToArray());
@@ -86,7 +86,7 @@
 			api.Categories.Update(category);
 
 			// Assert
-			Assert.AreEqual(1, receivedEvents.Count);
+			Assert.HasCount(1, receivedEvents);
 
 			var receivedEvent = receivedEvents[0];
 			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent.Created.ToArray());
@@ -112,7 +112,7 @@
 			api.Categories.Delete(category);
 
 			// Assert
-			Assert.AreEqual(1, receivedEvents.Count);
+			Assert.HasCount(1, receivedEvents);
 
 			var receivedEvent = receivedEvents[0];
 			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent.Created.ToArray());

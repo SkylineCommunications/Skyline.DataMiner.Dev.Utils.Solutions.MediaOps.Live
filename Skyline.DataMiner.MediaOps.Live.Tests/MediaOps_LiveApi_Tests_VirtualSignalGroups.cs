@@ -18,7 +18,7 @@
 
 			var vsgs = api.VirtualSignalGroups.GetByEndpoints([videoSource1, videoSource2]).ToList();
 
-			Assert.AreEqual(2, vsgs.Count);
+			Assert.HasCount(2, vsgs);
 			CollectionAssert.AreEquivalent(
 				new[] { "Source 1", "Source 2" },
 				vsgs.Select(x => x.Name).ToList());
@@ -34,7 +34,7 @@
 
 			var vsgs = api.VirtualSignalGroups.GetByEndpointIds([videoSource1.ID, videoSource2.ID]).ToList();
 
-			Assert.AreEqual(2, vsgs.Count);
+			Assert.HasCount(2, vsgs);
 			CollectionAssert.AreEquivalent(
 				new[] { "Source 1", "Source 2" },
 				vsgs.Select(x => x.Name).ToList());
@@ -53,12 +53,12 @@
 			vsg.Levels.Remove(vsg.Levels.FirstOrDefault(x => x.Level == videoLevel));
 			api.VirtualSignalGroups.Update(vsg);
 			vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
-			Assert.AreEqual(1, vsg.Levels.Count);
+			Assert.HasCount(1, vsg.Levels);
 
 			vsg.Levels.Add(new LevelEndpoint(videoLevel, videoSource1));
 			api.VirtualSignalGroups.Update(vsg);
 			vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
-			Assert.AreEqual(2, vsg.Levels.Count);
+			Assert.HasCount(2, vsg.Levels);
 		}
 
 		[TestMethod]
@@ -74,7 +74,7 @@
 
 			// assert
 			Assert.IsNotNull(result);
-			Assert.IsTrue(result.Count > 0, "Expected at least one joined result.");
+			Assert.IsGreaterThan(0, result.Count, "Expected at least one joined result.");
 
 			foreach (var (virtualSignalGroup, endpoints) in result)
 			{
@@ -87,9 +87,7 @@
 
 				foreach (var endpoint in endpoints)
 				{
-					Assert.IsTrue(
-						endpoint.Name.EndsWith(vsgName),
-						$"Endpoint '{endpoint.Name}' should end with VSG name '{vsgName}'.");
+					Assert.EndsWith(vsgName, endpoint.Name, $"Endpoint '{endpoint.Name}' should end with VSG name '{vsgName}'.");
 				}
 			}
 		}

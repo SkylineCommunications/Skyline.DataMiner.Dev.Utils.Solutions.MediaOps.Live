@@ -101,5 +101,17 @@
 				   connectivityManagementDefinitions.Contains(SlcConnectivityManagementIds.Definitions.Endpoint) &&
 				   orchestrationDefinitions.Contains(SlcOrchestrationIds.Definitions.OrchestrationEvent);
 		}
+
+		public string GetVersion()
+		{
+#pragma warning disable CS0618 // Type or member is obsolete
+			if (!String.IsNullOrWhiteSpace(ThisAssembly.Git.Tag))
+			{
+				return ThisAssembly.Git.Tag;
+			}
+
+			return $"{ThisAssembly.Git.SemVer.Major}.{ThisAssembly.Git.SemVer.Minor}.{ThisAssembly.Git.SemVer.Patch}{ThisAssembly.Git.SemVer.DashLabel}";
+#pragma warning restore CS0618 // Type or member is obsolete
+		}
 	}
 }

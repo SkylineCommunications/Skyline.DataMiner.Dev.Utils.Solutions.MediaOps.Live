@@ -13,7 +13,7 @@
 			var api = new MediaOpsLiveApiMock();
 
 			var endpoints = api.Endpoints.Query().ToList();
-			Assert.AreEqual(40, endpoints.Count);
+			Assert.HasCount(40, endpoints);
 			CollectionAssert.AllItemsAreUnique(endpoints);
 			CollectionAssert.AreEquivalent(
 				api.Endpoints.ReadAll().ToList(),
@@ -27,7 +27,7 @@
 
 			{
 				var endpoints = api.Endpoints.Query().Where(x => !(x.ID == Guid.Empty)).ToList();
-				Assert.AreEqual(40, endpoints.Count);
+				Assert.HasCount(40, endpoints);
 				CollectionAssert.AreEquivalent(
 					api.Endpoints.ReadAll().Where(x => !(x.ID == Guid.Empty)).ToList(),
 					endpoints);
@@ -35,7 +35,7 @@
 
 			{
 				var endpoints = api.Endpoints.Query().Where(x => x.Role == Role.Source).ToList();
-				Assert.AreEqual(20, endpoints.Count);
+				Assert.HasCount(20, endpoints);
 				CollectionAssert.AreEquivalent(
 					api.Endpoints.ReadAll().Where(x => x.Role == Role.Source).ToList(),
 					endpoints);
@@ -44,7 +44,7 @@
 			{
 				var source = 1;
 				var endpoints = api.Endpoints.Query().Where(x => x.Name == "Video Source " + source || x.Name == "Audio Source " + source).ToList();
-				Assert.AreEqual(2, endpoints.Count);
+				Assert.HasCount(2, endpoints);
 				CollectionAssert.AreEquivalent(
 					api.Endpoints.ReadAll().Where(x => x.Name == "Video Source " + source || x.Name == "Audio Source " + source).ToList(),
 					endpoints);
@@ -52,7 +52,7 @@
 
 			{
 				var endpoints = api.Endpoints.Query().Where(x => x.Name.Contains("Video")).ToList();
-				Assert.AreEqual(20, endpoints.Count);
+				Assert.HasCount(20, endpoints);
 				CollectionAssert.AreEquivalent(
 					api.Endpoints.ReadAll().Where(x => x.Name.Contains("Video")).ToList(),
 					endpoints);
@@ -60,7 +60,7 @@
 
 			{
 				var endpoints = api.Endpoints.Query().Where(x => !x.Name.Contains("Video")).ToList();
-				Assert.AreEqual(20, endpoints.Count);
+				Assert.HasCount(20, endpoints);
 				CollectionAssert.AreEquivalent(
 					api.Endpoints.ReadAll().Where(x => !x.Name.Contains("Video")).ToList(),
 					endpoints);
@@ -90,7 +90,7 @@
 					.Where(x => x.Levels.Any(l => l.Endpoint == videoSource1))
 					.ToList();
 
-				Assert.AreEqual(1, virtualSignalGroups.Count);
+				Assert.HasCount(1, virtualSignalGroups);
 				Assert.AreEqual("Source 1", virtualSignalGroups[0].Name);
 			}
 
@@ -99,7 +99,7 @@
 					.Where(x => x.Levels.Any(l => l.Endpoint == videoSource1 || l.Endpoint == videoSource2))
 					.ToList();
 
-				Assert.AreEqual(2, virtualSignalGroups.Count);
+				Assert.HasCount(2, virtualSignalGroups);
 				CollectionAssert.AreEquivalent(
 					new[] { "Source 1", "Source 2" },
 					virtualSignalGroups.Select(x => x.Name).ToArray());
@@ -110,7 +110,7 @@
 					.Where(x => x.Levels.Any(l => (Guid)l.Endpoint == videoSource1.ID))
 					.ToList();
 
-				Assert.AreEqual(1, virtualSignalGroups.Count);
+				Assert.HasCount(1, virtualSignalGroups);
 				Assert.AreEqual("Source 1", virtualSignalGroups[0].Name);
 			}
 		}
@@ -316,7 +316,7 @@
 
 			{
 				var endpoints = api.Endpoints.Query().Take(3).ToList();
-				Assert.AreEqual(3, endpoints.Count);
+				Assert.HasCount(3, endpoints);
 			}
 		}
 
@@ -342,7 +342,7 @@
 					.Where(x => x.Name == "Video Source 1")
 					.ToList();
 
-				Assert.AreEqual(1, endpoints.Count);
+				Assert.HasCount(1, endpoints);
 				CollectionAssert.AreEquivalent(endpoints.Select(x => x.Name).ToList(), new[] { "Video Source 1" });
 			}
 		}
@@ -358,7 +358,7 @@
 					.Take(3)
 					.ToList();
 
-				Assert.AreEqual(3, endpoints.Count);
+				Assert.HasCount(3, endpoints);
 				Assert.IsTrue(endpoints.All(x => x.Role == Role.Source));
 			}
 		}

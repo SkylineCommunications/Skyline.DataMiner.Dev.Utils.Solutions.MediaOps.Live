@@ -299,6 +299,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API
         public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.VirtualSignalGroupRepository VirtualSignalGroups { get; }
         public virtual Skyline.DataMiner.MediaOps.Live.Take.TakeHelper GetConnectionHandler() { }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.IDms GetDms() { }
+        public string GetVersion() { }
         public bool IsInstalled() { }
         public void SetLogger(Skyline.DataMiner.MediaOps.Live.Logging.ILogger logger) { }
     }

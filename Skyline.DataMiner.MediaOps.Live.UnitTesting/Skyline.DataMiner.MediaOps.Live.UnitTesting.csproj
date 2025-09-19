@@ -23,13 +23,6 @@
 		<Description>Provides an API and helper classes for MediaOps Live.</Description>
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.MediaOps.Live</RepositoryUrl>
-
-		<Deterministic>false</Deterministic>
-		<VersionPrefix>1.0</VersionPrefix>
-		<VersionSuffix>$([System.DateTime]::Now.ToString(`yyyy.Mdd`))</VersionSuffix>
-		<Version>$(VersionPrefix).$(VersionSuffix)</Version>
-		<FileVersion>$(Version)</FileVersion>
-		<AssemblyVersion>$(VersionPrefix).*</AssemblyVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -44,6 +37,9 @@
 		<PackageReference Include="Skyline.DataMiner.Dev.Common" Version="10.5.7.2" />
 		<PackageReference Include="Skyline.DataMiner.Utils.DOM" Version="10.5.2.4" />
 		<PackageReference Include="Skyline.DataMiner.Utils.PerformanceAnalyzer" Version="3.0.2" />
+		<PackageReference Include="GitInfo" Version="3.5.0">
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 	</ItemGroup>
 	
 	<ItemGroup>
@@ -54,6 +50,10 @@
 	</ItemGroup>
 
 	<Target Name="CopyNuGetPackage" AfterTargets="Pack" Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-		<Copy SourceFiles="$(OutputPath)..\$(PackageId).$(PackageVersion).nupkg" DestinationFolder="C:\Skyline_Data\MyNugets\" />
+		<ItemGroup>
+			<NuGetPackages Include="$(OutputPath)..\$(PackageId).*.nupkg" />
+		</ItemGroup>
+
+		<Copy SourceFiles="@(NuGetPackages)" DestinationFolder="C:\Skyline_Data\MyNugets\" SkipUnchangedFiles="true" />
 	</Target>
 </Project>
