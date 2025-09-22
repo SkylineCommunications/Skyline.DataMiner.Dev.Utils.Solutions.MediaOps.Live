@@ -10,17 +10,23 @@
 		{
 			var api = context.SLNet.GetMediaOpsLiveApi();
 
-			var statistics = Statistics.CollectStatistics(api);
+			var analyzer = new ErrorAnalyzer(api);
+			analyzer.Analyze();
+
+			var statistics = new MediaOpsMetrics(api);
+			statistics.CollectStatistics();
 
 			var result = new Result
 			{
 				Version = api.GetVersion(),
-				Metrics = statistics,
+				Metrics = statistics.Results,
+				Errors = analyzer.Errors,
 			};
 
 			return new BpaTestResult
 			{
-				Outcome = BpaTestOutcome.NoIssues,
+				TestExecuted = true,
+				Outcome = result.Outcome,
 				DetailedJsonResult = JsonConvert.SerializeObject(result),
 			};
 		}

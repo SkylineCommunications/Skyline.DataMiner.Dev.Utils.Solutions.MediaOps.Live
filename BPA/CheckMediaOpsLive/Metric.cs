@@ -10,6 +10,6 @@
 
 		public string Name { get; }
 
-		public double Value { get;  }
+		public double Value { get; }
 	}
 }
