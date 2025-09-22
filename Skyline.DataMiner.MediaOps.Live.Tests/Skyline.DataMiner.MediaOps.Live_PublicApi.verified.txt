@@ -460,6 +460,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
     public class VirtualSignalGroupEndpointsMapping
     {
         public VirtualSignalGroupEndpointsMapping() { }
+        public VirtualSignalGroupEndpointsMapping(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups) { }
         public int EndpointCount { get; }
         public int VirtualSignalGroupCount { get; }
         public void Add(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
