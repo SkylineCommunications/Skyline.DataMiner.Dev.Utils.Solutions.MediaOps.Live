@@ -11,6 +11,23 @@
 	{
 		private readonly ManyToManyMapping<VirtualSignalGroup, ApiObjectReference<Endpoint>> _mapping = new();
 
+		public VirtualSignalGroupEndpointsMapping()
+		{
+		}
+
+		public VirtualSignalGroupEndpointsMapping(IEnumerable<VirtualSignalGroup> virtualSignalGroups)
+		{
+			if (virtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroups));
+			}
+
+			foreach (var vsg in virtualSignalGroups)
+			{
+				Add(vsg);
+			}
+		}
+
 		public int VirtualSignalGroupCount => _mapping.Forward.Count;
 
 		public int EndpointCount => _mapping.Reverse.Count;
