@@ -154,8 +154,11 @@
 
 		private void InitializeConnectivityManagement(bool installDomModules, bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
 		{
-			CreateMediationElement(123, 1000, "MediaOps Mediation 1");
-			CreateMediationElement(124, 1000, "MediaOps Mediation 1");
+			var dmaId1 = 123;
+			var dmaId2 = 124;
+
+			var mediationElement1 = CreateMediationElement(dmaId1, 1000, "MediaOps Mediation 1");
+			var mediationElement2 = CreateMediationElement(dmaId2, 1000, "MediaOps Mediation 2");
 
 			if (installDomModules)
 			{
@@ -180,8 +183,7 @@
 			{
 				for (int eid = 1; eid <= numberOfElements; eid++)
 				{
-					Dms.GetOrCreateAgent(123)
-						.CreateElement(eid, $"MediaOps Simulator {eid}", "Skyline MediaOps Simulator");
+					CreateMediatedElement(dmaId1, eid, mediationElement1);
 				}
 			}
 
@@ -277,6 +279,46 @@
 			}
 		}
 
+		private SimulatedElement CreateMediationElement(int dmaId, int elementId, string name)
+		{
+			var element = Dms.GetOrCreateAgent(dmaId)
+				.CreateElement(elementId, name, Constants.MediationProtocolName);
+
+			element.CreateTable(MediationElement.ElementsTableId);
+			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
+			element.CreateTable(MediationElement.ConnectionsTableId);
+			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
+
+			var connectionHandlerScriptsTable = element.Tables[MediationElement.ConnectionHandlerScriptsTableId];
+			var simulatorConnectionHandlerScript = "Simulator_ConnectionHandler";
+			connectionHandlerScriptsTable.SetRow(simulatorConnectionHandlerScript, [simulatorConnectionHandlerScript]);
+
+			return element;
+		}
+
+		private void CreateMediatedElement(int dmaId, int elementId, SimulatedElement mediationElement)
+		{
+			var element = Dms.GetOrCreateAgent(dmaId)
+				.CreateElement(elementId, $"MediaOps Simulator {elementId}", "Skyline MediaOps Simulator");
+
+			var mediatedElementsTable = mediationElement.Tables[MediationElement.ElementsTableId];
+
+			var mediatedElementKey = $"{dmaId}/{elementId}";
+
+			var mediatedElementRow = new object[7]
+			{
+				mediatedElementKey,
+				element.Name,
+				"Simulator_ConnectionHandler",
+				null,
+				null,
+				null,
+				1, // Enabled
+			};
+
+			mediatedElementsTable.SetRow(mediatedElementKey, mediatedElementRow);
+		}
+
 		private void InitializeOrchestration(bool installDomModules)
 		{
 			Dms.Agents[123].CreateElement(1001, "Orchestration Dummy Instance 1", "Protocol", "Production");
@@ -337,16 +379,6 @@
 			job.OrchestrationEvents.AddRange(WithNodes_CreateEventConfigurationInstances(10, 10, jobInfoReference));
 
 			Api.Orchestration.SaveOrchestrationJobConfiguration(job);
-		}
-
-		private void CreateMediationElement(int dmaId, int elementId, string name)
-		{
-			var element = Dms.GetOrCreateAgent(dmaId)
-				.CreateElement(elementId, name, "Skyline MediaOps Mediation");
-
-			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
-			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
-			element.CreateTable(MediationElement.ConnectionsTableId);
 		}
 
 		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes, Guid jobReferenceId)

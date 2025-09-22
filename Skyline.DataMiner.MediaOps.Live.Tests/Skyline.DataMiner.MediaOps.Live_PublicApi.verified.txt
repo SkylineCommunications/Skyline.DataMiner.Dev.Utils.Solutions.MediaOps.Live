@@ -1472,10 +1472,20 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
         public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Mediation.Element.Connection> UpdatedConnections { get; }
         public override string ToString() { }
     }
+    public class MediatedElementInfo
+    {
+        public MediatedElementInfo(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId id, string name) { }
+        public MediatedElementInfo(int dmaId, int elementId, string name) { }
+        public string ConnectionHandlerScript { get; }
+        public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId Id { get; }
+        public bool IsEnabled { get; }
+        public string Name { get; }
+    }
     public sealed class MediationElement
     {
         public static readonly int ConnectionHandlerScriptsTableId;
         public static readonly int ConnectionsTableId;
+        public static readonly int ElementsTableId;
         public static readonly int PendingConnectionActionsTableId;
         public int DmaId { get; }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.IDmsElement DmsElement { get; }
@@ -1486,8 +1496,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
         public Skyline.DataMiner.MediaOps.Live.Mediation.Element.MediationElementSubscription CreateSubscription() { }
         public override bool Equals(object obj) { }
         public string GetConnectionHandlerScriptName(Skyline.DataMiner.Core.DataMinerSystem.Common.IDmsElement destinationElement) { }
+        public System.Collections.Generic.IEnumerable<string> GetConnectionHandlerScriptNames() { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.Mediation.Element.Connection> GetConnections() { }
         public override int GetHashCode() { }
+        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.Mediation.Element.MediatedElementInfo> GetMediatedElements() { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.Mediation.Element.PendingConnectionAction> GetPendingConnectionActions() { }
         public bool TryGetConnection(System.Guid destinationEndpointId, out Skyline.DataMiner.MediaOps.Live.Mediation.Element.Connection connection) { }
         public bool TryGetPendingConnectionAction(System.Guid destinationEndpointId, out Skyline.DataMiner.MediaOps.Live.Mediation.Element.PendingConnectionAction pendingConnectionAction) { }

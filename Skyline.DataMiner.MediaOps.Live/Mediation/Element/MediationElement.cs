@@ -11,7 +11,8 @@
 	{
 		public static string ProtocolName => Constants.MediationProtocolName;
 
-		public static readonly int ConnectionHandlerScriptsTableId = 1000;
+		public static readonly int ElementsTableId = 1000;
+		public static readonly int ConnectionHandlerScriptsTableId = 2000;
 		public static readonly int PendingConnectionActionsTableId = 3000;
 		public static readonly int ConnectionsTableId = 5000;
 
@@ -118,6 +119,32 @@
 			return false;
 		}
 
+		public IEnumerable<MediatedElementInfo> GetMediatedElements()
+		{
+			return DmsElement.GetTable(ElementsTableId)
+				.GetData().Values
+				.Select(row =>
+				{
+					var key = Convert.ToString(row[0]);
+					var name = Convert.ToString(row[1]);
+
+					DmsElementId.TryParse(key, out var id);
+
+					return new MediatedElementInfo(id, name)
+					{
+						ConnectionHandlerScript = Convert.ToString(row[2]),
+						IsEnabled = Convert.ToInt32(row[6]) == 1,
+					};
+				});
+		}
+
+		public IEnumerable<string> GetConnectionHandlerScriptNames()
+		{
+			return DmsElement.GetTable(ConnectionHandlerScriptsTableId)
+				.GetData().Values
+				.Select(row => Convert.ToString(row[0]));
+		}
+
 		public string GetConnectionHandlerScriptName(IDmsElement destinationElement)
 		{
 			if (destinationElement is null)
@@ -125,11 +152,11 @@
 				throw new ArgumentNullException(nameof(destinationElement));
 			}
 
-			var scriptColumn = DmsElement.GetTable(ConnectionHandlerScriptsTableId).GetColumn<string>(1003);
+			var scriptColumn = DmsElement.GetTable(ElementsTableId).GetColumn<string>(1003);
 
 			var script = scriptColumn.GetValue(destinationElement.DmsElementId.Value, KeyType.PrimaryKey);
 
-			if (string.IsNullOrEmpty(script))
+			if (String.IsNullOrEmpty(script))
 			{
 				throw new InvalidOperationException($"No connection handler script found for element '{destinationElement.Name}' in mediation element '{Name}'.");
 			}
