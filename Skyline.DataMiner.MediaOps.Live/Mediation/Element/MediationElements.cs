@@ -36,7 +36,7 @@
 			return _elementCache.GetOrRefresh(LoadMediationElements);
 		}
 
-		public IDictionary<Endpoint, MediationElement> GetMediationElements(IEnumerable<Endpoint> endpoints)
+		public IDictionary<Endpoint, MediationElement> GetElementsForEndpoints(IEnumerable<Endpoint> endpoints)
 		{
 			if (endpoints is null)
 			{
@@ -76,14 +76,14 @@
 			return result;
 		}
 
-		public MediationElement GetMediationElement(Endpoint endpoint)
+		public MediationElement GetElementForEndpoint(Endpoint endpoint)
 		{
 			if (endpoint is null)
 			{
 				throw new ArgumentNullException(nameof(endpoint));
 			}
 
-			var mediationElements = GetMediationElements([endpoint]);
+			var mediationElements = GetElementsForEndpoints([endpoint]);
 
 			if (mediationElements.Count != 1)
 			{

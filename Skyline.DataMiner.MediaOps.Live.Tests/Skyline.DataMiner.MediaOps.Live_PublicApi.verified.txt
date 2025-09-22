@@ -1504,8 +1504,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
     {
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.Mediation.Element.MediationElement> GetAllElements() { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.Mediation.Element.MediationElement> GetAllElementsCached() { }
-        public Skyline.DataMiner.MediaOps.Live.Mediation.Element.MediationElement GetMediationElement(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint endpoint) { }
-        public System.Collections.Generic.IDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.Mediation.Element.MediationElement> GetMediationElements(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoints) { }
+        public Skyline.DataMiner.MediaOps.Live.Mediation.Element.MediationElement GetElementForEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint endpoint) { }
+        public System.Collections.Generic.IDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.Mediation.Element.MediationElement> GetElementsForEndpoints(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoints) { }
     }
     public sealed class PendingConnectionAction : System.IEquatable<Skyline.DataMiner.MediaOps.Live.Mediation.Element.PendingConnectionAction>
     {

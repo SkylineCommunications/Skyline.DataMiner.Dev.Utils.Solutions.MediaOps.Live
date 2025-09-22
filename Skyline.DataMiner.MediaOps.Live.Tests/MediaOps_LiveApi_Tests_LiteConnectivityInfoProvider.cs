@@ -120,7 +120,7 @@
 			var audioSource1 = api.Endpoints.Read("Audio Source 1");
 			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
 
-			var mediationElement = api.MediationElements.GetMediationElement(audioDestination1);
+			var mediationElement = api.MediationElements.GetElementForEndpoint(audioDestination1);
 			var simulatedMediationElement = simulation.Dms.Agents[mediationElement.DmaId].Elements[mediationElement.ElementId];
 
 			simulation.CreateTestConnection(audioSource1, audioDestination1);

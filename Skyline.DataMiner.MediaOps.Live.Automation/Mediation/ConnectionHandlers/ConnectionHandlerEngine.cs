@@ -62,7 +62,7 @@
 		{
 			var now = DateTimeOffset.Now;
 
-			var mediationElementMap = Api.MediationElements.GetMediationElements(
+			var mediationElementMap = Api.MediationElements.GetElementsForEndpoints(
 				connections.Select(x => x.DestinationEndpoint));
 
 			foreach (var group in connections

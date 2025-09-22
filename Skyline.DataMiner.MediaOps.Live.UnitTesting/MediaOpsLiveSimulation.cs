@@ -46,7 +46,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = Api.MediationElements.GetMediationElement(destination);
+			var mediationElement = Api.MediationElements.GetElementForEndpoint(destination);
 
 			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
@@ -77,7 +77,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = Api.MediationElements.GetMediationElement(destination);
+			var mediationElement = Api.MediationElements.GetElementForEndpoint(destination);
 
 			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
@@ -111,7 +111,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = Api.MediationElements.GetMediationElement(destination);
+			var mediationElement = Api.MediationElements.GetElementForEndpoint(destination);
 
 			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
@@ -140,7 +140,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = Api.MediationElements.GetMediationElement(destination);
+			var mediationElement = Api.MediationElements.GetElementForEndpoint(destination);
 
 			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
