@@ -507,14 +507,14 @@
 				input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
 			}
 
-			var result = AutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out string[] errorMessages);
+			var result = AutomationHelper.ExecuteAutomationScript(connection, scriptName, scriptParams, scriptDummies, input, out string[] errorMessages);
 			OrchestrationScriptResult scriptResult = new OrchestrationScriptResult
 			{
 				ErrorMessages = errorMessages,
 				HadError = result.HadError || errorMessages.Any(),
 			};
 
-			if (result.ScriptOutput.TryGetValue(OrchestrationScript.ScriptOutputRequestScriptInfoKey, out string orchestrationOutputString))
+			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, out string orchestrationOutputString))
 			{
 				OrchestrationScriptOutput orchestrationOutput = JsonConvert.DeserializeObject<OrchestrationScriptOutput>(orchestrationOutputString);
 				scriptResult.ServiceId = String.Join($"/", orchestrationOutput.OrchestrationServiceAgentId, orchestrationOutput.OrchestrationServiceId);

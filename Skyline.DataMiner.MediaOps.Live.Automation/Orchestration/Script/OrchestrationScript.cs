@@ -15,6 +15,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Enums;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
@@ -217,7 +218,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				case OrchestrationScriptAction.PerformOrchestrationAskMissingValues:
 				{
 					OrchestrationScriptOutput orchestrationScriptOutput = PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
-					return new Dictionary<string, string> { { ScriptOutputRequestScriptInfoKey, orchestrationScriptOutput == null ? null : JsonConvert.SerializeObject(orchestrationScriptOutput) } };
+					return new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, orchestrationScriptOutput == null ? null : JsonConvert.SerializeObject(orchestrationScriptOutput) } };
 				}
 
 				default:
