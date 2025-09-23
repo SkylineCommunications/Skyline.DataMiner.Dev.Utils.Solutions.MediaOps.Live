@@ -46,7 +46,7 @@
 		/// </summary>
 		public string JobId => JobInfo.JobReference;
 
-		internal OrchestrationJobInfo JobInfo { get; }
+		internal OrchestrationJobInfo JobInfo { get; set; }
 
 		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
@@ -108,7 +108,7 @@
 
 				if (orchestrationEvent.JobInfoReference.Value.ID != jobInfoReference)
 				{
-					throw new InvalidOperationException("One of the job events is already part of another job");
+					throw new InvalidOperationException($"One of the job events is already part of another job (reference: {orchestrationEvent.JobInfoReference.Value.ID}");
 				}
 			}
 		}

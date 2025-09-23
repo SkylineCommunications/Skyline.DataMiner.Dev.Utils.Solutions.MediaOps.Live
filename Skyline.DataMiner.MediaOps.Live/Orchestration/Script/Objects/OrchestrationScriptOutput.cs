@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects
 {
-	public class ScriptOutput
+	public class OrchestrationScriptOutput
 	{
 		public int OrchestrationServiceAgentId { get; set; }
 

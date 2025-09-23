@@ -90,9 +90,17 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				IEnumerable<OrchestrationEvent> events = GetEventsByJobReference(jobReference, performanceTracker);
+				var jobInfo = _jobInfoHelper.GetJobInfoByJobReference(jobReference);
+				IEnumerable<OrchestrationEvent> events = GetEventsByJobInfoReference(jobInfo, performanceTracker);
 
-				return new OrchestrationJob(jobReference, events);
+				OrchestrationJob job = new OrchestrationJob(jobReference, events);
+
+				if (jobInfo != null)
+				{
+					job.JobInfo = jobInfo;
+				}
+
+				return job;
 			}
 		}
 
@@ -113,9 +121,17 @@
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				IEnumerable<OrchestrationEventConfiguration> events = GetEventConfigurationsByJobReference(jobReference, performanceTracker);
+				var jobInfo = _jobInfoHelper.GetJobInfoByJobReference(jobReference);
+				IEnumerable<OrchestrationEventConfiguration> events = GetEventConfigurationsByJobReference(jobInfo, performanceTracker);
 
-				return new OrchestrationJobConfiguration(jobReference, events);
+				OrchestrationJobConfiguration job = new OrchestrationJobConfiguration(jobReference, events);
+
+				if (jobInfo != null)
+				{
+					job.JobInfo = jobInfo;
+				}
+
+				return job;
 			}
 		}
 
@@ -319,21 +335,14 @@
 		/// <summary>
 		///     Get all <see cref="OrchestrationEvent" /> objects that contains the given job reference value.
 		/// </summary>
-		/// <param name="jobReference">Job reference value to filter.</param>
+		/// <param name="jobInfo">Job reference object to filter.</param>
 		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>A collection of <see cref="OrchestrationEvent" /> objects that contains the given job reference value.</returns>
 		/// <exception cref="ArgumentException">Job reference can not be null or whitespace.</exception>
-		private IEnumerable<OrchestrationEvent> GetEventsByJobReference(string jobReference, PerformanceTracker performanceTracker)
+		private IEnumerable<OrchestrationEvent> GetEventsByJobInfoReference(OrchestrationJobInfo jobInfo, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				if (String.IsNullOrEmpty(jobReference))
-				{
-					throw new ArgumentException($"'{nameof(jobReference)}' cannot be null or empty", nameof(jobReference));
-				}
-
-				var jobInfo = _jobInfoHelper.GetJobInfoByJobReference(jobReference);
-
 				if (jobInfo == null)
 				{
 					return new List<OrchestrationEvent>();
@@ -348,23 +357,18 @@
 		/// <summary>
 		///     Get all <see cref="OrchestrationEventConfiguration" /> objects that contains the given job reference value.
 		/// </summary>
-		/// <param name="jobReference">Job reference value to filter.</param>
+		/// <param name="jobInfo">Job reference object to filter.</param>
 		/// <param name="performanceTracker">Performance tracking object.</param>
 		/// <returns>
 		///     A collection of <see cref="OrchestrationEventConfiguration" /> objects that contains the given job reference
 		///     value.
 		/// </returns>
 		/// <exception cref="ArgumentException">Job reference can not be null or whitespace.</exception>
-		private IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(string jobReference, PerformanceTracker performanceTracker)
+		private IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsByJobReference(OrchestrationJobInfo jobInfo, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				if (String.IsNullOrEmpty(jobReference))
-				{
-					throw new ArgumentException($"'{nameof(jobReference)}' cannot be null or empty.", nameof(jobReference));
-				}
-
-				IEnumerable<OrchestrationEvent> events = GetEventsByJobReference(jobReference, performanceTracker);
+				IEnumerable<OrchestrationEvent> events = GetEventsByJobInfoReference(jobInfo, performanceTracker);
 				return GetEventsAsEventConfigurations(events, performanceTracker).Values;
 			}
 		}

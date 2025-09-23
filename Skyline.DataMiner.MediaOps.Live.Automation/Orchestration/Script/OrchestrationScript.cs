@@ -18,6 +18,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -46,30 +47,14 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		public abstract IEnumerable<IOrchestrationParameters> GetParameters();
 
-		public virtual DmsServiceId SetupService()
+		public virtual DmsServiceId SetupService(IEngine engine)
 		{
 			return default(DmsServiceId);
 		}
 
-		public virtual void TearDownService()
+		public virtual void TearDownService(IEngine engine)
 		{
-			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-			OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
-
-			if (eventJobInfo == null || eventJobInfo.MonitoringService == default)
-			{
-				return;
-			}
-
-			IDms dms = _engine.GetDms();
-			if (dms.ServiceExists(eventJobInfo.MonitoringService))
-			{
-				var service = dms.GetService(eventJobInfo.MonitoringService);
-				service.Delete();
-			}
-
-			eventJobInfo.MonitoringService = default;
-			api.Orchestration.JobInfos.Update(eventJobInfo);
+			// No base logic.
 		}
 
 		public DmsServiceId GetEventMonitoringService()
@@ -151,19 +136,28 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			return _metadata.TryGetValue(metadataParam, out metadataValue);
 		}
 
-		public NodeConfiguration GetNodeConfiguration(string nodeLabel)
+		public bool TryGetNodeConfiguration(string nodeLabel, out NodeConfiguration nodeConfiguration)
 		{
-			if (EventConfiguration == null)
+			if (EventConfiguration?.Configuration == null)
 			{
 				throw new InvalidOperationException("No event configuration was found");
 			}
 
-			return EventConfiguration.Configuration.NodeConfigurations.FirstOrDefault(nc => nc.NodeLabel == nodeLabel);
+			nodeConfiguration = EventConfiguration.Configuration.NodeConfigurations.FirstOrDefault(nc => nc.NodeLabel == nodeLabel);
+
+			return nodeConfiguration != null;
 		}
 
 		public void OrchestrateNode(NodeConfiguration nodeConfig)
 		{
-			OrchestrationEventExecutionHelper.TryExecuteOrchestrationScript(_engine.GetUserConnection(), Guid.Empty, nodeConfig.OrchestrationScriptName, nodeConfig.OrchestrationScriptArguments, nodeConfig.Profile, out string[] errorMessages);
+			if (nodeConfig == null)
+			{
+				throw new ArgumentNullException(nameof(nodeConfig));
+			}
+
+			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
+
+			OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(_engine.GetUserConnection(), nodeConfig.OrchestrationScriptName, nodeConfig.OrchestrationScriptArguments.Union(addedInputParams), nodeConfig.Profile);
 		}
 
 		private void RunSafe(IEngine engine)
@@ -222,8 +216,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				case OrchestrationScriptAction.PerformOrchestration:
 				case OrchestrationScriptAction.PerformOrchestrationAskMissingValues:
 				{
-					ScriptOutput scriptOutput = PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
-					return new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, scriptOutput == null ? null : JsonConvert.SerializeObject(scriptOutput) } };
+					OrchestrationScriptOutput orchestrationScriptOutput = PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
+					return new Dictionary<string, string> { { ScriptOutputRequestScriptInfoKey, orchestrationScriptOutput == null ? null : JsonConvert.SerializeObject(orchestrationScriptOutput) } };
 				}
 
 				default:
@@ -442,6 +436,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				foreach (ProfileInstance instance in instances)
 				{
 					PresetGroupDisplayInfo.PresetInfo presetInfo = new PresetGroupDisplayInfo.PresetInfo();
+
 					// Tip: add a check if the option names are unique
 					presets.Add(new GroupPresetOption(instance.Name, presetInfo));
 
@@ -494,9 +489,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private IEnumerable<ParameterInfo> GetIncompleteInfos(IEnumerable<ParameterInfo> infos) => infos.Where(x => x.Value is null);
 
-		private ScriptOutput PerformOrchestrationFromEntryPoint(IReadOnlyDictionary<string, string> metaData, bool askMissingValues)
+		private OrchestrationScriptOutput PerformOrchestrationFromEntryPoint(IReadOnlyDictionary<string, string> metaData, bool askMissingValues)
 		{
-			ScriptOutput scriptOutput = new ScriptOutput();
+			OrchestrationScriptOutput orchestrationScriptOutput = new OrchestrationScriptOutput();
 
 			ScriptInfo scriptInfo = GetScriptInfo();
 
@@ -520,24 +515,44 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 			Orchestrate(_engine);
 
-			if (EventConfiguration.IsStartEvent)
+			TryGetMetadataValue("{Orchestration Level}", out string orchestrationLevel);
+			if (orchestrationLevel == "Global")
 			{
-				MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-				OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
-
-				if (eventJobInfo != null && eventJobInfo.MonitoringService != default)
+				if (EventConfiguration.IsStartEvent)
 				{
-					eventJobInfo.MonitoringService = SetupService();
-					api.Orchestration.JobInfos.Update(eventJobInfo);
+					MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+					OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
+
+					if (eventJobInfo != null)
+					{
+						eventJobInfo.MonitoringService = SetupService(_engine);
+						api.Orchestration.JobInfos.Update(eventJobInfo);
+					}
+				}
+
+				if (EventConfiguration.IsStopEvent)
+				{
+					TearDownService(_engine);
+
+					MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+					OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
+
+					if (eventJobInfo != null || eventJobInfo.MonitoringService == default)
+					{
+						IDms dms = _engine.GetDms();
+						if (dms.ServiceExists(eventJobInfo.MonitoringService))
+						{
+							var service = dms.GetService(eventJobInfo.MonitoringService);
+							service.Delete();
+						}
+
+						eventJobInfo.MonitoringService = default;
+						api.Orchestration.JobInfos.Update(eventJobInfo);
+					}
 				}
 			}
 
-			if (EventConfiguration.IsStopEvent)
-			{
-				TearDownService();
-			}
-
-			return scriptOutput;
+			return orchestrationScriptOutput;
 		}
 	}
 }

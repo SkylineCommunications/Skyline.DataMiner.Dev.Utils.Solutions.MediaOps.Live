@@ -6,6 +6,8 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
+	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
@@ -13,7 +15,10 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Enums;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
@@ -32,6 +37,7 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 		private readonly OrchestrationSettings _settings;
+
 		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, OrchestrationSettings settings)
 		{
 			_api = api;
@@ -222,6 +228,11 @@
 
 				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
 
+				if (allInvolvedVsgIds.Count != allInvolvedVsgs.Count)
+				{
+					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
+				}
+
 				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
 
@@ -287,6 +298,11 @@
 
 				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
 
+				if (allInvolvedVsgIds.Count != allInvolvedVsgs.Count)
+				{
+					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
+				}
+
 				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
 
@@ -342,18 +358,20 @@
 					Task nodeOrchestrationTask = Task.Factory.StartNew(
 						() =>
 						{
-							if (TryExecuteOrchestrationScript(
-									Guid.Empty,
-									nodeConfiguration.OrchestrationScriptName,
-									nodeConfiguration.OrchestrationScriptArguments,
-									nodeConfiguration.Profile,
-									performanceTracker,
-									out string[] errorMessages))
+							IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(orchestrationEventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
+
+							OrchestrationScriptResult nodeScriptResult = ExecuteOrchestrationScript(
+								nodeConfiguration.OrchestrationScriptName,
+								nodeConfiguration.OrchestrationScriptArguments.Union(addedInputParams),
+								nodeConfiguration.Profile,
+								performanceTracker);
+
+							if (!nodeScriptResult.HadError)
 							{
 								return;
 							}
 
-							errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}");
+							errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: {String.Join("\n", nodeScriptResult.ErrorMessages)}");
 							orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						},
 						CancellationToken.None,
@@ -376,29 +394,31 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				if (!TryExecuteOrchestrationScript(
-						orchestrationEventConfiguration.ID,
-						orchestrationEventConfiguration.GlobalOrchestrationScript,
-						orchestrationEventConfiguration.GlobalOrchestrationScriptArguments,
-						orchestrationEventConfiguration.Profile,
-						performanceTracker,
-						out string[] errorMessages))
+				IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(orchestrationEventConfiguration.ID, OrchestrationLevel.Global).ToMetadataArguments();
+
+				OrchestrationScriptResult globalScriptResult = ExecuteOrchestrationScript(
+					orchestrationEventConfiguration.GlobalOrchestrationScript,
+					orchestrationEventConfiguration.GlobalOrchestrationScriptArguments.Union(addedInputParams),
+					orchestrationEventConfiguration.Profile,
+					performanceTracker);
+
+				if (globalScriptResult.HadError)
 				{
-					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", errorMessages)}";
+					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", globalScriptResult.ErrorMessages)}";
 					orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 				}
 			}
 		}
 
-		private bool TryExecuteOrchestrationScript(Guid eventId, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, PerformanceTracker performanceTracker, out string[] errorMessages)
+		private OrchestrationScriptResult ExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				return TryExecuteOrchestrationScript(_api.Connection, eventId, scriptName, arguments, profile, out errorMessages);
+				return ExecuteOrchestrationScript(_api.Connection, scriptName, arguments, profile);
 			}
 		}
 
-		internal static bool TryExecuteOrchestrationScript(IConnection connection, Guid eventId, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, out string[] errorMessages)
+		internal static OrchestrationScriptResult ExecuteOrchestrationScript(IConnection connection, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile)
 		{
 			IDms dms = connection.GetDms();
 			ProfileHelper profileHelper = new ProfileHelper(connection.HandleMessages);
@@ -441,8 +461,11 @@
 					continue;
 				}
 
-				errorMessages = [$"Missing required script parameter: {requiredParameter.Description}"];
-				return false;
+				return new OrchestrationScriptResult
+				{
+					ErrorMessages = [$"Missing required script parameter: {requiredParameter.Description}"],
+					HadError = true,
+				};
 			}
 
 			List<DmsAutomationScriptDummyValue> scriptDummies = [];
@@ -452,8 +475,11 @@
 
 				if (matchingArgument == null)
 				{
-					errorMessages = [$"Missing required script dummy: {requiredDummy.Description}"];
-					return false;
+					return new OrchestrationScriptResult
+					{
+						ErrorMessages = [$"Missing required script dummy: {requiredDummy.Description}"],
+						HadError = true,
+					};
 				}
 
 				if (matchingArgument.Value.Contains("/")) // By ID
@@ -475,16 +501,26 @@
 					value => value.Name,
 					value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
 				profile.Instance);
-			input.Metadata.Add("{Event ID}", eventId.ToString());
 
 			foreach (OrchestrationScriptArgument orchestrationScriptArgument in orchestrationScriptArguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata))
 			{
 				input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
 			}
 
-			var result = OrchestrationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
+			var result = AutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out string[] errorMessages);
+			OrchestrationScriptResult scriptResult = new OrchestrationScriptResult
+			{
+				ErrorMessages = errorMessages,
+				HadError = result.HadError || errorMessages.Any(),
+			};
 
-			return !result.HadError && !errorMessages.Any();
+			if (result.ScriptOutput.TryGetValue(OrchestrationScript.ScriptOutputRequestScriptInfoKey, out string orchestrationOutputString))
+			{
+				OrchestrationScriptOutput orchestrationOutput = JsonConvert.DeserializeObject<OrchestrationScriptOutput>(orchestrationOutputString);
+				scriptResult.ServiceId = String.Join($"/", orchestrationOutput.OrchestrationServiceAgentId, orchestrationOutput.OrchestrationServiceId);
+			}
+
+			return scriptResult;
 		}
 	}
 }

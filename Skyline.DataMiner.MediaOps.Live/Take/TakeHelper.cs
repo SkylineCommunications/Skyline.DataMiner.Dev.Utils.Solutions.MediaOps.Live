@@ -138,10 +138,20 @@
 				throw new ArgumentNullException(nameof(disconnectRequests));
 			}
 
-			if (performanceTracker == null)
-			{
-				throw new ArgumentNullException(nameof(performanceTracker));
+						if (!destination.TryGetEndpointForLevel(destinationLevel, out var destinationEndpointRef) ||
+							!endpoints.TryGetValue(destinationEndpointRef, out var destinationEndpoint))
+						{
+							throw new InvalidOperationException($"Couldn't find destination endpoint for level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
+						}
+
+						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint);
+						connectionRequests.Add(request);
+					}
+				}
+
+				TakeInternal(connectionRequests, performanceTracker);
 			}
+		}
 
 			try
 			{
