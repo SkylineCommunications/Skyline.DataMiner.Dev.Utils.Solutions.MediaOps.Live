@@ -25,13 +25,12 @@
 				{
 					var rowInfo = GetOrCreateRowInfo(row.Key);
 
-					if (rowInfo.LastUpdateType == UpdateType.None)
+					if (rowInfo.Row == null)
 					{
 						rowInfo.Row = row;
 					}
 
-					if (rowInfo.IsSentToClient ||
-						rowInfo.LastUpdateType == UpdateType.Remove)
+					if (rowInfo.IsSentToClient || rowInfo.IsRemoved)
 					{
 						// If the row was already sent to the client or removed, skip it
 						continue;
@@ -74,13 +73,13 @@
 			lock (_lock)
 			{
 				var rowInfo = GetOrCreateRowInfo(row.Key);
-				rowInfo.LastUpdateType = UpdateType.Add;
 				rowInfo.Row = row;
 
 				EnsureGqiUpdaterIsAvailable();
 				_updater.AddRow(row);
 
 				rowInfo.IsSentToClient = true;
+				rowInfo.IsRemoved = false;
 			}
 		}
 
@@ -94,7 +93,12 @@
 			lock (_lock)
 			{
 				var rowInfo = GetOrCreateRowInfo(row.Key);
-				rowInfo.LastUpdateType = UpdateType.Update;
+
+				if (rowInfo.IsRemoved)
+				{
+					throw new NotImplementedException("Cannot update a removed row. Use Add() or AddOrUpdate() instead");
+				}
+
 				rowInfo.Row = row;
 
 				if (rowInfo.IsSentToClient)
@@ -115,22 +119,14 @@
 			lock (_lock)
 			{
 				var rowInfo = GetOrCreateRowInfo(row.Key);
-				rowInfo.Row = row;
 
-				EnsureGqiUpdaterIsAvailable();
-
-				if (!rowInfo.IsSentToClient)
+				if (!rowInfo.IsSentToClient || rowInfo.IsRemoved)
 				{
-					rowInfo.LastUpdateType = UpdateType.Add;
-
-					_updater.AddRow(row);
-					rowInfo.IsSentToClient = true;
+					AddRow(row);
 				}
 				else
 				{
-					rowInfo.LastUpdateType = UpdateType.Update;
-
-					_updater.UpdateRow(row);
+					UpdateRow(row);
 				}
 			}
 		}
@@ -145,8 +141,8 @@
 			lock (_lock)
 			{
 				var rowInfo = GetOrCreateRowInfo(rowKey);
-				rowInfo.LastUpdateType = UpdateType.Remove;
 				rowInfo.Row = null;
+				rowInfo.IsRemoved = true;
 
 				if (rowInfo.IsSentToClient)
 				{
@@ -175,30 +171,20 @@
 			return rowInfo;
 		}
 
-		private enum UpdateType
-		{
-			None,
-			Add,
-			Update,
-			Remove,
-		}
-
 		private sealed class RowInfo
 		{
+			public RowInfo(string key)
+			{
+				Key = key ?? throw new ArgumentNullException(nameof(key));
+			}
+
 			public string Key { get; }
 
 			public GQIRow Row { get; set; }
 
 			public bool IsSentToClient { get; set; }
 
-			public UpdateType LastUpdateType { get; set; }
-
-			public RowInfo(string key)
-			{
-				Key = key ?? throw new ArgumentNullException(nameof(key));
-
-				LastUpdateType = UpdateType.None;
-			}
+			public bool IsRemoved { get; set; }
 		}
 	}
 }
