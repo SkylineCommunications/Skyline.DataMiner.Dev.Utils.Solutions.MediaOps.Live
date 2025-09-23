@@ -1655,6 +1655,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects
         public string ProfileInstance { get; }
         public System.Collections.Generic.Dictionary<string, object> ProfileParameterValues { get; }
     }
+    public class OrchestrationScriptOutput
+    {
+        public OrchestrationScriptOutput() { }
+        public int OrchestrationServiceAgentId { get; set; }
+        public int OrchestrationServiceId { get; set; }
+    }
     public class ScriptInfo
     {
         public ScriptInfo() { }
@@ -1666,12 +1672,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects
         public System.Collections.Generic.Dictionary<string, Skyline.DataMiner.Net.Profiles.Parameter> ProfileParameterReferences { get; }
         [System.Runtime.Serialization.DataMember]
         public System.Collections.Generic.Dictionary<string, System.Guid> ProfileParameters { get; }
-    }
-    public class ScriptOutput
-    {
-        public ScriptOutput() { }
-        public int OrchestrationServiceAgentId { get; set; }
-        public int OrchestrationServiceId { get; set; }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper

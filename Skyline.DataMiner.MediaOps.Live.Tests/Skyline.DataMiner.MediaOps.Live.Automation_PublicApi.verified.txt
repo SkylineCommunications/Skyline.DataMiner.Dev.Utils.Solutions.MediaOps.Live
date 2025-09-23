@@ -177,7 +177,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
         protected OrchestrationScript() { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventConfiguration EventConfiguration { get; }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId GetEventMonitoringService() { }
-        public Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration GetNodeConfiguration(string nodeLabel) { }
         public object GetParameterValue(string paramName) { }
         public abstract System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.IOrchestrationParameters> GetParameters();
         [Skyline.DataMiner.Automation.AutomationEntryPoint(Skyline.DataMiner.Automation.AutomationEntryPointType.Types.OnRequestScriptInfo)]
@@ -185,9 +184,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
         public abstract void Orchestrate(Skyline.DataMiner.Automation.IEngine engine);
         public void OrchestrateNode(Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfig) { }
         public void Run(Skyline.DataMiner.Automation.IEngine engine) { }
-        public virtual Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId SetupService() { }
-        public virtual void TearDownService() { }
+        public virtual Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId SetupService(Skyline.DataMiner.Automation.IEngine engine) { }
+        public virtual void TearDownService(Skyline.DataMiner.Automation.IEngine engine) { }
         public bool TryGetMetadataValue(string metadataParam, out string metadataValue) { }
+        public bool TryGetNodeConfiguration(string nodeLabel, out Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfiguration) { }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.Automation.Take
