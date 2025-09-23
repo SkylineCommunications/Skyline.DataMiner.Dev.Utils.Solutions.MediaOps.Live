@@ -119,14 +119,20 @@
 			lock (_lock)
 			{
 				var rowInfo = GetOrCreateRowInfo(row.Key);
+				rowInfo.Row = row;
+
+				EnsureGqiUpdaterIsAvailable();
 
 				if (!rowInfo.IsSentToClient || rowInfo.IsRemoved)
 				{
-					AddRow(row);
+					_updater.AddRow(row);
+
+					rowInfo.IsSentToClient = true;
+					rowInfo.IsRemoved = false;
 				}
 				else
 				{
-					UpdateRow(row);
+					_updater.UpdateRow(row);
 				}
 			}
 		}
