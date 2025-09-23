@@ -507,7 +507,7 @@
 				input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
 			}
 
-			var result = AutomationHelper.ExecuteAutomationScript(connection, scriptName, scriptParams, scriptDummies, input, out string[] errorMessages);
+			var result = OrchestrationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out string[] errorMessages);
 			OrchestrationScriptResult scriptResult = new OrchestrationScriptResult
 			{
 				ErrorMessages = errorMessages,
