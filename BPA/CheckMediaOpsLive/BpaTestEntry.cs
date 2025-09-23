@@ -2,6 +2,8 @@
 {
 	using System;
 
+	using CheckMediaOpsLive.Tools;
+
 	using Skyline.DataMiner.BpaLib;
 	using Skyline.DataMiner.Net.BPA.Config;
 
@@ -9,7 +11,7 @@
 	{
 		public override string Name => nameof(CheckMediaOpsLive);
 
-		public override string Description => "Checks the configuration and collect statistics of MediaOps.LIVE.";
+		public override string Description => "Checks the MediaOps.LIVE configuration and collects performance statistics.";
 
 		public override BpaScheduleConfig DefaultSchedule => BpaScheduleConfig.FromDays(1);
 

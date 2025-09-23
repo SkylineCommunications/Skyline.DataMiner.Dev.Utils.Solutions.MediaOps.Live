@@ -1,6 +1,7 @@
 ﻿namespace CheckMediaOpsLive
 {
-	using System.Collections.Generic;
+	using Newtonsoft.Json;
+	using Newtonsoft.Json.Converters;
 
 	public class Error
 	{
@@ -10,16 +11,17 @@
 			Text = text;
 		}
 
+		[JsonConverter(typeof(StringEnumConverter))]
 		public ErrorSeverity Severity { get; }
 
 		public string Text { get; }
 
 		public object Details { get; set; }
+	}
 
-		public enum ErrorSeverity
-		{
-			Warning,
-			Error,
-		}
+	public enum ErrorSeverity
+	{
+		Warning,
+		Error,
 	}
 }

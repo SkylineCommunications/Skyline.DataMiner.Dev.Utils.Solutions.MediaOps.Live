@@ -22,12 +22,12 @@
 			{
 				if (Errors != null)
 				{
-					if (Errors.Any(x => x.Severity == Error.ErrorSeverity.Error))
+					if (Errors.Any(x => x.Severity == ErrorSeverity.Error))
 					{
 						return BpaTestOutcome.IssuesDetected;
 					}
 
-					if (Errors.Any(x => x.Severity == Error.ErrorSeverity.Warning))
+					if (Errors.Any(x => x.Severity == ErrorSeverity.Warning))
 					{
 						return BpaTestOutcome.Warning;
 					}

@@ -10,7 +10,7 @@
 		{
 			var api = context.SLNet.GetMediaOpsLiveApi();
 
-			var analyzer = new ErrorAnalyzer(api);
+			var analyzer = new ErrorAnalyzer(api, context.SLNet);
 			analyzer.Analyze();
 
 			var statistics = new MediaOpsMetrics(api);
