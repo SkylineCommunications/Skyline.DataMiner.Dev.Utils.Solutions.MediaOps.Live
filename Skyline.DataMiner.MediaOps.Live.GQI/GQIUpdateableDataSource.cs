@@ -96,7 +96,7 @@
 
 				if (rowInfo.IsRemoved)
 				{
-					throw new NotImplementedException("Cannot update a removed row. Use Add() or AddOrUpdate() instead");
+					throw new NotImplementedException($"Cannot update a removed row. Use {nameof(AddRow)}() or {nameof(AddOrUpdateRow)}() instead");
 				}
 
 				rowInfo.Row = row;
