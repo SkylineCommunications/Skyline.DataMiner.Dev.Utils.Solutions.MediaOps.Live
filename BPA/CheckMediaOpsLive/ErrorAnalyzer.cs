@@ -16,7 +16,7 @@
 	public sealed class ErrorAnalyzer
 	{
 		private readonly MediaOpsLiveApi _api;
-		private readonly VirtualSignalGroupsData _data;
+		private readonly VirtualSignalGroupsContext _data;
 		private readonly AutomationScriptValidator _scriptValidator;
 
 		public ErrorAnalyzer(MediaOpsLiveApi api, Net.IConnection connection)
@@ -33,7 +33,7 @@
 
 			_api = api;
 
-			_data = new VirtualSignalGroupsData(api);
+			_data = new VirtualSignalGroupsContext(api);
 			_scriptValidator = new AutomationScriptValidator(connection);
 		}
 
@@ -48,9 +48,6 @@
 
 				CheckMediationElements();
 				CheckConnectionHandlerScripts();
-
-				DetectUnassignedEndpoints();
-				DetectEmptyVirtualSignalGroups();
 			}
 			catch (Exception ex)
 			{
@@ -65,43 +62,72 @@
 				var dms = _api.GetDms();
 				var elements = dms.GetElements().ToDictionary(x => x.DmsElementId);
 
+				var invalidTransportTypeReference = new List<Endpoint>();
+				var invalidElementReference = new List<Endpoint>();
+				var invalidControlElementReference = new List<Endpoint>();
+				var unassignedEndpoints = new List<Endpoint>();
+
 				foreach (var endpoint in _data.Endpoints.Values)
 				{
 					if (endpoint.TransportType.HasValue &&
 						!_data.TransportTypes.ContainsKey(endpoint.TransportType.Value))
 					{
-						AddError(
-							$"Endpoint '{endpoint.Name}' (ID: {endpoint.ID}) has an invalid transport type reference.",
-							new
-							{
-								Endpoint = new { endpoint.ID, endpoint.Name },
-								TransportTypeReference = endpoint.TransportType.Value
-							});
+						invalidTransportTypeReference.Add(endpoint);
 					}
 
 					if (endpoint.Element.HasValue &&
 						!elements.ContainsKey(endpoint.Element.Value))
 					{
-						AddError(
-							$"Endpoint '{endpoint.Name}' (ID: {endpoint.ID}) has an invalid element reference.",
-							new
-							{
-								Endpoint = new { endpoint.ID, endpoint.Name },
-								ElementReference = endpoint.Element.Value
-							});
+						invalidElementReference.Add(endpoint);
 					}
 
 					if (endpoint.ControlElement.HasValue &&
 						!elements.ContainsKey(endpoint.ControlElement.Value))
 					{
-						AddError(
-							$"Endpoint '{endpoint.Name}' (ID: {endpoint.ID}) has an invalid control element reference.",
-							new
-							{
-								Endpoint = new { endpoint.ID, endpoint.Name },
-								ControlElementReference = endpoint.ControlElement.Value
-							});
+						invalidControlElementReference.Add(endpoint);
 					}
+
+					var virtualSignalGroups = _data.Mapping.GetVirtualSignalGroups(endpoint);
+					if (virtualSignalGroups.Count == 0)
+					{
+						unassignedEndpoints.Add(endpoint);
+					}
+				}
+
+				if (invalidTransportTypeReference.Count > 0)
+				{
+					AddError(
+						invalidTransportTypeReference.Count == 1
+							? $"One endpoint has an invalid transport type reference."
+							: $"{invalidTransportTypeReference.Count} endpoints have an invalid transport type reference.",
+						new { invalidTransportTypeReference.Count, });
+				}
+
+				if (invalidElementReference.Count > 0)
+				{
+					AddError(
+						invalidElementReference.Count == 1
+							? $"One endpoint has an invalid element reference."
+							: $"{invalidElementReference.Count} endpoints have an invalid element reference.",
+						new { invalidElementReference.Count, });
+				}
+
+				if (invalidControlElementReference.Count > 0)
+				{
+					AddError(
+						invalidControlElementReference.Count == 1
+							? $"One endpoint has an invalid control element reference."
+							: $"{invalidControlElementReference.Count} endpoints have an invalid control element reference.",
+						new { invalidControlElementReference.Count, });
+				}
+
+				if (unassignedEndpoints.Count > 0)
+				{
+					AddWarning(
+						unassignedEndpoints.Count == 1
+							? $"One endpoint is not assigned to any VSG."
+							: $"{unassignedEndpoints.Count} endpoints are not assigned to any VSG.",
+						new { unassignedEndpoints.Count, });
 				}
 			}
 			catch (Exception ex)
@@ -114,32 +140,57 @@
 		{
 			try
 			{
+				var invalidLevelReference = new List<VirtualSignalGroup>();
+				var invalidEndpointReference = new List<VirtualSignalGroup>();
+				var emptyVSGs = new List<VirtualSignalGroup>();
+
 				foreach (var vsg in _data.VirtualSignalGroups.Values)
 				{
 					foreach (var levelEndpoint in vsg.Levels)
 					{
 						if (!_data.Levels.ContainsKey(levelEndpoint.Level))
 						{
-							AddError(
-								$"Virtual Signal Group '{vsg.Name}' (ID: {vsg.ID}) has an invalid level reference.",
-								new
-								{
-									VirtualSignalGroup = new { vsg.ID, vsg.Name },
-									LevelReference = levelEndpoint
-								});
+							invalidLevelReference.Add(vsg);
 						}
 
 						if (!_data.Endpoints.ContainsKey(levelEndpoint.Endpoint))
 						{
-							AddError(
-								$"Virtual Signal Group '{vsg.Name}' (ID: {vsg.ID}) has an invalid endpoint reference.",
-								new
-								{
-									VirtualSignalGroup = new { vsg.ID, vsg.Name },
-									EndpointReference = levelEndpoint
-								});
+							invalidEndpointReference.Add(vsg);
 						}
 					}
+
+					var endpoints = _data.Mapping.GetEndpoints(vsg);
+					if (endpoints.Count == 0)
+					{
+						emptyVSGs.Add(vsg);
+					}
+				}
+
+				if (invalidLevelReference.Count > 0)
+				{
+					AddError(
+						invalidLevelReference.Count == 1
+							? $"One VSG has an invalid level reference."
+							: $"{invalidLevelReference.Count} VSGs have an invalid level reference.",
+						new { invalidLevelReference.Count, });
+				}
+
+				if (invalidEndpointReference.Count > 0)
+				{
+					AddError(
+						invalidEndpointReference.Count == 1
+							? $"One VSG has an invalid endpoint reference."
+							: $"{invalidEndpointReference.Count} VSGs have an invalid endpoint reference.",
+						new { invalidEndpointReference.Count, });
+				}
+
+				if (emptyVSGs.Count > 0)
+				{
+					AddWarning(
+						emptyVSGs.Count == 1
+							? $"One VSG does not have any endpoints assigned."
+							: $"{emptyVSGs.Count} VSGs don't have any endpoints assigned.",
+						new { emptyVSGs.Count, });
 				}
 			}
 			catch (Exception ex)
@@ -239,79 +290,6 @@
 								Errors = scriptErrors,
 							});
 					}
-				}
-			}
-			catch (Exception ex)
-			{
-				AddException(ex);
-			}
-		}
-
-		private void DetectUnassignedEndpoints()
-		{
-			try
-			{
-				var unassignedEndpoints = new List<Endpoint>();
-
-				foreach (var endpoint in _data.Endpoints.Values)
-				{
-					var virtualSignalGroups = _data.Mapping.GetVirtualSignalGroups(endpoint);
-
-					if (virtualSignalGroups.Count == 0)
-					{
-						unassignedEndpoints.Add(endpoint);
-					}
-				}
-
-				if (unassignedEndpoints.Count > 0)
-				{
-					var message = unassignedEndpoints.Count == 1
-						? $"There is 1 unassigned endpoint."
-						: $"There are {unassignedEndpoints.Count} unassigned endpoints.";
-
-					AddWarning(
-						message,
-						new
-						{
-							unassignedEndpoints.Count,
-							Endpoints = unassignedEndpoints.Select(x => new { x.ID, x.Name })
-						});
-				}
-			}
-			catch (Exception ex)
-			{
-				AddException(ex);
-			}
-		}
-
-		private void DetectEmptyVirtualSignalGroups()
-		{
-			try
-			{
-				var emptyVSGs = new List<VirtualSignalGroup>();
-
-				foreach (var vsg in _data.VirtualSignalGroups.Values)
-				{
-					var endpoints = _data.Mapping.GetEndpoints(vsg);
-					if (endpoints.Count == 0)
-					{
-						emptyVSGs.Add(vsg);
-					}
-				}
-
-				if (emptyVSGs.Count > 0)
-				{
-					var message = emptyVSGs.Count == 1
-						? $"There is 1 empty virtual signal group."
-						: $"There are {emptyVSGs.Count} empty virtual signal groups.";
-
-					AddWarning(
-						message,
-						new
-						{
-							emptyVSGs.Count,
-							VirtualSignalGroups = emptyVSGs.Select(x => new { x.ID, x.Name })
-						});
 				}
 			}
 			catch (Exception ex)

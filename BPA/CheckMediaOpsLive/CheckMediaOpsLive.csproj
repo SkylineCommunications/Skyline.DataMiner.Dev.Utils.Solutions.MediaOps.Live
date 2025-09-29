@@ -44,6 +44,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="BPA">
       <HintPath>..\import\Skyline\bin\BPA.dll</HintPath>
@@ -63,21 +66,25 @@
     <Compile Include="Automation\AutomationScriptValidator.cs" />
     <Compile Include="BpaTestEntry.cs" />
     <Compile Include="BpaTestResult.cs" />
+    <Compile Include="MediaOpsLiveStatistics.cs" />
     <Compile Include="Tools\CustomAssemblyResolver.cs" />
     <Compile Include="MediaOpsLiveBpa.cs" />
     <Compile Include="Result.cs" />
-    <Compile Include="MediaOpsMetrics.cs" />
-    <Compile Include="Metric.cs" />
+    <Compile Include="MediaOpsLiveStatisticsCollector.cs" />
+    <Compile Include="ConnectionHandlerScriptStatistics.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Error.cs" />
     <Compile Include="ErrorAnalyzer.cs" />
-    <Compile Include="VirtualSignalGroupsData.cs" />
+    <Compile Include="VirtualSignalGroupsContext.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Skyline.DataMiner.Core.DataMinerSystem.Common" Version="1.1.3.4" />
     <PackageReference Include="Skyline.DataMiner.Core.InterAppCalls.Common" Version="1.1.0.1" />
     <PackageReference Include="Skyline.DataMiner.MediaOps.Live" Version="1.0.1-alpha109" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Documentation.md" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

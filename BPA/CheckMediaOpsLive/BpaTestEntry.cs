@@ -9,7 +9,7 @@
 
 	public class BpaTestEntry : ABpaTest
 	{
-		public override string Name => nameof(CheckMediaOpsLive);
+		public override string Name => "MediaOps.LIVE Configuration";
 
 		public override string Description => "Checks the MediaOps.LIVE configuration and collects performance statistics.";
 

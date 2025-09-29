@@ -13,13 +13,13 @@
 			var analyzer = new ErrorAnalyzer(api, context.SLNet);
 			analyzer.Analyze();
 
-			var statistics = new MediaOpsMetrics(api);
-			statistics.CollectStatistics();
+			var statisticsCollector = new MediaOpsLiveStatisticsCollector(api);
+			var statistics = statisticsCollector.CollectStatistics();
 
 			var result = new Result
 			{
 				Version = api.GetVersion(),
-				Metrics = statistics.Results,
+				Statistics = statistics,
 				Errors = analyzer.Errors,
 			};
 
@@ -27,6 +27,7 @@
 			{
 				TestExecuted = true,
 				Outcome = result.Outcome,
+				ResultMessage = result.Message,
 				DetailedJsonResult = JsonConvert.SerializeObject(result),
 			};
 		}

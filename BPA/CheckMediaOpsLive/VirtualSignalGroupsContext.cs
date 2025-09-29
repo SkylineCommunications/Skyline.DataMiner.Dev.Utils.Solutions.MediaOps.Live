@@ -7,9 +7,9 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	public class VirtualSignalGroupsData
+	public class VirtualSignalGroupsContext
 	{
-		public VirtualSignalGroupsData(MediaOpsLiveApi api)
+		public VirtualSignalGroupsContext(MediaOpsLiveApi api)
 		{
 			Levels = api.Levels.ReadAll().ToDictionary(x => x.Reference);
 			TransportTypes = api.TransportTypes.ReadAll().ToDictionary(x => x.Reference);

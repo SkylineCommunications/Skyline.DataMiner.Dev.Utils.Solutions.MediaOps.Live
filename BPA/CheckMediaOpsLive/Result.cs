@@ -11,7 +11,7 @@
 	{
 		public string Version { get; set; }
 
-		public ICollection<Metric> Metrics { get; set; }
+		public MediaOpsLiveStatistics Statistics { get; set; }
 
 		public ICollection<Error> Errors { get; set; }
 
@@ -34,6 +34,28 @@
 				}
 
 				return BpaTestOutcome.NoIssues;
+			}
+		}
+
+		[JsonIgnore]
+		public string Message
+		{
+			get
+			{
+				if (Errors != null)
+				{
+					if (Errors.Any(x => x.Severity == ErrorSeverity.Error))
+					{
+						return "Errors detected in the system. Please contact your system administrator for support.";
+					}
+
+					if (Errors.Any(x => x.Severity == ErrorSeverity.Warning))
+					{
+						return "Warnings detected in the system. Please contact your system administrator for support.";
+					}
+				}
+
+				return "No incorrect configurations detected in the system.";
 			}
 		}
 	}

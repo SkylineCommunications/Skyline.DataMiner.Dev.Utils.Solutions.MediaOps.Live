@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 
+	using Skyline.DataMiner.Net.Helper;
 	using Skyline.DataMiner.Net.Messages;
 
 	public class AutomationExe
