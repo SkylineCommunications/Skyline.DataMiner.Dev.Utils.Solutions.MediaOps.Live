@@ -6,6 +6,7 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Data;
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -25,16 +26,34 @@
 
 		protected internal override DomDefinitionId DomDefinition => Endpoint.DomDefinition;
 
-		public IEnumerable<Endpoint> GetByElement(string dmaElementId)
+		public Endpoint GetByRoleElementAndIdentifier(Role role, DmsElementId elementId, string identifier)
 		{
-			if (String.IsNullOrWhiteSpace(dmaElementId))
+			if (String.IsNullOrWhiteSpace(identifier))
 			{
-				throw new ArgumentException($"'{nameof(dmaElementId)}' cannot be null or whitespace.", nameof(dmaElementId));
+				throw new ArgumentException($"'{nameof(identifier)}' cannot be null or whitespace.", nameof(identifier));
 			}
 
 			var filter = new ANDFilterElement<DomInstance>(
 				DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
-				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(dmaElementId));
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Role).Equal((int)role),
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(elementId.Value),
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Identifier).Equal(identifier));
+
+			var endpoints = Read(filter).Take(2).ToList();
+
+			if (endpoints.Count > 1)
+			{
+				throw new InvalidOperationException($"Multiple endpoints found with role '{role}', element ID '{elementId}' and identifier '{identifier}'.");
+			}
+
+			return endpoints.FirstOrDefault();
+		}
+
+		public IEnumerable<Endpoint> GetByElement(DmsElementId elementId)
+		{
+			var filter = new ANDFilterElement<DomInstance>(
+				DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(elementId.Value));
 
 			return Read(filter);
 		}

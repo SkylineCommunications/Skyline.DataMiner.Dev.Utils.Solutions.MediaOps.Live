@@ -206,7 +206,7 @@
 							Name = $"Video Source {vsgCounter}",
 							TransportType = transportTypeIP,
 							Element = elementId,
-							Identifier = $"Key-{vsgCounter}",
+							Identifier = $"Video-{vsgCounter}",
 						};
 						var audioSource = new Endpoint(Tools.GuidFromString($"Audio Source {vsgCounter}"))
 						{
@@ -214,7 +214,7 @@
 							Name = $"Audio Source {vsgCounter}",
 							TransportType = transportTypeIP,
 							Element = elementId,
-							Identifier = $"Key-{vsgCounter}",
+							Identifier = $"Audio-{vsgCounter}",
 						};
 						var videoDestination = new Endpoint(Tools.GuidFromString($"Video Destination {vsgCounter}"))
 						{
@@ -222,7 +222,7 @@
 							Name = $"Video Destination {vsgCounter}",
 							TransportType = transportTypeIP,
 							Element = elementId,
-							Identifier = $"Key-{vsgCounter}",
+							Identifier = $"Video-{vsgCounter}",
 						};
 						var audioDestination = new Endpoint(Tools.GuidFromString($"Audio Destination {vsgCounter}"))
 						{
@@ -230,7 +230,7 @@
 							Name = $"Audio Destination {vsgCounter}",
 							TransportType = transportTypeIP,
 							Element = elementId,
-							Identifier = $"Key-{vsgCounter}",
+							Identifier = $"Audio-{vsgCounter}",
 						};
 						Api.Endpoints.CreateOrUpdate([videoSource, audioSource, videoDestination, audioDestination]);
 
