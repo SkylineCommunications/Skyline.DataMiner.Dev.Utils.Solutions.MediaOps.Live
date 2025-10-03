@@ -23,6 +23,7 @@
 			// Ensure the cache is initialized with Engine.SLNetRaw
 			_ = StaticMediaOpsLiveCache.GetOrCreate(Engine.SLNetRaw);
 
+			engine.GenerateInformation("MediaOpsApi From Engine");
 			var api = new EngineMediaOpsLiveApi(engine);
 			api.SetLogger(new EngineLogger(engine));
 
