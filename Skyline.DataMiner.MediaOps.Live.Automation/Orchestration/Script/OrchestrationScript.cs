@@ -61,7 +61,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		public DmsServiceId GetEventMonitoringService()
 		{
 			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-			OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
+			OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
 
 			if (eventJobInfo == null)
 			{
@@ -522,7 +522,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				if (EventConfiguration.IsStartEvent)
 				{
 					MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-					OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
+					OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
 
 					if (eventJobInfo != null)
 					{
@@ -536,7 +536,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 					TearDownService(_engine);
 
 					MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-					OrchestrationJobInfo eventJobInfo = api.Orchestration.JobInfos.Read(EventConfiguration.JobInfoReference.Value);
+					OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
 
 					if (eventJobInfo != null || eventJobInfo.MonitoringService == default)
 					{

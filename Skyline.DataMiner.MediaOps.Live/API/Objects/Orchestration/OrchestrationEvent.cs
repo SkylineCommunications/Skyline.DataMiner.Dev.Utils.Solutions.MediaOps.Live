@@ -6,8 +6,11 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
+	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler;
+	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums;
 
 	/// <summary>
 	/// Information about an orchestration event.
@@ -256,6 +259,11 @@
 			}
 		}
 
+		public OrchestrationJobInfo GetJobInfo(MediaOpsLiveApi api)
+		{
+			return api.Orchestration.JobInfos.Read(JobInfoReference.Value);
+		}
+
 		internal OrchestrationEventConfiguration ToOrchestrationEventConfiguration(DomInstance configurationDomInstance)
 		{
 			return new OrchestrationEventConfiguration(_domInstance, new ConfigurationInstance(configurationDomInstance));
@@ -264,6 +272,54 @@
 		internal void InternalSetState(SlcOrchestrationIds.Enums.EventState? state)
 		{
 			_domInstance.OrchestrationEventInfo.EventState = state;
+		}
+
+		internal void SendPlanJobStateUpdate(MediaOpsLiveApi api)
+		{
+			if (EventType == SlcOrchestrationIds.Enums.EventType.Other)
+			{
+				return;
+			}
+
+			OrchestrationJobInfo info = GetJobInfo(api);
+
+			if (info == null)
+			{
+				return;
+			}
+
+			SetJobOrchestrationStateAction setStateAction = new SetJobOrchestrationStateAction
+			{
+				DomJobId = Guid.Parse(info.JobReference),
+				Event = GetEventTypeAsPlanJobEvent(),
+				EventState = EventState == SlcOrchestrationIds.Enums.EventState.Failed || !String.IsNullOrEmpty(FailureInfo) ? OrchestrationEventState.Failed : OrchestrationEventState.Succeeded,
+				Message = FailureInfo,
+			};
+
+			api.GetMediaOpsPlanHelper().UpdateJobState(setStateAction);
+		}
+
+		private Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent GetEventTypeAsPlanJobEvent()
+		{
+			switch (EventType)
+			{
+				case SlcOrchestrationIds.Enums.EventType.Postrollstart:
+				case SlcOrchestrationIds.Enums.EventType.Stop:
+					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PostrollStart;
+
+				case SlcOrchestrationIds.Enums.EventType.Prerollstart:
+				case SlcOrchestrationIds.Enums.EventType.Start:
+					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PrerollStart;
+
+				case SlcOrchestrationIds.Enums.EventType.Postrollstop:
+					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PostrollStop;
+
+				case SlcOrchestrationIds.Enums.EventType.Prerollstop:
+					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PrerollStop;
+
+				default:
+					throw new NotSupportedException("Event type cannot be translated to PLAN job event");
+			}
 		}
 
 		private void PublicSetState(SlcOrchestrationIds.Enums.EventState? state)

@@ -8,6 +8,7 @@
 
 	using Newtonsoft.Json;
 
+	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
@@ -104,6 +105,8 @@
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 					}
+
+					orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
 				}
 
 				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
