@@ -10,20 +10,20 @@
 
 	public class EngineMediaOpsLiveApi : MediaOpsLiveApi
 	{
-		private readonly IEngine _engine;
-
 		public EngineMediaOpsLiveApi(IEngine engine, IConnection connection) : base(connection)
 		{
-			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
+			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 		}
 
 		public EngineMediaOpsLiveApi(IEngine engine) : this(engine, engine.GetUserConnection())
 		{
 		}
 
+		public IEngine Engine { get; }
+
 		public override TakeHelper GetConnectionHandler()
 		{
-			return new EngineTakeHelper(_engine, this);
+			return new EngineTakeHelper(Engine, this);
 		}
 	}
 }

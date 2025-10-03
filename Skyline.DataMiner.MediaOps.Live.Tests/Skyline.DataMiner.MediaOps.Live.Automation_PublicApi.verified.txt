@@ -9,6 +9,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.API
     {
         public EngineMediaOpsLiveApi(Skyline.DataMiner.Automation.IEngine engine) { }
         public EngineMediaOpsLiveApi(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Net.IConnection connection) { }
+        public Skyline.DataMiner.Automation.IEngine Engine { get; }
         public override Skyline.DataMiner.MediaOps.Live.Take.TakeHelper GetConnectionHandler() { }
     }
 }
@@ -27,6 +28,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Logging
     public class EngineLogger : Skyline.DataMiner.MediaOps.Live.Logging.LoggerBase
     {
         public EngineLogger(Skyline.DataMiner.Automation.IEngine engine) { }
+        public Skyline.DataMiner.Automation.IEngine Engine { get; }
         public override void Log(string message, Skyline.DataMiner.MediaOps.Live.Logging.LogType type = 1) { }
     }
 }
@@ -194,6 +196,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Take
 {
     public class EngineTakeHelper : Skyline.DataMiner.MediaOps.Live.Take.TakeHelper
     {
+        public Skyline.DataMiner.Automation.IEngine Engine { get; }
         protected override void ExecuteConnectionHandlerScript(string script, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.ConnectionHandlerScriptAction action, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerRequest request, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
     }
 }

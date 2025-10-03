@@ -12,12 +12,12 @@
 
 	public class EngineTakeHelper : TakeHelper
 	{
-		private readonly IEngine _engine;
-
 		internal EngineTakeHelper(IEngine engine, MediaOpsLiveApi api) : base(api)
 		{
-			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
+			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 		}
+
+		public IEngine Engine { get; }
 
 		protected override void ExecuteConnectionHandlerScript(string script, ConnectionHandlerScriptAction action, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
 		{
@@ -27,7 +27,7 @@
 				performanceTracker.AddMetadata("Script", script);
 				performanceTracker.AddMetadata("Input Data", inputData);
 
-				var subScript = _engine.PrepareSubScript(script);
+				var subScript = Engine.PrepareSubScript(script);
 				subScript.Synchronous = true;
 				subScript.ExtendedErrorInfo = true;
 
