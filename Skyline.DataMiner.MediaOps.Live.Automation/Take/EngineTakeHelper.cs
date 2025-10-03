@@ -19,20 +19,20 @@
 
 		public IEngine Engine { get; }
 
-		protected override void ExecuteConnectionHandlerScript(string script, ConnectionHandlerScriptAction action, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
+		protected override void ExecuteConnectionHandlerScript(string script, ConnectionHandlerScriptAction action, IConnectionHandlerInputData inputData, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var inputData = JsonConvert.SerializeObject(request);
+				var inputDataSerialized = JsonConvert.SerializeObject(inputData);
 				performanceTracker.AddMetadata("Script", script);
-				performanceTracker.AddMetadata("Input Data", inputData);
+				performanceTracker.AddMetadata("Input Data", inputDataSerialized);
 
 				var subScript = Engine.PrepareSubScript(script);
 				subScript.Synchronous = true;
 				subScript.ExtendedErrorInfo = true;
 
 				subScript.SelectScriptParam("Action", Convert.ToString(action));
-				subScript.SelectScriptParam("Input Data", inputData);
+				subScript.SelectScriptParam("Input Data", inputDataSerialized);
 
 				subScript.StartScript();
 
