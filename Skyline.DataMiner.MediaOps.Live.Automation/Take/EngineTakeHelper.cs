@@ -8,6 +8,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Take;
+	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
 	public class EngineTakeHelper : TakeHelper
@@ -38,7 +39,7 @@
 
 				if (subScript.HadError)
 				{
-					throw new InvalidOperationException(String.Join(@"\r\n", subScript.GetErrorMessages()));
+					throw new DataMinerException("Script execution failed: " + String.Join(", ", subScript.GetErrorMessages()));
 				}
 			}
 		}
