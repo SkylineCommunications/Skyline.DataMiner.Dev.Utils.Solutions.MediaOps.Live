@@ -106,8 +106,6 @@
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 					}
 
-					_api.Logger?.Log("Send update to PLAN");
-
 					orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
 				}
 
