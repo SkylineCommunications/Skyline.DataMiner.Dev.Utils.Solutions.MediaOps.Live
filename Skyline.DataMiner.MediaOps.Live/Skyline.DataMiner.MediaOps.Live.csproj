@@ -23,6 +23,8 @@
 		<Description>Provides an API and helper classes for MediaOps Live.</Description>
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.MediaOps.Live</RepositoryUrl>
+
+		<GitVersion>false</GitVersion>
 	</PropertyGroup>
 
 	<ItemGroup>
