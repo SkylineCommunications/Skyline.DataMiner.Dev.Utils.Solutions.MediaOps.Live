@@ -30,7 +30,7 @@
 
 		internal override MediaOpsPlanHelper GetMediaOpsPlanHelper()
 		{
-			return new EngineMediaOpsPlanHelper(_engine);
+			return new EngineMediaOpsPlanHelper(Engine);
 		}
 	}
 }
