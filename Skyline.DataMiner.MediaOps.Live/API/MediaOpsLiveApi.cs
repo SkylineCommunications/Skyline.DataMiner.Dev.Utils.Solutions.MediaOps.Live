@@ -12,6 +12,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Take;
+	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
@@ -72,6 +73,11 @@
 		public virtual TakeHelper GetConnectionHandler()
 		{
 			return new TakeHelper(this);
+		}
+
+		internal virtual MediaOpsPlanHelper GetMediaOpsPlanHelper()
+		{
+			return new MediaOpsPlanHelper();
 		}
 
 		public bool IsInstalled()

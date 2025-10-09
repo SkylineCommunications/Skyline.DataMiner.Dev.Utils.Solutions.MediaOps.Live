@@ -533,6 +533,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
         public string Name { get; set; }
         public System.TimeSpan? OrchestrationDuration { get; }
         public Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling.ScheduledTaskId SchedulerReference { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobInfo GetJobInfo(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
     }
     public class OrchestrationEventConfiguration : Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent
     {
