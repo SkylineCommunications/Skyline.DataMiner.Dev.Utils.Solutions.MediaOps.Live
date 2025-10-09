@@ -1375,26 +1375,26 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers
         Connect = 3,
         Disconnect = 4,
     }
-    public interface IConnectionHandlerRequest { }
+    public class CreateConnectionsInputData : Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerInputData
+    {
+        public CreateConnectionsInputData() { }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.ConnectionInfo> Connections { get; set; }
+    }
+    public class DisconnectDestinationsInputData : Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerInputData
+    {
+        public DisconnectDestinationsInputData() { }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.EndpointInfo> Destinations { get; set; }
+    }
+    public interface IConnectionHandlerInputData { }
 }
-namespace Skyline.DataMiner.MediaOps.Live.Mediation.Data
+namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data
 {
     public class ConnectionInfo
     {
         public ConnectionInfo() { }
         public ConnectionInfo(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint source, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint destination) { }
-        public Skyline.DataMiner.MediaOps.Live.Mediation.Data.EndpointInfo DestinationEndpoint { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.Mediation.Data.EndpointInfo SourceEndpoint { get; set; }
-    }
-    public class CreateConnectionsRequest : Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerRequest
-    {
-        public CreateConnectionsRequest() { }
-        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Mediation.Data.ConnectionInfo> Connections { get; set; }
-    }
-    public class DisconnectDestinationsRequest : Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerRequest
-    {
-        public DisconnectDestinationsRequest() { }
-        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Mediation.Data.EndpointInfo> Destinations { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.EndpointInfo DestinationEndpoint { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.EndpointInfo SourceEndpoint { get; set; }
     }
     public class ElementInfo
     {
@@ -1410,9 +1410,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.Data
     {
         public EndpointInfo() { }
         public EndpointInfo(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint instance) { }
-        public string Element { get; set; }
         public System.Guid ID { get; set; }
-        public string Identifier { get; set; }
         public string Name { get; set; }
     }
     public class ParameterUpdate
@@ -1437,12 +1435,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.Data
     }
     public class SubscriptionInfo
     {
-        public SubscriptionInfo(Skyline.DataMiner.MediaOps.Live.Mediation.Data.SubscriptionInfo.ParameterType type, int parameterId) { }
+        public SubscriptionInfo(Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.SubscriptionInfo.ParameterType type, int parameterId) { }
         public SubscriptionInfo(int parameterId, string rowKey) { }
         public int ParameterId { get; }
         public string RowKey { get; }
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
-        public Skyline.DataMiner.MediaOps.Live.Mediation.Data.SubscriptionInfo.ParameterType Type { get; }
+        public Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.SubscriptionInfo.ParameterType Type { get; }
         public enum ParameterType
         {
             Standalone = 0,
@@ -1758,7 +1756,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
         public void Disconnect(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest> disconnectRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
         public void Disconnect(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgDisconnectRequest> vsgDisconnectRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
         public void EnableWaitForCompletion(System.TimeSpan timeout, Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectionMonitor connectionMonitor = null) { }
-        protected virtual void ExecuteConnectionHandlerScript(string script, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.ConnectionHandlerScriptAction action, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerRequest request, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
+        protected virtual void ExecuteConnectionHandlerScript(string script, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.ConnectionHandlerScriptAction action, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerInputData inputData, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
         public void Take(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest> connectionRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
         public void Take(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgConnectionRequest> vsgConnectionRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
     }

@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Data
+﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data
 {
 	public class ElementInfo
 	{

@@ -15,7 +15,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
@@ -469,43 +468,43 @@
 				{
 					var script = group.Key;
 
-					IConnectionHandlerRequest request = action switch
+					IConnectionHandlerInputData inputData = action switch
 					{
-						ConnectionHandlerScriptAction.Connect => new CreateConnectionsRequest
-						{
-							Connections = group
-								.Select(x => new Mediation.Data.ConnectionInfo(x.Source, x.Destination))
-								.ToArray(),
-						},
-						ConnectionHandlerScriptAction.Disconnect => new DisconnectDestinationsRequest
-						{
-							Destinations = group
-								.Select(x => new Mediation.Data.EndpointInfo(x.Destination))
-								.ToArray(),
-						},
+						ConnectionHandlerScriptAction.Connect => new CreateConnectionsInputData
+							{
+								Connections = group
+									.Select(x => new Mediation.ConnectionHandlers.Data.ConnectionInfo(x.Source, x.Destination))
+									.ToArray(),
+							},
+						ConnectionHandlerScriptAction.Disconnect => new DisconnectDestinationsInputData
+							{
+								Destinations = group
+									.Select(x => new Mediation.ConnectionHandlers.Data.EndpointInfo(x.Destination))
+									.ToArray(),
+							},
 						_ => throw new InvalidOperationException($"Invalid action: {action}"),
 					};
 
 					_api.Logger?.Information($"Executing connection handler script '{script}' ({action}) for {group.Count()} connections");
 
-					ExecuteConnectionHandlerScript(script, action, request, performanceTracker);
+					ExecuteConnectionHandlerScript(script, action, inputData, performanceTracker);
 				}
 			}
 		}
 
-		protected virtual void ExecuteConnectionHandlerScript(string script, ConnectionHandlerScriptAction action, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
+		protected virtual void ExecuteConnectionHandlerScript(string script, ConnectionHandlerScriptAction action, IConnectionHandlerInputData inputData, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var inputData = JsonConvert.SerializeObject(request);
+				var inputDataSerialized = JsonConvert.SerializeObject(inputData);
 
 				performanceTracker.AddMetadata("Script", script);
-				performanceTracker.AddMetadata("Input Data", inputData);
+				performanceTracker.AddMetadata("Input Data", inputDataSerialized);
 
 				var parameters = new Dictionary<string, string>
 				{
 					{ "Action", Convert.ToString(action) },
-					{ "Input Data", inputData },
+					{ "Input Data", inputDataSerialized },
 				};
 
 				AutomationHelper.ExecuteAutomationScript(_api.Connection, script, parameters);

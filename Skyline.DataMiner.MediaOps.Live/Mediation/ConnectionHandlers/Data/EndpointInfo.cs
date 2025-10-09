@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Data
+﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data
 {
 	using System;
 
@@ -19,16 +19,10 @@
 
 			ID = instance.ID;
 			Name = instance.Name;
-			Element = instance.Element?.Value ?? String.Empty;
-			Identifier = instance.Identifier;
 		}
 
 		public Guid ID { get; set; }
 
 		public string Name { get; set; }
-
-		public string Element { get; set; }
-
-		public string Identifier { get; set; }
 	}
 }
