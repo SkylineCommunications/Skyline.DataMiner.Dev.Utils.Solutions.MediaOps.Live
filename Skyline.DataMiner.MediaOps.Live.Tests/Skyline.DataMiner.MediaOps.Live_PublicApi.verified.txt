@@ -1483,10 +1483,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
     }
     public sealed class MediationElement
     {
-        public static readonly int ConnectionHandlerScriptsTableId;
-        public static readonly int ConnectionsTableId;
-        public static readonly int ElementsTableId;
-        public static readonly int PendingConnectionActionsTableId;
         public int DmaId { get; }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.IDmsElement DmsElement { get; }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId DmsElementId { get; }

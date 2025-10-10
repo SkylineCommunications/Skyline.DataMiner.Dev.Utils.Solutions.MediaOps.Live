@@ -11,10 +11,10 @@
 	{
 		public static string ProtocolName => Constants.MediationProtocolName;
 
-		public static readonly int ElementsTableId = 1000;
-		public static readonly int ConnectionHandlerScriptsTableId = 2000;
-		public static readonly int PendingConnectionActionsTableId = 3000;
-		public static readonly int ConnectionsTableId = 5000;
+		internal static readonly int ElementsTableId = 1000;
+		internal static readonly int ConnectionHandlerScriptsTableId = 2000;
+		internal static readonly int PendingConnectionActionsTableId = 3000;
+		internal static readonly int ConnectionsTableId = 5000;
 
 		internal MediationElement(MediaOpsLiveApi api, IDmsElement dmsElement)
 		{
