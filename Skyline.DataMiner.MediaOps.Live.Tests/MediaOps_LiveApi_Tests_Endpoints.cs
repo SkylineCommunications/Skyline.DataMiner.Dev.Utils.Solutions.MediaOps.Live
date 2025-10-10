@@ -22,5 +22,35 @@
 			endpoint.Should().NotBeNull();
 			endpoint.Name.Should().Be("Audio Destination 1");
 		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Endpoints_GetByTransportMetadata()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			// Test 1: Find endpoint by multicast IP
+			{
+				var endpoints = api.Endpoints.GetByTransportMetadata("Multicast IP", "239.1.1.1").ToList();
+
+				endpoints.Should().HaveCount(1);
+				endpoints[0].Name.Should().Be("Video Source 1");
+			}
+
+			// Test 2: Find endpoints by source IP
+			{
+				var endpoints = api.Endpoints.GetByTransportMetadata("Source IP", "10.0.0.1").ToList();
+
+				endpoints.Should().HaveCountGreaterThan(1);
+				endpoints.Should().AllSatisfy(
+					endpoint => endpoint.HasTransportMetadata("Source IP", "10.0.0.1"));
+			}
+
+			// Test 3: Test the post-filtering (DOM doesn't check if the field name and value are in the same section)
+			{
+				var endpoints = api.Endpoints.GetByTransportMetadata("Multicast IP", "10.0.0.1").ToList();
+
+				endpoints.Should().BeEmpty();
+			}
+		}
 	}
 }

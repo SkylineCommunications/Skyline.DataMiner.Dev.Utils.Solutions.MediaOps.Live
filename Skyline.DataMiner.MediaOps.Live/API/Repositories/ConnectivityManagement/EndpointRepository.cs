@@ -81,6 +81,26 @@
 					x => Read(x));
 		}
 
+		public IEnumerable<Endpoint> GetByTransportMetadata(string fieldName, string value)
+		{
+			if (String.IsNullOrWhiteSpace(fieldName))
+			{
+				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
+			}
+
+			var filter = new ANDFilterElement<DomInstance>(
+				DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.FieldName).Equal(fieldName),
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Value).Equal(value));
+
+			var endpoints = Read(filter);
+
+			// Post-filtering to ensure that the field name and value are in the same section (DOM doesn't support this).
+			endpoints = endpoints.Where(e => e.HasTransportMetadata(fieldName, value));
+
+			return endpoints;
+		}
+
 		protected internal override Endpoint CreateInstance(DomInstance domInstance)
 		{
 			return new Endpoint(domInstance);

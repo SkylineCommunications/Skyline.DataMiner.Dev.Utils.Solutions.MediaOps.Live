@@ -355,6 +355,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata> TransportMetadata { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>? TransportType { get; set; }
         public string GetTransportMetadata(string fieldName) { }
+        public bool HasTransportMetadata(string fieldName, string value) { }
         public void RemoveTransportMetadata(string fieldName) { }
         public void SetTransportMetadata(string fieldName, string value) { }
         public bool TryGetTransportMetadata(string fieldName, out string value) { }
@@ -622,6 +623,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagemen
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByElement(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByElementAndIdentifiers(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, System.Collections.Generic.IEnumerable<string> identifiers) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetByRoleElementAndIdentifier(Skyline.DataMiner.MediaOps.Live.API.Enums.Role role, Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, string identifier) { }
+        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByTransportMetadata(string fieldName, string value) { }
         protected override void ValidateBeforeDelete(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> instances) { }
         protected override void ValidateBeforeSave(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> instances) { }
     }

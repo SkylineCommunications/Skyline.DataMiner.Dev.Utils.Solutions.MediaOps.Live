@@ -210,7 +210,7 @@
 							TransportMetadata =
 							{
 								new TransportMetadata("Source IP", "10.0.0.1"),
-								new TransportMetadata("Multicast IP", $"239.1.{i}.1"),
+								new TransportMetadata("Multicast IP", $"239.1.{vsgCounter}.1"),
 								new TransportMetadata("Multicast Port", "5000"),
 							},
 						};
@@ -224,7 +224,7 @@
 							TransportMetadata =
 							{
 								new TransportMetadata("Source IP", "10.0.0.1"),
-								new TransportMetadata("Multicast IP", $"239.1.{i}.2"),
+								new TransportMetadata("Multicast IP", $"239.1.{vsgCounter}.2"),
 								new TransportMetadata("Multicast Port", "5000"),
 							},
 						};
