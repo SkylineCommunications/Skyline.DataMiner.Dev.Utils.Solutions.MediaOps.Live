@@ -17,7 +17,7 @@
 	{
 		private readonly VirtualSignalGroupInstance _domInstance;
 
-		private readonly WrappedList<VirtualSignalGroupLevelsSection, LevelEndpoint> _wrappedLevels;
+		private readonly WrappedList<VirtualSignalGroupLevelSection, LevelEndpoint> _wrappedLevels;
 		private readonly WrappedList<Guid, ApiObjectReference<Category>> _wrappedCategories;
 
 		public VirtualSignalGroup() : this(new VirtualSignalGroupInstance())
@@ -32,8 +32,8 @@
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
 
-			_wrappedLevels = new WrappedList<VirtualSignalGroupLevelsSection, LevelEndpoint>(
-				_domInstance.VirtualSignalGroupLevels,
+			_wrappedLevels = new WrappedList<VirtualSignalGroupLevelSection, LevelEndpoint>(
+				_domInstance.VirtualSignalGroupLevel,
 				x => new LevelEndpoint(x),
 				x => x.DomSection);
 

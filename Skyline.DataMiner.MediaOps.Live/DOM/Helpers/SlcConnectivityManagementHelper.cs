@@ -101,7 +101,7 @@
 			}
 
 			var endpointIds = vsgs
-				.SelectMany(vsg => vsg.VirtualSignalGroupLevels
+				.SelectMany(vsg => vsg.VirtualSignalGroupLevel
 					.Select(level => level.Endpoint ?? Guid.Empty)
 					.Where(id => id != Guid.Empty))
 				.Distinct();
@@ -109,7 +109,7 @@
 			var endpoints = GetEndpoints(endpointIds);
 
 			return vsgs
-				.SelectMany(vsg => vsg.VirtualSignalGroupLevels
+				.SelectMany(vsg => vsg.VirtualSignalGroupLevel
 					.Where(level => level.Endpoint != null)
 					.Select(level => new
 					{
@@ -232,7 +232,7 @@
 
 			FilterElement<DomInstance> CreateFilter(Guid id) =>
 				DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id)
-				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint).Equal(id));
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint).Equal(id));
 
 			var vsgs = FilterQueryExecutor.RetrieveFilteredItems(
 					endpointIds,

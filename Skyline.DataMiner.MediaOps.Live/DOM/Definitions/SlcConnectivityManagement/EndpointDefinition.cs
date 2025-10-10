@@ -20,6 +20,7 @@
 			SectionDefinitionLinks =
 			{
 				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.EndpointInfo.Id),
+				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Id) { AllowMultipleSections = true, IsOptional = true },
 				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id) { IsOptional = true },
 			},
 			ModuleSettingsOverrides = new ModuleSettingsOverrides
@@ -37,6 +38,7 @@
 		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetEndpointInfoSectionDefinition(),
+			GetTransportTypeMetadataSectionDefinition(),
 			GetTransportTypeTsoipSectionDefinition(),
 		};
 
@@ -115,6 +117,35 @@
 					Name = "Transport Type",
 					IsOptional = false,
 					DomDefinitionIds = { SlcConnectivityManagementIds.Definitions.TransportType },
+				});
+
+			return sectionDefinition;
+		}
+
+		private static SectionDefinition GetTransportTypeMetadataSectionDefinition()
+		{
+			var sectionDefinition = new CustomSectionDefinition
+			{
+				ID = SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Id,
+				Name = "Endpoint Transport Metadata",
+			};
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
+					ID = SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.FieldName,
+					Name = "Field Name",
+					IsOptional = false,
+				});
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
+					ID = SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Value,
+					Name = "Value",
+					IsOptional = true,
 				});
 
 			return sectionDefinition;

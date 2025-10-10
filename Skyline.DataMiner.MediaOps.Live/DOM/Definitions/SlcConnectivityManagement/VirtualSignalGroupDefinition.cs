@@ -20,7 +20,7 @@
 			SectionDefinitionLinks =
 			{
 				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Id),
-				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Id) { AllowMultipleSections = true, IsOptional = true },
+				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Id) { AllowMultipleSections = true, IsOptional = true },
 			},
 			ModuleSettingsOverrides = new ModuleSettingsOverrides
 			{
@@ -91,15 +91,15 @@
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{
-				ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Id,
-				Name = "Virtual Signal Group Levels",
+				ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Id,
+				Name = "Virtual Signal Group Level",
 			};
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
 				new DomInstanceFieldDescriptor(SlcConnectivityManagementIds.ModuleId)
 				{
 					FieldType = typeof(Guid),
-					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint,
+					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint,
 					Name = "Endpoint",
 					IsOptional = false,
 					DomDefinitionIds = { SlcConnectivityManagementIds.Definitions.Endpoint },
@@ -109,7 +109,7 @@
 				new DomInstanceFieldDescriptor(SlcConnectivityManagementIds.ModuleId)
 				{
 					FieldType = typeof(Guid),
-					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level,
+					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level,
 					Name = "Level",
 					IsOptional = false,
 					DomDefinitionIds = { SlcConnectivityManagementIds.Definitions.Level },

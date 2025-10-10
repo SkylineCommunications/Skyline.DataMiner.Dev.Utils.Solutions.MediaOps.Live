@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement
 {
+	using System;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.DOM.Interfaces;
@@ -17,6 +18,7 @@
 			SectionDefinitionLinks =
 			{
 				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Id),
+				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.TransportTypeField.Id) { AllowMultipleSections = true, IsOptional = true },
 			},
 			ModuleSettingsOverrides = new ModuleSettingsOverrides
 			{
@@ -33,6 +35,7 @@
 		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetTransportTypeInfoSectionDefinition(),
+			GetTransportTypeFieldSectionDefinition(),
 		};
 
 		private static SectionDefinition GetTransportTypeInfoSectionDefinition()
@@ -48,6 +51,26 @@
 				{
 					FieldType = typeof(string),
 					ID = SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name,
+					Name = "Name",
+					IsOptional = false,
+				});
+
+			return sectionDefinition;
+		}
+
+		private static SectionDefinition GetTransportTypeFieldSectionDefinition()
+		{
+			var sectionDefinition = new CustomSectionDefinition
+			{
+				ID = SlcConnectivityManagementIds.Sections.TransportTypeField.Id,
+				Name = "Transport Type Field",
+			};
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
+					ID = SlcConnectivityManagementIds.Sections.TransportTypeField.Name,
 					Name = "Name",
 					IsOptional = false,
 				});

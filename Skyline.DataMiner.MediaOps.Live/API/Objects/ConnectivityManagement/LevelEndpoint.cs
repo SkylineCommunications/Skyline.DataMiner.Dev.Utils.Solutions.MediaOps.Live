@@ -8,7 +8,7 @@
 	{
 		public LevelEndpoint()
 		{
-			DomSection = new VirtualSignalGroupLevelsSection();
+			DomSection = new VirtualSignalGroupLevelSection();
 		}
 
 		public LevelEndpoint(Level level, Endpoint endpoint) : this()
@@ -23,12 +23,12 @@
 			Endpoint = endpoint;
 		}
 
-		internal LevelEndpoint(VirtualSignalGroupLevelsSection domSection)
+		internal LevelEndpoint(VirtualSignalGroupLevelSection domSection)
 		{
 			DomSection = domSection ?? throw new ArgumentNullException(nameof(domSection));
 		}
 
-		internal VirtualSignalGroupLevelsSection DomSection { get; }
+		internal VirtualSignalGroupLevelSection DomSection { get; }
 
 		public ApiObjectReference<Level> Level
 		{
