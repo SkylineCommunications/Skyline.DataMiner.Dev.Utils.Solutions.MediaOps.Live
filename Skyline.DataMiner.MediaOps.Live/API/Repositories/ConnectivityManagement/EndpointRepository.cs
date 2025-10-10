@@ -5,7 +5,6 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Data;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
@@ -82,43 +81,6 @@
 					x => Read(x));
 		}
 
-		public IEnumerable<Endpoint> GetByMulticasts(IEnumerable<Multicast> multicasts)
-		{
-			if (multicasts == null)
-			{
-				throw new ArgumentNullException(nameof(multicasts));
-			}
-
-			FilterElement<DomInstance> CreateFilter(Multicast multicast) =>
-				new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
-					CreateMulticastFilter(multicast));
-
-			return FilterQueryExecutor.RetrieveFilteredItems(
-				multicasts,
-				mc => CreateFilter(mc),
-				f => Read(f));
-		}
-
-		public IEnumerable<Endpoint> GetByElementAndMulticasts(DmsElementId elementId, IEnumerable<Multicast> multicasts)
-		{
-			if (multicasts == null)
-			{
-				throw new ArgumentNullException(nameof(multicasts));
-			}
-
-			FilterElement<DomInstance> CreateFilter(Multicast multicast) =>
-				new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(elementId.Value),
-					CreateMulticastFilter(multicast));
-
-			return FilterQueryExecutor.RetrieveFilteredItems(
-				multicasts,
-				mc => CreateFilter(mc),
-				f => Read(f));
-		}
-
 		protected internal override Endpoint CreateInstance(DomInstance domInstance)
 		{
 			return new Endpoint(domInstance);
@@ -157,12 +119,6 @@
 					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.ControlIdentifier), comparer, value);
 				case nameof(Endpoint.TransportType):
 					return FilterElementFactory.Create<Guid>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType), comparer, value);
-				case nameof(Endpoint.TransportTypeTSoIP.MulticastIP):
-					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP), comparer, value);
-				case nameof(Endpoint.TransportTypeTSoIP.Port):
-					return FilterElementFactory.Create<int>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port), comparer, value);
-				case nameof(Endpoint.TransportTypeTSoIP.SourceIP):
-					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP), comparer, value);
 			}
 
 			return base.CreateFilter(fieldName, comparer, value);
@@ -186,39 +142,9 @@
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.ControlIdentifier), sortOrder, naturalSort);
 				case nameof(Endpoint.TransportType):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType), sortOrder, naturalSort);
-				case nameof(Endpoint.TransportTypeTSoIP.MulticastIP):
-					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP), sortOrder, naturalSort);
-				case nameof(Endpoint.TransportTypeTSoIP.Port):
-					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port), sortOrder, naturalSort);
-				case nameof(Endpoint.TransportTypeTSoIP.SourceIP):
-					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP), sortOrder, naturalSort);
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
-		}
-
-		private static FilterElement<DomInstance> CreateMulticastFilter(Multicast multicast)
-		{
-			var filters = new List<FilterElement<DomInstance>>();
-
-			if (!String.IsNullOrWhiteSpace(multicast.IpAddress))
-			{
-				filters.Add(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP).Equal(multicast.IpAddress));
-			}
-
-			if (!String.IsNullOrWhiteSpace(multicast.SourceIP))
-			{
-				filters.Add(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP).Equal(multicast.SourceIP));
-			}
-
-			if (multicast.Port > 0)
-			{
-				filters.Add(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port).Equal(multicast.Port));
-			}
-
-			return filters.Count == 1
-				? filters[0]
-				: new ANDFilterElement<DomInstance>(filters.ToArray());
 		}
 
 		private void CheckDuplicatesBeforeSave(ICollection<Endpoint> instances)

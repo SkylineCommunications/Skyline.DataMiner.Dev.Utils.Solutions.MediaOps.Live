@@ -122,21 +122,6 @@
 			}
 		}
 
-		public TransportTypeTsoip TransportTypeTSoIP
-		{
-			get
-			{
-				return _domInstance.TransportTypeTsoip != null
-					? new TransportTypeTsoip(_domInstance.TransportTypeTsoip)
-					: null;
-			}
-
-			set
-			{
-				_domInstance.TransportTypeTsoip = value?.DomSection;
-			}
-		}
-
 		public ApiObjectReference<TransportType>? TransportType
 		{
 			get
@@ -183,8 +168,5 @@
 		public static readonly Exposer<Endpoint, string> ControlIdentifier = new Exposer<Endpoint, string>(x => x.ControlIdentifier, nameof(Endpoint.ControlIdentifier));
 		public static readonly Exposer<Endpoint, ApiObjectReference<TransportType>?> TransportType = new Exposer<Endpoint, ApiObjectReference<TransportType>?>(x => x.TransportType, nameof(Endpoint.TransportType));
 
-		public static readonly Exposer<Endpoint, string> Tsoip_MulticastIP = new Exposer<Endpoint, string>(x => x.TransportTypeTSoIP.MulticastIP, nameof(TransportTypeTsoip.MulticastIP));
-		public static readonly Exposer<Endpoint, int?> Tsoip_Port = new Exposer<Endpoint, int?>(x => x.TransportTypeTSoIP.Port, nameof(TransportTypeTsoip.Port));
-		public static readonly Exposer<Endpoint, string> Tsoip_SourceIP = new Exposer<Endpoint, string>(x => x.TransportTypeTSoIP.SourceIP, nameof(TransportTypeTsoip.SourceIP));
 	}
 }

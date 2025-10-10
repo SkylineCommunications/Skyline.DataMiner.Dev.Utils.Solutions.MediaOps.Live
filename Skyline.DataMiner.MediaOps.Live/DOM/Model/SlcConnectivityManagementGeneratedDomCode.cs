@@ -66,15 +66,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				public static FieldDescriptorID TransportType { get; } = new FieldDescriptorID(new Guid("64cc245e-5a0a-4479-9766-a93a7c090255"));
 			}
 
-			public static class TransportTypeTsoip
-			{
-				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("6d130f78-b4f4-4ee1-974d-27997a57502e"))
-				{ ModuleId = "(slc)connectivity_management" };
-				public static FieldDescriptorID SourceIP { get; } = new FieldDescriptorID(new Guid("a77067fb-c978-4c19-862c-871015609518"));
-				public static FieldDescriptorID MulticastIP { get; } = new FieldDescriptorID(new Guid("17fd8b18-bce5-4dd5-9892-ace39e8e01b0"));
-				public static FieldDescriptorID Port { get; } = new FieldDescriptorID(new Guid("4608640f-fda1-4bf9-98c2-2e7d752ad6cf"));
-			}
-
 			public static class TransportTypeInfo
 			{
 				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("57558fef-283c-4b4d-84f8-f411a26e546c"))
@@ -401,11 +392,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public EndpointInfoSection EndpointInfo { get; set; }
 
 		/// <summary>
-		/// Gets or sets the TransportTypeTsoip section of the DOM Instance.
-		/// </summary>
-		public TransportTypeTsoipSection TransportTypeTsoip { get; set; }
-
-		/// <summary>
 		/// Gets or sets the EndpointTransportMetadata section of the DOM Instance.
 		/// </summary>
 		public IList<EndpointTransportMetadataSection> EndpointTransportMetadata { get; private set; }
@@ -446,10 +432,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(EndpointInfo.ToSection());
-			if (TransportTypeTsoip != null && !TransportTypeTsoip.IsEmpty)
-			{
-				domInstance.Sections.Add(TransportTypeTsoip.ToSection());
-			}
 
 			foreach (var item in EndpointTransportMetadata)
 			{
@@ -484,16 +466,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			else
 			{
 				EndpointInfo = new EndpointInfoSection(_endpointInfo);
-			}
-
-			var _transportTypeTsoip = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id));
-			if (_transportTypeTsoip is null)
-			{
-				TransportTypeTsoip = new TransportTypeTsoipSection();
-			}
-			else
-			{
-				TransportTypeTsoip = new TransportTypeTsoipSection(_transportTypeTsoip);
 			}
 
 			EndpointTransportMetadata = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Id)).Select(section => new EndpointTransportMetadataSection(section)).ToList();
@@ -1613,185 +1585,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				section.AddOrUpdateListValue<Guid>(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportMetadata, TransportMetadata.ToList());
 			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType) == null)
 				throw new InvalidOperationException("'TransportType' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			return section;
-		}
-	}
-
-	/// <summary>
-	/// Represents a wrapper class for accessing a TransportTypeTsoipSection section.
-	/// The <see cref="TransportTypeTsoipSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
-	/// </summary>
-	public partial class TransportTypeTsoipSection : DomSectionBase
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="TransportTypeTsoipSection"/> class. Creates an empty <see cref="TransportTypeTsoipSection"/> object with default settings.
-		/// </summary>
-		public TransportTypeTsoipSection() : base(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id)
-		{
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="TransportTypeTsoipSection"/> class using the specified <paramref name="section"/> for initializing the object.
-		/// </summary>
-		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="TransportTypeTsoipSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public TransportTypeTsoipSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id)
-		{
-		}
-
-		/// <summary>
-		/// Gets or sets the SourceIP field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public String SourceIP
-		{
-			get
-			{
-				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP);
-				if (wrapper != null)
-				{
-					return (String)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP, (String)value);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the MulticastIP field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public String MulticastIP
-		{
-			get
-			{
-				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP);
-				if (wrapper != null)
-				{
-					return (String)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP, (String)value);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the Port field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public Int64? Port
-		{
-			get
-			{
-				var wrapper = section.GetValue<Int64>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port);
-				if (wrapper != null)
-				{
-					return (Int64?)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port, (Int64)value);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Creates a deep copy of the current <see cref="TransportTypeTsoipSection"/>.
-		/// </summary>
-		/// <returns>A new <see cref="TransportTypeTsoipSection"/> object that is a deep copy of this section.</returns>
-		public TransportTypeTsoipSection Clone()
-		{
-			return new TransportTypeTsoipSection((Section)this.ToSection().Clone());
-		}
-
-		/// <summary>
-		/// Creates a duplicate of the current <see cref="TransportTypeTsoipSection"/> with a new id.
-		/// </summary>
-		/// <returns>A new <see cref="TransportTypeTsoipSection"/> object that is a copy of this section but with a different id.</returns>
-		public TransportTypeTsoipSection Duplicate()
-		{
-			var section = (Section)this.ToSection().Clone();
-			section.ID = new SectionID(Guid.NewGuid());
-			return new TransportTypeTsoipSection(section);
-		}
-
-		/// <inheritdoc />
-		protected override Section InternalToSection()
-		{
-			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP) == null)
-				throw new InvalidOperationException("'MulticastIP' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
 		}
 	}
