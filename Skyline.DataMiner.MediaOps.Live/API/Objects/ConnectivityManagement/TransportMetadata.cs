@@ -6,14 +6,25 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 
-	public class EndpointTransportMetadata
+	public class TransportMetadata
 	{
-		public EndpointTransportMetadata()
+		public TransportMetadata()
 		{
 			DomSection = new EndpointTransportMetadataSection();
 		}
 
-		internal EndpointTransportMetadata(EndpointTransportMetadataSection domSection)
+		public TransportMetadata(string fieldName, string value) : this()
+		{
+			if (String.IsNullOrWhiteSpace(fieldName))
+			{
+				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
+			}
+
+			FieldName = fieldName;
+			Value = value;
+		}
+
+		internal TransportMetadata(EndpointTransportMetadataSection domSection)
 		{
 			DomSection = domSection ?? throw new ArgumentNullException(nameof(domSection));
 		}

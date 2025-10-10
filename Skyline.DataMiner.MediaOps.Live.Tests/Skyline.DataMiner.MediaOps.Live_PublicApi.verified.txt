@@ -352,8 +352,12 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public bool IsSource { get; }
         public string Name { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Enums.Role Role { get; set; }
-        public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.EndpointTransportMetadata> TransportMetadata { get; set; }
+        public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata> TransportMetadata { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>? TransportType { get; set; }
+        public string GetTransportMetadata(string fieldName) { }
+        public void RemoveTransportMetadata(string fieldName) { }
+        public void SetTransportMetadata(string fieldName, string value) { }
+        public bool TryGetTransportMetadata(string fieldName, out string value) { }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
     }
     public static class EndpointExposers
@@ -366,12 +370,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, string> Name;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.API.Enums.Role> Role;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>?> TransportType;
-    }
-    public class EndpointTransportMetadata
-    {
-        public EndpointTransportMetadata() { }
-        public string FieldName { get; set; }
-        public string Value { get; set; }
     }
     public class Level : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level>
     {
@@ -397,6 +395,15 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level, long> Number;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>?> TransportType;
     }
+    public class TransportMetadata
+    {
+        public TransportMetadata() { }
+        public TransportMetadata(string fieldName, string value) { }
+        public string FieldName { get; set; }
+        public string Value { get; set; }
+        public override string ToString() { }
+        public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
+    }
     public class TransportType : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>
     {
         public TransportType() { }
@@ -415,6 +422,8 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
     {
         public TransportTypeField() { }
         public string Name { get; set; }
+        public override string ToString() { }
+        public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
     }
     public class VirtualSignalGroup : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>
     {

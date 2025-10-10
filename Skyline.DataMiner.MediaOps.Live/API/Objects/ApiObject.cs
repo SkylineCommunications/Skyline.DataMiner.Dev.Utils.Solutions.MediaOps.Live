@@ -65,6 +65,11 @@
 
 		public override string ToString()
 		{
+			if (!String.IsNullOrWhiteSpace(DomInstance.Name))
+			{
+				return $"{typeof(T).Name} '{DomInstance.Name}' [{ID}]";
+			}
+
 			return $"{typeof(T).Name} [{ID}]";
 		}
 	}

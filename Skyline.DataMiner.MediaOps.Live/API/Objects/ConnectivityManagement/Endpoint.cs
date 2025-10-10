@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
@@ -15,7 +16,7 @@
 	{
 		private readonly EndpointInstance _domInstance;
 
-		private readonly WrappedList<EndpointTransportMetadataSection, EndpointTransportMetadata> _wrappedTransportMetadata;
+		private readonly WrappedList<EndpointTransportMetadataSection, TransportMetadata> _wrappedTransportMetadata;
 
 		public Endpoint() : this(new EndpointInstance())
 		{
@@ -30,9 +31,9 @@
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
 
-			_wrappedTransportMetadata = new WrappedList<EndpointTransportMetadataSection, EndpointTransportMetadata>(
+			_wrappedTransportMetadata = new WrappedList<EndpointTransportMetadataSection, TransportMetadata>(
 				_domInstance.EndpointTransportMetadata,
-				x => new EndpointTransportMetadata(x),
+				x => new TransportMetadata(x),
 				x => x.DomSection);
 		}
 
@@ -143,7 +144,7 @@
 			}
 		}
 
-		public IList<EndpointTransportMetadata> TransportMetadata
+		public IList<TransportMetadata> TransportMetadata
 		{
 			get
 			{
@@ -160,6 +161,81 @@
 		public bool IsSource => Role == Role.Source;
 
 		public bool IsDestination => Role == Role.Destination;
+
+		public void SetTransportMetadata(string fieldName, string value)
+		{
+			if (String.IsNullOrWhiteSpace(fieldName))
+			{
+				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
+			}
+
+			var existing = TransportMetadata.FirstOrDefault(x => String.Equals(x.FieldName, fieldName));
+			if (existing != null)
+			{
+				existing.Value = value;
+			}
+			else
+			{
+				TransportMetadata.Add(new TransportMetadata(fieldName, value));
+			}
+		}
+
+		public void RemoveTransportMetadata(string fieldName)
+		{
+			if (String.IsNullOrWhiteSpace(fieldName))
+			{
+				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
+			}
+
+			var existing = TransportMetadata.FirstOrDefault(x => String.Equals(x.FieldName, fieldName));
+			if (existing != null)
+			{
+				TransportMetadata.Remove(existing);
+			}
+		}
+
+		public bool TryGetTransportMetadata(string fieldName, out string value)
+		{
+			if (String.IsNullOrWhiteSpace(fieldName))
+			{
+				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
+			}
+
+			var existing = TransportMetadata.FirstOrDefault(x => String.Equals(x.FieldName, fieldName));
+			if (existing != null)
+			{
+				value = existing.Value;
+				return true;
+			}
+
+			value = null;
+			return false;
+		}
+
+		public string GetTransportMetadata(string fieldName)
+		{
+			if (String.IsNullOrWhiteSpace(fieldName))
+			{
+				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
+			}
+
+			var existing = TransportMetadata.FirstOrDefault(x => String.Equals(x.FieldName, fieldName))
+				?? throw new InvalidOperationException($"No transport metadata found with field name '{fieldName}'.");
+
+			return existing.Value;
+		}
+
+		public bool HasTransportMetadata(string fieldName, string value)
+		{
+			if (String.IsNullOrWhiteSpace(fieldName))
+			{
+				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
+			}
+
+			return TransportMetadata.Any(x => String.Equals(x.FieldName, fieldName) && String.Equals(x.Value, value));
+		}
+
+
 
 		public ValidationResult Validate()
 		{

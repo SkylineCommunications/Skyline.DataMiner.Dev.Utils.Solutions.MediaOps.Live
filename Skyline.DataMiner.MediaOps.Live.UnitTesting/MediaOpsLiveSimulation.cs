@@ -207,6 +207,12 @@
 							TransportType = transportTypeIP,
 							Element = elementId,
 							Identifier = $"Video-{vsgCounter}",
+							TransportMetadata =
+							{
+								new TransportMetadata("Source IP", "10.0.0.1"),
+								new TransportMetadata("Multicast IP", $"239.1.{i}.1"),
+								new TransportMetadata("Multicast Port", "5000"),
+							},
 						};
 						var audioSource = new Endpoint(Tools.GuidFromString($"Audio Source {vsgCounter}"))
 						{
@@ -215,6 +221,12 @@
 							TransportType = transportTypeIP,
 							Element = elementId,
 							Identifier = $"Audio-{vsgCounter}",
+							TransportMetadata =
+							{
+								new TransportMetadata("Source IP", "10.0.0.1"),
+								new TransportMetadata("Multicast IP", $"239.1.{i}.2"),
+								new TransportMetadata("Multicast Port", "5000"),
+							},
 						};
 						var videoDestination = new Endpoint(Tools.GuidFromString($"Video Destination {vsgCounter}"))
 						{
