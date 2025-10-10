@@ -79,7 +79,7 @@
 			return dms.GetScripts().Where(IsOrchestrationScript).Select(script => script.Name).ToList();
 		}
 
-		private static bool IsOrchestrationScript(IDmsAutomationScript script)
+		internal static bool IsOrchestrationScript(IDmsAutomationScript script)
 		{
 			if (script == null)
 			{

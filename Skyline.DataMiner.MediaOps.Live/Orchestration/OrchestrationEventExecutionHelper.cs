@@ -24,6 +24,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
@@ -510,7 +511,17 @@
 				input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
 			}
 
-			var result = OrchestrationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out string[] errorMessages);
+			ExecuteScriptResponseMessage result;
+			string[] errorMessages;
+			if (OrchestrationScriptInfoHelper.IsOrchestrationScript(script))
+			{
+				result = OrchestrationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
+			}
+			else
+			{
+				result = OrchestrationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out errorMessages);
+			}
+
 			OrchestrationScriptResult scriptResult = new OrchestrationScriptResult
 			{
 				ErrorMessages = errorMessages,
