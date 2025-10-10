@@ -202,21 +202,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
         public static bool operator ==(Skyline.DataMiner.MediaOps.Live.API.Connectivity.VirtualSignalGroupConnectivity left, Skyline.DataMiner.MediaOps.Live.API.Connectivity.VirtualSignalGroupConnectivity right) { }
     }
 }
-namespace Skyline.DataMiner.MediaOps.Live.API.Data
-{
-    public class Multicast
-    {
-        public Multicast(string ip) { }
-        public Multicast(string ip, int port) { }
-        public Multicast(string ip, int port, string source) { }
-        public string IpAddress { get; set; }
-        public int Port { get; set; }
-        public string SourceIP { get; set; }
-        public override bool Equals(object obj) { }
-        public override int GetHashCode() { }
-        public override string ToString() { }
-    }
-}
 namespace Skyline.DataMiner.MediaOps.Live.API.Enums
 {
     public enum OrchestrationScriptArgumentType
@@ -367,6 +352,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public bool IsSource { get; }
         public string Name { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Enums.Role Role { get; set; }
+        public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.EndpointTransportMetadata> TransportMetadata { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>? TransportType { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
     }
@@ -380,6 +366,12 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, string> Name;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.API.Enums.Role> Role;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>?> TransportType;
+    }
+    public class EndpointTransportMetadata
+    {
+        public EndpointTransportMetadata() { }
+        public string FieldName { get; set; }
+        public string Value { get; set; }
     }
     public class Level : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level>
     {
@@ -409,6 +401,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
     {
         public TransportType() { }
         public TransportType(System.Guid id) { }
+        public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField> Fields { get; set; }
         public bool IsPredefined { get; }
         public string Name { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
@@ -417,6 +410,11 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
     {
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType, System.Guid> ID;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType, string> Name;
+    }
+    public class TransportTypeField
+    {
+        public TransportTypeField() { }
+        public string Name { get; set; }
     }
     public class VirtualSignalGroup : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>
     {
@@ -957,7 +955,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
     {
         public EndpointTransportMetadataSection() { }
         public EndpointTransportMetadataSection(Skyline.DataMiner.Net.Sections.Section section) { }
-        public string Fieldname { get; set; }
+        public string FieldName { get; set; }
         public string Value { get; set; }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointTransportMetadataSection Clone() { }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointTransportMetadataSection Duplicate() { }

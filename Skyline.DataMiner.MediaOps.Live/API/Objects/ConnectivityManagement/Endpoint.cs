@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	using System;
+	using System.Collections.Generic;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
@@ -14,6 +15,8 @@
 	{
 		private readonly EndpointInstance _domInstance;
 
+		private readonly WrappedList<EndpointTransportMetadataSection, EndpointTransportMetadata> _wrappedTransportMetadata;
+
 		public Endpoint() : this(new EndpointInstance())
 		{
 			TransportType = Guid.NewGuid();
@@ -26,6 +29,11 @@
 		internal Endpoint(EndpointInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
+
+			_wrappedTransportMetadata = new WrappedList<EndpointTransportMetadataSection, EndpointTransportMetadata>(
+				_domInstance.EndpointTransportMetadata,
+				x => new EndpointTransportMetadata(x),
+				x => x.DomSection);
 		}
 
 		internal Endpoint(DomInstance domInstance) : this(new EndpointInstance(domInstance))
@@ -135,6 +143,20 @@
 			}
 		}
 
+		public IList<EndpointTransportMetadata> TransportMetadata
+		{
+			get
+			{
+				return _wrappedTransportMetadata;
+			}
+
+			set
+			{
+				_wrappedTransportMetadata.Clear();
+				_wrappedTransportMetadata.AddRange(value);
+			}
+		}
+
 		public bool IsSource => Role == Role.Source;
 
 		public bool IsDestination => Role == Role.Destination;
@@ -167,6 +189,5 @@
 		public static readonly Exposer<Endpoint, DmsElementId?> ControlElement = new Exposer<Endpoint, DmsElementId?>(x => x.ControlElement, nameof(Endpoint.ControlElement));
 		public static readonly Exposer<Endpoint, string> ControlIdentifier = new Exposer<Endpoint, string>(x => x.ControlIdentifier, nameof(Endpoint.ControlIdentifier));
 		public static readonly Exposer<Endpoint, ApiObjectReference<TransportType>?> TransportType = new Exposer<Endpoint, ApiObjectReference<TransportType>?>(x => x.TransportType, nameof(Endpoint.TransportType));
-
 	}
 }

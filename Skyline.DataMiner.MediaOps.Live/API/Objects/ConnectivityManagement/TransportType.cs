@@ -1,6 +1,10 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	using System;
+	using System.Collections;
+	using System.Collections.Generic;
+	using System.Linq;
+
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
@@ -14,6 +18,8 @@
 	{
 		private readonly TransportTypeInstance _domInstance;
 
+		private readonly WrappedList<TransportTypeFieldSection, TransportTypeField> _wrappedFields;
+
 		public TransportType() : this(new TransportTypeInstance())
 		{
 		}
@@ -25,6 +31,11 @@
 		internal TransportType(TransportTypeInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
+
+			_wrappedFields = new WrappedList<TransportTypeFieldSection, TransportTypeField>(
+				_domInstance.TransportTypeField,
+				x => new TransportTypeField(x),
+				x => x.DomSection);
 		}
 
 		internal TransportType(DomInstance domInstance) : this(new TransportTypeInstance(domInstance))
@@ -45,6 +56,20 @@
 			set
 			{
 				_domInstance.TransportTypeInfo.Name = value;
+			}
+		}
+
+		public IList<TransportTypeField> Fields
+		{
+			get
+			{
+				return _wrappedFields;
+			}
+
+			set
+			{
+				_wrappedFields.Clear();
+				_wrappedFields.AddRange(value);
 			}
 		}
 

@@ -1704,7 +1704,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <summary>
-		/// Gets or sets the Fieldname field of the DOM Instance.
+		/// Gets or sets the FieldName field of the DOM Instance.
 		/// </summary>
 		/// <remarks>
 		/// When retrieving the value:
@@ -1718,7 +1718,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
 		/// </list>
 		/// </remarks>
-		public String Fieldname
+		public String FieldName
 		{
 			get
 			{

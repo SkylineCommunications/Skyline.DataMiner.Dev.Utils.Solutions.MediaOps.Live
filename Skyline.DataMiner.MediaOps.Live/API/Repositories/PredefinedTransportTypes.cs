@@ -8,7 +8,16 @@
 
 	public static class PredefinedTransportTypes
 	{
-		public static TransportType TSoIP { get; } = new TransportType(Guid.Parse("37f7faf4-6786-429d-9d66-6e46662c1986")) { Name = "TSoIP" };
+		public static TransportType TSoIP { get; } = new TransportType(Guid.Parse("37f7faf4-6786-429d-9d66-6e46662c1986"))
+		{
+			Name = "TSoIP",
+			Fields =
+			{
+				new TransportTypeField { Name = "Source IP" },
+				new TransportTypeField { Name = "Multicast IP" },
+				new TransportTypeField { Name = "Port" },
+			},
+		};
 
 		public static TransportType[] All { get; } =
 		[

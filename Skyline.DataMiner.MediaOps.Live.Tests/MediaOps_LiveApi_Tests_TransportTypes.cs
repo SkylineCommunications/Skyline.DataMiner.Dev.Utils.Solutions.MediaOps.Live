@@ -13,9 +13,11 @@
 
 			api.TransportTypes.CreatePredefinedTransportTypes();
 
+			var all = api.TransportTypes.ReadAll().ToList();
+
 			CollectionAssert.IsSubsetOf(
 				PredefinedTransportTypes.All,
-				api.TransportTypes.ReadAll().ToList());
+				all);
 		}
 
 		[TestMethod]
