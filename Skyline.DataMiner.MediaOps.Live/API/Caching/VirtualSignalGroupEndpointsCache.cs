@@ -119,7 +119,7 @@
 		{
 			lock (_lock)
 			{
-				return _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint); 
+				return _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint);
 			}
 		}
 
