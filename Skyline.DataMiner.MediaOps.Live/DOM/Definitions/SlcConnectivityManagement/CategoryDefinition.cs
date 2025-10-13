@@ -31,12 +31,12 @@
 			},
 		};
 
-		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
+		public IEnumerable<CustomSectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetCategoryInfoSectionDefinition(),
 		};
 
-		private static SectionDefinition GetCategoryInfoSectionDefinition()
+		private static CustomSectionDefinition GetCategoryInfoSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{

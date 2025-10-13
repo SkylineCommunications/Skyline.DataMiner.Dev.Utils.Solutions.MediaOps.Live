@@ -34,13 +34,13 @@
 			},
 		};
 
-		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
+		public IEnumerable<CustomSectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetEndpointInfoSectionDefinition(),
 			GetTransportTypeMetadataSectionDefinition(),
 		};
 
-		private static SectionDefinition GetEndpointInfoSectionDefinition()
+		private static CustomSectionDefinition GetEndpointInfoSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{
@@ -120,7 +120,7 @@
 			return sectionDefinition;
 		}
 
-		private static SectionDefinition GetTransportTypeMetadataSectionDefinition()
+		private static CustomSectionDefinition GetTransportTypeMetadataSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{

@@ -9,6 +9,6 @@
 	{
 		DomDefinition Definition { get; }
 
-		IEnumerable<SectionDefinition> SectionDefinitions { get; }
+		IEnumerable<CustomSectionDefinition> SectionDefinitions { get; }
 	}
 }

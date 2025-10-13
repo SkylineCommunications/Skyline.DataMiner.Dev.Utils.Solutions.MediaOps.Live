@@ -30,9 +30,14 @@
 
 			CreateOrUpdateModuleSettings(moduleSettingsHelper, domModuleInfo.ModuleSettings, logAction);
 
-			foreach (var definition in domModuleInfo.Definitions)
+			foreach (var domDefinitionInfo in domModuleInfo.Definitions)
 			{
-				CreateOrUpdateDomDefinition(domHelper, definition, logAction);
+				foreach (var sectionDefinition in domDefinitionInfo.SectionDefinitions)
+				{
+					CreateOrUpdateSectionDefinition(domHelper, sectionDefinition, logAction);
+				}
+
+				CreateOrUpdateDomDefinition(domHelper, domDefinitionInfo.Definition, logAction);
 			}
 		}
 
@@ -45,55 +50,81 @@
 				logAction);
 		}
 
-		private static void CreateOrUpdateDomDefinition(DomHelper helper, IDomDefinitionInfo domDefinitionInfo, Action<string> logAction)
-		{
-			foreach (var sectionDefinition in domDefinitionInfo.SectionDefinitions)
-			{
-				CreateOrUpdateSectionDefinition(helper, sectionDefinition, logAction);
-			}
-
-			CreateOrUpdateDomDefinition(helper, domDefinitionInfo.Definition, logAction);
-		}
-
 		private static void CreateOrUpdateDomDefinition(DomHelper helper, DomDefinition definition, Action<string> logAction)
 		{
 			CreateOrUpdate(
 				helper.DomDefinitions,
 				DomDefinitionExposers.Id.Equal(definition.ID),
 				definition,
-				logAction);
+				logAction,
+				MergeDomDefinitions);
 		}
 
-		private static void CreateOrUpdateSectionDefinition(DomHelper helper, SectionDefinition definition, Action<string> logAction)
+		private static void CreateOrUpdateSectionDefinition(DomHelper helper, CustomSectionDefinition definition, Action<string> logAction)
 		{
 			CreateOrUpdate(
 				helper.SectionDefinitions,
 				SectionDefinitionExposers.ID.Equal(definition.GetID()),
 				definition,
-				logAction);
+				logAction,
+				MergeSectionDefinitions);
 		}
 
-		private static void CreateOrUpdate<T>(ICrudHelperComponent<T> crudHelperComponent, FilterElement<T> filter, T obj, Action<string> logAction)
+		private static void CreateOrUpdate<T, TNew>(ICrudHelperComponent<T> crudHelperComponent, FilterElement<T> filter, TNew newItem, Action<string> logAction, Action<TNew, T> mergeExistingAction = null)
 			where T : DataType
+			where TNew : T
 		{
-			Log(logAction, "Searching for", obj);
-			T existingObj = crudHelperComponent.Read(filter).SingleOrDefault();
+			Log(logAction, "Searching for", newItem);
+			T existingItem = crudHelperComponent.Read(filter).SingleOrDefault();
 
-			if (existingObj == null)
+			if (existingItem == null)
 			{
-				Log(logAction, "Creating", obj);
-				crudHelperComponent.Create(obj);
-				return;
-			}
-
-			if (existingObj.Equals(obj))
-			{
-				Log(logAction, "Skipping", obj);
+				Log(logAction, "Creating", newItem);
+				crudHelperComponent.Create(newItem);
 			}
 			else
 			{
-				Log(logAction, "Updating", obj);
-				crudHelperComponent.Update(obj);
+				if (existingItem.Equals(newItem))
+				{
+					Log(logAction, "Skipping", newItem);
+					return;
+				}
+
+				Log(logAction, "Updating", newItem);
+				mergeExistingAction?.Invoke(newItem, existingItem);
+				crudHelperComponent.Update(newItem);
+			}
+		}
+
+		private static void MergeDomDefinitions(DomDefinition newDefinition, DomDefinition existing)
+		{
+			var newSectionDefinitionLinks = newDefinition.SectionDefinitionLinks
+				.Select(x => x.SectionDefinitionID)
+				.ToList();
+
+			foreach (var existingSectionDefinitionLink in existing.SectionDefinitionLinks)
+			{
+				if (!newSectionDefinitionLinks.Contains(existingSectionDefinitionLink.SectionDefinitionID))
+				{
+					existingSectionDefinitionLink.IsSoftDeleted = true;
+					newDefinition.SectionDefinitionLinks.Add(existingSectionDefinitionLink);
+				}
+			}
+		}
+
+		private static void MergeSectionDefinitions(CustomSectionDefinition newDefinition, SectionDefinition existing)
+		{
+			var newFieldDescriptors = newDefinition.GetAllFieldDescriptors()
+				.Select(x => x.ID)
+				.ToList();
+
+			foreach (var existingFieldDescriptor in existing.GetAllFieldDescriptors())
+			{
+				if (!newFieldDescriptors.Contains(existingFieldDescriptor.ID))
+				{
+					existingFieldDescriptor.IsSoftDeleted = true;
+					newDefinition.AddOrReplaceFieldDescriptor(existingFieldDescriptor);
+				}
 			}
 		}
 

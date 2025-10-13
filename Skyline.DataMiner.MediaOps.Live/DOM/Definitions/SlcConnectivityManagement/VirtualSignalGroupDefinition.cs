@@ -34,13 +34,13 @@
 			},
 		};
 
-		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
+		public IEnumerable<CustomSectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetVirtualSignalGroupInfoSectionDefinition(),
 			GetLevelsInfoSectionDefinition(),
 		};
 
-		private static SectionDefinition GetVirtualSignalGroupInfoSectionDefinition()
+		private static CustomSectionDefinition GetVirtualSignalGroupInfoSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{
@@ -87,7 +87,7 @@
 			return sectionDefinition;
 		}
 
-		private static SectionDefinition GetLevelsInfoSectionDefinition()
+		private static CustomSectionDefinition GetLevelsInfoSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{

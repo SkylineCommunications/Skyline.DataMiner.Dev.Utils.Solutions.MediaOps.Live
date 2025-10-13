@@ -32,13 +32,13 @@
 			},
 		};
 
-		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
+		public IEnumerable<CustomSectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetTransportTypeInfoSectionDefinition(),
 			GetTransportTypeFieldSectionDefinition(),
 		};
 
-		private static SectionDefinition GetTransportTypeInfoSectionDefinition()
+		private static CustomSectionDefinition GetTransportTypeInfoSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{
@@ -58,7 +58,7 @@
 			return sectionDefinition;
 		}
 
-		private static SectionDefinition GetTransportTypeFieldSectionDefinition()
+		private static CustomSectionDefinition GetTransportTypeFieldSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{

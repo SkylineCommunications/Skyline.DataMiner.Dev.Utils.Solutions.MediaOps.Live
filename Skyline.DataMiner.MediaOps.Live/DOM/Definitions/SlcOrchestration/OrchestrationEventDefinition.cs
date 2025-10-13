@@ -41,14 +41,14 @@
 			},
 		};
 
-		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
+		public IEnumerable<CustomSectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetOrchestrationEventInfoSectionDefinition(),
 			GetGlobalConfigurationSectionDefinition(),
 			GetConfigurationInfoSectionDefinition(),
 		};
 
-		private static SectionDefinition GetOrchestrationEventInfoSectionDefinition()
+		private static CustomSectionDefinition GetOrchestrationEventInfoSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{
@@ -143,7 +143,7 @@
 			return sectionDefinition;
 		}
 
-		private static SectionDefinition GetGlobalConfigurationSectionDefinition()
+		private static CustomSectionDefinition GetGlobalConfigurationSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{
@@ -181,7 +181,7 @@
 			return sectionDefinition;
 		}
 
-		private static SectionDefinition GetConfigurationInfoSectionDefinition()
+		private static CustomSectionDefinition GetConfigurationInfoSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{

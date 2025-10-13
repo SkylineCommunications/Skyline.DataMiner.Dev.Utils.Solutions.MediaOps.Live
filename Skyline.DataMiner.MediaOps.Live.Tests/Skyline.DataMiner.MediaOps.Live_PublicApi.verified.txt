@@ -861,7 +861,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Interfaces
     public interface IDomDefinitionInfo
     {
         Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinition Definition { get; }
-        System.Collections.Generic.IEnumerable<Skyline.DataMiner.Net.Sections.SectionDefinition> SectionDefinitions { get; }
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.Net.Sections.CustomSectionDefinition> SectionDefinitions { get; }
     }
     public interface IDomModuleInfo
     {
