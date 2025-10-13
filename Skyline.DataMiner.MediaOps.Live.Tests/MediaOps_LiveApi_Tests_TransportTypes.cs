@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.MediaOps.Live.API.TransportTypes;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
 	[TestClass]

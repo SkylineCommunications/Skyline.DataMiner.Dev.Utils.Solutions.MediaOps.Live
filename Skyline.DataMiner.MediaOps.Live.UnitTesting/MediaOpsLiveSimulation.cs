@@ -8,6 +8,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.API.TransportTypes;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
@@ -209,9 +210,9 @@
 							Identifier = $"Video-{vsgCounter}",
 							TransportMetadata =
 							{
-								new TransportMetadata("Source IP", "10.0.0.1"),
-								new TransportMetadata("Multicast IP", $"239.1.{vsgCounter}.1"),
-								new TransportMetadata("Multicast Port", "5000"),
+								new TransportMetadata(TsoipTransportType.FieldNames.SourceIp, "10.0.0.1"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastIp, $"239.1.{vsgCounter}.1"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastPort, "5000"),
 							},
 						};
 						var audioSource = new Endpoint(Tools.GuidFromString($"Audio Source {vsgCounter}"))
@@ -223,9 +224,9 @@
 							Identifier = $"Audio-{vsgCounter}",
 							TransportMetadata =
 							{
-								new TransportMetadata("Source IP", "10.0.0.1"),
-								new TransportMetadata("Multicast IP", $"239.1.{vsgCounter}.2"),
-								new TransportMetadata("Multicast Port", "5000"),
+								new TransportMetadata(TsoipTransportType.FieldNames.SourceIp, "10.0.0.1"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastIp, $"239.1.{vsgCounter}.2"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastPort, "5000"),
 							},
 						};
 						var videoDestination = new Endpoint(Tools.GuidFromString($"Video Destination {vsgCounter}"))
