@@ -6,6 +6,7 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -81,6 +82,46 @@
 					x => Read(x));
 		}
 
+		public IEnumerable<Endpoint> GetByTransportMetadata(params (string fieldName, string value)[] metadataFilters)
+		{
+			if (metadataFilters is null)
+			{
+				throw new ArgumentNullException(nameof(metadataFilters));
+			}
+
+			if (!metadataFilters.Any())
+			{
+				return Enumerable.Empty<Endpoint>();
+			}
+
+			if (metadataFilters.Any(x => String.IsNullOrWhiteSpace(x.fieldName)))
+			{
+				throw new ArgumentException($"'{nameof(metadataFilters)}' cannot contain null or whitespace field names.", nameof(metadataFilters));
+			}
+
+			var filters = new List<FilterElement<DomInstance>>
+			{
+				DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
+			};
+
+			foreach (var (fieldName, value) in metadataFilters)
+			{
+				var pairFilter = new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.FieldName).Equal(fieldName),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Value).Equal(value));
+
+				filters.Add(pairFilter);
+			}
+
+			var filter = new ANDFilterElement<DomInstance>(filters.ToArray());
+			var endpoints = Read(filter);
+
+			// DOM doesn't support field name/value matching in the same section, so we need to do some post-filtering
+			endpoints = endpoints.WithTransportMetadata(metadataFilters);
+
+			return endpoints;
+		}
+
 		public IEnumerable<Endpoint> GetByTransportMetadata(string fieldName, string value)
 		{
 			if (String.IsNullOrWhiteSpace(fieldName))
@@ -88,17 +129,7 @@
 				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
 			}
 
-			var filter = new ANDFilterElement<DomInstance>(
-				DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
-				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.FieldName).Equal(fieldName),
-				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Value).Equal(value));
-
-			var endpoints = Read(filter);
-
-			// Post-filtering to ensure that the field name and value are in the same section (DOM doesn't support this).
-			endpoints = endpoints.Where(e => e.HasTransportMetadata(fieldName, value));
-
-			return endpoints;
+			return GetByTransportMetadata([(fieldName, value)]);
 		}
 
 		protected internal override Endpoint CreateInstance(DomInstance domInstance)

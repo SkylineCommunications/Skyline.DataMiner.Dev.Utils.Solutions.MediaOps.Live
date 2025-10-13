@@ -219,10 +219,12 @@
 				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
 			}
 
-			var existing = TransportMetadata.FirstOrDefault(x => String.Equals(x.FieldName, fieldName))
-				?? throw new InvalidOperationException($"No transport metadata found with field name '{fieldName}'.");
+			if (!TryGetTransportMetadata(fieldName, out var value))
+			{
+				throw new InvalidOperationException($"No transport metadata found with field name '{fieldName}'.");
+			}
 
-			return existing.Value;
+			return value;
 		}
 
 		public bool HasTransportMetadata(string fieldName, string value)
@@ -232,10 +234,8 @@
 				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
 			}
 
-			return TransportMetadata.Any(x => String.Equals(x.FieldName, fieldName) && String.Equals(x.Value, value));
+			return TryGetTransportMetadata(fieldName, out var foundValue) && String.Equals(foundValue, value);
 		}
-
-
 
 		public ValidationResult Validate()
 		{
