@@ -287,12 +287,12 @@
 
 			if (!NameUtil.Validate(Name, out var error))
 			{
-				result.AddError(error, nameof(Name));
+				result.AddError(error, this, x => x.Name);
 			}
 
 			if (Description != null && Description.Length > 200)
 			{
-				result.AddError("Description cannot be longer than 200 characters.", nameof(Description));
+				result.AddError("Description cannot be longer than 200 characters.", this, x => x.Description);
 			}
 
 			return result;

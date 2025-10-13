@@ -42,11 +42,6 @@
 
 		protected override void ValidateBeforeSave(ICollection<TransportType> instances)
 		{
-			if (instances.Any(x => x.IsPredefined))
-			{
-				throw new InvalidOperationException("Modifying a predefined transport type is not allowed.");
-			}
-
 			foreach (var instance in instances)
 			{
 				instance.Validate().ThrowIfInvalid();
@@ -57,11 +52,6 @@
 
 		protected override void ValidateBeforeDelete(ICollection<TransportType> instances)
 		{
-			if (instances.Any(x => x.IsPredefined))
-			{
-				throw new InvalidOperationException("Modifying a predefined transport type is not allowed.");
-			}
-
 			CheckIfStillInUse(instances);
 		}
 

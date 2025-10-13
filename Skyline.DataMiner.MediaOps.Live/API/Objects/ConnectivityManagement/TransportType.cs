@@ -76,7 +76,20 @@
 
 			if (!NameUtil.Validate(Name, out var error))
 			{
-				result.AddError(error, nameof(Name));
+				result.AddError(error, this, x => x.Name);
+			}
+
+			var fieldNames = new HashSet<string>();
+
+			foreach (var field in Fields)
+			{
+				var fieldResult = field.Validate();
+				result.Merge(fieldResult);
+
+				if (!fieldNames.Add(field.Name))
+				{
+					result.AddError($"Field name '{field.Name}' is duplicated.", field, x => x.Name);
+				}
 			}
 
 			return result;

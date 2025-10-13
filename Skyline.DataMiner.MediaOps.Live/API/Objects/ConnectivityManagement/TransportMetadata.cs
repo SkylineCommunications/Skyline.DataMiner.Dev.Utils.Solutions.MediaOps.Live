@@ -63,7 +63,7 @@
 
 			if (!NameUtil.Validate(FieldName, out var error))
 			{
-				result.AddError(error, nameof(FieldName));
+				result.AddError(error, this, x => x.FieldName);
 			}
 
 			return result;

@@ -32,16 +32,26 @@
 			_errors.Add(new ValidationError(message));
 		}
 
-		public void AddError(string message, string propertyName)
+		public void AddError(string message, object instance, string propertyName)
 		{
-			_errors.Add(new ValidationError(message, propertyName));
+			_errors.Add(new ValidationError(message, instance, propertyName));
 		}
 
-		public void AddError<T>(string message, Expression<Func<T, object>> expression)
+		public void AddError<T>(string message, T instance, Expression<Func<T, object>> expression)
 		{
 			var propertyName = GetPropertyName(expression);
 
-			AddError(message, propertyName);
+			AddError(message, instance, propertyName);
+		}
+
+		public void Merge(ValidationResult result)
+		{
+			if (result is null)
+			{
+				throw new ArgumentNullException(nameof(result));
+			}
+
+			_errors.AddRange(result.Errors);
 		}
 
 		public ValidationResult ForProperty(string propertyName)
@@ -56,6 +66,25 @@
 			return new ValidationResult(errors);
 		}
 
+		public ValidationResult ForProperty(object instance, string propertyName)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			if (propertyName == null)
+			{
+				throw new ArgumentNullException(nameof(propertyName));
+			}
+
+			var errors = Errors.Where(x =>
+				x.Instance == instance &&
+				String.Equals(propertyName, x.PropertyName));
+
+			return new ValidationResult(errors);
+		}
+
 		public ValidationResult ForProperty<T>(Expression<Func<T, object>> expression)
 		{
 			if (expression == null)
@@ -66,6 +95,23 @@
 			var propertyName = GetPropertyName(expression);
 
 			return ForProperty(propertyName);
+		}
+
+		public ValidationResult ForProperty<T>(T instance, Expression<Func<T, object>> expression)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			if (expression == null)
+			{
+				throw new ArgumentNullException(nameof(expression));
+			}
+
+			var propertyName = GetPropertyName(expression);
+
+			return ForProperty(instance, propertyName);
 		}
 
 		public void ThrowIfInvalid()

@@ -60,7 +60,7 @@
 
 			if (!NameUtil.Validate(Name, out var error))
 			{
-				result.AddError(error, nameof(Name));
+				result.AddError(error, this, x => x.Name);
 			}
 
 			return result;

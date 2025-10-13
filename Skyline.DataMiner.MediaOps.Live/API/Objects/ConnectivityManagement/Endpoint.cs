@@ -243,12 +243,27 @@
 
 			if (!NameUtil.Validate(Name, out var error))
 			{
-				result.AddError(error, nameof(Name));
+				result.AddError(error, this, x => x.Name);
 			}
 
 			if (TransportType == null)
 			{
-				result.AddError($"{nameof(TransportType)} cannot be null.", nameof(TransportType));
+				result.AddError($"{nameof(TransportType)} cannot be null.", this, x => x.TransportType);
+			}
+			else
+			{
+				var fieldNames = new HashSet<string>();
+
+				foreach (var metadata in TransportMetadata)
+				{
+					var metadataResult = metadata.Validate();
+					result.Merge(metadataResult);
+
+					if (!fieldNames.Add(metadata.FieldName))
+					{
+						result.AddError($"Metadata field name '{metadata.FieldName}' is defined multiple times.", this, x => x.TransportMetadata);
+					}
+				}
 			}
 
 			return result;

@@ -14,11 +14,16 @@
 			Message = message;
 		}
 
-		public ValidationError(string message, string propertyName)
+		public ValidationError(string message, object instance, string propertyName)
 		{
 			if (String.IsNullOrWhiteSpace(message))
 			{
 				throw new ArgumentException($"'{nameof(message)}' cannot be null or whitespace.", nameof(message));
+			}
+
+			if (instance is null)
+			{
+				throw new ArgumentNullException(nameof(instance));
 			}
 
 			if (String.IsNullOrWhiteSpace(propertyName))
@@ -27,10 +32,13 @@
 			}
 
 			Message = message;
+			Instance = instance;
 			PropertyName = propertyName;
 		}
 
 		public string Message { get; }
+
+		public object Instance { get; }
 
 		public string PropertyName { get; }
 	}

@@ -16,34 +16,5 @@
 			var all = api.TransportTypes.ReadAll().ToList();
 			CollectionAssert.IsSubsetOf(PredefinedTransportTypes.All, all);
 		}
-
-		[TestMethod]
-		public void MediaOps_LiveApi_Tests_TransportTypes_ModifyingPredefinedTransportTypeThrowsException()
-		{
-			var api = new MediaOpsLiveApiMock();
-			api.TransportTypes.CreatePredefinedTransportTypes();
-
-			var tsoip = api.TransportTypes.Read("TSoIP");
-			tsoip.Name = "TSoIP 2";
-
-			var ex = Assert.Throws<Exception>(
-				() => { api.TransportTypes.Update(tsoip); });
-
-			Assert.AreEqual("Modifying a predefined transport type is not allowed.", ex.Message);
-		}
-
-		[TestMethod]
-		public void MediaOps_LiveApi_Tests_TransportTypes_DeletingPredefinedTransportTypeThrowsException()
-		{
-			var api = new MediaOpsLiveApiMock();
-			api.TransportTypes.CreatePredefinedTransportTypes();
-
-			var tsoip = api.TransportTypes.Read("TSoIP");
-
-			var ex = Assert.Throws<Exception>(
-				() => { api.TransportTypes.Delete(tsoip); });
-
-			Assert.AreEqual("Modifying a predefined transport type is not allowed.", ex.Message);
-		}
 	}
 }
