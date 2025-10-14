@@ -79,6 +79,15 @@
 				result.AddError(error, this, x => x.Name);
 			}
 
+			result.Merge(ValidateMetadataFields());
+
+			return result;
+		}
+
+		private ValidationResult ValidateMetadataFields()
+		{
+			var result = new ValidationResult();
+
 			var fieldNames = new HashSet<string>();
 
 			foreach (var field in Fields)

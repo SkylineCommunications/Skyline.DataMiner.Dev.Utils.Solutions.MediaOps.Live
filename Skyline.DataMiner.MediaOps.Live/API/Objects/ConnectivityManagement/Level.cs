@@ -59,11 +59,16 @@
 			}
 		}
 
-		public ApiObjectReference<TransportType>? TransportType
+		public ApiObjectReference<TransportType> TransportType
 		{
 			get
 			{
-				return _domInstance.LevelInfo.TransportType;
+				if (_domInstance.LevelInfo.TransportType.HasValue)
+				{
+					return _domInstance.LevelInfo.TransportType.Value;
+				}
+
+				return ApiObjectReference<TransportType>.Empty;
 			}
 
 			set
@@ -86,9 +91,9 @@
 				result.AddError($"{nameof(Number)} cannot be negative.", this, x => x.Number);
 			}
 
-			if (TransportType == null)
+			if (TransportType == ApiObjectReference<TransportType>.Empty)
 			{
-				result.AddError($"{nameof(TransportType)} cannot be null.", this, x => x.TransportType);
+				result.AddError($"Transport type is mandatory.", this, x => x.TransportType);
 			}
 
 			return result;

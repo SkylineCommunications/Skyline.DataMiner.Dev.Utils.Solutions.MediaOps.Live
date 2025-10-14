@@ -20,7 +20,6 @@
 
 		public Endpoint() : this(new EndpointInstance())
 		{
-			TransportType = Guid.NewGuid();
 		}
 
 		public Endpoint(Guid id) : this(new EndpointInstance(id))
@@ -136,11 +135,16 @@
 			}
 		}
 
-		public ApiObjectReference<TransportType>? TransportType
+		public ApiObjectReference<TransportType> TransportType
 		{
 			get
 			{
-				return _domInstance.EndpointInfo.TransportType;
+				if (_domInstance.EndpointInfo.TransportType.HasValue)
+				{
+					return _domInstance.EndpointInfo.TransportType.Value;
+				}
+
+				return ApiObjectReference<TransportType>.Empty;
 			}
 
 			set
@@ -251,23 +255,30 @@
 				result.AddError(error, this, x => x.Name);
 			}
 
-			if (TransportType == null)
+			if (TransportType == ApiObjectReference<TransportType>.Empty)
 			{
-				result.AddError($"{nameof(TransportType)} cannot be null.", this, x => x.TransportType);
+				result.AddError($"Transport type is mandatory.", this, x => x.TransportType);
 			}
-			else
+
+			result.Merge(ValidateTransportMetadata());
+
+			return result;
+		}
+
+		private ValidationResult ValidateTransportMetadata()
+		{
+			var result = new ValidationResult();
+
+			var fieldNames = new HashSet<string>();
+
+			foreach (var metadata in TransportMetadata)
 			{
-				var fieldNames = new HashSet<string>();
+				var metadataResult = metadata.Validate();
+				result.Merge(metadataResult);
 
-				foreach (var metadata in TransportMetadata)
+				if (!fieldNames.Add(metadata.FieldName))
 				{
-					var metadataResult = metadata.Validate();
-					result.Merge(metadataResult);
-
-					if (!fieldNames.Add(metadata.FieldName))
-					{
-						result.AddError($"Metadata field name '{metadata.FieldName}' is defined multiple times.", this, x => x.TransportMetadata);
-					}
+					result.AddError($"Metadata field name '{metadata.FieldName}' is defined multiple times.", this, x => x.TransportMetadata);
 				}
 			}
 

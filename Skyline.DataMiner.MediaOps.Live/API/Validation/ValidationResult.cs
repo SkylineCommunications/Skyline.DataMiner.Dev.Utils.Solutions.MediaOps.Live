@@ -133,12 +133,8 @@
 				return;
 			}
 
-			var errorMessages = Errors.Select(e =>
-				String.IsNullOrEmpty(e.PropertyName)
-					? $"- {e.Message}"
-					: $"- {e.PropertyName}: {e.Message}");
-
-			var errorMessage = $"Validation failed:{Environment.NewLine}{String.Join(Environment.NewLine, errorMessages)}";
+			var errorMessage = $"Validation failed:{Environment.NewLine}" +
+				$"{String.Join(Environment.NewLine, Errors.Select(e => $"- {e.Message}"))}";
 
 			throw new Exception(errorMessage);
 		}

@@ -359,7 +359,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public string Name { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Enums.Role Role { get; set; }
         public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata> TransportMetadata { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>? TransportType { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> TransportType { get; set; }
         public string GetTransportMetadata(string fieldName) { }
         public bool HasTransportMetadata(string fieldName, string value) { }
         public void RemoveTransportMetadata(string fieldName) { }
@@ -383,7 +383,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public Level() { }
         public string Name { get; set; }
         public long Number { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>? TransportType { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> TransportType { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
     }
     public sealed class LevelEndpoint : System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint>
