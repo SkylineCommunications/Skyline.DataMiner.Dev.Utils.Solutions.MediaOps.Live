@@ -60,7 +60,12 @@
 		{
 			get
 			{
-				return (Role)(int)_domInstance.EndpointInfo.Role;
+				if (_domInstance.EndpointInfo.Role.HasValue)
+				{
+					return (Role)(int)_domInstance.EndpointInfo.Role.Value;
+				}
+
+				return default;
 			}
 
 			set

@@ -32,7 +32,12 @@
 		{
 			get
 			{
-				return (long)_domInstance.LevelInfo.Number;
+				if (_domInstance.LevelInfo.Number.HasValue)
+				{
+					return _domInstance.LevelInfo.Number.Value;
+				}
+
+				return default;
 			}
 
 			set

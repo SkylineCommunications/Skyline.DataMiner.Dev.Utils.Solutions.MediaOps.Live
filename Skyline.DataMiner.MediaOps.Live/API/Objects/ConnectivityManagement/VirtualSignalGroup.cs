@@ -79,7 +79,12 @@
 		{
 			get
 			{
-				return (Role)(int)_domInstance.VirtualSignalGroupInfo.Role;
+				if (_domInstance.VirtualSignalGroupInfo.Role.HasValue)
+				{
+					return (Role)(int)_domInstance.VirtualSignalGroupInfo.Role.Value;
+				}
+
+				return default;
 			}
 
 			set
