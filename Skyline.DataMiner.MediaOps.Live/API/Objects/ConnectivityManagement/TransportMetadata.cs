@@ -7,7 +7,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 
-	public class TransportMetadata : IEquatable<TransportMetadata>
+	public sealed class TransportMetadata : IEquatable<TransportMetadata>
 	{
 		public TransportMetadata()
 		{
@@ -88,7 +88,7 @@
 
 		public override int GetHashCode()
 		{
-			return DomSection.GetHashCode();
+			return EqualityComparer<EndpointTransportMetadataSection>.Default.GetHashCode(DomSection);
 		}
 
 		public static bool operator ==(TransportMetadata left, TransportMetadata right)

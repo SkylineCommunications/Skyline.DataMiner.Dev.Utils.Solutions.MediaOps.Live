@@ -7,7 +7,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 
-	public class TransportTypeField : IEquatable<TransportTypeField>
+	public sealed class TransportTypeField : IEquatable<TransportTypeField>
 	{
 		public TransportTypeField()
 		{
@@ -72,7 +72,7 @@
 
 		public override int GetHashCode()
 		{
-			return DomSection.GetHashCode();
+			return EqualityComparer<TransportTypeFieldSection>.Default.GetHashCode(DomSection);
 		}
 
 		public static bool operator ==(TransportTypeField left, TransportTypeField right)
