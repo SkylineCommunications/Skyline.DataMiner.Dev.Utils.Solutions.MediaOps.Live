@@ -54,6 +54,18 @@
 			_errors.AddRange(result.Errors);
 		}
 
+		public ValidationResult ForInstance(object instance)
+		{
+			if (instance == null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			var errors = Errors.Where(x => EqualityComparer<object>.Default.Equals(x.Instance, instance));
+
+			return new ValidationResult(errors);
+		}
+
 		public ValidationResult ForProperty(string propertyName)
 		{
 			if (propertyName == null)
@@ -79,7 +91,7 @@
 			}
 
 			var errors = Errors.Where(x =>
-				x.Instance == instance &&
+				EqualityComparer<object>.Default.Equals(x.Instance, instance) &&
 				String.Equals(propertyName, x.PropertyName));
 
 			return new ValidationResult(errors);

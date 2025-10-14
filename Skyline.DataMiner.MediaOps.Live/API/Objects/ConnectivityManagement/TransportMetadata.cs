@@ -1,12 +1,13 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	using System;
+	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 
-	public class TransportMetadata
+	public class TransportMetadata : IEquatable<TransportMetadata>
 	{
 		public TransportMetadata()
 		{
@@ -72,6 +73,32 @@
 		public override string ToString()
 		{
 			return $"{FieldName}: {Value}";
+		}
+
+		public override bool Equals(object obj)
+		{
+			return Equals(obj as TransportMetadata);
+		}
+
+		public bool Equals(TransportMetadata other)
+		{
+			return other is not null &&
+				   EqualityComparer<EndpointTransportMetadataSection>.Default.Equals(DomSection, other.DomSection);
+		}
+
+		public override int GetHashCode()
+		{
+			return DomSection.GetHashCode();
+		}
+
+		public static bool operator ==(TransportMetadata left, TransportMetadata right)
+		{
+			return EqualityComparer<TransportMetadata>.Default.Equals(left, right);
+		}
+
+		public static bool operator !=(TransportMetadata left, TransportMetadata right)
+		{
+			return !(left == right);
 		}
 	}
 }
