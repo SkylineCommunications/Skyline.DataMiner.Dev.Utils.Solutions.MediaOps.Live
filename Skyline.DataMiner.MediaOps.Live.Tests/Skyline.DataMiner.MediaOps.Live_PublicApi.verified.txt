@@ -386,14 +386,20 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>? TransportType { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
     }
-    public class LevelEndpoint
+    public sealed class LevelEndpoint : System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint>
     {
         public LevelEndpoint() { }
         public LevelEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> level, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
         public LevelEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level level, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint endpoint) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> Endpoint { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> Level { get; set; }
+        public bool Equals(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint other) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
+        public override string ToString() { }
         public void Validate() { }
+        public static bool operator !=(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint right) { }
+        public static bool operator ==(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint right) { }
     }
     public static class LevelExposers
     {
@@ -402,7 +408,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level, long> Number;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>?> TransportType;
     }
-    public class TransportMetadata : System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata>
+    public sealed class TransportMetadata : System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata>
     {
         public TransportMetadata() { }
         public TransportMetadata(string fieldName, string value) { }
@@ -430,7 +436,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType, System.Guid> ID;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType, string> Name;
     }
-    public class TransportTypeField : System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField>
+    public sealed class TransportTypeField : System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField>
     {
         public TransportTypeField() { }
         public TransportTypeField(string name) { }
