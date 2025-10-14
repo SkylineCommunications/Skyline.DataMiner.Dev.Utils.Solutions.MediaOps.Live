@@ -402,14 +402,19 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level, long> Number;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>?> TransportType;
     }
-    public class TransportMetadata
+    public class TransportMetadata : System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata>
     {
         public TransportMetadata() { }
         public TransportMetadata(string fieldName, string value) { }
         public string FieldName { get; set; }
         public string Value { get; set; }
+        public bool Equals(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata other) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
         public override string ToString() { }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
+        public static bool operator !=(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata right) { }
+        public static bool operator ==(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata right) { }
     }
     public class TransportType : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>
     {
@@ -425,12 +430,18 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType, System.Guid> ID;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType, string> Name;
     }
-    public class TransportTypeField
+    public class TransportTypeField : System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField>
     {
         public TransportTypeField() { }
+        public TransportTypeField(string name) { }
         public string Name { get; set; }
+        public bool Equals(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField other) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
         public override string ToString() { }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
+        public static bool operator !=(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField right) { }
+        public static bool operator ==(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField right) { }
     }
     public class VirtualSignalGroup : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>
     {
@@ -817,6 +828,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Validation
         public void AddError(string message) { }
         public void AddError(string message, object instance, string propertyName) { }
         public void AddError<T>(string message, T instance, System.Linq.Expressions.Expression<System.Func<T, object>> expression) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult ForInstance(object instance) { }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult ForProperty(string propertyName) { }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult ForProperty(object instance, string propertyName) { }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult ForProperty<T>(System.Linq.Expressions.Expression<System.Func<T, object>> expression) { }

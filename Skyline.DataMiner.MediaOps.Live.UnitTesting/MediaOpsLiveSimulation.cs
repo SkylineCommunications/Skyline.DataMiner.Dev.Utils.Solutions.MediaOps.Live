@@ -170,12 +170,12 @@
 			var category = new Category { Name = "Category 1" };
 			Api.Categories.Create(category);
 
-			var transportTypeIP = new TransportType { Name = "IP" };
-			Api.TransportTypes.Create(transportTypeIP);
+			var transportTypeTSoIP = new TsoipTransportType();
+			Api.TransportTypes.Create(transportTypeTSoIP);
 
-			var videoLevel = new Level { Number = 1, Name = "Video", TransportType = transportTypeIP };
-			var audioLevel = new Level { Number = 2, Name = "Audio", TransportType = transportTypeIP };
-			var dataLevel = new Level { Number = 3, Name = "Data", TransportType = transportTypeIP };
+			var videoLevel = new Level { Number = 1, Name = "Video", TransportType = transportTypeTSoIP };
+			var audioLevel = new Level { Number = 2, Name = "Audio", TransportType = transportTypeTSoIP };
+			var dataLevel = new Level { Number = 3, Name = "Data", TransportType = transportTypeTSoIP };
 			Api.Levels.CreateOrUpdate([videoLevel, audioLevel, dataLevel]);
 
 			const int numberOfElements = 2;
@@ -205,7 +205,7 @@
 						{
 							Role = Role.Source,
 							Name = $"Video Source {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
 							Identifier = $"Video-{vsgCounter}",
 							TransportMetadata =
@@ -219,7 +219,7 @@
 						{
 							Role = Role.Source,
 							Name = $"Audio Source {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
 							Identifier = $"Audio-{vsgCounter}",
 							TransportMetadata =
@@ -233,7 +233,7 @@
 						{
 							Role = Role.Destination,
 							Name = $"Video Destination {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
 							Identifier = $"Video-{vsgCounter}",
 						};
@@ -241,7 +241,7 @@
 						{
 							Role = Role.Destination,
 							Name = $"Audio Destination {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
 							Identifier = $"Audio-{vsgCounter}",
 						};

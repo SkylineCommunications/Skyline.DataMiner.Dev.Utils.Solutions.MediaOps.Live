@@ -39,7 +39,7 @@
 		{
 			var api = new MediaOpsLiveApiMock();
 
-			var transportType = api.TransportTypes.Query().First(x => x.Name == "IP");
+			var transportType = api.TransportTypes.Query().First(x => x.Name == "TSoIP");
 
 			// deleting transport type that is still in use throws exception
 			var ex = Assert.Throws<InvalidOperationException>(
@@ -52,7 +52,7 @@
 		{
 			var api = new MediaOpsLiveApiMock();
 
-			var transportType = api.TransportTypes.Query().First(x => x.Name == "IP");
+			var transportType = api.TransportTypes.Query().First(x => x.Name == "TSoIP");
 
 			// doesn't throw exception
 			var l = new Level { Name = "L1", Number = 101, TransportType = transportType };
