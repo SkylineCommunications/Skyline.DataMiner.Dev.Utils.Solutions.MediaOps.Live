@@ -1813,7 +1813,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		protected override Section InternalToSection()
 		{
 			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.FieldName) == null)
-				throw new InvalidOperationException("'Fieldname' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+				throw new InvalidOperationException("'FieldName' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
 		}
 	}
