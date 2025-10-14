@@ -317,7 +317,11 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects
         where T : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T>
     {
         protected ApiObject(Skyline.DataMiner.MediaOps.Live.DOM.Model.DomInstanceBase domInstance) { }
+        public System.DateTimeOffset? CreatedAt { get; }
+        public string CreatedBy { get; }
         public System.Guid ID { get; }
+        public System.DateTimeOffset? LastModified { get; }
+        public string LastModifiedBy { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T> Reference { get; }
         public virtual bool Equals(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T> other) { }
         public override bool Equals(object obj) { }
