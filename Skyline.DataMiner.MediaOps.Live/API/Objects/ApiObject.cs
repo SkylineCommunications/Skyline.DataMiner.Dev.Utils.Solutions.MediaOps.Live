@@ -18,6 +18,14 @@
 
 		public ApiObjectReference<T> Reference => new ApiObjectReference<T>(DomInstance.ID.Id);
 
+		public DateTimeOffset CreatedAt => DomInstance.CreatedAt;
+
+		public string CreatedBy => DomInstance.CreatedBy;
+
+		public DateTimeOffset LastModified => DomInstance.LastModified;
+
+		public string LastModifiedBy => DomInstance.LastModifiedBy;
+
 		public override int GetHashCode()
 		{
 			return DomInstance.GetHashCode();
@@ -65,6 +73,11 @@
 
 		public override string ToString()
 		{
+			if (!String.IsNullOrWhiteSpace(DomInstance.Name))
+			{
+				return $"{typeof(T).Name} '{DomInstance.Name}' [{ID}]";
+			}
+
 			return $"{typeof(T).Name} [{ID}]";
 		}
 	}

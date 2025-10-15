@@ -39,7 +39,7 @@
 		{
 			var api = new MediaOpsLiveApiMock();
 
-			var transportType = api.TransportTypes.Query().First(x => x.Name == "IP");
+			var transportType = api.TransportTypes.Query().First(x => x.Name == "TSoIP");
 
 			// deleting transport type that is still in use throws exception
 			var ex = Assert.Throws<InvalidOperationException>(
@@ -52,7 +52,7 @@
 		{
 			var api = new MediaOpsLiveApiMock();
 
-			var transportType = api.TransportTypes.Query().First(x => x.Name == "IP");
+			var transportType = api.TransportTypes.Query().First(x => x.Name == "TSoIP");
 
 			// doesn't throw exception
 			var l = new Level { Name = "L1", Number = 101, TransportType = transportType };
@@ -66,6 +66,18 @@
 			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.Levels.Create(new Level { Name = "L2", Number = 102, TransportType = transportType }); });
 			Assert.AreEqual("Cannot save levels. The following names are already in use: L2", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_Levels_TransportTypeIsMandatory()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var level = new Level { Name = "L1", Number = 101 };
+
+			var ex = Assert.Throws<Exception>(
+				() => { api.Levels.CreateOrUpdate(level); });
+			Assert.AreEqual("Validation failed:\r\n- Transport type is mandatory.", ex.Message);
 		}
 
 		[TestMethod]
@@ -86,16 +98,18 @@
 		{
 			var api = new MediaOpsLiveApiMock();
 
-			// doesn't throw exception
-			var c = new Endpoint { Name = "E1", Role = Role.Source };
-			api.Endpoints.Create(c);
+			var transportType = api.TransportTypes.Query().First(x => x.Name == "TSoIP");
 
-			c.Name = "E2";
-			api.Endpoints.Update(c);
+			// doesn't throw exception
+			var endpoint = new Endpoint { Name = "E1", Role = Role.Source, TransportType = transportType };
+			api.Endpoints.Create(endpoint);
+
+			endpoint.Name = "E2";
+			api.Endpoints.Update(endpoint);
 
 			// create item with same name
 			var ex = Assert.Throws<InvalidOperationException>(
-				() => { api.Endpoints.Create(new Endpoint { Name = "E2", Role = Role.Destination }); });
+				() => { api.Endpoints.Create(new Endpoint { Name = "E2", Role = Role.Destination, TransportType = transportType }); });
 			Assert.AreEqual("Cannot save endpoints. The following names are already in use: E2", ex.Message);
 		}
 
@@ -110,6 +124,18 @@
 			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.Endpoints.Delete(endpoint); });
 			Assert.AreEqual("One or more endpoints are still in use", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_Endpoints_TransportTypeIsMandatory()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var endpoint = new Endpoint { Name = "E1", Role = Role.Source };
+
+			var ex = Assert.Throws<Exception>(
+				() => { api.Endpoints.CreateOrUpdate(endpoint); });
+			Assert.AreEqual("Validation failed:\r\n- Transport type is mandatory.", ex.Message);
 		}
 
 		[TestMethod]

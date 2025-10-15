@@ -41,13 +41,13 @@
 			},
 		};
 
-		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
+		public IEnumerable<CustomSectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetNodeConfigurationSectionDefinition(),
 			GetConnectionSectionDefinition(),
 		};
 
-		private static SectionDefinition GetNodeConfigurationSectionDefinition()
+		private static CustomSectionDefinition GetNodeConfigurationSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{
@@ -103,7 +103,7 @@
 			return sectionDefinition;
 		}
 
-		private static SectionDefinition GetConnectionSectionDefinition()
+		private static CustomSectionDefinition GetConnectionSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{

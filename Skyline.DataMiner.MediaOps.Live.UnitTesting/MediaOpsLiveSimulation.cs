@@ -8,6 +8,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.API.TransportTypes;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
@@ -169,12 +170,12 @@
 			var category = new Category { Name = "Category 1" };
 			Api.Categories.Create(category);
 
-			var transportTypeIP = new TransportType { Name = "IP" };
-			Api.TransportTypes.Create(transportTypeIP);
+			var transportTypeTSoIP = new TsoipTransportType();
+			Api.TransportTypes.Create(transportTypeTSoIP);
 
-			var videoLevel = new Level { Number = 1, Name = "Video", TransportType = transportTypeIP };
-			var audioLevel = new Level { Number = 2, Name = "Audio", TransportType = transportTypeIP };
-			var dataLevel = new Level { Number = 3, Name = "Data", TransportType = transportTypeIP };
+			var videoLevel = new Level { Number = 1, Name = "Video", TransportType = transportTypeTSoIP };
+			var audioLevel = new Level { Number = 2, Name = "Audio", TransportType = transportTypeTSoIP };
+			var dataLevel = new Level { Number = 3, Name = "Data", TransportType = transportTypeTSoIP };
 			Api.Levels.CreateOrUpdate([videoLevel, audioLevel, dataLevel]);
 
 			const int numberOfElements = 2;
@@ -204,23 +205,35 @@
 						{
 							Role = Role.Source,
 							Name = $"Video Source {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
 							Identifier = $"Video-{vsgCounter}",
+							TransportMetadata =
+							{
+								new TransportMetadata(TsoipTransportType.FieldNames.SourceIp, "10.0.0.1"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastIp, $"239.1.{vsgCounter}.1"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastPort, "5000"),
+							},
 						};
 						var audioSource = new Endpoint(Tools.GuidFromString($"Audio Source {vsgCounter}"))
 						{
 							Role = Role.Source,
 							Name = $"Audio Source {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
 							Identifier = $"Audio-{vsgCounter}",
+							TransportMetadata =
+							{
+								new TransportMetadata(TsoipTransportType.FieldNames.SourceIp, "10.0.0.1"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastIp, $"239.1.{vsgCounter}.2"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastPort, "5000"),
+							},
 						};
 						var videoDestination = new Endpoint(Tools.GuidFromString($"Video Destination {vsgCounter}"))
 						{
 							Role = Role.Destination,
 							Name = $"Video Destination {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
 							Identifier = $"Video-{vsgCounter}",
 						};
@@ -228,7 +241,7 @@
 						{
 							Role = Role.Destination,
 							Name = $"Audio Destination {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
 							Identifier = $"Audio-{vsgCounter}",
 						};

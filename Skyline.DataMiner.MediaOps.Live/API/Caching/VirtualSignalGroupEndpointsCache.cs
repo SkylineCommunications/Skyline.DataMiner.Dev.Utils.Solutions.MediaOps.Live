@@ -1,11 +1,13 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 {
 	using System;
+	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Diagnostics;
 	using System.Linq;
 	using System.Threading.Tasks;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
@@ -14,10 +16,10 @@
 	{
 		private readonly object _lock = new();
 
-		private readonly Dictionary<ApiObjectReference<Endpoint>, Endpoint> _endpoints = new();
-		private readonly Dictionary<string, Endpoint> _endpointsByName = new();
-		private readonly Dictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> _virtualSignalGroups = new();
-		private readonly Dictionary<string, VirtualSignalGroup> _virtualSignalGroupsByName = new();
+		private readonly ConcurrentDictionary<ApiObjectReference<Endpoint>, Endpoint> _endpoints = new();
+		private readonly ConcurrentDictionary<string, Endpoint> _endpointsByName = new();
+		private readonly ConcurrentDictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> _virtualSignalGroups = new();
+		private readonly ConcurrentDictionary<string, VirtualSignalGroup> _virtualSignalGroupsByName = new();
 
 		private readonly VirtualSignalGroupEndpointsMapping _virtualSignalGroupEndpointsMapping = new();
 
@@ -73,6 +75,16 @@
 			return _endpointsByName.TryGetValue(name, out endpoint);
 		}
 
+		public IReadOnlyCollection<Endpoint> GetEndpointsWithTransportMetadata(params (string fieldName, string value)[] metadataFilters)
+		{
+			if (metadataFilters is null)
+			{
+				throw new ArgumentNullException(nameof(metadataFilters));
+			}
+
+			return _endpoints.Values.WithTransportMetadata(metadataFilters).ToList();
+		}
+
 		public VirtualSignalGroup GetVirtualSignalGroup(ApiObjectReference<VirtualSignalGroup> id)
 		{
 			if (!TryGetVirtualSignalGroup(id, out var virtualSignalGroup))
@@ -105,7 +117,10 @@
 
 		public IReadOnlyCollection<VirtualSignalGroup> GetVirtualSignalGroupsThatContainEndpoint(ApiObjectReference<Endpoint> endpoint)
 		{
-			return _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint);
+			lock (_lock)
+			{
+				return _virtualSignalGroupEndpointsMapping.GetVirtualSignalGroups(endpoint);
+			}
 		}
 
 		public void Subscribe()
@@ -212,7 +227,7 @@
 						// Remove old name if it exists
 						if (_endpoints.TryGetValue(item.ID, out var existing))
 						{
-							_endpointsByName.Remove(existing.Name);
+							_endpointsByName.TryRemove(existing.Name, out _);
 						}
 
 						_endpoints[item.ID] = item;
@@ -224,8 +239,8 @@
 				{
 					foreach (var item in deleted)
 					{
-						_endpoints.Remove(item.ID);
-						_endpointsByName.Remove(item.Name);
+						_endpoints.TryRemove(item.ID, out _);
+						_endpointsByName.TryRemove(item.Name, out _);
 					}
 				}
 			}
@@ -242,7 +257,7 @@
 						// Remove old name if it exists
 						if (_virtualSignalGroups.TryGetValue(item.ID, out var existing))
 						{
-							_virtualSignalGroupsByName.Remove(existing.Name);
+							_virtualSignalGroupsByName.TryRemove(existing.Name, out _);
 						}
 
 						_virtualSignalGroups[item.ID] = item;
@@ -255,8 +270,8 @@
 				{
 					foreach (var item in deleted)
 					{
-						_virtualSignalGroups.Remove(item.ID);
-						_virtualSignalGroupsByName.Remove(item.Name);
+						_virtualSignalGroups.TryRemove(item.ID, out _);
+						_virtualSignalGroupsByName.TryRemove(item.Name, out _);
 						_virtualSignalGroupEndpointsMapping.Remove(item);
 					}
 				}

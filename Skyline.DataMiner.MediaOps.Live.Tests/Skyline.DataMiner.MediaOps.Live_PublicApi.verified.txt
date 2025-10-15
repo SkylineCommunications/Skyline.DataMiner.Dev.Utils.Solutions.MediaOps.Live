@@ -50,6 +50,9 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
         protected virtual void Dispose(bool disposing) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> id) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetEndpoint(string name) { }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithTransportMetadata([System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "fieldName",
+                "value"})] params System.ValueTuple<string, string>[] metadataFilters) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> id) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroup(string name) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsThatContainEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
@@ -202,21 +205,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
         public static bool operator ==(Skyline.DataMiner.MediaOps.Live.API.Connectivity.VirtualSignalGroupConnectivity left, Skyline.DataMiner.MediaOps.Live.API.Connectivity.VirtualSignalGroupConnectivity right) { }
     }
 }
-namespace Skyline.DataMiner.MediaOps.Live.API.Data
-{
-    public class Multicast
-    {
-        public Multicast(string ip) { }
-        public Multicast(string ip, int port) { }
-        public Multicast(string ip, int port, string source) { }
-        public string IpAddress { get; set; }
-        public int Port { get; set; }
-        public string SourceIP { get; set; }
-        public override bool Equals(object obj) { }
-        public override int GetHashCode() { }
-        public override string ToString() { }
-    }
-}
 namespace Skyline.DataMiner.MediaOps.Live.API.Enums
 {
     public enum OrchestrationScriptArgumentType
@@ -248,6 +236,9 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Extensions
                 "Endpoint",
                 "TransportType"})]
         public static System.Collections.Generic.IEnumerable<System.Collections.Generic.IEnumerable<System.ValueTuple<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>>> JoinTransportTypes(this System.Collections.Generic.IEnumerable<System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>> endpoints, Skyline.DataMiner.MediaOps.Live.API.Repositories.Repository<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> transportTypesRepository) { }
+        public static System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> WithTransportMetadata(this System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoints, [System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "fieldName",
+                "value"})] params System.ValueTuple<string, string>[] metadataFilters) { }
     }
     public static class JoinExtensions
     {
@@ -326,7 +317,11 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects
         where T : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T>
     {
         protected ApiObject(Skyline.DataMiner.MediaOps.Live.DOM.Model.DomInstanceBase domInstance) { }
+        public System.DateTimeOffset CreatedAt { get; }
+        public string CreatedBy { get; }
         public System.Guid ID { get; }
+        public System.DateTimeOffset LastModified { get; }
+        public string LastModifiedBy { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T> Reference { get; }
         public virtual bool Equals(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T> other) { }
         public override bool Equals(object obj) { }
@@ -367,8 +362,13 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public bool IsSource { get; }
         public string Name { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Enums.Role Role { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>? TransportType { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeTsoip TransportTypeTSoIP { get; set; }
+        public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata> TransportMetadata { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> TransportType { get; set; }
+        public string GetTransportMetadata(string fieldName) { }
+        public bool HasTransportMetadata(string fieldName, string value) { }
+        public void RemoveTransportMetadata(string fieldName) { }
+        public void SetTransportMetadata(string fieldName, string value) { }
+        public bool TryGetTransportMetadata(string fieldName, out string value) { }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
     }
     public static class EndpointExposers
@@ -381,26 +381,29 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, string> Name;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.API.Enums.Role> Role;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>?> TransportType;
-        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, string> Tsoip_MulticastIP;
-        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, int?> Tsoip_Port;
-        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, string> Tsoip_SourceIP;
     }
     public class Level : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level>
     {
         public Level() { }
         public string Name { get; set; }
         public long Number { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>? TransportType { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> TransportType { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
     }
-    public class LevelEndpoint
+    public sealed class LevelEndpoint : System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint>
     {
         public LevelEndpoint() { }
         public LevelEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> level, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
         public LevelEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level level, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint endpoint) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> Endpoint { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> Level { get; set; }
+        public bool Equals(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint other) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
+        public override string ToString() { }
         public void Validate() { }
+        public static bool operator !=(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint right) { }
+        public static bool operator ==(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint right) { }
     }
     public static class LevelExposers
     {
@@ -409,10 +412,25 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level, long> Number;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>?> TransportType;
     }
+    public sealed class TransportMetadata : System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata>
+    {
+        public TransportMetadata() { }
+        public TransportMetadata(string fieldName, string value) { }
+        public string FieldName { get; set; }
+        public string Value { get; set; }
+        public bool Equals(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata other) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
+        public override string ToString() { }
+        public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
+        public static bool operator !=(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata right) { }
+        public static bool operator ==(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata right) { }
+    }
     public class TransportType : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>
     {
         public TransportType() { }
         public TransportType(System.Guid id) { }
+        public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField> Fields { get; set; }
         public bool IsPredefined { get; }
         public string Name { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
@@ -422,16 +440,18 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType, System.Guid> ID;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType, string> Name;
     }
-    public class TransportTypeTsoip
+    public sealed class TransportTypeField : System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField>
     {
-        public TransportTypeTsoip() { }
-        public TransportTypeTsoip(string multicastIP) { }
-        public TransportTypeTsoip(string multicastIP, int port) { }
-        public TransportTypeTsoip(string multicastIP, string sourceIP) { }
-        public TransportTypeTsoip(string multicastIP, int port, string sourceIP) { }
-        public string MulticastIP { get; set; }
-        public int? Port { get; set; }
-        public string SourceIP { get; set; }
+        public TransportTypeField() { }
+        public TransportTypeField(string name) { }
+        public string Name { get; set; }
+        public bool Equals(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField other) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
+        public override string ToString() { }
+        public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
+        public static bool operator !=(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField right) { }
+        public static bool operator ==(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField left, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField right) { }
     }
     public class VirtualSignalGroup : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>
     {
@@ -629,9 +649,11 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagemen
         protected override SLDataGateway.API.Types.Querying.IOrderByElement CreateOrderBy(string fieldName, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByElement(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByElementAndIdentifiers(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, System.Collections.Generic.IEnumerable<string> identifiers) { }
-        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByElementAndMulticasts(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Data.Multicast> multicasts) { }
-        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByMulticasts(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Data.Multicast> multicasts) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetByRoleElementAndIdentifier(Skyline.DataMiner.MediaOps.Live.API.Enums.Role role, Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, string identifier) { }
+        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByTransportMetadata([System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "fieldName",
+                "value"})] params System.ValueTuple<string, string>[] metadataFilters) { }
+        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByTransportMetadata(string fieldName, string value) { }
         protected override void ValidateBeforeDelete(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> instances) { }
         protected override void ValidateBeforeSave(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> instances) { }
     }
@@ -694,13 +716,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
 {
-    public static class PredefinedTransportTypes
-    {
-        public static Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType[] All { get; }
-        public static System.Collections.Generic.IReadOnlyDictionary<System.Guid, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> ById { get; }
-        public static System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> ByName { get; }
-        public static Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType TSoIP { get; }
-    }
     public abstract class Repository<T>
         where T : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T>
     {
@@ -783,12 +798,34 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Tools
         public static SLDataGateway.API.Types.Querying.IOrderByElement Create(Skyline.DataMiner.Net.Messages.SLDataGateway.FieldExposer exposer, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }
     }
 }
+namespace Skyline.DataMiner.MediaOps.Live.API.TransportTypes
+{
+    public static class PredefinedTransportTypes
+    {
+        public static Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType[] All { get; }
+        public static System.Collections.Generic.IReadOnlyDictionary<System.Guid, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> ById { get; }
+        public static System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> ByName { get; }
+        public static Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType TSoIP { get; }
+    }
+    public class TsoipTransportType : Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType
+    {
+        public TsoipTransportType() { }
+        public class FieldNames
+        {
+            public const string MulticastIp = "Multicast IP";
+            public const string MulticastPort = "Multicast Port";
+            public const string SourceIp = "Source IP";
+            public FieldNames() { }
+        }
+    }
+}
 namespace Skyline.DataMiner.MediaOps.Live.API.Validation
 {
     public class ValidationError
     {
         public ValidationError(string message) { }
-        public ValidationError(string message, string propertyName) { }
+        public ValidationError(string message, object instance, string propertyName) { }
+        public object Instance { get; }
         public string Message { get; }
         public string PropertyName { get; }
     }
@@ -799,10 +836,14 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Validation
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationError> Errors { get; }
         public bool IsValid { get; }
         public void AddError(string message) { }
-        public void AddError(string message, string propertyName) { }
-        public void AddError<T>(string message, System.Linq.Expressions.Expression<System.Func<T, object>> expression) { }
+        public void AddError(string message, object instance, string propertyName) { }
+        public void AddError<T>(string message, T instance, System.Linq.Expressions.Expression<System.Func<T, object>> expression) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult ForInstance(object instance) { }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult ForProperty(string propertyName) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult ForProperty(object instance, string propertyName) { }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult ForProperty<T>(System.Linq.Expressions.Expression<System.Func<T, object>> expression) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult ForProperty<T>(T instance, System.Linq.Expressions.Expression<System.Func<T, object>> expression) { }
+        public void Merge(Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult result) { }
         public void ThrowIfInvalid() { }
     }
 }
@@ -846,7 +887,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Interfaces
     public interface IDomDefinitionInfo
     {
         Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinition Definition { get; }
-        System.Collections.Generic.IEnumerable<Skyline.DataMiner.Net.Sections.SectionDefinition> SectionDefinitions { get; }
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.Net.Sections.CustomSectionDefinition> SectionDefinitions { get; }
     }
     public interface IDomModuleInfo
     {
@@ -862,11 +903,11 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
         protected DomInstanceBase(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId definitionId) { }
         protected DomInstanceBase(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
         protected DomInstanceBase(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId definitionId, System.Guid id) { }
-        public System.DateTime? CreatedAt { get; }
+        public System.DateTimeOffset CreatedAt { get; }
         public string CreatedBy { get; }
         public Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinitionId { get; }
         public Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstanceId ID { get; }
-        public System.DateTime? LastModified { get; }
+        public System.DateTimeOffset LastModified { get; }
         public string LastModifiedBy { get; }
         public string ModuleId { get; }
         public string Name { get; }
@@ -921,16 +962,21 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
         public CategoryInfoSection(Skyline.DataMiner.Net.Sections.Section section) { }
         public string Name { get; set; }
         public System.Guid? ParentCategory { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInfoSection Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInfoSection Duplicate() { }
         protected override Skyline.DataMiner.Net.Sections.Section InternalToSection() { }
     }
     public class CategoryInstance : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomInstanceBase
     {
         public CategoryInstance() { }
         public CategoryInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
+        public CategoryInstance(System.Guid id) { }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInfoSection CategoryInfo { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInstance Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInstance Duplicate() { }
         protected override sealed void InitializeProperties() { }
-        protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
-        public override void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
+        protected override sealed Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
+        public override sealed void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
         public static Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInstance op_Explicit(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance instance) { }
     }
     public class EndpointInfoSection : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomSectionBase
@@ -945,6 +991,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.SlcConnectivityManagementIds.Enums.Role? Role { get; set; }
         public System.Collections.Generic.IList<System.Guid> TransportMetadata { get; }
         public System.Guid? TransportType { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointInfoSection Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointInfoSection Duplicate() { }
         protected override Skyline.DataMiner.Net.Sections.Section InternalToSection() { }
     }
     public class EndpointInstance : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomInstanceBase
@@ -953,13 +1001,25 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
         public EndpointInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
         public EndpointInstance(System.Guid id) { }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointInfoSection EndpointInfo { get; set; }
+        public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointTransportMetadataSection> EndpointTransportMetadata { get; }
         public bool IsDestination { get; }
         public bool IsSource { get; }
-        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.TransportTypeTsoipSection TransportTypeTsoip { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointInstance Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointInstance Duplicate() { }
         protected override sealed void InitializeProperties() { }
-        protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
-        public override void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
+        protected override sealed Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
+        public override sealed void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
         public static Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointInstance op_Explicit(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance instance) { }
+    }
+    public class EndpointTransportMetadataSection : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomSectionBase
+    {
+        public EndpointTransportMetadataSection() { }
+        public EndpointTransportMetadataSection(Skyline.DataMiner.Net.Sections.Section section) { }
+        public string FieldName { get; set; }
+        public string Value { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointTransportMetadataSection Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointTransportMetadataSection Duplicate() { }
+        protected override Skyline.DataMiner.Net.Sections.Section InternalToSection() { }
     }
     public class LevelInfoSection : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomSectionBase
     {
@@ -968,16 +1028,21 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
         public string Name { get; set; }
         public long? Number { get; set; }
         public System.Guid? TransportType { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.LevelInfoSection Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.LevelInfoSection Duplicate() { }
         protected override Skyline.DataMiner.Net.Sections.Section InternalToSection() { }
     }
     public class LevelInstance : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomInstanceBase
     {
         public LevelInstance() { }
         public LevelInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
+        public LevelInstance(System.Guid id) { }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.LevelInfoSection LevelInfo { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.LevelInstance Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.LevelInstance Duplicate() { }
         protected override sealed void InitializeProperties() { }
-        protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
-        public override void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
+        protected override sealed Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
+        public override sealed void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
         public static Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.LevelInstance op_Explicit(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance instance) { }
     }
     public static class SlcConnectivityManagementIds
@@ -1020,6 +1085,12 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
                 public static Skyline.DataMiner.Net.Sections.FieldDescriptorID TransportMetadata { get; }
                 public static Skyline.DataMiner.Net.Sections.FieldDescriptorID TransportType { get; }
             }
+            public static class EndpointTransportMetadata
+            {
+                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID FieldName { get; }
+                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
+                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Value { get; }
+            }
             public static class LevelInfo
             {
                 public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
@@ -1027,17 +1098,15 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
                 public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Number { get; }
                 public static Skyline.DataMiner.Net.Sections.FieldDescriptorID TransportType { get; }
             }
-            public static class TransportTypeInfo
+            public static class TransportTypeField
             {
                 public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
                 public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Name { get; }
             }
-            public static class TransportTypeTsoip
+            public static class TransportTypeInfo
             {
                 public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID MulticastIP { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Port { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID SourceIP { get; }
+                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Name { get; }
             }
             public static class VirtualSignalGroupInfo
             {
@@ -1047,7 +1116,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
                 public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Name { get; }
                 public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Role { get; }
             }
-            public static class VirtualSignalGroupLevels
+            public static class VirtualSignalGroupLevel
             {
                 public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Endpoint { get; }
                 public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
@@ -1055,11 +1124,22 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
             }
         }
     }
+    public class TransportTypeFieldSection : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomSectionBase
+    {
+        public TransportTypeFieldSection() { }
+        public TransportTypeFieldSection(Skyline.DataMiner.Net.Sections.Section section) { }
+        public string Name { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.TransportTypeFieldSection Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.TransportTypeFieldSection Duplicate() { }
+        protected override Skyline.DataMiner.Net.Sections.Section InternalToSection() { }
+    }
     public class TransportTypeInfoSection : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomSectionBase
     {
         public TransportTypeInfoSection() { }
         public TransportTypeInfoSection(Skyline.DataMiner.Net.Sections.Section section) { }
         public string Name { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.TransportTypeInfoSection Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.TransportTypeInfoSection Duplicate() { }
         protected override Skyline.DataMiner.Net.Sections.Section InternalToSection() { }
     }
     public class TransportTypeInstance : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomInstanceBase
@@ -1067,20 +1147,14 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
         public TransportTypeInstance() { }
         public TransportTypeInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
         public TransportTypeInstance(System.Guid id) { }
+        public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.TransportTypeFieldSection> TransportTypeField { get; }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.TransportTypeInfoSection TransportTypeInfo { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.TransportTypeInstance Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.TransportTypeInstance Duplicate() { }
         protected override sealed void InitializeProperties() { }
-        protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
-        public override void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
+        protected override sealed Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
+        public override sealed void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
         public static Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.TransportTypeInstance op_Explicit(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance instance) { }
-    }
-    public class TransportTypeTsoipSection : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomSectionBase
-    {
-        public TransportTypeTsoipSection() { }
-        public TransportTypeTsoipSection(Skyline.DataMiner.Net.Sections.Section section) { }
-        public string MulticastIP { get; set; }
-        public long? Port { get; set; }
-        public string SourceIP { get; set; }
-        protected override Skyline.DataMiner.Net.Sections.Section InternalToSection() { }
     }
     public class VirtualSignalGroupInfoSection : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomSectionBase
     {
@@ -1090,6 +1164,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
         public string Description { get; set; }
         public string Name { get; set; }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.SlcConnectivityManagementIds.Enums.Role? Role { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupInfoSection Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupInfoSection Duplicate() { }
         protected override Skyline.DataMiner.Net.Sections.Section InternalToSection() { }
     }
     public class VirtualSignalGroupInstance : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomInstanceBase
@@ -1100,19 +1176,23 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
         public bool IsDestination { get; }
         public bool IsSource { get; }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupInfoSection VirtualSignalGroupInfo { get; set; }
-        public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupLevelsSection> VirtualSignalGroupLevels { get; }
+        public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupLevelSection> VirtualSignalGroupLevel { get; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupInstance Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupInstance Duplicate() { }
         public System.Collections.Generic.IEnumerable<System.Guid> GetEndpointIds() { }
         protected override sealed void InitializeProperties() { }
-        protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
-        public override void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
+        protected override sealed Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
+        public override sealed void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
         public static Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupInstance op_Explicit(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance instance) { }
     }
-    public class VirtualSignalGroupLevelsSection : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomSectionBase
+    public class VirtualSignalGroupLevelSection : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomSectionBase
     {
-        public VirtualSignalGroupLevelsSection() { }
-        public VirtualSignalGroupLevelsSection(Skyline.DataMiner.Net.Sections.Section section) { }
+        public VirtualSignalGroupLevelSection() { }
+        public VirtualSignalGroupLevelSection(Skyline.DataMiner.Net.Sections.Section section) { }
         public System.Guid? Endpoint { get; set; }
         public System.Guid? Level { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupLevelSection Clone() { }
+        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupLevelSection Duplicate() { }
         protected override Skyline.DataMiner.Net.Sections.Section InternalToSection() { }
     }
 }

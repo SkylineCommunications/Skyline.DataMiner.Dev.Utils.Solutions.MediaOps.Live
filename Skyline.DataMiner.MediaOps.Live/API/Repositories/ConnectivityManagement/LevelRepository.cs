@@ -99,7 +99,7 @@
 			FilterElement<DomInstance> CreateFilter(Level l) =>
 				new ANDFilterElement<DomInstance>(
 					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level).Equal(l.ID));
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level).Equal(l.ID));
 
 			var count = FilterQueryExecutor.CountFilteredItems(instances, CreateFilter, Helper.DomInstances.Count);
 

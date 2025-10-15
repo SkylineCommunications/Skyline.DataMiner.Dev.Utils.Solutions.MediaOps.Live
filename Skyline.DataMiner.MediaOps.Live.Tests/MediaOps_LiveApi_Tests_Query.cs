@@ -237,7 +237,7 @@
 			var api = new MediaOpsLiveApiMock();
 
 			{
-				var result = api.TransportTypes.Query().All(x => x.Name == "IP");
+				var result = api.TransportTypes.Query().All(x => x.Name == "TSoIP");
 				Assert.IsTrue(result);
 			}
 

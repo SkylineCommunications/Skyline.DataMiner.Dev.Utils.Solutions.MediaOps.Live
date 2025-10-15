@@ -1,10 +1,11 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	using System;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.MediaOps.Live.API.TransportTypes;
 	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
@@ -13,6 +14,8 @@
 	public class TransportType : ApiObject<TransportType>
 	{
 		private readonly TransportTypeInstance _domInstance;
+
+		private readonly WrappedList<TransportTypeFieldSection, TransportTypeField> _wrappedFields;
 
 		public TransportType() : this(new TransportTypeInstance())
 		{
@@ -25,6 +28,11 @@
 		internal TransportType(TransportTypeInstance domInstance) : base(domInstance)
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
+
+			_wrappedFields = new WrappedList<TransportTypeFieldSection, TransportTypeField>(
+				_domInstance.TransportTypeField,
+				x => new TransportTypeField(x),
+				x => x.DomSection);
 		}
 
 		internal TransportType(DomInstance domInstance) : this(new TransportTypeInstance(domInstance))
@@ -48,13 +56,49 @@
 			}
 		}
 
+		public IList<TransportTypeField> Fields
+		{
+			get
+			{
+				return _wrappedFields;
+			}
+
+			set
+			{
+				_wrappedFields.Clear();
+				_wrappedFields.AddRange(value);
+			}
+		}
+
 		public ValidationResult Validate()
 		{
 			var result = new ValidationResult();
 
 			if (!NameUtil.Validate(Name, out var error))
 			{
-				result.AddError(error, nameof(Name));
+				result.AddError(error, this, x => x.Name);
+			}
+
+			result.Merge(ValidateMetadataFields());
+
+			return result;
+		}
+
+		private ValidationResult ValidateMetadataFields()
+		{
+			var result = new ValidationResult();
+
+			var fieldNames = new HashSet<string>();
+
+			foreach (var field in Fields)
+			{
+				var fieldResult = field.Validate();
+				result.Merge(fieldResult);
+
+				if (!fieldNames.Add(field.Name))
+				{
+					result.AddError($"Field name '{field.Name}' is duplicated.", field, x => x.Name);
+				}
 			}
 
 			return result;

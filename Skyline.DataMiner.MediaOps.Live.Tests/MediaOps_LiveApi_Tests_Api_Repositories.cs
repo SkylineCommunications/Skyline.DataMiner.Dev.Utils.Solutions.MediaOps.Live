@@ -194,7 +194,7 @@
 				.ToList();
 
 			// assert
-			var ip = api.TransportTypes.Query().First(x => x.Name == "IP");
+			var ip = api.TransportTypes.Query().First(x => x.Name == "TSoIP");
 			var video = api.Levels.Query().First(x => x.Name == "Video");
 			var audio = api.Levels.Query().First(x => x.Name == "Audio");
 			var data = api.Levels.Query().First(x => x.Name == "Data");
@@ -225,7 +225,7 @@
 				.ToList();
 
 			// assert
-			var ip = api.TransportTypes.Query().First(x => x.Name == "IP");
+			var ip = api.TransportTypes.Query().First(x => x.Name == "TSoIP");
 			var video = api.Levels.Query().First(x => x.Name == "Video");
 			var audio = api.Levels.Query().First(x => x.Name == "Audio");
 			var data = api.Levels.Query().First(x => x.Name == "Data");

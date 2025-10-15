@@ -33,12 +33,12 @@
 			},
 		};
 
-		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
+		public IEnumerable<CustomSectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetJobInfoSectionDefinition(),
 		};
 
-		private static SectionDefinition GetJobInfoSectionDefinition()
+		private static CustomSectionDefinition GetJobInfoSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{

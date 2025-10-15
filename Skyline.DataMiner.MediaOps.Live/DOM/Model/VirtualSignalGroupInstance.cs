@@ -11,12 +11,12 @@
 
 		public IEnumerable<Guid> GetEndpointIds()
 		{
-			if (VirtualSignalGroupLevels == null)
+			if (VirtualSignalGroupLevel == null)
 			{
 				yield break;
 			}
 
-			foreach (var level in VirtualSignalGroupLevels)
+			foreach (var level in VirtualSignalGroupLevel)
 			{
 				if (level.Endpoint == null)
 				{
