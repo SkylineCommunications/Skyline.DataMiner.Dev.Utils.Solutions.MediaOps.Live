@@ -6,7 +6,6 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Interfaces;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Apps.Modules;
-	using Skyline.DataMiner.Net.ManagerStore;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Sections;
@@ -16,14 +15,9 @@
 		public static void Install(Func<DMSMessage[], DMSMessage[]> messageHandler, IDomModuleInfo domModuleInfo, Action<string> logAction)
 		{
 			if (messageHandler == null)
-			{
 				throw new ArgumentNullException(nameof(messageHandler));
-			}
-
 			if (domModuleInfo == null)
-			{
 				throw new ArgumentNullException(nameof(domModuleInfo));
-			}
 
 			var moduleSettingsHelper = new ModuleSettingsHelper(messageHandler);
 			var domHelper = new DomHelper(messageHandler, domModuleInfo.ModuleId);
@@ -43,88 +37,125 @@
 
 		private static void CreateOrUpdateModuleSettings(ModuleSettingsHelper helper, ModuleSettings settings, Action<string> logAction)
 		{
-			CreateOrUpdate(
-				helper.ModuleSettings,
-				ModuleSettingsExposers.ModuleId.Equal(settings.ModuleId),
-				settings,
-				logAction);
+			if (settings is null)
+				throw new ArgumentNullException(nameof(settings));
+
+			var existing = helper.ModuleSettings.Read(ModuleSettingsExposers.ModuleId.Equal(settings.ModuleId)).SingleOrDefault();
+
+			if (existing == null)
+			{
+				Log(logAction, "Creating", settings);
+				helper.ModuleSettings.Create(settings);
+			}
+			else
+			{
+				if (existing.Equals(settings))
+				{
+					Log(logAction, "Skipping", settings);
+					return;
+				}
+
+				Log(logAction, "Updating", settings);
+				helper.ModuleSettings.Update(settings);
+			}
 		}
 
 		private static void CreateOrUpdateDomDefinition(DomHelper helper, DomDefinition definition, Action<string> logAction)
 		{
-			CreateOrUpdate(
-				helper.DomDefinitions,
-				DomDefinitionExposers.Id.Equal(definition.ID),
-				definition,
-				logAction,
-				MergeDomDefinitions);
+			if (definition is null)
+				throw new ArgumentNullException(nameof(definition));
+
+			var existing = helper.DomDefinitions.Read(DomDefinitionExposers.Id.Equal(definition.ID)).SingleOrDefault();
+
+			if (existing == null)
+			{
+				Log(logAction, "Creating", definition);
+				helper.DomDefinitions.Create(definition);
+			}
+			else
+			{
+				if (existing.Equals(definition))
+				{
+					Log(logAction, "Skipping", definition);
+					return;
+				}
+
+				Log(logAction, "Updating", definition);
+				MarkExistingSectionDefinitionLinksAsDeleted(definition, existing);
+				helper.DomDefinitions.Update(definition);
+			}
 		}
 
 		private static void CreateOrUpdateSectionDefinition(DomHelper helper, CustomSectionDefinition definition, Action<string> logAction)
 		{
-			CreateOrUpdate(
-				helper.SectionDefinitions,
-				SectionDefinitionExposers.ID.Equal(definition.GetID()),
-				definition,
-				logAction,
-				MergeSectionDefinitions);
-		}
+			if (definition is null)
+				throw new ArgumentNullException(nameof(definition));
 
-		private static void CreateOrUpdate<T, TNew>(ICrudHelperComponent<T> crudHelperComponent, FilterElement<T> filter, TNew newItem, Action<string> logAction, Action<TNew, T> mergeExistingAction = null)
-			where T : DataType
-			where TNew : T
-		{
-			Log(logAction, "Searching for", newItem);
-			T existingItem = crudHelperComponent.Read(filter).SingleOrDefault();
+			var existing = helper.SectionDefinitions.Read(SectionDefinitionExposers.ID.Equal(definition.GetID())).SingleOrDefault();
 
-			if (existingItem == null)
+			if (existing == null)
 			{
-				Log(logAction, "Creating", newItem);
-				crudHelperComponent.Create(newItem);
+				Log(logAction, "Creating", definition);
+				helper.SectionDefinitions.Create(definition);
 			}
 			else
 			{
-				if (existingItem.Equals(newItem))
+				if (existing.Equals(definition))
 				{
-					Log(logAction, "Skipping", newItem);
+					Log(logAction, "Skipping", definition);
 					return;
 				}
 
-				Log(logAction, "Updating", newItem);
-				mergeExistingAction?.Invoke(newItem, existingItem);
-				crudHelperComponent.Update(newItem);
+				Log(logAction, "Updating", definition);
+				MarkExistingFieldDescriptorsAsDeleted(definition, existing);
+				helper.SectionDefinitions.Update(definition);
 			}
 		}
 
-		private static void MergeDomDefinitions(DomDefinition newDefinition, DomDefinition existing)
+		private static void MarkExistingSectionDefinitionLinksAsDeleted(DomDefinition newDefinition, DomDefinition existing)
 		{
-			var newSectionDefinitionLinks = newDefinition.SectionDefinitionLinks
+			if (newDefinition == null)
+				throw new ArgumentNullException(nameof(newDefinition));
+			if (existing == null)
+				throw new ArgumentNullException(nameof(existing));
+
+			var newIds = newDefinition.SectionDefinitionLinks
 				.Select(x => x.SectionDefinitionID)
-				.ToList();
+				.ToHashSet();
 
-			foreach (var existingSectionDefinitionLink in existing.SectionDefinitionLinks)
-			{
-				if (!newSectionDefinitionLinks.Contains(existingSectionDefinitionLink.SectionDefinitionID))
+			var deletedLinks = existing.SectionDefinitionLinks
+				.Where(existingLink => !newIds.Contains(existingLink.SectionDefinitionID))
+				.Select(existingLink =>
 				{
-					existingSectionDefinitionLink.IsSoftDeleted = true;
-					newDefinition.SectionDefinitionLinks.Add(existingSectionDefinitionLink);
-				}
-			}
+					existingLink.IsSoftDeleted = true;
+					return existingLink;
+				});
+
+			newDefinition.SectionDefinitionLinks.AddRange(deletedLinks);
 		}
 
-		private static void MergeSectionDefinitions(CustomSectionDefinition newDefinition, SectionDefinition existing)
+		private static void MarkExistingFieldDescriptorsAsDeleted(CustomSectionDefinition newDefinition, SectionDefinition existing)
 		{
-			var newFieldDescriptors = newDefinition.GetAllFieldDescriptors()
-				.Select(x => x.ID)
-				.ToList();
+			if (newDefinition == null)
+				throw new ArgumentNullException(nameof(newDefinition));
+			if (existing == null)
+				throw new ArgumentNullException(nameof(existing));
 
-			foreach (var existingFieldDescriptor in existing.GetAllFieldDescriptors())
-			{
-				if (!newFieldDescriptors.Contains(existingFieldDescriptor.ID))
+			var newIds = newDefinition.GetAllFieldDescriptors()
+				.Select(x => x.ID)
+				.ToHashSet();
+
+			var deletedFieldDescriptors = existing.GetAllFieldDescriptors()
+				.Where(fd => !newIds.Contains(fd.ID))
+				.Select(fd =>
 				{
-					existingFieldDescriptor.IsSoftDeleted = true;
-					newDefinition.AddOrReplaceFieldDescriptor(existingFieldDescriptor);
-				}
+					fd.IsSoftDeleted = true;
+					return fd;
+				});
+
+			foreach (var deletedFieldDescriptor in deletedFieldDescriptors)
+			{
+				newDefinition.AddOrReplaceFieldDescriptor(deletedFieldDescriptor);
 			}
 		}
 
