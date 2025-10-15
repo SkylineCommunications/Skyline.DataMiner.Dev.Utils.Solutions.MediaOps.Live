@@ -112,7 +112,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 		{
 			get
 			{
-				return ((ITrackCreatedAt)domInstance).CreatedAt.ToUniversalTime();
+				return ((ITrackCreatedAt)domInstance).CreatedAt;
 			}
 		}
 
@@ -134,7 +134,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 		{
 			get
 			{
-				return ((ITrackLastModified)domInstance).LastModified.ToUniversalTime();
+				return ((ITrackLastModified)domInstance).LastModified;
 			}
 		}
 
