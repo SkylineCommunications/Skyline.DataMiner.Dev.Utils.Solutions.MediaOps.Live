@@ -317,10 +317,10 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects
         where T : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T>
     {
         protected ApiObject(Skyline.DataMiner.MediaOps.Live.DOM.Model.DomInstanceBase domInstance) { }
-        public System.DateTimeOffset? CreatedAt { get; }
+        public System.DateTimeOffset CreatedAt { get; }
         public string CreatedBy { get; }
         public System.Guid ID { get; }
-        public System.DateTimeOffset? LastModified { get; }
+        public System.DateTimeOffset LastModified { get; }
         public string LastModifiedBy { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T> Reference { get; }
         public virtual bool Equals(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T> other) { }
@@ -903,11 +903,11 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
         protected DomInstanceBase(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId definitionId) { }
         protected DomInstanceBase(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
         protected DomInstanceBase(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId definitionId, System.Guid id) { }
-        public System.DateTime? CreatedAt { get; }
+        public System.DateTimeOffset CreatedAt { get; }
         public string CreatedBy { get; }
         public Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinitionId { get; }
         public Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstanceId ID { get; }
-        public System.DateTime? LastModified { get; }
+        public System.DateTimeOffset LastModified { get; }
         public string LastModifiedBy { get; }
         public string ModuleId { get; }
         public string Name { get; }

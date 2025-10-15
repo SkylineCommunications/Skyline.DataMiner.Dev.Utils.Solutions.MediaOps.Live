@@ -18,11 +18,11 @@
 
 		public ApiObjectReference<T> Reference => new ApiObjectReference<T>(DomInstance.ID.Id);
 
-		public DateTimeOffset? CreatedAt => DomInstance.CreatedAt;
+		public DateTimeOffset CreatedAt => DomInstance.CreatedAt;
 
 		public string CreatedBy => DomInstance.CreatedBy;
 
-		public DateTimeOffset? LastModified => DomInstance.LastModified;
+		public DateTimeOffset LastModified => DomInstance.LastModified;
 
 		public string LastModifiedBy => DomInstance.LastModifiedBy;
 
