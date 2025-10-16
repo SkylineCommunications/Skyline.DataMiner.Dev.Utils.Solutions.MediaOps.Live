@@ -24,6 +24,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
@@ -424,10 +425,66 @@
 		internal static OrchestrationScriptResult ExecuteOrchestrationScript(IConnection connection, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile)
 		{
 			IDms dms = connection.GetDms();
-			ProfileHelper profileHelper = new ProfileHelper(connection.HandleMessages);
-
 			IDmsAutomationScript script = dms.GetScript(scriptName);
 			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments = arguments.ToList();
+
+			List<DmsAutomationScriptParamValue> scriptParams = [];
+			OrchestrationScriptResult scriptParamResult = PrepareScriptParams(dms, script, orchestrationScriptArguments, scriptParams, profile);
+			if (scriptParamResult.HadError)
+			{
+				return scriptParamResult;
+			}
+
+			List<DmsAutomationScriptDummyValue> scriptDummies = [];
+			OrchestrationScriptResult scriptDummyResult = PrepareScriptDummies(dms, script, orchestrationScriptArguments, scriptDummies);
+			if (scriptDummyResult.HadError)
+			{
+				return scriptDummyResult;
+			}
+
+			ExecuteScriptResponseMessage result;
+			string[] errorMessages;
+			if (OrchestrationScriptInfoHelper.IsOrchestrationScript(script))
+			{
+				OrchestrationScriptInput input = new(
+					profile.Values.ToDictionary(value => value.Name, value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
+					profile.Instance);
+
+				foreach (OrchestrationScriptArgument orchestrationScriptArgument in orchestrationScriptArguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata))
+				{
+					input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
+				}
+
+				result = OrchestrationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
+			}
+			else
+			{
+				result = OrchestrationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out errorMessages);
+			}
+
+			OrchestrationScriptResult scriptResult = new OrchestrationScriptResult
+			{
+				ErrorMessages = errorMessages,
+				HadError = result.HadError || errorMessages.Any(),
+			};
+
+			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, out string orchestrationOutputString))
+			{
+				OrchestrationScriptOutput orchestrationOutput = JsonConvert.DeserializeObject<OrchestrationScriptOutput>(orchestrationOutputString);
+				scriptResult.ServiceId = String.Join($"/", orchestrationOutput.OrchestrationServiceAgentId, orchestrationOutput.OrchestrationServiceId);
+			}
+
+			return scriptResult;
+		}
+
+		private static OrchestrationScriptResult PrepareScriptParams(
+			IDms dms,
+			IDmsAutomationScript script,
+			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments,
+			List<DmsAutomationScriptParamValue> scriptParams,
+			OrchestrationProfile profile)
+		{
+			ProfileHelper profileHelper = new ProfileHelper(dms.Communication.SendMessages);
 
 			Lazy<ProfileInstance> profileInstance = new(() =>
 			{
@@ -440,7 +497,6 @@
 				return instance;
 			});
 
-			List<DmsAutomationScriptParamValue> scriptParams = [];
 			foreach (IDmsAutomationScriptParameter requiredParameter in script.Parameters)
 			{
 				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredParameter.Description && arg.Type == OrchestrationScriptArgumentType.Parameter);
@@ -471,7 +527,18 @@
 				};
 			}
 
-			List<DmsAutomationScriptDummyValue> scriptDummies = [];
+			return new OrchestrationScriptResult
+			{
+				HadError = false,
+			};
+		}
+
+		private static OrchestrationScriptResult PrepareScriptDummies(
+			IDms dms,
+			IDmsAutomationScript script,
+			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments,
+			List<DmsAutomationScriptDummyValue> scriptDummies)
+		{
 			foreach (IDmsAutomationScriptDummy requiredDummy in script.Dummies)
 			{
 				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredDummy.Description && arg.Type == OrchestrationScriptArgumentType.Element);
@@ -487,9 +554,9 @@
 
 				if (matchingArgument.Value.Contains("/")) // By ID
 				{
-					string[] splittedId = matchingArgument.Value.Split('/');
-					int dmaId = Convert.ToInt32(splittedId[0]);
-					int elementId = Convert.ToInt32(splittedId[1]);
+					string[] splitId = matchingArgument.Value.Split('/');
+					int dmaId = Convert.ToInt32(splitId[0]);
+					int elementId = Convert.ToInt32(splitId[1]);
 					scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, new DmsElementId(dmaId, elementId)));
 				}
 				else // By Name
@@ -499,31 +566,10 @@
 				}
 			}
 
-			OrchestrationScriptInput input = new(
-				profile.Values.ToDictionary(
-					value => value.Name,
-					value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
-				profile.Instance);
-
-			foreach (OrchestrationScriptArgument orchestrationScriptArgument in orchestrationScriptArguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata))
+			return new OrchestrationScriptResult
 			{
-				input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
-			}
-
-			var result = OrchestrationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out string[] errorMessages);
-			OrchestrationScriptResult scriptResult = new OrchestrationScriptResult
-			{
-				ErrorMessages = errorMessages,
-				HadError = result.HadError || errorMessages.Any(),
+				HadError = false,
 			};
-
-			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, out string orchestrationOutputString))
-			{
-				OrchestrationScriptOutput orchestrationOutput = JsonConvert.DeserializeObject<OrchestrationScriptOutput>(orchestrationOutputString);
-				scriptResult.ServiceId = String.Join($"/", orchestrationOutput.OrchestrationServiceAgentId, orchestrationOutput.OrchestrationServiceId);
-			}
-
-			return scriptResult;
 		}
 	}
 }

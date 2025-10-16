@@ -328,7 +328,7 @@
 				{
 					PSA[] info = msg.Ppsa.Ppsa;
 					SA[] generalInfo = info[0].Psa;
-					string firstArgument = Convert.ToString(generalInfo[0].Sa[0]);
+					string firstArgument = generalInfo[0].Sa[0];
 
 					returnId = !Int32.TryParse(firstArgument, out int taskId) ? dma.Scheduler.GetFirstAvailableId() : taskId;
 					dma.Scheduler.Tasks[returnId] = new SimulatedSchedulerTask(dma.Scheduler, msg);
