@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 {
-	public partial class OrchestrationEventInstance
+	internal partial class OrchestrationEventInstance
 	{
 		/// <summary>
 		/// Apply default setting after initializing the instance.

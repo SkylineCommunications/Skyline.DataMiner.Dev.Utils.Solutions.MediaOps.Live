@@ -126,7 +126,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a LevelInstance DOM instance.
 	/// The <see cref="LevelInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class LevelInstance : DomInstanceBase
+	internal partial class LevelInstance : DomInstanceBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="LevelInstance"/> class. Creates an empty <see cref="LevelInstance"/> instance with default settings.
@@ -235,7 +235,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a EndpointInstance DOM instance.
 	/// The <see cref="EndpointInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class EndpointInstance : DomInstanceBase
+	internal partial class EndpointInstance : DomInstanceBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="EndpointInstance"/> class. Creates an empty <see cref="EndpointInstance"/> instance with default settings.
@@ -357,7 +357,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a VirtualSignalGroupInstance DOM instance.
 	/// The <see cref="VirtualSignalGroupInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class VirtualSignalGroupInstance : DomInstanceBase
+	internal partial class VirtualSignalGroupInstance : DomInstanceBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VirtualSignalGroupInstance"/> class. Creates an empty <see cref="VirtualSignalGroupInstance"/> instance with default settings.
@@ -477,7 +477,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a TransportTypeInstance DOM instance.
 	/// The <see cref="TransportTypeInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class TransportTypeInstance : DomInstanceBase
+	internal partial class TransportTypeInstance : DomInstanceBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="TransportTypeInstance"/> class. Creates an empty <see cref="TransportTypeInstance"/> instance with default settings.
@@ -616,7 +616,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a VirtualSignalGroupLevelSection section.
 	/// The <see cref="VirtualSignalGroupLevelSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class VirtualSignalGroupLevelSection : DomSectionBase
+	internal partial class VirtualSignalGroupLevelSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VirtualSignalGroupLevelSection"/> class. Creates an empty <see cref="VirtualSignalGroupLevelSection"/> object with default settings.
@@ -754,7 +754,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a VirtualSignalGroupInfoSection section.
 	/// The <see cref="VirtualSignalGroupInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class VirtualSignalGroupInfoSection : DomSectionBase
+	internal partial class VirtualSignalGroupInfoSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VirtualSignalGroupInfoSection"/> class. Creates an empty <see cref="VirtualSignalGroupInfoSection"/> object with default settings.
@@ -959,7 +959,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a EndpointInfoSection section.
 	/// The <see cref="EndpointInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class EndpointInfoSection : DomSectionBase
+	internal partial class EndpointInfoSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="EndpointInfoSection"/> class. Creates an empty <see cref="EndpointInfoSection"/> object with default settings.
@@ -1338,7 +1338,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a TransportTypeInfoSection section.
 	/// The <see cref="TransportTypeInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class TransportTypeInfoSection : DomSectionBase
+	internal partial class TransportTypeInfoSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="TransportTypeInfoSection"/> class. Creates an empty <see cref="TransportTypeInfoSection"/> object with default settings.
@@ -1431,7 +1431,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a EndpointTransportMetadataSection section.
 	/// The <see cref="EndpointTransportMetadataSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class EndpointTransportMetadataSection : DomSectionBase
+	internal partial class EndpointTransportMetadataSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="EndpointTransportMetadataSection"/> class. Creates an empty <see cref="EndpointTransportMetadataSection"/> object with default settings.
@@ -1567,7 +1567,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a LevelInfoSection section.
 	/// The <see cref="LevelInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class LevelInfoSection : DomSectionBase
+	internal partial class LevelInfoSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="LevelInfoSection"/> class. Creates an empty <see cref="LevelInfoSection"/> object with default settings.
@@ -1750,7 +1750,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a TransportTypeFieldSection section.
 	/// The <see cref="TransportTypeFieldSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class TransportTypeFieldSection : DomSectionBase
+	internal partial class TransportTypeFieldSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="TransportTypeFieldSection"/> class. Creates an empty <see cref="TransportTypeFieldSection"/> object with default settings.

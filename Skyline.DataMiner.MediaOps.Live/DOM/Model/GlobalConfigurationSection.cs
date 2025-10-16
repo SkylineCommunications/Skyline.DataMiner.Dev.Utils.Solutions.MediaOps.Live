@@ -8,7 +8,7 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 
-	public partial class GlobalConfigurationSection
+	internal partial class GlobalConfigurationSection
 	{
 		public List<OrchestrationScriptArgument> OrchestrationScriptArgumentsList
 		{

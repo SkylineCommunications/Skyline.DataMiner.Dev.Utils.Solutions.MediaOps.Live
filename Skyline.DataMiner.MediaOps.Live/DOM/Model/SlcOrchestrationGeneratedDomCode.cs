@@ -136,7 +136,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	/// Represents a wrapper class for accessing a OrchestrationEventInstance DOM instance.
 	/// The <see cref="OrchestrationEventInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class OrchestrationEventInstance : DomInstanceBase
+	internal partial class OrchestrationEventInstance : DomInstanceBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEventInstance"/> class. Creates an empty <see cref="OrchestrationEventInstance"/> instance with default settings.
@@ -250,7 +250,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	/// Represents a wrapper class for accessing a OrchestrationJobInfoInstance DOM instance.
 	/// The <see cref="OrchestrationJobInfoInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class OrchestrationJobInfoInstance : DomInstanceBase
+	internal partial class OrchestrationJobInfoInstance : DomInstanceBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationJobInfoInstance"/> class. Creates an empty <see cref="OrchestrationJobInfoInstance"/> instance with default settings.
@@ -324,7 +324,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	/// Represents a wrapper class for accessing a ConfigurationInstance DOM instance.
 	/// The <see cref="ConfigurationInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class ConfigurationInstance : DomInstanceBase
+	internal partial class ConfigurationInstance : DomInstanceBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ConfigurationInstance"/> class. Creates an empty <see cref="ConfigurationInstance"/> instance with default settings.
@@ -423,7 +423,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	/// Represents a wrapper class for accessing a ConfigurationInfoSection section.
 	/// The <see cref="ConfigurationInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class ConfigurationInfoSection : DomSectionBase
+	internal partial class ConfigurationInfoSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ConfigurationInfoSection"/> class. Creates an empty <see cref="ConfigurationInfoSection"/> object with default settings.
@@ -496,7 +496,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	/// Represents a wrapper class for accessing a ConnectionSection section.
 	/// The <see cref="ConnectionSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class ConnectionSection : DomSectionBase
+	internal partial class ConnectionSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ConnectionSection"/> class. Creates an empty <see cref="ConnectionSection"/> object with default settings.
@@ -747,7 +747,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	/// Represents a wrapper class for accessing a GlobalConfigurationSection section.
 	/// The <see cref="GlobalConfigurationSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class GlobalConfigurationSection : DomSectionBase
+	internal partial class GlobalConfigurationSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="GlobalConfigurationSection"/> class. Creates an empty <see cref="GlobalConfigurationSection"/> object with default settings.
@@ -898,7 +898,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	/// Represents a wrapper class for accessing a NodeConfigurationSection section.
 	/// The <see cref="NodeConfigurationSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class NodeConfigurationSection : DomSectionBase
+	internal partial class NodeConfigurationSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="NodeConfigurationSection"/> class. Creates an empty <see cref="NodeConfigurationSection"/> object with default settings.
@@ -1143,7 +1143,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	/// Represents a wrapper class for accessing a OrchestrationEventInfoSection section.
 	/// The <see cref="OrchestrationEventInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class OrchestrationEventInfoSection : DomSectionBase
+	internal partial class OrchestrationEventInfoSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEventInfoSection"/> class. Creates an empty <see cref="OrchestrationEventInfoSection"/> object with default settings.
@@ -1568,7 +1568,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	/// Represents a wrapper class for accessing a JobInfoSection section.
 	/// The <see cref="JobInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class JobInfoSection : DomSectionBase
+	internal partial class JobInfoSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="JobInfoSection"/> class. Creates an empty <see cref="JobInfoSection"/> object with default settings.

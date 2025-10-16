@@ -8,7 +8,7 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 
-	public partial class ConnectionSection
+	internal partial class ConnectionSection
 	{
 		public List<LevelMapping> LevelMappingList
 		{
