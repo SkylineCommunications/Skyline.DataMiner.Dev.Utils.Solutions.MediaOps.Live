@@ -7,7 +7,7 @@
 	public abstract class ApiObject<T> : IApiObjectReference, IEquatable<ApiObject<T>>
 		where T : ApiObject<T>
 	{
-		protected ApiObject(DomInstanceBase domInstance)
+		internal ApiObject(DomInstanceBase domInstance)
 		{
 			DomInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
 		}

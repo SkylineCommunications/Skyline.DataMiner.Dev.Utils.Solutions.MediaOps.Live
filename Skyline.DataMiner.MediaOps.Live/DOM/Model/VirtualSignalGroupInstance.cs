@@ -3,7 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 
-	public partial class VirtualSignalGroupInstance
+	internal partial class VirtualSignalGroupInstance
 	{
 		public bool IsSource => VirtualSignalGroupInfo.Role == SlcConnectivityManagementIds.Enums.Role.Source;
 
