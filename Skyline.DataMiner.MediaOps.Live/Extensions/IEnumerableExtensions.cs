@@ -4,7 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	public static class IEnumerableExtensions
+	internal static class IEnumerableExtensions
 	{
 		public static Dictionary<TKey, TElement> SafeToDictionary<TSource, TKey, TElement>(
 			 this IEnumerable<TSource> source,

@@ -81,7 +81,7 @@
 					FieldType = typeof(List<Guid>),
 					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Categories,
 					Name = "Categories",
-					DomDefinitionIds = { SlcConnectivityManagementIds.Definitions.Category },
+					DomDefinitionIds = { SlcCategoriesIds.Definitions.Category },
 				});
 
 			return sectionDefinition;

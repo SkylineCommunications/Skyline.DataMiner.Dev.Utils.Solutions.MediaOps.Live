@@ -278,7 +278,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API
     public class MediaOpsLiveApi
     {
         public MediaOpsLiveApi(Skyline.DataMiner.Net.IConnection connection) { }
-        public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.CategoryRepository Categories { get; }
         protected Skyline.DataMiner.Net.IConnection Connection { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.EndpointRepository Endpoints { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.LevelRepository Levels { get; }
@@ -338,19 +337,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
 {
-    public class Category : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category>
-    {
-        public Category() { }
-        public string Name { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category>? ParentCategory { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
-    }
-    public static class CategoryExposers
-    {
-        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category, System.Guid> ID;
-        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category, string> Name;
-        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category>?> ParentCategory;
-    }
     public class Endpoint : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>
     {
         public Endpoint() { }
@@ -458,7 +444,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
     {
         public VirtualSignalGroup() { }
         public VirtualSignalGroup(System.Guid id) { }
-        public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category>> Categories { get; set; }
+        public System.Collections.Generic.IList<System.Guid> Categories { get; set; }
         public string Description { get; set; }
         public bool IsDestination { get; }
         public bool IsSource { get; }
@@ -496,7 +482,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
     }
     public static class VirtualSignalGroupExposers
     {
-        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.DynamicListExposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category>> Categories;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, string> Description;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.DynamicListExposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>> Endpoint;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, System.Guid> ID;
@@ -633,15 +618,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Querying
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement
 {
-    public class CategoryRepository : Skyline.DataMiner.MediaOps.Live.API.Repositories.Repository<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category>
-    {
-        protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinition { get; }
-        protected override Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance> CreateFilter(string fieldName, Skyline.DataMiner.Net.Messages.SLDataGateway.Comparer comparer, object value) { }
-        protected override Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category CreateInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
-        protected override SLDataGateway.API.Types.Querying.IOrderByElement CreateOrderBy(string fieldName, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }
-        protected override void ValidateBeforeDelete(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category> instances) { }
-        protected override void ValidateBeforeSave(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Category> instances) { }
-    }
     public class EndpointRepository : Skyline.DataMiner.MediaOps.Live.API.Repositories.Repository<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>
     {
         protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinition { get; }
@@ -957,29 +933,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 }
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 {
-    public class CategoryInfoSection : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomSectionBase
-    {
-        public CategoryInfoSection() { }
-        public CategoryInfoSection(Skyline.DataMiner.Net.Sections.Section section) { }
-        public string Name { get; set; }
-        public System.Guid? ParentCategory { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInfoSection Clone() { }
-        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInfoSection Duplicate() { }
-        protected override Skyline.DataMiner.Net.Sections.Section InternalToSection() { }
-    }
-    public class CategoryInstance : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomInstanceBase
-    {
-        public CategoryInstance() { }
-        public CategoryInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
-        public CategoryInstance(System.Guid id) { }
-        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInfoSection CategoryInfo { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInstance Clone() { }
-        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInstance Duplicate() { }
-        protected override sealed void InitializeProperties() { }
-        protected override sealed Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
-        public override sealed void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
-        public static Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.CategoryInstance op_Explicit(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance instance) { }
-    }
     public class EndpointInfoSection : Skyline.DataMiner.MediaOps.Live.DOM.Model.DomSectionBase
     {
         public EndpointInfoSection() { }
@@ -1046,13 +999,23 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
         public override sealed void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
         public static Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.LevelInstance op_Explicit(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance instance) { }
     }
+    public static class SlcCategoriesIds
+    {
+        public const string ModuleId = "(slc)categories";
+        public static class Behaviors { }
+        public static class Definitions
+        {
+            public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId Category { get; }
+        }
+        public static class Enums { }
+        public static class Sections { }
+    }
     public static class SlcConnectivityManagementIds
     {
         public const string ModuleId = "(slc)connectivity_management";
         public static class Behaviors { }
         public static class Definitions
         {
-            public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId Category { get; }
             public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId Endpoint { get; }
             public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId Level { get; }
             public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId TransportType { get; }
@@ -1068,12 +1031,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
         }
         public static class Sections
         {
-            public static class CategoryInfo
-            {
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Name { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID ParentCategory { get; }
-            }
             public static class EndpointInfo
             {
                 public static Skyline.DataMiner.Net.Sections.FieldDescriptorID ControlElement { get; }
@@ -1402,15 +1359,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Tools
         public static System.Collections.Generic.IEnumerable<TResult> RetrieveFilteredItems<TId, TFilter, TResult>(System.Collections.Generic.IEnumerable<TId> ids, System.Func<TId, Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<TFilter>> filterProvider, System.Func<Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<TFilter>, System.Collections.Generic.IEnumerable<TResult>> filterResolver) { }
     }
 }
-namespace Skyline.DataMiner.MediaOps.Live.Extensions
-{
-    public static class IEnumerableExtensions
-    {
-        public static System.Collections.Generic.IEnumerable<T> Flatten<T>(this System.Collections.Generic.IEnumerable<System.Collections.Generic.IEnumerable<T>> source) { }
-        public static System.Collections.Generic.Dictionary<TKey, TSource> SafeToDictionary<TSource, TKey>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector, System.Collections.Generic.IEqualityComparer<TKey> comparer = null) { }
-        public static System.Collections.Generic.Dictionary<TKey, TElement> SafeToDictionary<TSource, TKey, TElement>(this System.Collections.Generic.IEnumerable<TSource> source, System.Func<TSource, TKey> keySelector, System.Func<TSource, TElement> elementSelector, System.Collections.Generic.IEqualityComparer<TKey> comparer = null) { }
-    }
-}
 namespace Skyline.DataMiner.MediaOps.Live.Logging
 {
     public interface ILogger
@@ -1672,6 +1620,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration
     {
         public static Skyline.DataMiner.Net.Messages.ExecuteScriptResponseMessage ExecuteGetOrchestrationScriptInfo(Skyline.DataMiner.Net.IConnection connection, string scriptName) { }
         public static Skyline.DataMiner.Net.Messages.ExecuteScriptResponseMessage TryExecuteOrchestrationScript(Skyline.DataMiner.Net.IConnection connection, string scriptName, System.Collections.Generic.List<Skyline.DataMiner.Core.DataMinerSystem.Common.DmsAutomationScriptParamValue> scriptParams, System.Collections.Generic.List<Skyline.DataMiner.Core.DataMinerSystem.Common.DmsAutomationScriptDummyValue> scriptDummies, Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects.OrchestrationScriptInput input, out string[] errorMessages) { }
+        public static Skyline.DataMiner.Net.Messages.ExecuteScriptResponseMessage TryExecuteScript(Skyline.DataMiner.Net.IConnection connection, string scriptName, System.Collections.Generic.List<Skyline.DataMiner.Core.DataMinerSystem.Common.DmsAutomationScriptParamValue> scriptParams, System.Collections.Generic.List<Skyline.DataMiner.Core.DataMinerSystem.Common.DmsAutomationScriptDummyValue> scriptDummies, out string[] errorMessages) { }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling

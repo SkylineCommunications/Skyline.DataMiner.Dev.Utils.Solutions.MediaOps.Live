@@ -167,9 +167,6 @@
 				DomModuleInstaller.Install(_connection.HandleMessages, slcConnectivityManagementDomModule, x => { });
 			}
 
-			var category = new Category { Name = "Category 1" };
-			Api.Categories.Create(category);
-
 			var transportTypeTSoIP = new TsoipTransportType();
 			Api.TransportTypes.Create(transportTypeTSoIP);
 
@@ -254,10 +251,6 @@
 								Role = Role.Source,
 								Name = $"Source {vsgCounter}",
 								Description = $"Source {vsgCounter}",
-								Categories =
-								[
-									category,
-								],
 								Levels =
 								[
 									new LevelEndpoint(videoLevel, videoSource),
@@ -269,10 +262,6 @@
 								Role = Role.Destination,
 								Name = $"Destination {vsgCounter}",
 								Description = $"Destination {vsgCounter}",
-								Categories =
-								[
-									category,
-								],
 								Levels =
 								[
 									new LevelEndpoint(videoLevel, videoDestination),

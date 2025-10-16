@@ -28,7 +28,6 @@
 
 		public IEnumerable<IDomDefinitionInfo> Definitions { get; } = new IDomDefinitionInfo[]
 		{
-			new CategoryDefinition(),
 			new TransportTypeDefinition(),
 			new EndpointDefinition(),
 			new LevelDefinition(),

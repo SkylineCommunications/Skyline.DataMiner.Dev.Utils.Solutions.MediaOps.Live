@@ -10,6 +10,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -18,7 +19,6 @@
 		private readonly VirtualSignalGroupInstance _domInstance;
 
 		private readonly WrappedList<VirtualSignalGroupLevelSection, LevelEndpoint> _wrappedLevels;
-		private readonly WrappedList<Guid, ApiObjectReference<Category>> _wrappedCategories;
 
 		public VirtualSignalGroup() : this(new VirtualSignalGroupInstance())
 		{
@@ -36,11 +36,6 @@
 				_domInstance.VirtualSignalGroupLevel,
 				x => new LevelEndpoint(x),
 				x => x.DomSection);
-
-			_wrappedCategories = new WrappedList<Guid, ApiObjectReference<Category>>(
-				_domInstance.VirtualSignalGroupInfo.Categories,
-				x => new ApiObjectReference<Category>(x),
-				x => x.ID);
 		}
 
 		internal VirtualSignalGroup(DomInstance domInstance) : this(new VirtualSignalGroupInstance(domInstance))
@@ -107,17 +102,17 @@
 			}
 		}
 
-		public IList<ApiObjectReference<Category>> Categories
+		public IList<Guid> Categories
 		{
 			get
 			{
-				return _wrappedCategories;
+				return _domInstance.VirtualSignalGroupInfo.Categories;
 			}
 
 			set
 			{
-				_wrappedCategories.Clear();
-				_wrappedCategories.AddRange(value);
+				_domInstance.VirtualSignalGroupInfo.Categories.Clear();
+				_domInstance.VirtualSignalGroupInfo.Categories.AddRange(value);
 			}
 		}
 
@@ -312,6 +307,5 @@
 		public static readonly Exposer<VirtualSignalGroup, Role> Role = new Exposer<VirtualSignalGroup, Role>(x => x.Role, nameof(VirtualSignalGroup.Role));
 		public static readonly DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Level>> Level = DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Level>>.CreateFromListExposer(new Exposer<VirtualSignalGroup, IEnumerable>(x => x.Levels.Select(c => c.Level), nameof(LevelEndpoint.Level)));
 		public static readonly DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Endpoint>> Endpoint = DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Endpoint>>.CreateFromListExposer(new Exposer<VirtualSignalGroup, IEnumerable>(x => x.Levels.Select(c => c.Endpoint), nameof(LevelEndpoint.Endpoint)));
-		public static readonly DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Category>> Categories = DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Category>>.CreateFromListExposer(new Exposer<VirtualSignalGroup, IEnumerable>(x => x.Categories.Select(c => c.ID), nameof(VirtualSignalGroup.Categories)));
 	}
 }

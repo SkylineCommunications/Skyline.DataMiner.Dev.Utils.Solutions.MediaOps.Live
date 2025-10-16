@@ -33,7 +33,6 @@
 			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper, connection);
 			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper, connection);
 			Levels = new LevelRepository(SlcConnectivityManagementHelper, connection);
-			Categories = new CategoryRepository(SlcConnectivityManagementHelper, connection);
 			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper, connection);
 
 			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
@@ -54,8 +53,6 @@
 		public VirtualSignalGroupRepository VirtualSignalGroups { get; }
 
 		public LevelRepository Levels { get; }
-
-		public CategoryRepository Categories { get; }
 
 		public TransportTypeRepository TransportTypes { get; }
 
