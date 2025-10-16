@@ -956,8 +956,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
         public EndpointInstance(System.Guid id) { }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointInfoSection EndpointInfo { get; set; }
         public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointTransportMetadataSection> EndpointTransportMetadata { get; }
-        public bool IsDestination { get; }
-        public bool IsSource { get; }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointInstance Clone() { }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.EndpointInstance Duplicate() { }
         protected override sealed void InitializeProperties() { }
@@ -1131,13 +1129,10 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
         public VirtualSignalGroupInstance() { }
         public VirtualSignalGroupInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
         public VirtualSignalGroupInstance(System.Guid id) { }
-        public bool IsDestination { get; }
-        public bool IsSource { get; }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupInfoSection VirtualSignalGroupInfo { get; set; }
         public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupLevelSection> VirtualSignalGroupLevel { get; }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupInstance Clone() { }
         public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement.VirtualSignalGroupInstance Duplicate() { }
-        public System.Collections.Generic.IEnumerable<System.Guid> GetEndpointIds() { }
         protected override sealed void InitializeProperties() { }
         protected override sealed Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance InternalToInstance() { }
         public override sealed void Save(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
