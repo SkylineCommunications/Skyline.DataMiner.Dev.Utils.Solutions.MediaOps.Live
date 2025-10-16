@@ -35,7 +35,7 @@
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
 
-		public MediaOpsLiveApi Api { get; }
+		internal MediaOpsLiveApi Api { get; }
 
 		public bool IsSubscribed { get; private set; }
 

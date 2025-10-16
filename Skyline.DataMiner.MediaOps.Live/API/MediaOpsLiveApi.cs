@@ -4,6 +4,7 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -73,6 +74,16 @@
 		public virtual TakeHelper GetConnectionHandler()
 		{
 			return new TakeHelper(this);
+		}
+
+		public virtual LiteConnectivityInfoProvider GetLiteConnectivityInfoProvider()
+		{
+			return new LiteConnectivityInfoProvider(this);
+		}
+
+		public virtual ConnectivityInfoProvider GetConnectivityInfoProvider()
+		{
+			return new ConnectivityInfoProvider(this);
 		}
 
 		internal virtual MediaOpsPlanHelper GetMediaOpsPlanHelper()

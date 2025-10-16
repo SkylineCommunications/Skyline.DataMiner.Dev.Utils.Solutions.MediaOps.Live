@@ -109,7 +109,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
     public sealed class ConnectivityInfoProvider : System.IDisposable
     {
         public ConnectivityInfoProvider(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api, Skyline.DataMiner.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider liteConnectivityInfoProvider = null, Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupEndpointsCache virtualSignalGroupsCache = null, Skyline.DataMiner.MediaOps.Live.API.Caching.LevelsCache levelsCache = null, bool subscribe = false) { }
-        public Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi Api { get; }
         public bool IsSubscribed { get; }
         public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectionsUpdatedEvent> ConnectionsUpdated;
         public void Dispose() { }
@@ -289,7 +288,9 @@ namespace Skyline.DataMiner.MediaOps.Live.API
         public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.TransportTypeRepository TransportTypes { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.VirtualSignalGroupRepository VirtualSignalGroups { get; }
         public virtual Skyline.DataMiner.MediaOps.Live.Take.TakeHelper GetConnectionHandler() { }
+        public virtual Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectivityInfoProvider GetConnectivityInfoProvider() { }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.IDms GetDms() { }
+        public virtual Skyline.DataMiner.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider GetLiteConnectivityInfoProvider() { }
         public string GetVersion() { }
         public bool IsInstalled() { }
         public void SetLogger(Skyline.DataMiner.MediaOps.Live.Logging.ILogger logger) { }
