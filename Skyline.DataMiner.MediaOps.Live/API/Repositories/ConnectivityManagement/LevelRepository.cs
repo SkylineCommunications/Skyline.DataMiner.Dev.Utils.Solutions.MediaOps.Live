@@ -35,7 +35,8 @@
 				instance.Validate().ThrowIfInvalid();
 			}
 
-			CheckDuplicatesBeforeSave(instances);
+			CheckDuplicateNamesBeforeSave(instances);
+			CheckDuplicateNumbersBeforeSave(instances);
 		}
 
 		protected override void ValidateBeforeDelete(ICollection<Level> instances)
@@ -73,14 +74,12 @@
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
 		}
 
-		private void CheckDuplicatesBeforeSave(ICollection<Level> instances)
+		private void CheckDuplicateNamesBeforeSave(ICollection<Level> instances)
 		{
 			FilterElement<DomInstance> CreateFilter(Level l) =>
 				new ANDFilterElement<DomInstance>(
 					DomInstanceExposers.Id.NotEqual(l.ID),
-					new ORFilterElement<DomInstance>(
-						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Name).Equal(l.Name),
-						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number).Equal(l.Number)));
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Name).Equal(l.Name));
 
 			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Read).ToList();
 
@@ -91,6 +90,25 @@
 					.OrderBy(x => x, new NaturalSortComparer()));
 
 				throw new InvalidOperationException($"Cannot save levels. The following names are already in use: {names}");
+			}
+		}
+
+		private void CheckDuplicateNumbersBeforeSave(ICollection<Level> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(Level l) =>
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.Id.NotEqual(l.ID),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number).Equal(l.Number));
+
+			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Read).ToList();
+
+			if (conflicts.Count > 0)
+			{
+				var numbers = String.Join(", ", conflicts
+					.Select(x => x.Number)
+					.OrderBy(x => x));
+
+				throw new InvalidOperationException($"Cannot save levels. The following numbers are already in use: {numbers}");
 			}
 		}
 
