@@ -312,7 +312,9 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects
         public static Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T> op_Implicit(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T> apiObject) { }
         public static Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T> op_Implicit(System.Guid id) { }
         public static bool operator !=(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T> left, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T> right) { }
+        public static bool operator !=(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T>? left, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T>? right) { }
         public static bool operator ==(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T> left, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T> right) { }
+        public static bool operator ==(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T>? left, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<T>? right) { }
     }
     public abstract class ApiObject<T> : Skyline.DataMiner.MediaOps.Live.API.Objects.IApiObjectReference, System.IEquatable<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T>>
         where T : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T>
