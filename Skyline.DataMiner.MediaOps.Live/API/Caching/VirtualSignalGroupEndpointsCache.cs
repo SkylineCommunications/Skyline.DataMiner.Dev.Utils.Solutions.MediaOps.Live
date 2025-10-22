@@ -3,16 +3,14 @@
 	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
-	using System.Diagnostics;
 	using System.Linq;
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 
-	public class VirtualSignalGroupEndpointsCache : IDisposable
+	public class VirtualSignalGroupEndpointsCache
 	{
 		private readonly object _lock = new();
 
@@ -23,18 +21,6 @@
 
 		private readonly VirtualSignalGroupEndpointsMapping _virtualSignalGroupEndpointsMapping = new();
 
-		private RepositorySubscription<Endpoint> _subscriptionEndpoints;
-		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
-
-		public VirtualSignalGroupEndpointsCache(MediaOpsLiveApi api, bool subscribe = false)
-		{
-			Api = api ?? throw new ArgumentNullException(nameof(api));
-
-			Initialize(subscribe);
-		}
-
-		internal MediaOpsLiveApi Api { get; }
-
 		public IReadOnlyDictionary<ApiObjectReference<Endpoint>, Endpoint> Endpoints => _endpoints;
 
 		public IReadOnlyDictionary<string, Endpoint> EndpointsByName => _endpointsByName;
@@ -42,8 +28,6 @@
 		public IReadOnlyDictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> VirtualSignalGroups => _virtualSignalGroups;
 
 		public IReadOnlyDictionary<string, VirtualSignalGroup> VirtualSignalGroupsByName => _virtualSignalGroupsByName;
-
-		public bool IsSubscribed { get; private set; }
 
 		public Endpoint GetEndpoint(ApiObjectReference<Endpoint> id)
 		{
@@ -123,157 +107,91 @@
 			}
 		}
 
-		public void Subscribe()
+		public void LoadInitialData(MediaOpsLiveApi api)
 		{
-			lock (_lock)
+			if (api is null)
 			{
-				if (IsSubscribed)
-				{
-					return;
-				}
-
-				_subscriptionEndpoints = Api.Endpoints.Subscribe();
-				_subscriptionEndpoints.Changed += Endpoints_Changed;
-
-				_subscriptionVirtualSignalGroups = Api.VirtualSignalGroups.Subscribe();
-				_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
-
-				IsSubscribed = true;
+				throw new ArgumentNullException(nameof(api));
 			}
-		}
 
-		public void Unsubscribe()
-		{
-			lock (_lock)
-			{
-				if (!IsSubscribed)
-				{
-					return;
-				}
-
-				_subscriptionEndpoints.Changed -= Endpoints_Changed;
-				_subscriptionEndpoints.Dispose();
-
-				_subscriptionVirtualSignalGroups.Changed -= VirtualSignalGroups_Changed;
-				_subscriptionVirtualSignalGroups.Dispose();
-
-				IsSubscribed = false;
-			}
-		}
-
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-			Unsubscribe();
-		}
-
-		private void Initialize(bool subscribe)
-		{
-			lock (_lock)
-			{
-				if (subscribe)
-				{
-					Subscribe();
-				}
-
-				LoadInitialData();
-			}
-		}
-
-		private void LoadInitialData()
-		{
-			var endpointsTask = Task.Run(() => Api.Endpoints.ReadAll());
-			var virtualSignalGroupsTask = Task.Run(() => Api.VirtualSignalGroups.ReadAll());
+			var endpointsTask = Task.Run(() => api.Endpoints.ReadAll());
+			var virtualSignalGroupsTask = Task.Run(() => api.VirtualSignalGroups.ReadAll());
 
 			Task.WaitAll(endpointsTask, virtualSignalGroupsTask);
 
-			UpdateEndpoints(endpointsTask.Result);
-			UpdateVirtualSignalGroups(virtualSignalGroupsTask.Result);
-		}
-
-		private void Endpoints_Changed(object sender, ApiObjectsChangedEvent<Endpoint> e)
-		{
 			lock (_lock)
 			{
-				Debug.WriteLine($"Endpoints changed: {e}");
-
-				UpdateEndpoints(e.Created.Concat(e.Updated), e.Deleted);
+				UpdateEndpoints(endpointsTask.Result, []);
+				UpdateVirtualSignalGroups(virtualSignalGroupsTask.Result, []);
 			}
 		}
 
-		private void VirtualSignalGroups_Changed(object sender, ApiObjectsChangedEvent<VirtualSignalGroup> e)
+		public void UpdateEndpoints(IEnumerable<Endpoint> updated, IEnumerable<Endpoint> deleted)
 		{
-			lock (_lock)
+			if (updated is null)
 			{
-				Debug.WriteLine($"Virtual Signal Groups changed: {e}");
-
-				UpdateVirtualSignalGroups(e.Created.Concat(e.Updated), e.Deleted);
+				throw new ArgumentNullException(nameof(updated));
 			}
-		}
 
-		private void UpdateEndpoints(IEnumerable<Endpoint> updated, IEnumerable<Endpoint> deleted = null)
-		{
+			if (deleted is null)
+			{
+				throw new ArgumentNullException(nameof(deleted));
+			}
+
 			lock (_lock)
 			{
-				if (updated != null)
+				foreach (var item in updated)
 				{
-					foreach (var item in updated)
+					// Remove old name if it exists
+					if (_endpoints.TryGetValue(item.ID, out var existing))
 					{
-						// Remove old name if it exists
-						if (_endpoints.TryGetValue(item.ID, out var existing))
-						{
-							_endpointsByName.TryRemove(existing.Name, out _);
-						}
-
-						_endpoints[item.ID] = item;
-						_endpointsByName[item.Name] = item;
+						_endpointsByName.TryRemove(existing.Name, out _);
 					}
+
+					_endpoints[item.ID] = item;
+					_endpointsByName[item.Name] = item;
 				}
 
-				if (deleted != null)
+				foreach (var item in deleted)
 				{
-					foreach (var item in deleted)
-					{
-						_endpoints.TryRemove(item.ID, out _);
-						_endpointsByName.TryRemove(item.Name, out _);
-					}
+					_endpoints.TryRemove(item.ID, out _);
+					_endpointsByName.TryRemove(item.Name, out _);
 				}
 			}
 		}
 
-		private void UpdateVirtualSignalGroups(IEnumerable<VirtualSignalGroup> updated, IEnumerable<VirtualSignalGroup> deleted = null)
+		public void UpdateVirtualSignalGroups(IEnumerable<VirtualSignalGroup> updated, IEnumerable<VirtualSignalGroup> deleted)
 		{
+			if (updated is null)
+			{
+				throw new ArgumentNullException(nameof(updated));
+			}
+
+			if (deleted is null)
+			{
+				throw new ArgumentNullException(nameof(deleted));
+			}
+
 			lock (_lock)
 			{
-				if (updated != null)
+				foreach (var item in updated)
 				{
-					foreach (var item in updated)
+					// Remove old name if it exists
+					if (_virtualSignalGroups.TryGetValue(item.ID, out var existing))
 					{
-						// Remove old name if it exists
-						if (_virtualSignalGroups.TryGetValue(item.ID, out var existing))
-						{
-							_virtualSignalGroupsByName.TryRemove(existing.Name, out _);
-						}
-
-						_virtualSignalGroups[item.ID] = item;
-						_virtualSignalGroupsByName[item.Name] = item;
-						_virtualSignalGroupEndpointsMapping.AddOrUpdate(item);
+						_virtualSignalGroupsByName.TryRemove(existing.Name, out _);
 					}
+
+					_virtualSignalGroups[item.ID] = item;
+					_virtualSignalGroupsByName[item.Name] = item;
+					_virtualSignalGroupEndpointsMapping.AddOrUpdate(item);
 				}
 
-				if (deleted != null)
+				foreach (var item in deleted)
 				{
-					foreach (var item in deleted)
-					{
-						_virtualSignalGroups.TryRemove(item.ID, out _);
-						_virtualSignalGroupsByName.TryRemove(item.Name, out _);
-						_virtualSignalGroupEndpointsMapping.Remove(item);
-					}
+					_virtualSignalGroups.TryRemove(item.ID, out _);
+					_virtualSignalGroupsByName.TryRemove(item.Name, out _);
+					_virtualSignalGroupEndpointsMapping.Remove(item);
 				}
 			}
 		}

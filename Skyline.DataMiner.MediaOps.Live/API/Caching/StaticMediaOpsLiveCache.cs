@@ -6,6 +6,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
+	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 
@@ -14,8 +15,9 @@
 		private static readonly object _lock = new();
 		private static volatile StaticMediaOpsLiveCache _instance;
 
-		private readonly Lazy<VirtualSignalGroupEndpointsCache> _lazyVirtualSignalGroupsCache;
-		private readonly Lazy<LevelsCache> _lazyLevelsCache;
+		private readonly Lazy<VirtualSignalGroupEndpointsObserver> _lazyVirtualSignalGroupsObserver;
+		private readonly Lazy<LevelsObserver> _lazyLevelsObserver;
+
 		private readonly Lazy<LiteConnectivityInfoProvider> _lazyLiteConnectivityInfoProvider;
 		private readonly Lazy<ConnectivityInfoProvider> _lazyConnectivityInfoProvider;
 		private readonly Lazy<ConnectionMonitor> _lazyConnectionMonitor;
@@ -28,8 +30,9 @@
 
 			Api = new MediaOpsLiveApi(Connection);
 
-			_lazyVirtualSignalGroupsCache = new(() => new VirtualSignalGroupEndpointsCache(Api, subscribe: true));
-			_lazyLevelsCache = new(() => new LevelsCache(Api, subscribe: true));
+			_lazyLevelsObserver = new(CreateLevelsObserver);
+			_lazyVirtualSignalGroupsObserver = new(CreateVirtualSignalGroupsObserver);
+
 			_lazyLiteConnectivityInfoProvider = new(() => new LiteConnectivityInfoProvider(Api, subscribe: true));
 			_lazyConnectivityInfoProvider = new(() => new ConnectivityInfoProvider(Api, LiteConnectivityInfoProvider, VirtualSignalGroupsCache, LevelsCache, subscribe: true));
 			_lazyConnectionMonitor = new(() => new ConnectionMonitor(Api, LiteConnectivityInfoProvider));
@@ -39,9 +42,13 @@
 
 		private MediaOpsLiveApi Api { get; }
 
-		public VirtualSignalGroupEndpointsCache VirtualSignalGroupsCache => _lazyVirtualSignalGroupsCache.Value;
+		public VirtualSignalGroupEndpointsObserver VirtualSignalGroupEndpointsObserver => _lazyVirtualSignalGroupsObserver.Value;
 
-		public LevelsCache LevelsCache => _lazyLevelsCache.Value;
+		public VirtualSignalGroupEndpointsCache VirtualSignalGroupsCache => VirtualSignalGroupEndpointsObserver.Cache;
+
+		public LevelsObserver LevelsObserver => _lazyLevelsObserver.Value;
+
+		public LevelsCache LevelsCache => LevelsObserver.Cache;
 
 		public LiteConnectivityInfoProvider LiteConnectivityInfoProvider => _lazyLiteConnectivityInfoProvider.Value;
 
@@ -144,17 +151,33 @@
 				_lazyLiteConnectivityInfoProvider.Value.Dispose();
 			}
 
-			if (_lazyLevelsCache.IsValueCreated)
+			if (_lazyLevelsObserver.IsValueCreated)
 			{
-				_lazyLevelsCache.Value.Dispose();
+				_lazyLevelsObserver.Value.Dispose();
 			}
 
-			if (_lazyVirtualSignalGroupsCache.IsValueCreated)
+			if (_lazyVirtualSignalGroupsObserver.IsValueCreated)
 			{
-				_lazyVirtualSignalGroupsCache.Value.Dispose();
+				_lazyVirtualSignalGroupsObserver.Value.Dispose();
 			}
 
 			_disposed = true;
+		}
+
+		private VirtualSignalGroupEndpointsObserver CreateVirtualSignalGroupsObserver()
+		{
+			var observer = new VirtualSignalGroupEndpointsObserver(Api);
+			observer.Subscribe();
+			observer.LoadInitialData();
+			return observer;
+		}
+
+		private LevelsObserver CreateLevelsObserver()
+		{
+			var observer = new LevelsObserver(Api);
+			observer.Subscribe();
+			observer.LoadInitialData();
+			return observer;
 		}
 
 		private static IConnection CloneConnection(IConnection baseConnection)

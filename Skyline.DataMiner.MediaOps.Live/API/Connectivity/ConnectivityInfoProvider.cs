@@ -9,6 +9,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 
 	public sealed class ConnectivityInfoProvider : IDisposable
@@ -18,6 +19,9 @@
 		private VirtualSignalGroupEndpointsCache _vsgCache;
 		private LevelsCache _levelsCache;
 		private LiteConnectivityInfoProvider _liteConnectivityInfoProvider;
+
+		private VirtualSignalGroupEndpointsObserver _vsgObserver;
+		private LevelsObserver _levelsObserver;
 
 		private bool _isDisposed;
 
@@ -282,7 +286,8 @@
 					return;
 				}
 
-				_vsgCache.Subscribe();
+				_levelsObserver.Subscribe();
+				_vsgObserver.Subscribe();
 				_liteConnectivityInfoProvider.Subscribe();
 
 				IsSubscribed = true;
@@ -298,7 +303,8 @@
 					return;
 				}
 
-				_vsgCache.Unsubscribe();
+				_levelsObserver.Unsubscribe();
+				_vsgObserver.Unsubscribe();
 				_liteConnectivityInfoProvider.Unsubscribe();
 
 				IsSubscribed = false;
@@ -322,14 +328,22 @@
 		{
 			lock (_lock)
 			{
-				_levelsCache = levelsCache ?? new LevelsCache(Api, subscribe);
+				_levelsCache = levelsCache ?? new LevelsCache();
+				_levelsObserver = new LevelsObserver(Api, _levelsCache);
 
-				_vsgCache = virtualSignalGroupsCache ?? new VirtualSignalGroupEndpointsCache(Api, subscribe);
+				_vsgCache = virtualSignalGroupsCache ?? new VirtualSignalGroupEndpointsCache();
+				_vsgObserver = new VirtualSignalGroupEndpointsObserver(Api, _vsgCache);
 
 				_liteConnectivityInfoProvider = liteConnectivityInfoProvider ?? new LiteConnectivityInfoProvider(Api, subscribe);
 				_liteConnectivityInfoProvider.EndpointsImpacted += Endpoints_Impacted;
 
-				IsSubscribed = subscribe;
+				if (subscribe)
+				{
+					Subscribe();
+				}
+
+				_levelsCache.LoadInitialData(Api);
+				_vsgCache.LoadInitialData(Api);
 			}
 		}
 
