@@ -299,23 +299,23 @@
 			api.GetMediaOpsPlanHelper().UpdateJobState(setStateAction);
 		}
 
-		private Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent GetEventTypeAsPlanJobEvent()
+		private OrchestrationEventType GetEventTypeAsPlanJobEvent()
 		{
 			switch (EventType)
 			{
 				case SlcOrchestrationIds.Enums.EventType.Postrollstart:
 				case SlcOrchestrationIds.Enums.EventType.Stop:
-					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PostrollStart;
+					return OrchestrationEventType.PostrollStart;
 
 				case SlcOrchestrationIds.Enums.EventType.Prerollstart:
 				case SlcOrchestrationIds.Enums.EventType.Start:
-					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PrerollStart;
+					return OrchestrationEventType.PrerollStart;
 
 				case SlcOrchestrationIds.Enums.EventType.Postrollstop:
-					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PostrollStop;
+					return OrchestrationEventType.PostrollStop;
 
 				case SlcOrchestrationIds.Enums.EventType.Prerollstop:
-					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PrerollStop;
+					return OrchestrationEventType.PrerollStop;
 
 				default:
 					throw new NotSupportedException("Event type cannot be translated to PLAN job event");

@@ -37,8 +37,8 @@
 		<InternalsVisibleTo Include="SLC-AS-MediaOps.LIVE.Tests" />
 	</ItemGroup>
 	<ItemGroup>
-		<PackageReference Include="Skyline.DataMiner.Dev.Common" Version="10.5.9.1" />
-		<PackageReference Include="Skyline.DataMiner.Files.SLAnalyticsTypes" Version="10.5.7.2" />
+		<PackageReference Include="Skyline.DataMiner.Dev.Common" Version="10.5.9.2" />
+		<PackageReference Include="Skyline.DataMiner.Files.SLAnalyticsTypes" Version="10.5.9.2" />
 		<PackageReference Include="Skyline.DataMiner.Utils.DOM" Version="10.5.2.4" />
 		<PackageReference Include="Skyline.DataMiner.Utils.PerformanceAnalyzer" Version="3.0.2" />
 		<PackageReference Include="GitInfo" Version="3.5.0">
