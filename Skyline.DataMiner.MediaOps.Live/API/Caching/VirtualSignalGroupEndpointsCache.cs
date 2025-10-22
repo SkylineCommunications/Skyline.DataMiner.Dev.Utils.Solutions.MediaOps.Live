@@ -33,7 +33,7 @@
 			Initialize(subscribe);
 		}
 
-		public MediaOpsLiveApi Api { get; }
+		internal MediaOpsLiveApi Api { get; }
 
 		public IReadOnlyDictionary<ApiObjectReference<Endpoint>, Endpoint> Endpoints => _endpoints;
 

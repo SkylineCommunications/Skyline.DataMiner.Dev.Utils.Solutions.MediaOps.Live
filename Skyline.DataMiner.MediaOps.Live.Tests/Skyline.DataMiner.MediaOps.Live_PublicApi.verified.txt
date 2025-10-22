@@ -11,7 +11,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
     public class LevelsCache : System.IDisposable
     {
         public LevelsCache(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api, bool subscribe = false) { }
-        public Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi Api { get; }
         public bool IsSubscribed { get; }
         public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level>, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> Levels { get; }
         public System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> LevelsByName { get; }
@@ -40,7 +39,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
     public class VirtualSignalGroupEndpointsCache : System.IDisposable
     {
         public VirtualSignalGroupEndpointsCache(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api, bool subscribe = false) { }
-        public Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi Api { get; }
         public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> Endpoints { get; }
         public System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> EndpointsByName { get; }
         public bool IsSubscribed { get; }

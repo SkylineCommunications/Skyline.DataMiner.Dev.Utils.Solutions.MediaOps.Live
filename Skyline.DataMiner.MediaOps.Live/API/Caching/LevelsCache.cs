@@ -25,7 +25,7 @@
 			Initialize(subscribe);
 		}
 
-		public MediaOpsLiveApi Api { get; }
+		internal MediaOpsLiveApi Api { get; }
 
 		public IReadOnlyDictionary<ApiObjectReference<Level>, Level> Levels => _levels;
 
