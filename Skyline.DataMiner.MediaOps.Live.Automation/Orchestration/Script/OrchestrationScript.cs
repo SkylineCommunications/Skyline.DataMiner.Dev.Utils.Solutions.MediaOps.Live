@@ -42,7 +42,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private IEngine _engine;
 
-		public OrchestrationEventConfiguration EventConfiguration => _eventConfiguration.Value;
+		public OrchestrationEventConfiguration EventConfiguration => _eventConfiguration?.Value;
 
 		public abstract void Orchestrate(IEngine engine);
 
