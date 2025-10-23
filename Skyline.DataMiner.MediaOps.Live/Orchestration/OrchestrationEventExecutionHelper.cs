@@ -96,7 +96,7 @@
 					tasks.Add(nodeOrchestrationTask);
 				}
 
-				ProcessConnections(eventConfigurations, performanceTracker);
+				ProcessConnections(eventConfigurations.Where(e => !String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
 
 				Task.WaitAll(tasks.ToArray());
 
@@ -128,7 +128,7 @@
 			}
 		}
 
-		private void ProcessConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
+		internal void ProcessConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -158,7 +158,7 @@
 				catch (ConnectFailedException e)
 				{
 					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
@@ -166,7 +166,7 @@
 				}
 				catch (Exception e)
 				{
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
@@ -180,7 +180,7 @@
 				catch (DisconnectFailedException e)
 				{
 					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
@@ -188,7 +188,7 @@
 				}
 				catch (Exception e)
 				{
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";

@@ -25,6 +25,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
+	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
+	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
 
 	using DropdownParameterDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.DropdownParameterDisplayInfo;
 	using GroupPresetOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<Mvc.DisplayTypes.PresetGroupDisplayInfo.PresetInfo>;
@@ -159,6 +161,26 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
 
 			OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(_engine.GetUserConnection(), nodeConfig.OrchestrationScriptName, nodeConfig.OrchestrationScriptArguments.Union(addedInputParams), nodeConfig.Profile);
+		}
+
+		/// <summary>
+		/// Orchestrates all connections for the event. Based on event type, this will be a connect or disconnect operation.
+		/// </summary>
+		/// <param name="timeoutSeconds">Optional argument to override timeout (default 60 seconds).</param>
+		public void OrchestrateAllConnections(int timeoutSeconds = 60)
+		{
+			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+
+			OrchestrationEventExecutionHelper orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
+
+			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
+			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-OrchestrateAllConnections", performanceLogFilename);
+
+			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
+			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
+			{
+				orchestrationEventExecutionHelper.ProcessConnections(new List<OrchestrationEventConfiguration> { EventConfiguration }, performanceTracker);
+			}
 		}
 
 		private void RunSafe(IEngine engine)
