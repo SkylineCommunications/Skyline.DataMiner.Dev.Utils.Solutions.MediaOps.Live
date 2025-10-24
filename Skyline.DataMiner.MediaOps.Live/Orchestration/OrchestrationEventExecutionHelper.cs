@@ -509,14 +509,14 @@
 				var profileParameter = profile.Values.FirstOrDefault(value => value.Name == requiredParameter.Description);
 				if (profileParameter != null)
 				{
-					scriptParams.Add(new DmsAutomationScriptParamValue(profileParameter.Name, profileParameter.Value.ToString()));
+					scriptParams.Add(new DmsAutomationScriptParamValue(profileParameter.Name, GetProfileParameterValue(profileParameter.Value).ToString()));
 					continue;
 				}
 
 				var profileInstanceParameter = profileInstance.Value.Values.FirstOrDefault(value => value.Parameter.Name == requiredParameter.Description);
 				if (profileInstanceParameter != null)
 				{
-					scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, profileInstanceParameter.Value.ToString()));
+					scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, GetProfileParameterValue(profileInstanceParameter.Value).ToString()));
 					continue;
 				}
 
@@ -531,6 +531,18 @@
 			{
 				HadError = false,
 			};
+		}
+
+		private static object GetProfileParameterValue(ParameterValue value)
+		{
+			if (value.Type == ParameterValue.ValueType.Double)
+			{
+				return value.DoubleValue;
+			}
+			else
+			{
+				return value.StringValue;
+			}
 		}
 
 		private static OrchestrationScriptResult PrepareScriptDummies(
