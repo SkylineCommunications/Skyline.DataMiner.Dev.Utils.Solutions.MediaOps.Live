@@ -96,7 +96,7 @@
 					tasks.Add(nodeOrchestrationTask);
 				}
 
-				ProcessConnections(eventConfigurations.Where(e => !String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
+				ProcessConnections(eventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
 
 				Task.WaitAll(tasks.ToArray());
 
