@@ -539,40 +539,44 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			Orchestrate(_engine);
 
 			TryGetMetadataValue("{Orchestration Level}", out string orchestrationLevel);
-			if (orchestrationLevel == "Global")
+			if (orchestrationLevel != "Global")
 			{
-				if (EventConfiguration.IsStartEvent)
-				{
-					MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-					OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+				return orchestrationScriptOutput;
+			}
 
-					if (eventJobInfo != null)
-					{
-						eventJobInfo.MonitoringService = SetupService(_engine);
-						api.Orchestration.JobInfos.Update(eventJobInfo);
-					}
+			if (EventConfiguration.IsStartEvent)
+			{
+				MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+				OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+
+				if (eventJobInfo != null)
+				{
+					eventJobInfo.MonitoringService = SetupService(_engine);
+					api.Orchestration.JobInfos.Update(eventJobInfo);
+				}
+			}
+
+			if (EventConfiguration.IsStopEvent)
+			{
+				TearDownService(_engine);
+
+				MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+				OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+
+				if (eventJobInfo == null || eventJobInfo.MonitoringService == default)
+				{
+					return orchestrationScriptOutput;
 				}
 
-				if (EventConfiguration.IsStopEvent)
+				IDms dms = _engine.GetDms();
+				if (dms.ServiceExists(eventJobInfo.MonitoringService))
 				{
-					TearDownService(_engine);
-
-					MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-					OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
-
-					if (eventJobInfo != null || eventJobInfo.MonitoringService == default)
-					{
-						IDms dms = _engine.GetDms();
-						if (dms.ServiceExists(eventJobInfo.MonitoringService))
-						{
-							var service = dms.GetService(eventJobInfo.MonitoringService);
-							service.Delete();
-						}
-
-						eventJobInfo.MonitoringService = default;
-						api.Orchestration.JobInfos.Update(eventJobInfo);
-					}
+					var service = dms.GetService(eventJobInfo.MonitoringService);
+					service.Delete();
 				}
+
+				eventJobInfo.MonitoringService = default;
+				api.Orchestration.JobInfos.Update(eventJobInfo);
 			}
 
 			return orchestrationScriptOutput;
