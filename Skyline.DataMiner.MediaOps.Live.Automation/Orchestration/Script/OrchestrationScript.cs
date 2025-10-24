@@ -301,7 +301,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				parameterInfos.Add(info);
 			}
 
-			// Add profile instance parameter values from provide instance in input.
+			// Add profile instance parameter values from provided instance in input.
 			GetParamsFromInstance(input, parameterInfos);
 
 			// Add single parameter values from the input.
