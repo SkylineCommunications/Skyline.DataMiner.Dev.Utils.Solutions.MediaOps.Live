@@ -9,8 +9,6 @@
 	{
 		public TextBox Value { get; }
 
-		public Label Unit { get; }
-
 		public TextParameterSection(TextParameterDisplayInfo info) : base(info)
 		{
 			if (info == null)
@@ -28,7 +26,6 @@
 
 			var section = new Section();
 			section.AddWidget(Value, 0, 0);
-			section.AddWidget(Unit, 0, 1);
 			AddSection(section, 0, 1);
 		}
 
