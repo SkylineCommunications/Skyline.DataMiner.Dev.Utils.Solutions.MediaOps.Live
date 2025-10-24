@@ -13,6 +13,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Automation;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Enums;
@@ -433,6 +434,16 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 								Step = parameter.Stepsize,
 								Decimals = parameter.Decimals,
 								Unit = parameter.Units,
+							};
+						}
+
+						break;
+
+					case Parameter.ParameterType.Text:
+						{
+							parameterInfo.DisplayInfo = new TextParameterDisplayInfo()
+							{
+								Label = parameterInfo.Id,
 							};
 						}
 
