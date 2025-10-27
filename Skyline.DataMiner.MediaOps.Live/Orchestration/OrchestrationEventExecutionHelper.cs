@@ -8,7 +8,6 @@
 
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
@@ -56,14 +55,14 @@
 					return;
 				}
 
-				List<SlcOrchestrationIds.Enums.EventState> statesToDiscard =
+				List<EventState> statesToDiscard =
 				[
-					SlcOrchestrationIds.Enums.EventState.Failed,
-					SlcOrchestrationIds.Enums.EventState.Completed,
-					SlcOrchestrationIds.Enums.EventState.Configuring,
+					EventState.Failed,
+					EventState.Completed,
+					EventState.Configuring,
 				];
 
-				ExecuteEvents(events.Where(e => !statesToDiscard.Contains(e.EventState.Value)), performanceTracker);
+				ExecuteEvents(events.Where(e => !statesToDiscard.Contains(e.EventState)), performanceTracker);
 			}
 		}
 
@@ -102,7 +101,7 @@
 
 				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
 				{
-					if (orchestrationEventConfiguration.EventState != SlcOrchestrationIds.Enums.EventState.Failed)
+					if (orchestrationEventConfiguration.EventState != EventState.Failed)
 					{
 						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
 					}
@@ -387,7 +386,7 @@
 
 				Task.WaitAll(nodeOrchestrationTasks.ToArray());
 
-				if (orchestrationEventConfiguration.EventState == SlcOrchestrationIds.Enums.EventState.Failed)
+				if (orchestrationEventConfiguration.EventState == EventState.Failed)
 				{
 					orchestrationEventConfiguration.FailureInfo += String.Join("\n", errors);
 				}

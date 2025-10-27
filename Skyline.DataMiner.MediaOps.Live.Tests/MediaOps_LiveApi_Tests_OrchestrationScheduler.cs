@@ -1,7 +1,7 @@
 namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
 	[TestClass]
@@ -16,8 +16,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var ev = new OrchestrationEvent
 			{
 				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
-				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
 				Name = "Test Event Confirmed",
 			};
 
@@ -46,8 +46,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(new OrchestrationEvent
 			{
 				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
-				EventState = SlcOrchestrationIds.Enums.EventState.Draft,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Draft,
+				EventType = EventType.Other,
 				Name = "Test Event Draft",
 			});
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
@@ -65,8 +65,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(new OrchestrationEvent
 			{
 				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
-				EventState = SlcOrchestrationIds.Enums.EventState.Cancelled,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Cancelled,
+				EventType = EventType.Other,
 				Name = "Test Event Cancelled",
 			});
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
@@ -83,8 +83,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var ev = new OrchestrationEvent
 			{
 				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
-				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
 				Name = "Test Event Confirmed",
 			};
 
@@ -94,7 +94,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 
-			ev.EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
+			ev.EventState = EventState.Cancelled;
 
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
@@ -111,8 +111,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var ev = new OrchestrationEvent
 			{
 				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
-				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
 				Name = "Test Event Confirmed",
 			};
 
@@ -136,8 +136,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var ev = new OrchestrationEvent()
 			{
 				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
-				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
 				Name = "Test Event Confirmed",
 			};
 
@@ -150,7 +150,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			api.Orchestration.ExecuteEventsNow(new List<OrchestrationEvent> { ev });
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
-			Assert.AreEqual(SlcOrchestrationIds.Enums.EventState.Completed, ev.EventState);
+			Assert.AreEqual(EventState.Completed, ev.EventState);
 		}
 
 		[TestMethod]
@@ -162,8 +162,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var ev = new OrchestrationEventConfiguration
 			{
 				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
-				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
 				Name = "Test Event Confirmed",
 				GlobalOrchestrationScript = "Script_Success",
 			};
@@ -177,7 +177,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			api.Orchestration.ExecuteEventsNow(new List<OrchestrationEvent> { ev });
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
-			Assert.AreEqual(SlcOrchestrationIds.Enums.EventState.Completed, ev.EventState);
+			Assert.AreEqual(EventState.Completed, ev.EventState);
 		}
 
 		[TestMethod]
@@ -189,8 +189,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var ev = new OrchestrationEventConfiguration
 			{
 				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
-				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
 				Name = "Test Event Confirmed",
 				GlobalOrchestrationScript = "Script_Fail",
 			};
@@ -204,7 +204,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			api.Orchestration.ExecuteEventsNow(new List<OrchestrationEvent> { ev });
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
-			Assert.AreEqual(SlcOrchestrationIds.Enums.EventState.Failed, ev.EventState);
+			Assert.AreEqual(EventState.Failed, ev.EventState);
 		}
 
 		[TestMethod]
@@ -217,8 +217,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var ev = new OrchestrationEvent
 			{
 				EventTime = hourFromNow,
-				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
 				Name = "Test Event Confirmed",
 			};
 
@@ -257,22 +257,22 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var ev = new OrchestrationEvent
 			{
 				EventTime = hourFromNow,
-				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
 				Name = "Test Event Confirmed",
 			};
 			var ev2 = new OrchestrationEvent
 			{
 				EventTime = hourFromNow,
-				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
 				Name = "Test Event Confirmed",
 			};
 			var ev3 = new OrchestrationEvent
 			{
 				EventTime = twoHourFromNow,
-				EventState = SlcOrchestrationIds.Enums.EventState.Confirmed,
-				EventType = SlcOrchestrationIds.Enums.EventType.Other,
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
 				Name = "Test Event Confirmed",
 			};
 

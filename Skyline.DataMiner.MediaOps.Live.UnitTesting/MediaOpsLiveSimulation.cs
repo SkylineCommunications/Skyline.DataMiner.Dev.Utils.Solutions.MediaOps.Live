@@ -11,7 +11,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.TransportTypes;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
@@ -439,8 +438,8 @@
 				{
 					Name = $"Test Event {i}",
 					EventTime = DateTime.UtcNow + TimeSpan.FromHours(1),
-					EventType = SlcOrchestrationIds.Enums.EventType.Other,
-					EventState = SlcOrchestrationIds.Enums.EventState.Draft,
+					EventType = EventType.Other,
+					EventState = EventState.Draft,
 					Configuration =
 					{
 						Connections = connections,

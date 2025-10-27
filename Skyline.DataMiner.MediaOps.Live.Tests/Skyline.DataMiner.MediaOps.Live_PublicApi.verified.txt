@@ -206,6 +206,25 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Enums
         Source = 0,
         Destination = 1,
     }
+    public enum EventState
+    {
+        Confirmed = 0,
+        Configuring = 1,
+        Cancelled = 2,
+        Completed = 3,
+        Failed = 4,
+        Draft = 5,
+    }
+    public enum EventType
+    {
+        Other = 0,
+        PrerollStart = 1,
+        PrerollStop = 2,
+        PostrollStart = 3,
+        PostrollStop = 4,
+        Start = 5,
+        Stop = 6,
+    }
     public enum OrchestrationScriptArgumentType
     {
         Element = 0,
@@ -543,9 +562,9 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
     {
         public OrchestrationEvent() { }
         public System.DateTimeOffset? ActualStartTime { get; }
-        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration.SlcOrchestrationIds.Enums.EventState? EventState { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.API.Enums.EventState EventState { get; set; }
         public System.DateTimeOffset? EventTime { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration.SlcOrchestrationIds.Enums.EventType EventType { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.API.Enums.EventType EventType { get; set; }
         public string FailureInfo { get; }
         public string Name { get; set; }
         public System.TimeSpan? OrchestrationDuration { get; }
@@ -918,176 +937,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Interfaces
         System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.DOM.Interfaces.IDomDefinitionInfo> Definitions { get; }
         string ModuleId { get; }
         Skyline.DataMiner.Net.Apps.Modules.ModuleSettings ModuleSettings { get; }
-    }
-}
-namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
-{
-    public static class SlcConnectivityManagementIds
-    {
-        public const string ModuleId = "(slc)connectivity_management";
-        public static class Behaviors { }
-        public static class Definitions
-        {
-            public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId Category { get; }
-            public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId Endpoint { get; }
-            public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId Level { get; }
-            public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId TransportType { get; }
-            public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId VirtualSignalGroup { get; }
-        }
-        public static class Enums
-        {
-            public enum Role
-            {
-                Source = 0,
-                Destination = 1,
-            }
-        }
-        public static class Sections
-        {
-            public static class CategoryInfo
-            {
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Name { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID ParentCategory { get; }
-            }
-            public static class EndpointInfo
-            {
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID ControlElement { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID ControlIdentifier { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Element { get; }
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Identifier { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Name { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Role { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID TransportMetadata { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID TransportType { get; }
-            }
-            public static class EndpointTransportMetadata
-            {
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID FieldName { get; }
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Value { get; }
-            }
-            public static class LevelInfo
-            {
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Name { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Number { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID TransportType { get; }
-            }
-            public static class TransportTypeField
-            {
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Name { get; }
-            }
-            public static class TransportTypeInfo
-            {
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Name { get; }
-            }
-            public static class VirtualSignalGroupInfo
-            {
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Categories { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Description { get; }
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Name { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Role { get; }
-            }
-            public static class VirtualSignalGroupLevel
-            {
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Endpoint { get; }
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Level { get; }
-            }
-        }
-    }
-}
-namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
-{
-    public static class SlcOrchestrationIds
-    {
-        public const string ModuleId = "(slc)orchestration";
-        public static class Behaviors { }
-        public static class Definitions
-        {
-            public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId Configuration { get; }
-            public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId OrchestrationEvent { get; }
-            public static Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId OrchestrationJobInfo { get; }
-        }
-        public static class Enums
-        {
-            public enum EventState
-            {
-                Confirmed = 0,
-                Configuring = 1,
-                Cancelled = 2,
-                Completed = 3,
-                Failed = 4,
-                Draft = 5,
-            }
-            public enum EventType
-            {
-                Other = 0,
-                Prerollstart = 1,
-                Prerollstop = 2,
-                Postrollstart = 3,
-                Postrollstop = 4,
-                Start = 5,
-                Stop = 6,
-            }
-        }
-        public static class Sections
-        {
-            public static class ConfigurationInfo
-            {
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID Configuration { get; }
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-            }
-            public static class Connection
-            {
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID DestinationNodeID { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID DestinationVSG { get; }
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID LevelMapping { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID SourceNodeID { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID SourceVSG { get; }
-            }
-            public static class GlobalConfiguration
-            {
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID OrchestrationProfile { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID OrchestrationScriptArguments { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID OrchestrationScriptName { get; }
-            }
-            public static class JobInfo
-            {
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID JobReference { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID MonitoringService { get; }
-            }
-            public static class NodeConfiguration
-            {
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID NodeID { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID NodeLabel { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID OrchestrationProfile { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID OrchestrationScriptArguments { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID OrchestrationScriptName { get; }
-            }
-            public static class OrchestrationEventInfo
-            {
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID ActualStartTime { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID EventName { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID EventState { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID EventTime { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID EventType { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID FailureInfo { get; }
-                public static Skyline.DataMiner.Net.Sections.SectionDefinitionID Id { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID JobInformation { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID OrchestrationDuration { get; }
-                public static Skyline.DataMiner.Net.Sections.FieldDescriptorID SchedulerReference { get; }
-            }
-        }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Tools

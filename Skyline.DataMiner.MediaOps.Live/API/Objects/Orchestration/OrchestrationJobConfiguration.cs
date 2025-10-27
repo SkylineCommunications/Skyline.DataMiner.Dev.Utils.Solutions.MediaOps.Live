@@ -3,7 +3,8 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Net;
 
 	/// <summary>
@@ -74,7 +75,7 @@
 		{
 			foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
 			{
-				if (orchestrationEvent.EventState != SlcOrchestrationIds.Enums.EventState.Confirmed)
+				if (orchestrationEvent.EventState != EventState.Confirmed)
 				{
 					continue;
 				}
