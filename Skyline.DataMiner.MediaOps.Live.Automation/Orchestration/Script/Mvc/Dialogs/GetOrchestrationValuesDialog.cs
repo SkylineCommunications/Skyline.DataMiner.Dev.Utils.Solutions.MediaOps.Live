@@ -17,7 +17,6 @@
 
 		public GetOrchestrationValuesDialog(IEngine engine, IReadOnlyCollection<ParameterInfo> parameterInfos) : base(engine)
 		{
-			engine.GenerateInformation($"ParamInfos|{JsonConvert.SerializeObject(parameterInfos)}");
 			InitializeSections(parameterInfos, out var parameterSections, out var sectionsToDisplay);
 			Sections = parameterSections;
 

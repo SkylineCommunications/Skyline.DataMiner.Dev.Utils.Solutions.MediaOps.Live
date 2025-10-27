@@ -296,7 +296,15 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				{
 					Id = profileParameter.Key,
 					Reference = reference,
+					ValueType = profileParameter.Value.Type
 				};
+
+				switch (profileParameter.Value?.Type)
+				{
+					case Parameter.ParameterType.Text:
+						info.Type = "TextParameter";
+						break;
+				}
 
 				parameterInfos.Add(info);
 			}
@@ -469,6 +477,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			{
 				// Tip: If there are a lot of definitions, getting all instances in one call will be more efficient.
 				List<ProfileInstance> instances = profileHelper.ProfileInstances.Read(ProfileInstanceExposers.AppliesToID.Equal(definition.ID));
+				_engine.GenerateInformation($"AssignProfileDefinitionGroups|GetProfileInstance{definition.ID}|{JsonConvert.SerializeObject(instances)}");
 
 				List<GroupPresetOption> presets = new List<GroupPresetOption>(instances.Count);
 				foreach (ProfileInstance instance in instances)
@@ -488,12 +497,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 						switch (value.Value.Type)
 						{
 							case ParameterValue.ValueType.Double:
-								_engine.GenerateInformation("AssignProfileDefinitionGroups|Adding Double Param");
 								presetInfo.ParameterValues.Add((parameter, value.Value.DoubleValue));
 								break;
 
 							case ParameterValue.ValueType.String:
-								_engine.GenerateInformation("AssignProfileDefinitionGroups|Adding String Param");
 								presetInfo.ParameterValues.Add((parameter, value.Value.StringValue));
 								break;
 
