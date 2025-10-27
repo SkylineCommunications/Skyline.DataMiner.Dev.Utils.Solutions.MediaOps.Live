@@ -134,7 +134,7 @@
 
 			set
 			{
-				PublicSetState((SlcOrchestrationIds.Enums.EventState)(int)value);
+				PublicSetState(value);
 			}
 		}
 
@@ -279,9 +279,9 @@
 			return new OrchestrationEventConfiguration(_domInstance, new ConfigurationInstance(configurationDomInstance));
 		}
 
-		internal void InternalSetState(SlcOrchestrationIds.Enums.EventState? state)
+		internal void InternalSetState(EventState state)
 		{
-			_domInstance.OrchestrationEventInfo.EventState = state;
+			_domInstance.OrchestrationEventInfo.EventState = (SlcOrchestrationIds.Enums.EventState)(int)state;
 		}
 
 		internal void SendPlanJobStateUpdate(MediaOpsLiveApi api)
@@ -332,14 +332,18 @@
 			}
 		}
 
-		private void PublicSetState(SlcOrchestrationIds.Enums.EventState state)
+		private void PublicSetState(EventState state)
 		{
 			switch (state)
 			{
-				case SlcOrchestrationIds.Enums.EventState.Cancelled:
-				case SlcOrchestrationIds.Enums.EventState.Draft:
-				case SlcOrchestrationIds.Enums.EventState.Confirmed:
-					_domInstance.OrchestrationEventInfo.EventState = state;
+				case EventState.Cancelled:
+					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
+					return;
+				case EventState.Draft:
+					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
+					return;
+				case EventState.Confirmed:
+					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
 					return;
 
 				default:

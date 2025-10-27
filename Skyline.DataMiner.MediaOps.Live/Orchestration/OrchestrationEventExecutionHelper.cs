@@ -14,7 +14,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Enums;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
@@ -74,7 +73,7 @@
 				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
 				foreach (OrchestrationEventConfiguration orchestrationEvent in eventConfigurations)
 				{
-					orchestrationEvent.InternalSetState(SlcOrchestrationIds.Enums.EventState.Configuring);
+					orchestrationEvent.InternalSetState(EventState.Configuring);
 					orchestrationEvent.ActualStartTime = DateTimeOffset.UtcNow;
 				}
 
@@ -103,7 +102,7 @@
 				{
 					if (orchestrationEventConfiguration.EventState != EventState.Failed)
 					{
-						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
+						orchestrationEventConfiguration.InternalSetState(EventState.Completed);
 					}
 
 					orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
@@ -159,7 +158,7 @@
 					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
-						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
@@ -167,7 +166,7 @@
 				{
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
 					{
-						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
@@ -181,7 +180,7 @@
 					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
-						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
@@ -189,7 +188,7 @@
 				{
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
 					{
-						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
@@ -375,7 +374,7 @@
 							}
 
 							errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: {String.Join("\n", nodeScriptResult.ErrorMessages)}");
-							orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+							orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						},
 						CancellationToken.None,
 						TaskCreationOptions.None,
@@ -408,7 +407,7 @@
 				if (globalScriptResult.HadError)
 				{
 					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", globalScriptResult.ErrorMessages)}";
-					orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 				}
 			}
 		}
