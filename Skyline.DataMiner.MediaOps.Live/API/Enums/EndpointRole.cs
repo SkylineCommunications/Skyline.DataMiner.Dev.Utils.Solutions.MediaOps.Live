@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Enums
 {
-	public enum Role
+	public enum EndpointRole
 	{
 		Source = 0,
 		Destination = 1,

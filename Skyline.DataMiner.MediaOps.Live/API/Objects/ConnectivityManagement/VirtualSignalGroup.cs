@@ -75,13 +75,13 @@
 			}
 		}
 
-		public Role Role
+		public EndpointRole Role
 		{
 			get
 			{
 				if (_domInstance.VirtualSignalGroupInfo.Role.HasValue)
 				{
-					return (Role)(int)_domInstance.VirtualSignalGroupInfo.Role.Value;
+					return (EndpointRole)(int)_domInstance.VirtualSignalGroupInfo.Role.Value;
 				}
 
 				return default;
@@ -121,9 +121,9 @@
 			}
 		}
 
-		public bool IsSource => Role == Role.Source;
+		public bool IsSource => Role == EndpointRole.Source;
 
-		public bool IsDestination => Role == Role.Destination;
+		public bool IsDestination => Role == EndpointRole.Destination;
 
 		public IEnumerable<(ApiObjectReference<Level> Level, ApiObjectReference<Endpoint> Endpoint)> GetLevelEndpoints()
 		{
@@ -309,7 +309,7 @@
 		public static readonly Exposer<VirtualSignalGroup, Guid> ID = new Exposer<VirtualSignalGroup, Guid>(x => x.ID, nameof(VirtualSignalGroup.ID));
 		public static readonly Exposer<VirtualSignalGroup, string> Name = new Exposer<VirtualSignalGroup, string>(x => x.Name, nameof(VirtualSignalGroup.Name));
 		public static readonly Exposer<VirtualSignalGroup, string> Description = new Exposer<VirtualSignalGroup, string>(x => x.Description, nameof(VirtualSignalGroup.Description));
-		public static readonly Exposer<VirtualSignalGroup, Role> Role = new Exposer<VirtualSignalGroup, Role>(x => x.Role, nameof(VirtualSignalGroup.Role));
+		public static readonly Exposer<VirtualSignalGroup, EndpointRole> Role = new Exposer<VirtualSignalGroup, EndpointRole>(x => x.Role, nameof(VirtualSignalGroup.Role));
 		public static readonly DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Level>> Level = DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Level>>.CreateFromListExposer(new Exposer<VirtualSignalGroup, IEnumerable>(x => x.Levels.Select(c => c.Level), nameof(LevelEndpoint.Level)));
 		public static readonly DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Endpoint>> Endpoint = DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Endpoint>>.CreateFromListExposer(new Exposer<VirtualSignalGroup, IEnumerable>(x => x.Levels.Select(c => c.Endpoint), nameof(LevelEndpoint.Endpoint)));
 		public static readonly DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Category>> Categories = DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Category>>.CreateFromListExposer(new Exposer<VirtualSignalGroup, IEnumerable>(x => x.Categories.Select(c => c.ID), nameof(VirtualSignalGroup.Categories)));

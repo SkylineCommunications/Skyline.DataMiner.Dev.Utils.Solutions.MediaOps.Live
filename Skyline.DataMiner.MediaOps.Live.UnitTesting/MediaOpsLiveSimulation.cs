@@ -203,7 +203,7 @@
 
 						var videoSource = new Endpoint(Tools.GuidFromString($"Video Source {vsgCounter}"))
 						{
-							Role = Role.Source,
+							Role = EndpointRole.Source,
 							Name = $"Video Source {vsgCounter}",
 							TransportType = transportTypeTSoIP,
 							Element = elementId,
@@ -217,7 +217,7 @@
 						};
 						var audioSource = new Endpoint(Tools.GuidFromString($"Audio Source {vsgCounter}"))
 						{
-							Role = Role.Source,
+							Role = EndpointRole.Source,
 							Name = $"Audio Source {vsgCounter}",
 							TransportType = transportTypeTSoIP,
 							Element = elementId,
@@ -231,7 +231,7 @@
 						};
 						var videoDestination = new Endpoint(Tools.GuidFromString($"Video Destination {vsgCounter}"))
 						{
-							Role = Role.Destination,
+							Role = EndpointRole.Destination,
 							Name = $"Video Destination {vsgCounter}",
 							TransportType = transportTypeTSoIP,
 							Element = elementId,
@@ -239,7 +239,7 @@
 						};
 						var audioDestination = new Endpoint(Tools.GuidFromString($"Audio Destination {vsgCounter}"))
 						{
-							Role = Role.Destination,
+							Role = EndpointRole.Destination,
 							Name = $"Audio Destination {vsgCounter}",
 							TransportType = transportTypeTSoIP,
 							Element = elementId,
@@ -251,7 +251,7 @@
 						{
 							var source1 = new VirtualSignalGroup(Tools.GuidFromString($"Source {vsgCounter}"))
 							{
-								Role = Role.Source,
+								Role = EndpointRole.Source,
 								Name = $"Source {vsgCounter}",
 								Description = $"Source {vsgCounter}",
 								Categories =
@@ -266,7 +266,7 @@
 							};
 							var destination1 = new VirtualSignalGroup(Tools.GuidFromString($"Destination {vsgCounter}"))
 							{
-								Role = Role.Destination,
+								Role = EndpointRole.Destination,
 								Name = $"Destination {vsgCounter}",
 								Description = $"Destination {vsgCounter}",
 								Categories =

@@ -101,7 +101,7 @@
 			var transportType = api.TransportTypes.Query().First(x => x.Name == "TSoIP");
 
 			// doesn't throw exception
-			var endpoint = new Endpoint { Name = "E1", Role = Role.Source, TransportType = transportType };
+			var endpoint = new Endpoint { Name = "E1", Role = EndpointRole.Source, TransportType = transportType };
 			api.Endpoints.Create(endpoint);
 
 			endpoint.Name = "E2";
@@ -109,7 +109,7 @@
 
 			// create item with same name
 			var ex = Assert.Throws<InvalidOperationException>(
-				() => { api.Endpoints.Create(new Endpoint { Name = "E2", Role = Role.Destination, TransportType = transportType }); });
+				() => { api.Endpoints.Create(new Endpoint { Name = "E2", Role = EndpointRole.Destination, TransportType = transportType }); });
 			Assert.AreEqual("Cannot save endpoints. The following names are already in use: E2", ex.Message);
 		}
 
@@ -131,7 +131,7 @@
 		{
 			var api = new MediaOpsLiveApiMock();
 
-			var endpoint = new Endpoint { Name = "E1", Role = Role.Source };
+			var endpoint = new Endpoint { Name = "E1", Role = EndpointRole.Source };
 
 			var ex = Assert.Throws<Exception>(
 				() => { api.Endpoints.CreateOrUpdate(endpoint); });
@@ -144,7 +144,7 @@
 			var api = new MediaOpsLiveApiMock();
 
 			// doesn't throw exception
-			var c = new VirtualSignalGroup { Name = "VSG1", Role = Role.Source };
+			var c = new VirtualSignalGroup { Name = "VSG1", Role = EndpointRole.Source };
 			api.VirtualSignalGroups.Create(c);
 
 			c.Name = "VSG2";
@@ -152,7 +152,7 @@
 
 			// create item with same name
 			var ex = Assert.Throws<InvalidOperationException>(
-				() => { api.VirtualSignalGroups.Create(new VirtualSignalGroup { Name = "VSG2", Role = Role.Destination }); });
+				() => { api.VirtualSignalGroups.Create(new VirtualSignalGroup { Name = "VSG2", Role = EndpointRole.Destination }); });
 			Assert.AreEqual("Cannot save VSGs. The following names are already in use: VSG2", ex.Message);
 		}
 

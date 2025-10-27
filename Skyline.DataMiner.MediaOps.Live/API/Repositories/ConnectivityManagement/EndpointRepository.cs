@@ -26,7 +26,7 @@
 
 		protected internal override DomDefinitionId DomDefinition => Endpoint.DomDefinition;
 
-		public Endpoint GetByRoleElementAndIdentifier(Role role, DmsElementId elementId, string identifier)
+		public Endpoint GetByRoleElementAndIdentifier(EndpointRole role, DmsElementId elementId, string identifier)
 		{
 			if (String.IsNullOrWhiteSpace(identifier))
 			{

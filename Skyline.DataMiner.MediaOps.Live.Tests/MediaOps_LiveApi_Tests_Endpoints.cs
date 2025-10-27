@@ -16,7 +16,7 @@
 			var api = new MediaOpsLiveApiMock();
 
 			var endpoint = api.Endpoints.GetByRoleElementAndIdentifier(
-				Role.Destination,
+				EndpointRole.Destination,
 				new DmsElementId(123, 1),
 				"Audio-1");
 

@@ -201,17 +201,17 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Enums
 {
+    public enum EndpointRole
+    {
+        Source = 0,
+        Destination = 1,
+    }
     public enum OrchestrationScriptArgumentType
     {
         Element = 0,
         Parameter = 1,
         Preset = 2,
         Metadata = 3,
-    }
-    public enum Role
-    {
-        Source = 0,
-        Destination = 1,
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Extensions
@@ -358,7 +358,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public bool IsDestination { get; }
         public bool IsSource { get; }
         public string Name { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.API.Enums.Role Role { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole Role { get; set; }
         public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportMetadata> TransportMetadata { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> TransportType { get; set; }
         public string GetTransportMetadata(string fieldName) { }
@@ -376,7 +376,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, System.Guid> ID;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, string> Identifier;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, string> Name;
-        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.API.Enums.Role> Role;
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole> Role;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>?> TransportType;
     }
     public class Level : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level>
@@ -460,7 +460,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public bool IsSource { get; }
         public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.LevelEndpoint> Levels { get; set; }
         public string Name { get; set; }
-        public Skyline.DataMiner.MediaOps.Live.API.Enums.Role Role { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole Role { get; set; }
         public void AssignEndpointToLevel(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> level, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
         public void AssignEndpointToLevel(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level level, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint endpoint) { }
         public bool ContainsEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
@@ -498,7 +498,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, System.Guid> ID;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.DynamicListExposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level>> Level;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, string> Name;
-        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, Skyline.DataMiner.MediaOps.Live.API.Enums.Role> Role;
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole> Role;
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
@@ -646,7 +646,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagemen
         protected override SLDataGateway.API.Types.Querying.IOrderByElement CreateOrderBy(string fieldName, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByElement(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByElementAndIdentifiers(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, System.Collections.Generic.IEnumerable<string> identifiers) { }
-        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetByRoleElementAndIdentifier(Skyline.DataMiner.MediaOps.Live.API.Enums.Role role, Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, string identifier) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetByRoleElementAndIdentifier(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role, Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, string identifier) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetByTransportMetadata([System.Runtime.CompilerServices.TupleElementNames(new string[] {
                 "fieldName",
                 "value"})] params System.ValueTuple<string, string>[] metadataFilters) { }

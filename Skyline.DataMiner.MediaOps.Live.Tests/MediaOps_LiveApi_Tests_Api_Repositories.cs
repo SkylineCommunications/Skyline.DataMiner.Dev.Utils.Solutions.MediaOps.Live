@@ -35,7 +35,7 @@
 			var endpointCount = api.Endpoints.Count(endpointFilter);
 			Assert.AreEqual(20, endpointCount);
 
-			var vsgFilter = VirtualSignalGroupExposers.Role.UncheckedEqual(Role.Destination);
+			var vsgFilter = VirtualSignalGroupExposers.Role.UncheckedEqual(EndpointRole.Destination);
 			var vsgCount = api.VirtualSignalGroups.Count(vsgFilter);
 			Assert.AreEqual(10, vsgCount);
 		}
