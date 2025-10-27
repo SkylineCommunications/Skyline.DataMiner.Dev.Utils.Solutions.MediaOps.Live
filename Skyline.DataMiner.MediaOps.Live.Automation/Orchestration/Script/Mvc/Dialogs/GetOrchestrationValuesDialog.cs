@@ -3,6 +3,8 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects;
@@ -15,6 +17,7 @@
 
 		public GetOrchestrationValuesDialog(IEngine engine, IReadOnlyCollection<ParameterInfo> parameterInfos) : base(engine)
 		{
+			engine.GenerateInformation($"ParamInfos|{JsonConvert.SerializeObject(parameterInfos)}");
 			InitializeSections(parameterInfos, out var parameterSections, out var sectionsToDisplay);
 			Sections = parameterSections;
 

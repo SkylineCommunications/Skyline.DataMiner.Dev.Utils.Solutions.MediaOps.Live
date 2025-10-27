@@ -314,34 +314,36 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private void GetParamsFromInstance(OrchestrationScriptInput input, List<ParameterInfo> parameterInfos)
 		{
-			if (!String.IsNullOrEmpty(input.ProfileInstance))
+			if (String.IsNullOrEmpty(input.ProfileInstance))
 			{
-				ProfileHelper helper = new ProfileHelper(_engine.SendSLNetMessages);
-				List<ProfileInstance> instances = helper.ProfileInstances.Read(ProfileInstanceExposers.Name.Equal(input.ProfileInstance));
+				return;
+			}
 
-				if (instances.Count == 0)
+			ProfileHelper helper = new ProfileHelper(_engine.SendSLNetMessages);
+			List<ProfileInstance> instances = helper.ProfileInstances.Read(ProfileInstanceExposers.Name.Equal(input.ProfileInstance));
+
+			if (instances.Count == 0)
+			{
+				throw new InvalidOperationException($"No profile instance found with name {input.ProfileInstance}");
+			}
+
+			if (instances.Count > 1)
+			{
+				throw new InvalidOperationException($"Multiple profile instances found with name {input.ProfileInstance}");
+			}
+
+			ProfileInstance instance = instances.First();
+
+			foreach (ProfileParameterEntry profileParameterEntry in instance.Values)
+			{
+				ParameterInfo matchInfo = parameterInfos
+					.FirstOrDefault(x => (x.Reference as ProfileParameterID).Id == profileParameterEntry.ParameterID);
+
+				if (matchInfo != null)
 				{
-					throw new InvalidOperationException($"No profile instance found with name {input.ProfileInstance}");
-				}
-
-				if (instances.Count > 1)
-				{
-					throw new InvalidOperationException($"Multiple profile instances found with name {input.ProfileInstance}");
-				}
-
-				ProfileInstance instance = instances.First();
-
-				foreach (ProfileParameterEntry profileParameterEntry in instance.Values)
-				{
-					ParameterInfo matchInfo = parameterInfos
-						.FirstOrDefault(x => (x.Reference as ProfileParameterID).Id == profileParameterEntry.ParameterID);
-
-					if (matchInfo != null)
-					{
-						matchInfo.Value = profileParameterEntry.Value.Type == ParameterValue.ValueType.Double
-							? profileParameterEntry.Value.DoubleValue
-							: profileParameterEntry.Value.StringValue;
-					}
+					matchInfo.Value = profileParameterEntry.Value.Type == ParameterValue.ValueType.Double
+						? profileParameterEntry.Value.DoubleValue
+						: profileParameterEntry.Value.StringValue;
 				}
 			}
 		}
@@ -374,6 +376,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				{
 					throw new InvalidOperationException($"Parameter {parameter} wasn't requested");
 				}
+
+				_engine.GenerateInformation($"Interprete Types|{JsonConvert.SerializeObject(profileParameters)}");
 
 				parameterInfo.Description = parameter.Name;
 				parameterInfo.Type = "ProfileParameter";
@@ -484,10 +488,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 						switch (value.Value.Type)
 						{
 							case ParameterValue.ValueType.Double:
+								_engine.GenerateInformation("AssignProfileDefinitionGroups|Adding Double Param");
 								presetInfo.ParameterValues.Add((parameter, value.Value.DoubleValue));
 								break;
 
 							case ParameterValue.ValueType.String:
+								_engine.GenerateInformation("AssignProfileDefinitionGroups|Adding String Param");
 								presetInfo.ParameterValues.Add((parameter, value.Value.StringValue));
 								break;
 
