@@ -384,8 +384,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 					throw new InvalidOperationException($"Parameter {parameter} wasn't requested");
 				}
 
-				_engine.GenerateInformation($"Interprete Types|{JsonConvert.SerializeObject(profileParameters)}");
-
 				parameterInfo.Description = parameter.Name;
 				parameterInfo.Type = "ProfileParameter";
 				switch (parameter.InterpreteType.Type)
@@ -476,7 +474,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			{
 				// Tip: If there are a lot of definitions, getting all instances in one call will be more efficient.
 				List<ProfileInstance> instances = profileHelper.ProfileInstances.Read(ProfileInstanceExposers.AppliesToID.Equal(definition.ID));
-				_engine.GenerateInformation($"AssignProfileDefinitionGroups|GetProfileInstance{definition.ID}|{JsonConvert.SerializeObject(instances)}");
 
 				List<GroupPresetOption> presets = new List<GroupPresetOption>(instances.Count);
 				foreach (ProfileInstance instance in instances)
