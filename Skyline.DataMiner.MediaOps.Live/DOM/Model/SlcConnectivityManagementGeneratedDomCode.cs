@@ -12,7 +12,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
 
-	public static class SlcConnectivityManagementIds
+	internal static class SlcConnectivityManagementIds
 	{
 		public const string ModuleId = "(slc)connectivity_management";
 		public static class Enums

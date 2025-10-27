@@ -11,7 +11,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
 
-	public static class SlcOrchestrationIds
+	internal static class SlcOrchestrationIds
 	{
 		public const string ModuleId = "(slc)orchestration";
 		public static class Enums

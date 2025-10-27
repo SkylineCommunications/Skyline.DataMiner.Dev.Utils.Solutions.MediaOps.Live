@@ -4,7 +4,6 @@
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
 	using IParameterGroupDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.IParameterGroupDisplayInfo;
