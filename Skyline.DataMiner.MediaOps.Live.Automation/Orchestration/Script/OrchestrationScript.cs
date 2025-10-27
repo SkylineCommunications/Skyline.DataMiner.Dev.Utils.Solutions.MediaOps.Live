@@ -296,7 +296,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				{
 					Id = profileParameter.Key,
 					Reference = reference,
-					ValueType = profileParameter.Value.Type
 				};
 
 				switch (profileParameter.Value?.Type)
