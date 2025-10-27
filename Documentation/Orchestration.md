@@ -25,7 +25,7 @@ Orchestration events are the core of the Orchestration module.
 Each event represents a collection of specific action that needs to be executed at a scheduled time.
 
 ### Create an event
-```
+```csharp
 OrchestrationEvent orchestrationEvent = new OrchestrationEvent
 {
 	Name = "Event Name",
@@ -40,18 +40,18 @@ Events are always part of a job.
 This job provides context and allows grouping multiple events together, such as start and stop events, or preroll and postroll events.
 
 ### Create/Find a job
-```
+```csharp
 MediaOpsLiveApi api = engine.GetMediaOpsLiveApi();
 OrchestrationJob orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob("MyJobReference");
 ```
 
 ### Add an event to a job
-```
+```csharp
 orchestrationJob.OrchestrationEvents.Add(orchestrationEvent);
 ```
 
 ### Save a job
-```
+```csharp
 api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 ```
 
@@ -81,7 +81,7 @@ To provide any actual orchestration information, the orchestration event configu
 which extends the options from the orchestration event object
 
 ### Create an orchestration event with configuration
-```
+```csharp
 OrchestrationEventConfiguration orchestrationEventConfiguration = new OrchestrationEventConfiguration
 {
 	Name = "Event Name",
@@ -96,18 +96,18 @@ Events are always part of a job.
 This job provides context and allows grouping multiple events together, such as start and stop events, or preroll and postroll events.
 
 ### Create/Find a job configuration 
-```
+```csharp
 MediaOpsLiveApi api = engine.GetMediaOpsLiveApi();
 OrchestrationJobConfiguration orchestrationJobConfiguration = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration("MyJobReference");
 ```
 
 ### Add an event to a job
-```
+```csharp
 orchestrationJobConfiguration.OrchestrationEvents.Add(orchestrationEventConfiguration);
 ```
 
 ### Save a job
-```
+```csharp
 api.Orchestration.SaveOrchestrationJobConfiguration(orchestrationJobConfiguration);
 ```
 
@@ -123,11 +123,11 @@ If needed, an event can also be executed immediately, regardless of it's schedul
 The executed event can also be a completely new event that is not yet part of a job.
 If the executed event was already scheduled in the future, the scheduled instance will be removed.
 
-```
+```csharp
 api.Orchestration.ExecuteEventsNow(new List<OrchestrationEvent> { orchestrationEvent });
 ```
 
-```
+```csharp
 api.Orchestration.ExecuteEventsNow(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration });
 ```
 
@@ -138,7 +138,7 @@ api.Orchestration.ExecuteEventsNow(new List<OrchestrationEventConfiguration> { o
 
 ### Add nodes to an event
 To specify a collection of resources that require orchestration actions, nodes can be added to an event configuration.
-```
+```csharp
 OrchestrationEventConfiguration orchestrationEventConfiguration = new OrchestrationEventConfiguration
 {
 	Name = "Event Name",
@@ -163,7 +163,7 @@ OrchestrationEventConfiguration orchestrationEventConfiguration = new Orchestrat
 When multiple nodes are added to an event configuration, connections between these nodes can be defined, by referencing the NodeId of the nodes.
 A reference to the Virtual Signal Groups gives meaning to the connection and will be used during execution to connect/disconnect the actual signals.
 
-```
+```csharp
 	Configuration =
 	{
 		NodeConfigurations =
@@ -198,7 +198,7 @@ In case a more refined connection is needed, level mapping can be added.
 In the example below, we only want to connect audio and video signals between the two nodes.
 Additionally, the audio channels are shuffled.
 Any other signals will not be connected.
-```
+```csharp
 		Connections =
 		{
 			new Connection
@@ -229,7 +229,7 @@ Furthermore, scripts can be added on either an event (global) level or on the no
 When executing an event, the orchestration will only consider 1) the global script or 2) the scripts of the nodes.
 When both global and node scripts are required, the node scripts can be orchestrated from the global script.
 
-```
+```csharp
 OrchestrationEventConfiguration orchestrationEventConfiguration = new OrchestrationEventConfiguration
 {
 	Name = "Event Name",
@@ -242,7 +242,7 @@ OrchestrationEventConfiguration orchestrationEventConfiguration = new Orchestrat
 
 ### Provide input to an orchestration script
 When the orchestration script requires input parameters these can be provided via the OrchestrationScriptParameters property.
-```
+```csharp
 	GlobalOrchestrationScriptArguments =
 	{
 		new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "ScriptParameter1Name", "ScriptParameter1Value"),
@@ -252,7 +252,7 @@ When the orchestration script requires input parameters these can be provided vi
 
 To add script dummies, the OrchestrationScriptArgumentType.Dummy type can be used.
 As value, either the name or the ID of the dummy can be used (AgentId/ElementId).
-```
+```csharp
 	GlobalOrchestrationScriptArguments =
 	{
 		new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Element, "ScriptDummyName", "ElementNameOrId"),
@@ -261,7 +261,7 @@ As value, either the name or the ID of the dummy can be used (AgentId/ElementId)
 
 Lastly, custom metadata information can be forwarded to the script.
 This information is not critical for the script to run, but can provide additional information to be used inside of the script.
-```
+```csharp
 	GlobalOrchestrationScriptArguments =
 	{
 		new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Metadata, "MetadataParameterName", "MetadataParameterValue"),
@@ -273,7 +273,7 @@ Some orchestration script need specific profile instances or profile parameters 
 Additionally, profiles can also be used to provide values for script input parameters. In this case, matching is done based on the parameter names.
 
 Profile information can be provided as a whole profile instance
-```
+```csharp
 	Profile = 
 	{
 		Definition = "NameOfProfileDefinition",
@@ -282,7 +282,7 @@ Profile information can be provided as a whole profile instance
 ```
 
 or as a list of profile parameters. In this case, the profile definition and instance are not required.
-```	
+```	csharp
 	Profile =
 	{
 		Values =
@@ -321,7 +321,7 @@ Both options can also be combined, in which case additional parameters can be pr
 ### Get available orchestration scripts
 The Orchestration module provides a way to retrieve all available orchestration scripts in the system.
 
-```
+```csharp
 List<string> orchestrationScripts = api.Orchestration.Scripts.GetOrchestrationScripts();
 ```
 
@@ -333,7 +333,7 @@ This will return the following information:
 This is a combination of profile parameters that are not part of the profile definition and script parameters and the script parameters.
 - Elements: A list of script dummies that are required by the script. The required protocol and version is also provided.
 
-```
+```csharp
 OrchestrationScriptInputInfo scriptInputInformation = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("NameOfOrchestrationScript");
 
 Guid definition = scriptInputInformation.ProfileDefinition;
@@ -343,14 +343,14 @@ List<OrchestrationScriptInputElement> elements = scriptInputInformation.Elements
 
 ### Get a list of available script input profile instances
 From the requested script input information, all available profile instances can be retrieved. A profile helper is required to perform this action.
-```
+```csharp
 ProfileHelper profileHelper = new ProfileHelper(engine.SendSLNetMessages);
 List<ProfileInstance> availableInstances = scriptInputInformation.GetApplicableInstances(profileHelper);
 ```
 
 ### Get a list of available elements for a script dummy
 Although the script input information provides all the element requirements, it is also possible to immediately retrieve a list of valid elements.
-```
+```csharp
 OrchestrationScriptInputElement orchestrationScriptInputElement = elements.First();
 orchestrationScriptInputElement.GetApplicableElements(engine.GetUserConnection());
 ```
