@@ -353,7 +353,7 @@
 
 		private void Endpoints_Impacted(object sender, ICollection<ApiObjectReference<Endpoint>> impactedEndpoints)
 		{
-			Debug.WriteLine($"Endpoints impacted: {string.Join(", ", impactedEndpoints)}");
+			Debug.WriteLine($"Endpoints impacted: {String.Join(", ", impactedEndpoints)}");
 
 			RaiseConnectionsUpdated(impactedEndpoints);
 		}

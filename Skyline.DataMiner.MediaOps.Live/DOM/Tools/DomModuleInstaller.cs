@@ -187,7 +187,7 @@
 					return customSectionDefinition.Name;
 
 				default:
-					return string.Empty;
+					return String.Empty;
 			}
 		}
 	}

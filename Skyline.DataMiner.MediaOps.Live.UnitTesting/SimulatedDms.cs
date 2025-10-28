@@ -267,7 +267,7 @@
 
 			if (!String.IsNullOrEmpty(msg.ProtocolName))
 			{
-				elements = elements.Where(x => string.Equals(x.ProtocolName, msg.ProtocolName, StringComparison.Ordinal));
+				elements = elements.Where(x => String.Equals(x.ProtocolName, msg.ProtocolName));
 			}
 
 			foreach (SimulatedElement element in elements)
@@ -288,7 +288,7 @@
 		private IEnumerable<DMSMessage> HandleMessage(GetElementByNameMessage msg)
 		{
 			IEnumerable<SimulatedElement> elements = Agents.Values.SelectMany(x => x.Elements.Values);
-			SimulatedElement element = elements.FirstOrDefault(x => string.Equals(x.Name, msg.ElementName, StringComparison.Ordinal));
+			SimulatedElement element = elements.FirstOrDefault(x => String.Equals(x.Name, msg.ElementName));
 
 			if (element != null)
 			{

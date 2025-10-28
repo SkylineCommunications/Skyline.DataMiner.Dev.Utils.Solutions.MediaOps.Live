@@ -60,8 +60,8 @@
 				rowKey,
 				destination.Name,
 				1, // IsConnected=true
-				source?.ID.ToString() ?? string.Empty,
-				source?.Name ?? string.Empty,
+				source?.ID.ToString() ?? String.Empty,
+				source?.Name ?? String.Empty,
 			};
 
 			connectionsTable.SetRow(rowKey, row);
@@ -91,8 +91,8 @@
 				rowKey,
 				destination.Name,
 				0, // IsConnected=false
-				string.Empty, // Source ID
-				string.Empty, // Source Name
+				String.Empty, // Source ID
+				String.Empty, // Source Name
 			};
 
 			connectionsTable.SetRow(rowKey, row);
@@ -126,8 +126,8 @@
 				destination.Name,
 				(int)action,
 				DateTime.Now.ToOADate(),
-				pendingSource?.ID.ToString() ?? string.Empty,
-				pendingSource?.Name ?? string.Empty,
+				pendingSource?.ID.ToString() ?? String.Empty,
+				pendingSource?.Name ?? String.Empty,
 			};
 
 			pendingActionsTable.SetRow(rowKey, row);

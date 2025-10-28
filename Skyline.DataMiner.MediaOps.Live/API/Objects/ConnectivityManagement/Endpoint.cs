@@ -178,7 +178,7 @@
 				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
 			}
 
-			var existing = TransportMetadata.FirstOrDefault(x => string.Equals(x.FieldName, fieldName, StringComparison.Ordinal));
+			var existing = TransportMetadata.FirstOrDefault(x => String.Equals(x.FieldName, fieldName));
 			if (existing != null)
 			{
 				existing.Value = value;
@@ -196,7 +196,7 @@
 				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
 			}
 
-			var existing = TransportMetadata.FirstOrDefault(x => string.Equals(x.FieldName, fieldName, StringComparison.Ordinal));
+			var existing = TransportMetadata.FirstOrDefault(x => String.Equals(x.FieldName, fieldName));
 			if (existing != null)
 			{
 				TransportMetadata.Remove(existing);
@@ -210,7 +210,7 @@
 				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
 			}
 
-			var existing = TransportMetadata.FirstOrDefault(x => string.Equals(x.FieldName, fieldName, StringComparison.Ordinal));
+			var existing = TransportMetadata.FirstOrDefault(x => String.Equals(x.FieldName, fieldName));
 			if (existing != null)
 			{
 				value = existing.Value;
@@ -243,7 +243,7 @@
 				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
 			}
 
-			return TryGetTransportMetadata(fieldName, out var foundValue) && string.Equals(foundValue, value, StringComparison.Ordinal);
+			return TryGetTransportMetadata(fieldName, out var foundValue) && String.Equals(foundValue, value);
 		}
 
 		public ValidationResult Validate()

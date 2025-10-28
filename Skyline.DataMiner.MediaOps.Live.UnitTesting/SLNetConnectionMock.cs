@@ -290,14 +290,14 @@
 		{
 			if (filters.Length > 0)
 			{
-				var subscriptionSet = _subscriptions.GetOrAdd(string.Empty, x => new SubscriptionSet(x));
+				var subscriptionSet = _subscriptions.GetOrAdd(String.Empty, x => new SubscriptionSet(x));
 
 				foreach (var filter in filters)
 				{
 					subscriptionSet.Filters.TryAdd(filter);
 				}
 
-				SendInitialEvents(string.Empty, filters);
+				SendInitialEvents(String.Empty, filters);
 			}
 
 			return new CreateSubscriptionResponseMessage()

@@ -73,7 +73,7 @@
 				throw new ArgumentNullException(nameof(propertyName));
 			}
 
-			var errors = Errors.Where(x => string.Equals(propertyName, x.PropertyName, StringComparison.Ordinal));
+			var errors = Errors.Where(x => String.Equals(propertyName, x.PropertyName));
 
 			return new ValidationResult(errors);
 		}
@@ -92,7 +92,7 @@
 
 			var errors = Errors.Where(x =>
 				EqualityComparer<object>.Default.Equals(x.Instance, instance) &&
-				string.Equals(propertyName, x.PropertyName, StringComparison.Ordinal));
+				String.Equals(propertyName, x.PropertyName));
 
 			return new ValidationResult(errors);
 		}
