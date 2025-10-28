@@ -13,6 +13,18 @@
 		private readonly Dictionary<ApiObjectReference<Level>, Level> _levels = new();
 		private readonly Dictionary<string, Level> _levelsByName = new();
 
+		public LevelsCache()
+		{
+		}
+
+		public LevelsCache(IEnumerable<Level> levels)
+		{
+			if (levels != null)
+			{
+				UpdateLevels(levels, []);
+			}
+		}
+
 		public IReadOnlyDictionary<ApiObjectReference<Level>, Level> Levels => _levels;
 
 		public IReadOnlyDictionary<string, Level> LevelsByName => _levelsByName;

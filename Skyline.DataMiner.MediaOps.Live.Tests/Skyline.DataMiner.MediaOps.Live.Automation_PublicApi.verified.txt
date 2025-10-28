@@ -200,6 +200,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
         [Skyline.DataMiner.Automation.AutomationEntryPoint(Skyline.DataMiner.Automation.AutomationEntryPointType.Types.OnRequestScriptInfo)]
         public Skyline.DataMiner.Net.Automation.RequestScriptInfoOutput OnRequestScriptInfoRequest(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Net.Automation.RequestScriptInfoInput inputData) { }
         public abstract void Orchestrate(Skyline.DataMiner.Automation.IEngine engine);
+        public void OrchestrateAllConnections(int timeoutSeconds = 60) { }
         public void OrchestrateNode(Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfig) { }
         public void Run(Skyline.DataMiner.Automation.IEngine engine) { }
         public virtual Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId SetupService(Skyline.DataMiner.Automation.IEngine engine) { }
