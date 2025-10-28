@@ -66,7 +66,7 @@
 					tcs.TrySetResult(true);
 				}
 
-				return await tcs.Task;
+				return await tcs.Task.ConfigureAwait(false);
 			}
 			finally
 			{
@@ -138,7 +138,7 @@
 					tcs.TrySetResult(true);
 				}
 
-				return await tcs.Task;
+				return await tcs.Task.ConfigureAwait(false);
 			}
 			finally
 			{

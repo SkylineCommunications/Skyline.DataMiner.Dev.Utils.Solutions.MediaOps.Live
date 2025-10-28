@@ -524,8 +524,8 @@
 					{
 						try
 						{
-							await semaphore.WaitAsync(cts.Token);
-							return await WaitUntilConnectedAsync(takeContext, cts.Token);
+							await semaphore.WaitAsync(cts.Token).ConfigureAwait(false);
+							return await WaitUntilConnectedAsync(takeContext, cts.Token).ConfigureAwait(false);
 						}
 						catch (Exception)
 						{
@@ -554,7 +554,7 @@
 				return await _connectionMonitor.WaitUntilConnectedAsync(
 					takeContext.Source,
 					takeContext.Destination,
-					cancellationToken);
+					cancellationToken).ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
 			{
@@ -575,8 +575,8 @@
 					{
 						try
 						{
-							await semaphore.WaitAsync(cts.Token);
-							return await WaitUntilDisconnectedAsync(takeContext, cts.Token);
+							await semaphore.WaitAsync(cts.Token).ConfigureAwait(false);
+							return await WaitUntilDisconnectedAsync(takeContext, cts.Token).ConfigureAwait(false);
 						}
 						catch (Exception)
 						{
@@ -604,7 +604,7 @@
 			{
 				return await _connectionMonitor.WaitUntilDisconnectedAsync(
 					takeContext.Destination,
-					cancellationToken);
+					cancellationToken).ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
 			{
