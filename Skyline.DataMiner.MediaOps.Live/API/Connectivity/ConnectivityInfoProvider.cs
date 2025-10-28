@@ -321,6 +321,10 @@
 			_liteConnectivityInfoProvider.EndpointsImpacted -= Endpoints_Impacted;
 			Unsubscribe();
 
+			_levelsObserver?.Dispose();
+			_vsgObserver?.Dispose();
+			_liteConnectivityInfoProvider?.Dispose();
+
 			_isDisposed = true;
 		}
 
@@ -349,7 +353,7 @@
 
 		private void Endpoints_Impacted(object sender, ICollection<ApiObjectReference<Endpoint>> impactedEndpoints)
 		{
-			Debug.WriteLine($"Endpoints impacted: {String.Join(", ", impactedEndpoints)}");
+			Debug.WriteLine($"Endpoints impacted: {string.Join(", ", impactedEndpoints)}");
 
 			RaiseConnectionsUpdated(impactedEndpoints);
 		}
