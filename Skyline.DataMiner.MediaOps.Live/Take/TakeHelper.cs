@@ -614,7 +614,7 @@
 
 		private static string FormatConnectionRequests(ICollection<ConnectionRequest> requests)
 		{
-			return string.Join(
+			return String.Join(
 				Environment.NewLine,
 				requests
 					.Select(r => $" - {r.Source.Name} [{r.Source.ID}] -> {r.Destination.Name} [{r.Destination.ID}]"));
@@ -622,7 +622,7 @@
 
 		private static string FormatConnectionRequests(ICollection<VsgConnectionRequest> requests)
 		{
-			return string.Join(
+			return String.Join(
 				Environment.NewLine,
 				requests
 					.Select(r =>
@@ -637,7 +637,7 @@
 
 		private static string FormatDisconnectRequests(ICollection<DisconnectRequest> requests)
 		{
-			return string.Join(
+			return String.Join(
 				Environment.NewLine,
 				requests
 					.Select(r => $" - {r.Destination.Name} [{r.Destination.ID}]"));
@@ -645,7 +645,7 @@
 
 		private static string FormatDisconnectRequests(ICollection<VsgDisconnectRequest> requests)
 		{
-			return string.Join(
+			return String.Join(
 				Environment.NewLine,
 				requests
 					.Select(r =>

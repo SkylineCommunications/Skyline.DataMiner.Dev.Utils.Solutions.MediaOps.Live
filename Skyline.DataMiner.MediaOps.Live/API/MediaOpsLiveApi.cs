@@ -122,7 +122,7 @@
 		public string GetVersion()
 		{
 #pragma warning disable CS0618 // Type or member is obsolete
-			if (!string.IsNullOrWhiteSpace(ThisAssembly.Git.Tag))
+			if (!String.IsNullOrWhiteSpace(ThisAssembly.Git.Tag))
 			{
 				return ThisAssembly.Git.Tag;
 			}
