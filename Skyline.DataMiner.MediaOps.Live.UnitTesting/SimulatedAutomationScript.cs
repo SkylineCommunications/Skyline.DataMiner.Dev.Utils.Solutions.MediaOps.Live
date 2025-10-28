@@ -29,7 +29,7 @@
 
 		public ScriptInfo OrchestrationScriptInfo => _orchestrationScriptInfo;
 
-		public string Folder { get; set; } = String.Empty;
+		public string Folder { get; set; } = string.Empty;
 
 		public string Name { get; set; }
 	}

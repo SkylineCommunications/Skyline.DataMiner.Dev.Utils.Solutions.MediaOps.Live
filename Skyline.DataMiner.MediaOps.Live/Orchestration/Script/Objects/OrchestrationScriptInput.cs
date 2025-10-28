@@ -12,7 +12,7 @@
 		{
 		}
 
-		public OrchestrationScriptInput(Dictionary<string, object> profileParameterValues) : this(profileParameterValues, String.Empty)
+		public OrchestrationScriptInput(Dictionary<string, object> profileParameterValues) : this(profileParameterValues, string.Empty)
 		{
 		}
 

@@ -31,7 +31,7 @@
 
 		public override void SetValue(object value)
 		{
-			Value.Text = value is null ? String.Empty : Convert.ToString(value);
+			Value.Text = value is null ? string.Empty : Convert.ToString(value);
 		}
 
 		public override object GetValue()
