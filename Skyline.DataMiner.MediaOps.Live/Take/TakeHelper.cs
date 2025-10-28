@@ -19,6 +19,9 @@
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
+	/// <summary>
+	/// Helper class for managing connection and disconnection operations between endpoints and virtual signal groups.
+	/// </summary>
 	public class TakeHelper
 	{
 		private readonly MediaOpsLiveApi _api;
@@ -27,11 +30,22 @@
 		private TimeSpan _timeout;
 		private ConnectionMonitor _connectionMonitor;
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TakeHelper"/> class.
+		/// </summary>
+		/// <param name="api">The MediaOps Live API instance.</param>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="api"/> is null.</exception>
 		protected internal TakeHelper(MediaOpsLiveApi api)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
 
+		/// <summary>
+		/// Enables waiting for connection/disconnection operations to complete before returning.
+		/// </summary>
+		/// <param name="timeout">The maximum time to wait for operations to complete.</param>
+		/// <param name="connectionMonitor">Optional connection monitor to use. If null, the default monitor will be used.</param>
+		/// <exception cref="ArgumentException">Thrown when <paramref name="timeout"/> is negative.</exception>
 		public void EnableWaitForCompletion(TimeSpan timeout, ConnectionMonitor connectionMonitor = null)
 		{
 			if (timeout < TimeSpan.Zero)
@@ -48,6 +62,9 @@
 			_timeout = timeout;
 		}
 
+		/// <summary>
+		/// Disables waiting for connection/disconnection operations to complete.
+		/// </summary>
 		public void DisableWaitForCompletion()
 		{
 			_api.Logger?.Information("Disabling wait for completion.");
@@ -56,6 +73,12 @@
 			_connectionMonitor = null;
 		}
 
+		/// <summary>
+		/// Executes connection requests to establish connections between endpoints.
+		/// </summary>
+		/// <param name="connectionRequests">The collection of connection requests to execute.</param>
+		/// <param name="performanceTracker">The performance tracker for monitoring execution.</param>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="connectionRequests"/> or <paramref name="performanceTracker"/> is null.</exception>
 		public void Take(ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker)
 		{
 			if (connectionRequests == null)
@@ -98,6 +121,12 @@
 			}
 		}
 
+		/// <summary>
+		/// Executes connection requests to establish connections between virtual signal groups.
+		/// </summary>
+		/// <param name="vsgConnectionRequests">The collection of VSG connection requests to execute.</param>
+		/// <param name="performanceTracker">The performance tracker for monitoring execution.</param>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="vsgConnectionRequests"/> or <paramref name="performanceTracker"/> is null.</exception>
 		public void Take(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
 		{
 			if (vsgConnectionRequests == null)
@@ -130,6 +159,12 @@
 			}
 		}
 
+		/// <summary>
+		/// Executes disconnect requests to remove connections from endpoints.
+		/// </summary>
+		/// <param name="disconnectRequests">The collection of disconnect requests to execute.</param>
+		/// <param name="performanceTracker">The performance tracker for monitoring execution.</param>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="disconnectRequests"/> is null.</exception>
 		public void Disconnect(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
 		{
 			if (disconnectRequests == null)
@@ -167,6 +202,12 @@
 			}
 		}
 
+		/// <summary>
+		/// Executes disconnect requests to remove connections from virtual signal groups.
+		/// </summary>
+		/// <param name="vsgDisconnectRequests">The collection of VSG disconnect requests to execute.</param>
+		/// <param name="performanceTracker">The performance tracker for monitoring execution.</param>
+		/// <exception cref="ArgumentNullException">Thrown when <paramref name="vsgDisconnectRequests"/> or <paramref name="performanceTracker"/> is null.</exception>
 		public void Disconnect(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
 		{
 			if (vsgDisconnectRequests == null)
@@ -492,6 +533,13 @@
 			}
 		}
 
+		/// <summary>
+		/// Executes a connection handler script with the specified action and input data.
+		/// </summary>
+		/// <param name="script">The name of the script to execute.</param>
+		/// <param name="action">The connection handler action to perform.</param>
+		/// <param name="inputData">The input data for the script.</param>
+		/// <param name="performanceTracker">The performance tracker for monitoring execution.</param>
 		protected virtual void ExecuteConnectionHandlerScript(string script, ConnectionHandlerScriptAction action, IConnectionHandlerInputData inputData, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
