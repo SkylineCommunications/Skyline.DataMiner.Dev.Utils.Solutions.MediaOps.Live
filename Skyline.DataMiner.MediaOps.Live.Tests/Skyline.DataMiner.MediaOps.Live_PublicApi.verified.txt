@@ -23,6 +23,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
                 "fieldName",
                 "value"})] params System.ValueTuple<string, string>[] metadataFilters) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithTransportMetadata(string fieldName, string value) { }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithTransportType(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> transportType) { }
         public void LoadInitialData(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
         public bool TryGetEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> id, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint endpoint) { }
         public bool TryGetEndpoint(string name, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint endpoint) { }
@@ -73,6 +74,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
                 "fieldName",
                 "value"})] params System.ValueTuple<string, string>[] metadataFilters) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithTransportMetadata(string fieldName, string value) { }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithTransportType(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> transportType) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> id) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroup(string name) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsThatContainEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
@@ -1372,15 +1374,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
         public Skyline.DataMiner.Net.Profiles.Parameter LinkedProfileParameter { get; set; }
         public string Name { get; set; }
         public System.Guid ProfileParameter { get; set; }
-    }
-}
-namespace Skyline.DataMiner.MediaOps.Live.Subscriptions
-{
-    public readonly struct ElementStateChangeEvent
-    {
-        public ElementStateChangeEvent(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, Skyline.DataMiner.Net.Messages.ElementState state) { }
-        public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId ElementId { get; }
-        public Skyline.DataMiner.Net.Messages.ElementState State { get; }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.Take

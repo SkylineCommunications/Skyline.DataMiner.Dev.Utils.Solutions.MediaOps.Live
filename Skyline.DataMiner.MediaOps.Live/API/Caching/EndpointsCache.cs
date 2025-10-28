@@ -16,6 +16,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 		private readonly Dictionary<ApiObjectReference<Endpoint>, Endpoint> _endpoints = new();
 		private readonly Dictionary<string, Endpoint> _endpointsByName = new();
 		private readonly ManyToManyMapping<(string, string), Endpoint> _endpointsByTransportMetaData = new();
+		private readonly OneToManyMapping<ApiObjectReference<TransportType>, Endpoint> _endpointsByTransportType = new();
 		private readonly OneToManyMapping<DmsElementId, Endpoint> _endpointsByElement = new();
 		private readonly OneToManyMapping<string, Endpoint> _endpointsByIdentifier = new();
 
@@ -113,7 +114,17 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 				}
 			}
 
-			return result.ToList();
+			return result;
+		}
+
+		public IReadOnlyCollection<Endpoint> GetEndpointsWithTransportType(ApiObjectReference<TransportType> transportType)
+		{
+			if (_endpointsByTransportType.TryGetChildren(transportType, out var endpoints))
+			{
+				return endpoints.ToList();
+			}
+
+			return [];
 		}
 
 		public IReadOnlyCollection<Endpoint> GetEndpointsWithElement(DmsElementId elementId)
@@ -179,16 +190,22 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 					{
 						_endpointsByName.Remove(existing.Name);
 						_endpointsByTransportMetaData.TryRemoveReverse(existing);
+						_endpointsByTransportType.RemoveChild(existing);
 						_endpointsByElement.RemoveChild(existing);
 						_endpointsByIdentifier.RemoveChild(existing);
 					}
 
 					_endpoints[item.ID] = item;
 					_endpointsByName[item.Name] = item;
+					_endpointsByTransportType.Add(item.TransportType, item);
 
 					if (item.Element.HasValue)
 					{
 						_endpointsByElement.Add(item.Element.Value, item);
+					}
+
+					if (!String.IsNullOrEmpty(item.Identifier))
+					{
 						_endpointsByIdentifier.Add(item.Identifier, item);
 					}
 
@@ -203,6 +220,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 					_endpoints.Remove(item.ID);
 					_endpointsByName.Remove(item.Name);
 					_endpointsByTransportMetaData.TryRemoveReverse(item);
+					_endpointsByTransportType.RemoveChild(item);
 					_endpointsByElement.RemoveChild(item);
 					_endpointsByIdentifier.RemoveChild(item);
 				}

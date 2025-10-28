@@ -4,7 +4,7 @@
 
 	using ElementState = Skyline.DataMiner.Net.Messages.ElementState;
 
-	public readonly struct ElementStateChangeEvent(DmsElementId elementId, ElementState state)
+	internal readonly struct ElementStateChangeEvent(DmsElementId elementId, ElementState state)
 	{
 		public DmsElementId ElementId { get; } = elementId;
 

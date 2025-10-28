@@ -113,6 +113,14 @@
 			}
 		}
 
+		public IReadOnlyCollection<Endpoint> GetEndpointsWithTransportType(ApiObjectReference<TransportType> transportType)
+		{
+			lock (_lock)
+			{
+				return _endpoints.GetEndpointsWithTransportType(transportType);
+			}
+		}
+
 		public VirtualSignalGroup GetVirtualSignalGroup(ApiObjectReference<VirtualSignalGroup> id)
 		{
 			lock (_lock)
