@@ -16,7 +16,14 @@
 
 		internal override void UpdateJobState(SetJobOrchestrationStateAction action)
 		{
-			action.SendToJobHandler(_engine);
+			try
+			{
+				action.SendToJobHandler(_engine);
+			}
+			catch (Exception)
+			{
+				// No logic needed. Just needs to catch errors in case the events are not related to a PLAN job, which we do not know.
+			}
 		}
 	}
 }

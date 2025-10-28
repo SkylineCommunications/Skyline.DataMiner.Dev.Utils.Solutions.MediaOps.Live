@@ -94,7 +94,7 @@
 					tasks.Add(nodeOrchestrationTask);
 				}
 
-				ProcessConnections(eventConfigurations, performanceTracker);
+				ProcessConnections(eventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
 
 				Task.WaitAll(tasks.ToArray());
 
@@ -126,7 +126,7 @@
 			}
 		}
 
-		private void ProcessConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
+		internal void ProcessConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -156,7 +156,7 @@
 				catch (ConnectFailedException e)
 				{
 					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
 						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
@@ -164,7 +164,7 @@
 				}
 				catch (Exception e)
 				{
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
 					{
 						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
@@ -178,7 +178,7 @@
 				catch (DisconnectFailedException e)
 				{
 					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
 						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
@@ -186,7 +186,7 @@
 				}
 				catch (Exception e)
 				{
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
 					{
 						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
@@ -507,14 +507,14 @@
 				var profileParameter = profile.Values.FirstOrDefault(value => value.Name == requiredParameter.Description);
 				if (profileParameter != null)
 				{
-					scriptParams.Add(new DmsAutomationScriptParamValue(profileParameter.Name, profileParameter.Value.ToString()));
+					scriptParams.Add(new DmsAutomationScriptParamValue(profileParameter.Name, GetProfileParameterValue(profileParameter.Value).ToString()));
 					continue;
 				}
 
 				var profileInstanceParameter = profileInstance.Value.Values.FirstOrDefault(value => value.Parameter.Name == requiredParameter.Description);
 				if (profileInstanceParameter != null)
 				{
-					scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, profileInstanceParameter.Value.ToString()));
+					scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, GetProfileParameterValue(profileInstanceParameter.Value).ToString()));
 					continue;
 				}
 
@@ -529,6 +529,18 @@
 			{
 				HadError = false,
 			};
+		}
+
+		private static object GetProfileParameterValue(ParameterValue value)
+		{
+			if (value.Type == ParameterValue.ValueType.Double)
+			{
+				return value.DoubleValue;
+			}
+			else
+			{
+				return value.StringValue;
+			}
 		}
 
 		private static OrchestrationScriptResult PrepareScriptDummies(
