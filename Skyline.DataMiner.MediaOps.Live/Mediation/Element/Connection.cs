@@ -30,14 +30,14 @@
 			IsConnected = Convert.ToInt32(row[2]) == 1;
 
 			var connectedSourceIdValue = Convert.ToString(row[3]);
-			if (!String.IsNullOrWhiteSpace(connectedSourceIdValue) &&
+			if (!string.IsNullOrWhiteSpace(connectedSourceIdValue) &&
 				Guid.TryParse(connectedSourceIdValue, out var parsedPendingSourceId))
 			{
 				ConnectedSource = parsedPendingSourceId;
 			}
 
 			var connectedSourceNameValue = Convert.ToString(row[4]);
-			if (!String.IsNullOrWhiteSpace(connectedSourceNameValue))
+			if (!string.IsNullOrWhiteSpace(connectedSourceNameValue))
 			{
 				ConnectedSourceName = connectedSourceNameValue;
 			}
@@ -112,7 +112,7 @@
 		{
 			if (IsConnected)
 			{
-				if (!String.IsNullOrWhiteSpace(ConnectedSourceName))
+				if (!string.IsNullOrWhiteSpace(ConnectedSourceName))
 				{
 					return $"{DestinationName} => {ConnectedSourceName} [Connected]";
 				}

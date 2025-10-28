@@ -34,14 +34,14 @@
 			Time = DateTime.FromOADate(timeValue);
 
 			var pendingSourceIdValue = Convert.ToString(row[4]);
-			if (!String.IsNullOrWhiteSpace(pendingSourceIdValue) &&
+			if (!string.IsNullOrWhiteSpace(pendingSourceIdValue) &&
 				Guid.TryParse(pendingSourceIdValue, out var parsedPendingSourceId))
 			{
 				PendingSource = parsedPendingSourceId;
 			}
 
 			var pendingSourceNameValue = Convert.ToString(row[5]);
-			if (!String.IsNullOrWhiteSpace(pendingSourceNameValue))
+			if (!string.IsNullOrWhiteSpace(pendingSourceNameValue))
 			{
 				PendingSourceName = pendingSourceNameValue;
 			}

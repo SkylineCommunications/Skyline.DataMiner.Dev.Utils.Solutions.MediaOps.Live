@@ -156,7 +156,7 @@
 
 			var script = scriptColumn.GetValue(destinationElement.DmsElementId.Value, KeyType.PrimaryKey);
 
-			if (String.IsNullOrEmpty(script))
+			if (string.IsNullOrEmpty(script))
 			{
 				throw new InvalidOperationException($"No connection handler script found for element '{destinationElement.Name}' in mediation element '{Name}'.");
 			}
