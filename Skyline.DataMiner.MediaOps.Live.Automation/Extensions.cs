@@ -41,7 +41,7 @@
 
 		public static IList<T> ReadScriptParamListFromApp<T>(this IEngine engine, string name)
 		{
-			if (String.IsNullOrWhiteSpace(name))
+			if (string.IsNullOrWhiteSpace(name))
 			{
 				throw new ArgumentException("Value cannot be null or whitespace.", nameof(name));
 			}
@@ -55,7 +55,7 @@
 
 			try
 			{
-				if (String.IsNullOrWhiteSpace(param.Value))
+				if (string.IsNullOrWhiteSpace(param.Value))
 				{
 					return Array.Empty<T>();
 				}
