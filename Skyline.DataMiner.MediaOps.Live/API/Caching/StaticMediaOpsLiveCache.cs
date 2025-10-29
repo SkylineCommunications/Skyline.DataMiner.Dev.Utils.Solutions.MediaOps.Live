@@ -34,7 +34,7 @@
 			_lazyVirtualSignalGroupsObserver = new(CreateVirtualSignalGroupsObserver);
 
 			_lazyLiteConnectivityInfoProvider = new(() => new LiteConnectivityInfoProvider(Api, subscribe: true));
-			_lazyConnectivityInfoProvider = new(() => new ConnectivityInfoProvider(Api, LiteConnectivityInfoProvider, VirtualSignalGroupsCache, LevelsCache, subscribe: true));
+			_lazyConnectivityInfoProvider = new(() => new ConnectivityInfoProvider(Api, LiteConnectivityInfoProvider, VirtualSignalGroupEndpointsObserver, LevelsObserver, subscribe: true));
 			_lazyConnectionMonitor = new(() => new ConnectionMonitor(Api, LiteConnectivityInfoProvider));
 		}
 

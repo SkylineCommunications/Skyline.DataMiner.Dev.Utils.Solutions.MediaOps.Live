@@ -145,7 +145,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
     }
     public sealed class ConnectivityInfoProvider : System.IDisposable
     {
-        public ConnectivityInfoProvider(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api, Skyline.DataMiner.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider liteConnectivityInfoProvider = null, Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupEndpointsCache virtualSignalGroupsCache = null, Skyline.DataMiner.MediaOps.Live.API.Caching.LevelsCache levelsCache = null, bool subscribe = false) { }
+        public ConnectivityInfoProvider(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api, Skyline.DataMiner.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider liteConnectivityInfoProvider = null, Skyline.DataMiner.MediaOps.Live.API.Subscriptions.VirtualSignalGroupEndpointsObserver virtualSignalGroupsObserver = null, Skyline.DataMiner.MediaOps.Live.API.Subscriptions.LevelsObserver levelsObserver = null, bool subscribe = false) { }
         public bool IsSubscribed { get; }
         public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectionsUpdatedEvent> ConnectionsUpdated;
         public void Dispose() { }
@@ -830,6 +830,19 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
         public System.Collections.Generic.IReadOnlyList<T> Updated { get; }
         public override string ToString() { }
     }
+    public class EndpointsObserver : System.IDisposable
+    {
+        public EndpointsObserver(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
+        public EndpointsObserver(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api, Skyline.DataMiner.MediaOps.Live.API.Caching.EndpointsCache cache) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Caching.EndpointsCache Cache { get; }
+        public bool IsSubscribed { get; }
+        public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Subscriptions.ApiObjectsChangedEvent<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>> EndpointsChanged;
+        public void Dispose() { }
+        protected virtual void Dispose(bool disposing) { }
+        public void LoadInitialData() { }
+        public void Subscribe() { }
+        public void Unsubscribe() { }
+    }
     public class LevelsObserver : System.IDisposable
     {
         public LevelsObserver(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
@@ -857,6 +870,19 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
         public Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupEndpointsCache Cache { get; }
         public bool IsSubscribed { get; }
         public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Subscriptions.ApiObjectsChangedEvent<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>> EndpointsChanged;
+        public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Subscriptions.ApiObjectsChangedEvent<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>> VirtualSignalGroupsChanged;
+        public void Dispose() { }
+        protected virtual void Dispose(bool disposing) { }
+        public void LoadInitialData() { }
+        public void Subscribe() { }
+        public void Unsubscribe() { }
+    }
+    public class VirtualSignalGroupsObserver : System.IDisposable
+    {
+        public VirtualSignalGroupsObserver(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
+        public VirtualSignalGroupsObserver(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api, Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupsCache cache) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupsCache Cache { get; }
+        public bool IsSubscribed { get; }
         public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Subscriptions.ApiObjectsChangedEvent<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>> VirtualSignalGroupsChanged;
         public void Dispose() { }
         protected virtual void Dispose(bool disposing) { }
