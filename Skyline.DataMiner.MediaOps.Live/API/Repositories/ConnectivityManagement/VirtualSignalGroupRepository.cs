@@ -15,6 +15,8 @@
 
 	using SLDataGateway.API.Types.Querying;
 
+	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+
 	public class VirtualSignalGroupRepository : Repository<VirtualSignalGroup>
 	{
 		internal VirtualSignalGroupRepository(SlcConnectivityManagementHelper helper, IConnection connection) : base(helper, connection)
@@ -46,6 +48,17 @@
 			}
 
 			return GetByEndpointIds(endpoints.Select(x => x.ID));
+		}
+
+		public IEnumerable<VirtualSignalGroup> GetByCategory(Categories.ApiObjectReference<Categories.Category> category)
+		{
+			if (category == Categories.ApiObjectReference<Categories.Category>.Empty)
+			{
+				return [];
+			}
+
+			var filter = VirtualSignalGroupExposers.Categories.Contains(category.ID);
+			return Read(filter);
 		}
 
 		protected internal override VirtualSignalGroup CreateInstance(DomInstance domInstance)
@@ -82,6 +95,8 @@
 					return FilterElementFactory.Create<Guid>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level), comparer, value);
 				case nameof(LevelEndpoint.Endpoint):
 					return FilterElementFactory.Create<Guid>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint), comparer, value);
+				case nameof(VirtualSignalGroup.Categories):
+					return FilterElementFactory.Create<Guid>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Categories), comparer, value);
 			}
 
 			return base.CreateFilter(fieldName, comparer, value);
@@ -101,6 +116,8 @@
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level), sortOrder, naturalSort);
 				case nameof(LevelEndpoint.Endpoint):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint), sortOrder, naturalSort);
+				case nameof(VirtualSignalGroup.Categories):
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Categories), sortOrder, naturalSort);
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);

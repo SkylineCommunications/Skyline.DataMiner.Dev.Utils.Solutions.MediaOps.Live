@@ -11,6 +11,7 @@
 	using Skyline.DataMiner.Net.Apps.Sections.SectionDefinitions;
 	using Skyline.DataMiner.Net.GenericEnums;
 	using Skyline.DataMiner.Net.Sections;
+	using Skyline.DataMiner.Utils.Categories.DOM.Definitions;
 
 	internal class VirtualSignalGroupDefinition : IDomDefinitionInfo
 	{
@@ -81,7 +82,6 @@
 					FieldType = typeof(List<Guid>),
 					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Categories,
 					Name = "Categories",
-					DomDefinitionIds = { SlcCategoriesIds.Definitions.Category },
 				});
 
 			return sectionDefinition;

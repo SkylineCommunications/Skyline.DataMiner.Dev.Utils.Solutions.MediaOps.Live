@@ -5,6 +5,8 @@
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
+	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_VirtualSignalGroups
 	{
@@ -90,6 +92,29 @@
 					Assert.EndsWith(vsgName, endpoint.Name, $"Endpoint '{endpoint.Name}' should end with VSG name '{vsgName}'.");
 				}
 			}
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroups_Categories()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var category = new Categories.Category { Name = "Category 1" };
+
+			var vsg = api.VirtualSignalGroups.Read("Source 1");
+			Assert.IsFalse(vsg.IsAssignedToCategory(category));
+
+			vsg.AssignToCategory(category);
+			api.VirtualSignalGroups.Update(vsg);
+			vsg = api.VirtualSignalGroups.Read("Source 1");
+			Assert.IsTrue(vsg.IsAssignedToCategory(category));
+			Assert.ContainsSingle(api.VirtualSignalGroups.GetByCategory(category));
+
+			vsg.UnassignFromCategory(category);
+			api.VirtualSignalGroups.Update(vsg);
+			vsg = api.VirtualSignalGroups.Read("Source 1");
+			Assert.IsFalse(vsg.IsAssignedToCategory(category));
+			Assert.IsEmpty(api.VirtualSignalGroups.GetByCategory(category));
 		}
 	}
 }
