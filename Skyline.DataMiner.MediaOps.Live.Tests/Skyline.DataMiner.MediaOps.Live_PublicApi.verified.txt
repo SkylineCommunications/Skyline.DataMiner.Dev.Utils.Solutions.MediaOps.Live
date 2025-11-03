@@ -475,7 +475,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public TransportType() { }
         public TransportType(System.Guid id) { }
         public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportTypeField> Fields { get; set; }
-        public bool IsPredefined { get; }
         public string Name { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Validation.ValidationResult Validate() { }
     }
@@ -710,7 +709,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagemen
         protected override Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance> CreateFilter(string fieldName, Skyline.DataMiner.Net.Messages.SLDataGateway.Comparer comparer, object value) { }
         protected override Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType CreateInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
         protected override SLDataGateway.API.Types.Querying.IOrderByElement CreateOrderBy(string fieldName, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }
-        public void CreatePredefinedTransportTypes() { }
         protected override void ValidateBeforeDelete(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> instances) { }
         protected override void ValidateBeforeSave(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> instances) { }
     }
@@ -888,27 +886,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Tools
     public static class OrderByElementFactory
     {
         public static SLDataGateway.API.Types.Querying.IOrderByElement Create(Skyline.DataMiner.Net.Messages.SLDataGateway.FieldExposer exposer, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }
-    }
-}
-namespace Skyline.DataMiner.MediaOps.Live.API.TransportTypes
-{
-    public static class PredefinedTransportTypes
-    {
-        public static Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType[] All { get; }
-        public static System.Collections.Generic.IReadOnlyDictionary<System.Guid, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> ById { get; }
-        public static System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> ByName { get; }
-        public static Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType TSoIP { get; }
-    }
-    public class TsoipTransportType : Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType
-    {
-        public TsoipTransportType() { }
-        public class FieldNames
-        {
-            public const string MulticastIp = "Multicast IP";
-            public const string MulticastPort = "Multicast Port";
-            public const string SourceIp = "Source IP";
-            public FieldNames() { }
-        }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Validation

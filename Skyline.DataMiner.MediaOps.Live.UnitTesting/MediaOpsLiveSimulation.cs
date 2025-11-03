@@ -8,7 +8,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.API.TransportTypes;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
