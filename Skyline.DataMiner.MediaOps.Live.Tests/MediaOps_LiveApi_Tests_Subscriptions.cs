@@ -3,7 +3,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
-	using Skyline.DataMiner.MediaOps.Live.API.TransportTypes;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -16,8 +15,8 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var endpointX = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
-			var endpointY = new Endpoint { Name = "Endpoint Y", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
+			var endpointX = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
+			var endpointY = new Endpoint { Name = "Endpoint Y", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
 
 			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();
 
@@ -44,8 +43,8 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var endpointX = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
-			var endpointY = new Endpoint { Name = "Endpoint Y", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
+			var endpointX = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
+			var endpointY = new Endpoint { Name = "Endpoint Y", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
 
 			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();
 
@@ -76,7 +75,7 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var endpoint = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
+			var endpoint = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
 			api.Endpoints.Create(endpoint);
 
 			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();
@@ -102,7 +101,7 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var endpoint = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
+			var endpoint = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
 			api.Endpoints.Create(endpoint);
 
 			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();

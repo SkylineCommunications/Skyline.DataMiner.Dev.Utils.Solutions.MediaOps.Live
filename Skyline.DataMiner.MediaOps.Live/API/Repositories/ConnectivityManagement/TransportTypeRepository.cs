@@ -6,7 +6,6 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.API.TransportTypes;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
@@ -23,17 +22,6 @@
 		}
 
 		protected internal override DomDefinitionId DomDefinition => TransportType.DomDefinition;
-
-		public void CreatePredefinedTransportTypes()
-		{
-			var existing = Read(PredefinedTransportTypes.ById.Keys);
-			var missing = PredefinedTransportTypes.All.Except(existing.Values).ToList();
-
-			if (missing.Count > 0)
-			{
-				CreateOrUpdateWithoutValidation(missing);
-			}
-		}
 
 		protected internal override TransportType CreateInstance(DomInstance domInstance)
 		{

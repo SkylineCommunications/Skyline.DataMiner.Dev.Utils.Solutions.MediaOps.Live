@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.TransportTypes
+﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
 {
 	using System;
 

@@ -5,7 +5,6 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.API.TransportTypes;
 	using Skyline.DataMiner.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
@@ -40,8 +39,6 @@
 		}
 
 		internal static DomDefinitionId DomDefinition => SlcConnectivityManagementIds.Definitions.TransportType;
-
-		public bool IsPredefined => PredefinedTransportTypes.ById.ContainsKey(ID);
 
 		public string Name
 		{
