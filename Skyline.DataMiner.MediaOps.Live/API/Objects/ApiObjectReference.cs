@@ -69,6 +69,16 @@
 			return !(left == right);
 		}
 
+		public static bool operator ==(ApiObjectReference<T>? left, ApiObjectReference<T>? right)
+		{
+			return (left ?? Empty).Equals(right ?? Empty);
+		}
+
+		public static bool operator !=(ApiObjectReference<T>? left, ApiObjectReference<T>? right)
+		{
+			return !(left == right);
+		}
+
 		public override string ToString()
 		{
 			return $"{typeof(T).Name} [{ID}]";

@@ -3,10 +3,10 @@
 	using System;
 	using System.Collections.Generic;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler;
@@ -59,16 +59,21 @@
 		/// <summary>
 		/// Gets or sets the type of the event.
 		/// </summary>
-		public SlcOrchestrationIds.Enums.EventType EventType
+		public EventType EventType
 		{
 			get
 			{
-				return _domInstance.OrchestrationEventInfo.EventType ?? SlcOrchestrationIds.Enums.EventType.Other;
+				if (_domInstance.OrchestrationEventInfo.EventType.HasValue)
+				{
+					return (EventType)(int)_domInstance.OrchestrationEventInfo.EventType.Value;
+				}
+
+				return EventType.Other;
 			}
 
 			set
 			{
-				_domInstance.OrchestrationEventInfo.EventType = value;
+				_domInstance.OrchestrationEventInfo.EventType = (SlcOrchestrationIds.Enums.EventType)(int)value;
 			}
 		}
 
@@ -115,11 +120,16 @@
 		/// <summary>
 		/// Gets or sets the state of the event.
 		/// </summary>
-		public SlcOrchestrationIds.Enums.EventState? EventState
+		public EventState EventState
 		{
 			get
 			{
-				return _domInstance.OrchestrationEventInfo.EventState;
+				if (_domInstance.OrchestrationEventInfo.EventState.HasValue)
+				{
+					return (EventState)(int)_domInstance.OrchestrationEventInfo.EventState.Value;
+				}
+
+				return EventState.Draft;
 			}
 
 			set
@@ -269,14 +279,14 @@
 			return new OrchestrationEventConfiguration(_domInstance, new ConfigurationInstance(configurationDomInstance));
 		}
 
-		internal void InternalSetState(SlcOrchestrationIds.Enums.EventState? state)
+		internal void InternalSetState(EventState state)
 		{
-			_domInstance.OrchestrationEventInfo.EventState = state;
+			_domInstance.OrchestrationEventInfo.EventState = (SlcOrchestrationIds.Enums.EventState)(int)state;
 		}
 
 		internal void SendPlanJobStateUpdate(MediaOpsLiveApi api)
 		{
-			if (EventType == SlcOrchestrationIds.Enums.EventType.Other)
+			if (EventType == EventType.Other)
 			{
 				return;
 			}
@@ -292,44 +302,48 @@
 			{
 				DomJobId = Guid.Parse(info.JobReference),
 				Event = GetEventTypeAsPlanJobEvent(),
-				EventState = EventState == SlcOrchestrationIds.Enums.EventState.Failed || !String.IsNullOrEmpty(FailureInfo) ? OrchestrationEventState.Failed : OrchestrationEventState.Succeeded,
+				EventState = EventState == Enums.EventState.Failed || !String.IsNullOrEmpty(FailureInfo) ? OrchestrationEventState.Failed : OrchestrationEventState.Succeeded,
 				Message = FailureInfo,
 			};
 
 			api.GetMediaOpsPlanHelper().UpdateJobState(setStateAction);
 		}
 
-		private Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent GetEventTypeAsPlanJobEvent()
+		private OrchestrationEventType GetEventTypeAsPlanJobEvent()
 		{
 			switch (EventType)
 			{
-				case SlcOrchestrationIds.Enums.EventType.Postrollstart:
-				case SlcOrchestrationIds.Enums.EventType.Stop:
-					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PostrollStart;
+				case EventType.PostrollStart:
+				case EventType.Stop:
+					return OrchestrationEventType.PostrollStart;
 
-				case SlcOrchestrationIds.Enums.EventType.Prerollstart:
-				case SlcOrchestrationIds.Enums.EventType.Start:
-					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PrerollStart;
+				case EventType.PrerollStart:
+				case EventType.Start:
+					return OrchestrationEventType.PrerollStart;
 
-				case SlcOrchestrationIds.Enums.EventType.Postrollstop:
-					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PostrollStop;
+				case EventType.PostrollStop:
+					return OrchestrationEventType.PostrollStop;
 
-				case SlcOrchestrationIds.Enums.EventType.Prerollstop:
-					return Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums.OrchestrationEvent.PrerollStop;
+				case EventType.PrerollStop:
+					return OrchestrationEventType.PrerollStop;
 
 				default:
 					throw new NotSupportedException("Event type cannot be translated to PLAN job event");
 			}
 		}
 
-		private void PublicSetState(SlcOrchestrationIds.Enums.EventState? state)
+		private void PublicSetState(EventState state)
 		{
 			switch (state)
 			{
-				case SlcOrchestrationIds.Enums.EventState.Cancelled:
-				case SlcOrchestrationIds.Enums.EventState.Draft:
-				case SlcOrchestrationIds.Enums.EventState.Confirmed:
-					_domInstance.OrchestrationEventInfo.EventState = state;
+				case EventState.Cancelled:
+					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Cancelled;
+					return;
+				case EventState.Draft:
+					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Draft;
+					return;
+				case EventState.Confirmed:
+					_domInstance.OrchestrationEventInfo.EventState = SlcOrchestrationIds.Enums.EventState.Confirmed;
 					return;
 
 				default:

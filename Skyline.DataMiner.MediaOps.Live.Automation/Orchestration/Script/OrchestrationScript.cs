@@ -13,6 +13,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Automation;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Enums;
@@ -25,6 +26,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
+	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
+	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
 
 	using DropdownParameterDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.DropdownParameterDisplayInfo;
 	using GroupPresetOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<Mvc.DisplayTypes.PresetGroupDisplayInfo.PresetInfo>;
@@ -42,7 +45,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private IEngine _engine;
 
-		public OrchestrationEventConfiguration EventConfiguration => _eventConfiguration.Value;
+		public OrchestrationEventConfiguration EventConfiguration => _eventConfiguration?.Value;
 
 		public abstract void Orchestrate(IEngine engine);
 
@@ -161,6 +164,26 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(_engine.GetUserConnection(), nodeConfig.OrchestrationScriptName, nodeConfig.OrchestrationScriptArguments.Union(addedInputParams), nodeConfig.Profile);
 		}
 
+		/// <summary>
+		/// Orchestrates all connections for the event. Based on event type, this will be a connect or disconnect operation.
+		/// </summary>
+		/// <param name="timeoutSeconds">Optional argument to override timeout (default 60 seconds).</param>
+		public void OrchestrateAllConnections(int timeoutSeconds = 60)
+		{
+			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+
+			OrchestrationEventExecutionHelper orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
+
+			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
+			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-OrchestrateAllConnections", performanceLogFilename);
+
+			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
+			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
+			{
+				orchestrationEventExecutionHelper.ProcessConnections(new List<OrchestrationEventConfiguration> { EventConfiguration }, performanceTracker);
+			}
+		}
+
 		private void RunSafe(IEngine engine)
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
@@ -275,10 +298,17 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 					Reference = reference,
 				};
 
+				switch (profileParameter.Value?.Type)
+				{
+					case Parameter.ParameterType.Text:
+						info.Type = "TextParameter";
+						break;
+				}
+
 				parameterInfos.Add(info);
 			}
 
-			// Add profile instance parameter values from provide instance in input.
+			// Add profile instance parameter values from provided instance in input.
 			GetParamsFromInstance(input, parameterInfos);
 
 			// Add single parameter values from the input.
@@ -291,34 +321,36 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private void GetParamsFromInstance(OrchestrationScriptInput input, List<ParameterInfo> parameterInfos)
 		{
-			if (!String.IsNullOrEmpty(input.ProfileInstance))
+			if (String.IsNullOrEmpty(input.ProfileInstance))
 			{
-				ProfileHelper helper = new ProfileHelper(_engine.SendSLNetMessages);
-				List<ProfileInstance> instances = helper.ProfileInstances.Read(ProfileInstanceExposers.Name.Equal(input.ProfileInstance));
+				return;
+			}
 
-				if (instances.Count == 0)
+			ProfileHelper helper = new ProfileHelper(_engine.SendSLNetMessages);
+			List<ProfileInstance> instances = helper.ProfileInstances.Read(ProfileInstanceExposers.Name.Equal(input.ProfileInstance));
+
+			if (instances.Count == 0)
+			{
+				throw new InvalidOperationException($"No profile instance found with name {input.ProfileInstance}");
+			}
+
+			if (instances.Count > 1)
+			{
+				throw new InvalidOperationException($"Multiple profile instances found with name {input.ProfileInstance}");
+			}
+
+			ProfileInstance instance = instances.First();
+
+			foreach (ProfileParameterEntry profileParameterEntry in instance.Values)
+			{
+				ParameterInfo matchInfo = parameterInfos
+					.FirstOrDefault(x => (x.Reference as ProfileParameterID).Id == profileParameterEntry.ParameterID);
+
+				if (matchInfo != null)
 				{
-					throw new InvalidOperationException($"No profile instance found with name {input.ProfileInstance}");
-				}
-
-				if (instances.Count > 1)
-				{
-					throw new InvalidOperationException($"Multiple profile instances found with name {input.ProfileInstance}");
-				}
-
-				ProfileInstance instance = instances.First();
-
-				foreach (ProfileParameterEntry profileParameterEntry in instance.Values)
-				{
-					ParameterInfo matchInfo = parameterInfos
-						.FirstOrDefault(x => (x.Reference as ProfileParameterID).Id == profileParameterEntry.ParameterID);
-
-					if (matchInfo != null)
-					{
-						matchInfo.Value = profileParameterEntry.Value.Type == ParameterValue.ValueType.Double
-							? profileParameterEntry.Value.DoubleValue
-							: profileParameterEntry.Value.StringValue;
-					}
+					matchInfo.Value = profileParameterEntry.Value.Type == ParameterValue.ValueType.Double
+						? profileParameterEntry.Value.DoubleValue
+						: profileParameterEntry.Value.StringValue;
 				}
 			}
 		}
@@ -411,6 +443,16 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 								Step = parameter.Stepsize,
 								Decimals = parameter.Decimals,
 								Unit = parameter.Units,
+							};
+						}
+
+						break;
+
+					case Parameter.ParameterType.Text:
+						{
+							parameterInfo.DisplayInfo = new TextParameterDisplayInfo()
+							{
+								Label = parameterInfo.Id,
 							};
 						}
 
@@ -517,40 +559,44 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			Orchestrate(_engine);
 
 			TryGetMetadataValue("{Orchestration Level}", out string orchestrationLevel);
-			if (orchestrationLevel == "Global")
+			if (orchestrationLevel != "Global")
 			{
-				if (EventConfiguration.IsStartEvent)
-				{
-					MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-					OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+				return orchestrationScriptOutput;
+			}
 
-					if (eventJobInfo != null)
-					{
-						eventJobInfo.MonitoringService = SetupService(_engine);
-						api.Orchestration.JobInfos.Update(eventJobInfo);
-					}
+			if (EventConfiguration.IsStartEvent)
+			{
+				MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+				OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+
+				if (eventJobInfo != null)
+				{
+					eventJobInfo.MonitoringService = SetupService(_engine);
+					api.Orchestration.JobInfos.Update(eventJobInfo);
+				}
+			}
+
+			if (EventConfiguration.IsStopEvent)
+			{
+				TearDownService(_engine);
+
+				MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+				OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+
+				if (eventJobInfo == null || eventJobInfo.MonitoringService == default)
+				{
+					return orchestrationScriptOutput;
 				}
 
-				if (EventConfiguration.IsStopEvent)
+				IDms dms = _engine.GetDms();
+				if (dms.ServiceExists(eventJobInfo.MonitoringService))
 				{
-					TearDownService(_engine);
-
-					MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-					OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
-
-					if (eventJobInfo != null || eventJobInfo.MonitoringService == default)
-					{
-						IDms dms = _engine.GetDms();
-						if (dms.ServiceExists(eventJobInfo.MonitoringService))
-						{
-							var service = dms.GetService(eventJobInfo.MonitoringService);
-							service.Delete();
-						}
-
-						eventJobInfo.MonitoringService = default;
-						api.Orchestration.JobInfos.Update(eventJobInfo);
-					}
+					var service = dms.GetService(eventJobInfo.MonitoringService);
+					service.Delete();
 				}
+
+				eventJobInfo.MonitoringService = default;
+				api.Orchestration.JobInfos.Update(eventJobInfo);
 			}
 
 			return orchestrationScriptOutput;

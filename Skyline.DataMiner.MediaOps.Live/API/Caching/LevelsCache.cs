@@ -2,36 +2,32 @@
 {
 	using System;
 	using System.Collections.Generic;
-	using System.Diagnostics;
-	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 
-	public class LevelsCache : IDisposable
+	public class LevelsCache
 	{
 		private readonly object _lock = new();
 
 		private readonly Dictionary<ApiObjectReference<Level>, Level> _levels = new();
 		private readonly Dictionary<string, Level> _levelsByName = new();
 
-		private RepositorySubscription<Level> _subscriptionLevels;
-
-		public LevelsCache(MediaOpsLiveApi api, bool subscribe = false)
+		public LevelsCache()
 		{
-			Api = api ?? throw new ArgumentNullException(nameof(api));
-
-			Initialize(subscribe);
 		}
 
-		public MediaOpsLiveApi Api { get; }
+		public LevelsCache(IEnumerable<Level> levels)
+		{
+			if (levels != null)
+			{
+				UpdateLevels(levels, []);
+			}
+		}
 
 		public IReadOnlyDictionary<ApiObjectReference<Level>, Level> Levels => _levels;
 
 		public IReadOnlyDictionary<string, Level> LevelsByName => _levelsByName;
-
-		public bool IsSubscribed { get; private set; }
 
 		public Level GetLevel(ApiObjectReference<Level> id)
 		{
@@ -63,104 +59,51 @@
 			return _levelsByName.TryGetValue(name, out level);
 		}
 
-		public void Subscribe()
+		public void LoadInitialData(MediaOpsLiveApi api)
 		{
+			if (api is null)
+			{
+				throw new ArgumentNullException(nameof(api));
+			}
+
+			var levels = api.Levels.ReadAll();
+
 			lock (_lock)
 			{
-				if (IsSubscribed)
-				{
-					return;
-				}
-
-				_subscriptionLevels = Api.Levels.Subscribe();
-				_subscriptionLevels.Changed += Levels_Changed;
-
-				IsSubscribed = true;
+				UpdateLevels(levels, []);
 			}
 		}
 
-		public void Unsubscribe()
+		public void UpdateLevels(IEnumerable<Level> updated, IEnumerable<Level> deleted)
 		{
-			lock (_lock)
+			if (updated is null)
 			{
-				if (!IsSubscribed)
-				{
-					return;
-				}
-
-				_subscriptionLevels.Changed -= Levels_Changed;
-				_subscriptionLevels.Dispose();
-
-				IsSubscribed = false;
+				throw new ArgumentNullException(nameof(updated));
 			}
-		}
 
-		public void Dispose()
-		{
-			Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-
-		protected virtual void Dispose(bool disposing)
-		{
-			Unsubscribe();
-		}
-
-		private void Initialize(bool subscribe)
-		{
-			lock (_lock)
+			if (deleted is null)
 			{
-				if (subscribe)
-				{
-					Subscribe();
-				}
-
-				LoadInitialData();
+				throw new ArgumentNullException(nameof(deleted));
 			}
-		}
 
-		private void LoadInitialData()
-		{
-			var levels = Api.Levels.ReadAll();
-			UpdateLevels(levels);
-		}
-
-		private void Levels_Changed(object sender, ApiObjectsChangedEvent<Level> e)
-		{
 			lock (_lock)
 			{
-				Debug.WriteLine($"Levels changed: {e}");
-
-				UpdateLevels(e.Created.Concat(e.Updated), e.Deleted);
-			}
-		}
-
-		private void UpdateLevels(IEnumerable<Level> updated, IEnumerable<Level> deleted = null)
-		{
-			lock (_lock)
-			{
-				if (updated != null)
+				foreach (var item in updated)
 				{
-					foreach (var item in updated)
+					// Remove old name if it exists
+					if (_levels.TryGetValue(item.ID, out var existing))
 					{
-						// Remove old name if it exists
-						if (_levels.TryGetValue(item.ID, out var existing))
-						{
-							_levelsByName.Remove(existing.Name);
-						}
-
-						_levels[item.ID] = item;
-						_levelsByName[item.Name] = item;
+						_levelsByName.Remove(existing.Name);
 					}
+
+					_levels[item.ID] = item;
+					_levelsByName[item.Name] = item;
 				}
 
-				if (deleted != null)
+				foreach (var item in deleted)
 				{
-					foreach (var item in deleted)
-					{
-						_levels.Remove(item.ID);
-						_levelsByName.Remove(item.Name);
-					}
+					_levels.Remove(item.ID);
+					_levelsByName.Remove(item.Name);
 				}
 			}
 		}

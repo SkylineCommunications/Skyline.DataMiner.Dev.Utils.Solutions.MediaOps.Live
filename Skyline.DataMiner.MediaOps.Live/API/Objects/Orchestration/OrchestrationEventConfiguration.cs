@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 
@@ -90,10 +91,10 @@
 		{
 			get
 			{
-				var startingEvents = new List<SlcOrchestrationIds.Enums.EventType>
+				var startingEvents = new List<EventType>
 				{
-					SlcOrchestrationIds.Enums.EventType.Start,
-					SlcOrchestrationIds.Enums.EventType.Prerollstart,
+					EventType.Start,
+					EventType.PrerollStart,
 				};
 
 				return startingEvents.Contains(EventType);
@@ -104,10 +105,10 @@
 		{
 			get
 			{
-				var stoppingEvents = new List<SlcOrchestrationIds.Enums.EventType>
+				var stoppingEvents = new List<EventType>
 				{
-					SlcOrchestrationIds.Enums.EventType.Stop,
-					SlcOrchestrationIds.Enums.EventType.Postrollstop,
+					EventType.Stop,
+					EventType.PostrollStop,
 				};
 
 				return stoppingEvents.Contains(EventType);
@@ -118,11 +119,11 @@
 		{
 			get
 			{
-				var connectEvents = new List<SlcOrchestrationIds.Enums.EventType>
+				var connectEvents = new List<EventType>
 				{
-					SlcOrchestrationIds.Enums.EventType.Start,
-					SlcOrchestrationIds.Enums.EventType.Prerollstart,
-					SlcOrchestrationIds.Enums.EventType.Prerollstop,
+					EventType.Start,
+					EventType.PrerollStart,
+					EventType.PrerollStop,
 				};
 
 				return connectEvents.Contains(EventType);
@@ -133,11 +134,11 @@
 		{
 			get
 			{
-				var disconnectEvents = new List<SlcOrchestrationIds.Enums.EventType>
+				var disconnectEvents = new List<EventType>
 				{
-					SlcOrchestrationIds.Enums.EventType.Stop,
-					SlcOrchestrationIds.Enums.EventType.Postrollstart,
-					SlcOrchestrationIds.Enums.EventType.Postrollstop,
+					EventType.Stop,
+					EventType.PostrollStart,
+					EventType.PostrollStop,
 				};
 
 				return disconnectEvents.Contains(EventType);

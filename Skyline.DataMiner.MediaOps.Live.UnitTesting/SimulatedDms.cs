@@ -8,7 +8,6 @@
 
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net.Automation;

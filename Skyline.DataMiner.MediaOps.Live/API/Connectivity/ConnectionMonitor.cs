@@ -11,6 +11,7 @@
 	public sealed class ConnectionMonitor : IDisposable
 	{
 		private readonly LiteConnectivityInfoProvider _connectivityInfoProvider;
+		private readonly bool _ownsConnectivityInfoProvider;
 
 		public ConnectionMonitor(MediaOpsLiveApi api, LiteConnectivityInfoProvider liteConnectivityInfoProvider = null)
 		{
@@ -19,7 +20,13 @@
 				throw new ArgumentNullException(nameof(api));
 			}
 
-			_connectivityInfoProvider = liteConnectivityInfoProvider ?? new LiteConnectivityInfoProvider(api, subscribe: true);
+			if (liteConnectivityInfoProvider == null)
+			{
+				liteConnectivityInfoProvider = new LiteConnectivityInfoProvider(api, subscribe: true);
+				_ownsConnectivityInfoProvider = true;
+			}
+
+			_connectivityInfoProvider = liteConnectivityInfoProvider;
 		}
 
 		public async Task<bool> WaitUntilConnectedAsync(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination, CancellationToken cancellationToken)
@@ -66,7 +73,7 @@
 					tcs.TrySetResult(true);
 				}
 
-				return await tcs.Task;
+				return await tcs.Task.ConfigureAwait(false);
 			}
 			finally
 			{
@@ -138,7 +145,7 @@
 					tcs.TrySetResult(true);
 				}
 
-				return await tcs.Task;
+				return await tcs.Task.ConfigureAwait(false);
 			}
 			finally
 			{
@@ -168,7 +175,10 @@
 
 		public void Dispose()
 		{
-			_connectivityInfoProvider?.Dispose();
+			if (_ownsConnectivityInfoProvider)
+			{
+				_connectivityInfoProvider?.Dispose();
+			}
 		}
 	}
 }

@@ -55,13 +55,13 @@
 			}
 		}
 
-		public Role Role
+		public EndpointRole Role
 		{
 			get
 			{
 				if (_domInstance.EndpointInfo.Role.HasValue)
 				{
-					return (Role)(int)_domInstance.EndpointInfo.Role.Value;
+					return (EndpointRole)(int)_domInstance.EndpointInfo.Role.Value;
 				}
 
 				return default;
@@ -167,9 +167,9 @@
 			}
 		}
 
-		public bool IsSource => Role == Role.Source;
+		public bool IsSource => Role == EndpointRole.Source;
 
-		public bool IsDestination => Role == Role.Destination;
+		public bool IsDestination => Role == EndpointRole.Destination;
 
 		public void SetTransportMetadata(string fieldName, string value)
 		{
@@ -290,7 +290,7 @@
 	{
 		public static readonly Exposer<Endpoint, Guid> ID = new Exposer<Endpoint, Guid>(x => x.ID, nameof(Endpoint.ID));
 		public static readonly Exposer<Endpoint, string> Name = new Exposer<Endpoint, string>(x => x.Name, nameof(Endpoint.Name));
-		public static readonly Exposer<Endpoint, Role> Role = new Exposer<Endpoint, Role>(x => x.Role, nameof(Endpoint.Role));
+		public static readonly Exposer<Endpoint, EndpointRole> Role = new Exposer<Endpoint, EndpointRole>(x => x.Role, nameof(Endpoint.Role));
 		public static readonly Exposer<Endpoint, DmsElementId?> Element = new Exposer<Endpoint, DmsElementId?>(x => x.Element, nameof(Endpoint.Element));
 		public static readonly Exposer<Endpoint, string> Identifier = new Exposer<Endpoint, string>(x => x.Identifier, nameof(Endpoint.Identifier));
 		public static readonly Exposer<Endpoint, DmsElementId?> ControlElement = new Exposer<Endpoint, DmsElementId?>(x => x.ControlElement, nameof(Endpoint.ControlElement));

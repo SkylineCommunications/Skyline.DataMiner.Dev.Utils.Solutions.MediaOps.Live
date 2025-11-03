@@ -11,7 +11,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.TransportTypes;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
@@ -200,7 +199,7 @@
 
 						var videoSource = new Endpoint(Tools.GuidFromString($"Video Source {vsgCounter}"))
 						{
-							Role = Role.Source,
+							Role = EndpointRole.Source,
 							Name = $"Video Source {vsgCounter}",
 							TransportType = transportTypeTSoIP,
 							Element = elementId,
@@ -214,7 +213,7 @@
 						};
 						var audioSource = new Endpoint(Tools.GuidFromString($"Audio Source {vsgCounter}"))
 						{
-							Role = Role.Source,
+							Role = EndpointRole.Source,
 							Name = $"Audio Source {vsgCounter}",
 							TransportType = transportTypeTSoIP,
 							Element = elementId,
@@ -228,7 +227,7 @@
 						};
 						var videoDestination = new Endpoint(Tools.GuidFromString($"Video Destination {vsgCounter}"))
 						{
-							Role = Role.Destination,
+							Role = EndpointRole.Destination,
 							Name = $"Video Destination {vsgCounter}",
 							TransportType = transportTypeTSoIP,
 							Element = elementId,
@@ -236,7 +235,7 @@
 						};
 						var audioDestination = new Endpoint(Tools.GuidFromString($"Audio Destination {vsgCounter}"))
 						{
-							Role = Role.Destination,
+							Role = EndpointRole.Destination,
 							Name = $"Audio Destination {vsgCounter}",
 							TransportType = transportTypeTSoIP,
 							Element = elementId,
@@ -248,7 +247,7 @@
 						{
 							var source1 = new VirtualSignalGroup(Tools.GuidFromString($"Source {vsgCounter}"))
 							{
-								Role = Role.Source,
+								Role = EndpointRole.Source,
 								Name = $"Source {vsgCounter}",
 								Description = $"Source {vsgCounter}",
 								Levels =
@@ -259,7 +258,7 @@
 							};
 							var destination1 = new VirtualSignalGroup(Tools.GuidFromString($"Destination {vsgCounter}"))
 							{
-								Role = Role.Destination,
+								Role = EndpointRole.Destination,
 								Name = $"Destination {vsgCounter}",
 								Description = $"Destination {vsgCounter}",
 								Levels =
@@ -428,8 +427,8 @@
 				{
 					Name = $"Test Event {i}",
 					EventTime = DateTime.UtcNow + TimeSpan.FromHours(1),
-					EventType = SlcOrchestrationIds.Enums.EventType.Other,
-					EventState = SlcOrchestrationIds.Enums.EventState.Draft,
+					EventType = EventType.Other,
+					EventState = EventState.Draft,
 					Configuration =
 					{
 						Connections = connections,

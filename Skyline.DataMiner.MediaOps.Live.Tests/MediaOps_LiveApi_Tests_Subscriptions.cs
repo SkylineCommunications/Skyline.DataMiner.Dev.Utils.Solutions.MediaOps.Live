@@ -16,8 +16,8 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var endpointX = new Endpoint { Name = "Endpoint X", Role = Role.Source, TransportType = PredefinedTransportTypes.TSoIP };
-			var endpointY = new Endpoint { Name = "Endpoint Y", Role = Role.Source, TransportType = PredefinedTransportTypes.TSoIP };
+			var endpointX = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
+			var endpointY = new Endpoint { Name = "Endpoint Y", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
 
 			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();
 
@@ -44,8 +44,8 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var endpointX = new Endpoint { Name = "Endpoint X", Role = Role.Source, TransportType = PredefinedTransportTypes.TSoIP };
-			var endpointY = new Endpoint { Name = "Endpoint Y", Role = Role.Source, TransportType = PredefinedTransportTypes.TSoIP };
+			var endpointX = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
+			var endpointY = new Endpoint { Name = "Endpoint Y", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
 
 			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();
 
@@ -76,7 +76,7 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var endpoint = new Endpoint { Name = "Endpoint X", Role = Role.Source, TransportType = PredefinedTransportTypes.TSoIP };
+			var endpoint = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
 			api.Endpoints.Create(endpoint);
 
 			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();
@@ -102,7 +102,7 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var endpoint = new Endpoint { Name = "Endpoint X", Role = Role.Source, TransportType = PredefinedTransportTypes.TSoIP };
+			var endpoint = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = PredefinedTransportTypes.TSoIP };
 			api.Endpoints.Create(endpoint);
 
 			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();

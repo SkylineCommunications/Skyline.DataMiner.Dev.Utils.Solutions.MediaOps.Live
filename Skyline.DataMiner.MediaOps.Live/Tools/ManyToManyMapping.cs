@@ -37,14 +37,47 @@
 			get { return _reverseMapping; }
 		}
 
-		public int Count
-		{
-			get { return _forwardMapping.Count; }
-		}
-
 		#endregion
 
 		#region Public Methods
+
+		public ICollection<Tb> GetForward(Ta a)
+		{
+			if (a == null)
+				throw new ArgumentNullException("a", "Key cannot be null");
+
+			if (!_forwardMapping.TryGetValue(a, out var list))
+				throw new ArgumentException("Key does not exist", "a");
+
+			return list;
+		}
+
+		public bool TryGetForward(Ta a, out ICollection<Tb> values)
+		{
+			if (a == null)
+				throw new ArgumentNullException(nameof(a));
+
+			return _forwardMapping.TryGetValue(a, out values);
+		}
+
+		public ICollection<Ta> GetReverse(Tb b)
+		{
+			if (b == null)
+				throw new ArgumentNullException("b", "Key cannot be null");
+
+			if (!_reverseMapping.TryGetValue(b, out var list))
+				throw new ArgumentException("Key does not exist", "b");
+
+			return list;
+		}
+
+		public bool TryGetReverse(Tb b, out ICollection<Ta> values)
+		{
+			if (b == null)
+				throw new ArgumentNullException(nameof(b));
+
+			return _reverseMapping.TryGetValue(b, out values);
+		}
 
 		public void Add(Ta a, Tb b)
 		{
@@ -220,6 +253,11 @@
 				return false;
 
 			return list.Contains(b);
+		}
+
+		public override string ToString()
+		{
+			return $"ManyToManyMapping<{typeof(Ta).Name}, {typeof(Tb).Name}> [Forward: {_forwardMapping.Count}, Reverse: {_reverseMapping.Count}]";
 		}
 
 		#endregion
