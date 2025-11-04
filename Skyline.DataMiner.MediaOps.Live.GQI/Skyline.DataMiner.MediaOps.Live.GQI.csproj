@@ -41,7 +41,7 @@
 		<PackageReference Include="Skyline.DataMiner.Files.SLAnalyticsTypes" Version="10.5.9.2" />
 		<PackageReference Include="Skyline.DataMiner.Utils.DOM" Version="10.5.2.4" />
 		<PackageReference Include="Skyline.DataMiner.Utils.PerformanceAnalyzer" Version="3.0.2" />
-		<PackageReference Include="GitInfo" Version="3.5.0">
+		<PackageReference Include="GitInfo" Version="3.6.0">
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
 	</ItemGroup>
