@@ -15,6 +15,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Utils.Categories.API;
 
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
@@ -29,6 +30,7 @@
 			_connection = Dms.CreateConnection();
 
 			Api = new MediaOpsLiveApi(_connection);
+			CategoriesApi = new CategoriesApi(_connection);
 
 			InitializeConnectivityManagement(installDomModules, createEndpoints, createVsgs, createConnections, createElements);
 			InitializeOrchestration(installDomModules);
@@ -37,6 +39,8 @@
 		public SimulatedDms Dms => _dms;
 
 		public MediaOpsLiveApi Api { get; }
+
+		public CategoriesApi CategoriesApi { get; }
 
 		public void CreateTestConnection(Endpoint source, Endpoint destination)
 		{
