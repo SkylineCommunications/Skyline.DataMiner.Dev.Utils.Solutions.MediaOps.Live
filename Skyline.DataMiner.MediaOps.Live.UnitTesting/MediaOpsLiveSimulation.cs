@@ -16,6 +16,7 @@
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Utils.Categories.API;
+	using Skyline.DataMiner.Utils.Categories.API.Objects;
 
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
@@ -177,6 +178,14 @@
 			var dataLevel = new Level { Number = 3, Name = "Data", TransportType = transportTypeTSoIP };
 			Api.Levels.CreateOrUpdate([videoLevel, audioLevel, dataLevel]);
 
+			var scopeSources = new Scope { Name = VirtualSignalGroupCategoryScopes.Sources };
+			var scopeDestinations = new Scope { Name = VirtualSignalGroupCategoryScopes.Destinations };
+			CategoriesApi.Scopes.CreateOrUpdate([scopeSources, scopeDestinations]);
+
+			var category1Sources = new Category { Name = "Category 1", Scope = scopeSources };
+			var category1Destinations = new Category { Name = "Category 1", Scope = scopeDestinations };
+			CategoriesApi.Categories.CreateOrUpdate([category1Sources, category1Destinations]);
+
 			const int numberOfElements = 2;
 
 			if (createElements)
@@ -258,6 +267,7 @@
 									new LevelEndpoint(videoLevel, videoSource),
 									new LevelEndpoint(audioLevel, audioSource),
 								],
+								Categories = [category1Sources],
 							};
 							var destination1 = new VirtualSignalGroup(Tools.GuidFromString($"Destination {vsgCounter}"))
 							{
@@ -269,6 +279,7 @@
 									new LevelEndpoint(videoLevel, videoDestination),
 									new LevelEndpoint(audioLevel, audioDestination),
 								],
+								Categories = [category1Destinations],
 							};
 							Api.VirtualSignalGroups.CreateOrUpdate([source1, destination1]);
 						}

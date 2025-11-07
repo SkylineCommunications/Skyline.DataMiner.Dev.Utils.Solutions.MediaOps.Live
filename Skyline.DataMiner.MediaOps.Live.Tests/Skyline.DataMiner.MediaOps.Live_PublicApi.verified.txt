@@ -541,6 +541,11 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroups(Skyline.DataMiner.Utils.Categories.API.Objects.ApiObjectReference<Skyline.DataMiner.Utils.Categories.API.Objects.Category> category) { }
         public void Remove(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
     }
+    public static class VirtualSignalGroupCategoryScopes
+    {
+        public static readonly string Destinations;
+        public static readonly string Sources;
+    }
     public class VirtualSignalGroupEndpointsMapping
     {
         public VirtualSignalGroupEndpointsMapping() { }

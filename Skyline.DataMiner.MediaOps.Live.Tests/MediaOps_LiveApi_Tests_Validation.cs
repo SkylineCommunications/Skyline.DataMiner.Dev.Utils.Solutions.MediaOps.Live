@@ -1,21 +1,12 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
 	[TestClass]
-	[DoNotParallelize]
 	public sealed class MediaOps_LiveApi_Tests_Validation
 	{
-		[TestInitialize]
-		public void TestInitialize()
-		{
-			// Clear the cached data before each test
-			StaticMediaOpsLiveCache.Reset();
-		}
-
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Validation_TransportTypes_CheckDuplicates()
 		{
