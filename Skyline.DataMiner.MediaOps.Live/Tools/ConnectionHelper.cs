@@ -8,7 +8,7 @@
 
 	internal static class ConnectionHelper
 	{
-		public static Connection CloneConnection(IConnection baseConnection, string clientName)
+		public static IConnection CloneConnection(IConnection baseConnection, string clientName)
 		{
 			if (baseConnection == null)
 			{
@@ -28,6 +28,12 @@
 			try
 			{
 				var ticket = RequestCloneTicket(baseConnection);
+
+				if (ticket == "<simulated connection>")
+				{
+					// Simulated connection, return the same connection.
+					return baseConnection;
+				}
 
 				var connection2 = ConnectionSettings.GetConnection("localhost", attributes);
 				connection2.ClientApplicationName = clientName;
