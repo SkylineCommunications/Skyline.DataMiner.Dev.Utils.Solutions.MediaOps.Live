@@ -9,6 +9,7 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -19,8 +20,11 @@
 
 	public class VirtualSignalGroupRepository : Repository<VirtualSignalGroup>
 	{
+		private readonly CategoriesHelper _categoriesHelper;
+
 		internal VirtualSignalGroupRepository(SlcConnectivityManagementHelper helper, IConnection connection) : base(helper, connection)
 		{
+			_categoriesHelper = new CategoriesHelper(connection);
 		}
 
 		protected internal override DomDefinitionId DomDefinition => VirtualSignalGroup.DomDefinition;
@@ -59,6 +63,72 @@
 
 			var filter = VirtualSignalGroupExposers.Categories.Contains(category.ID);
 			return Read(filter);
+		}
+
+		public override VirtualSignalGroup Create(VirtualSignalGroup instance)
+		{
+			if (instance is null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			// Create the instance first
+			var newInstance = base.Create(instance);
+
+			// Then update linked category items
+			_categoriesHelper.UpdateLinkedCategoryItems([newInstance]);
+
+			return newInstance;
+		}
+
+		public override VirtualSignalGroup Update(VirtualSignalGroup instance)
+		{
+			if (instance is null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			// Update the instance first
+			var newInstance = base.Update(instance);
+
+			// Then update linked category items
+			_categoriesHelper.UpdateLinkedCategoryItems([newInstance]);
+
+			return newInstance;
+		}
+
+		public override IEnumerable<VirtualSignalGroup> CreateOrUpdate(IEnumerable<VirtualSignalGroup> instances)
+		{
+			if (instances is null)
+			{
+				throw new ArgumentNullException(nameof(instances));
+			}
+
+			var instancesCollection = instances.AsCollection();
+
+			// First create or update the instances
+			var result = base.CreateOrUpdate(instancesCollection);
+
+			// Then update linked category items
+			_categoriesHelper.UpdateLinkedCategoryItems(instancesCollection);
+
+			return result;
+		}
+
+		public override void Delete(IEnumerable<VirtualSignalGroup> instances)
+		{
+			if (instances is null)
+			{
+				throw new ArgumentNullException(nameof(instances));
+			}
+
+			var instancesCollection = instances.AsCollection();
+
+			// First remove linked category items
+			_categoriesHelper.RemoveLinkedCategoryItems(instancesCollection);
+
+			// Proceed with deletion
+			base.Delete(instancesCollection);
 		}
 
 		protected internal override VirtualSignalGroup CreateInstance(DomInstance domInstance)

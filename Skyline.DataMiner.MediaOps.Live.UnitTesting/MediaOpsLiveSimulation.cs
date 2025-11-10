@@ -8,9 +8,6 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
@@ -33,8 +30,13 @@
 			Api = new MediaOpsLiveApi(_connection);
 			CategoriesApi = new CategoriesApi(_connection);
 
-			InitializeConnectivityManagement(installDomModules, createEndpoints, createVsgs, createConnections, createElements);
-			InitializeOrchestration(installDomModules);
+			if (installDomModules)
+			{
+				Api.InstallDomModules();
+			}
+
+			InitializeConnectivityManagement(createEndpoints, createVsgs, createConnections, createElements);
+			InitializeOrchestration();
 		}
 
 		public SimulatedDms Dms => _dms;
@@ -156,19 +158,13 @@
 			pendingActionsTable.DeleteRow(rowKey);
 		}
 
-		private void InitializeConnectivityManagement(bool installDomModules, bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
+		private void InitializeConnectivityManagement( bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
 		{
 			var dmaId1 = 123;
 			var dmaId2 = 124;
 
 			var mediationElement1 = CreateMediationElement(dmaId1, 1000, "MediaOps Mediation 1");
 			var mediationElement2 = CreateMediationElement(dmaId2, 1000, "MediaOps Mediation 2");
-
-			if (installDomModules)
-			{
-				var slcConnectivityManagementDomModule = new SlcConnectivityManagementDomModule();
-				DomModuleInstaller.Install(_connection.HandleMessages, slcConnectivityManagementDomModule, x => { });
-			}
 
 			var transportTypeTSoIP = new TsoipTransportType();
 			Api.TransportTypes.Create(transportTypeTSoIP);
@@ -334,7 +330,7 @@
 			mediatedElementsTable.SetRow(mediatedElementKey, mediatedElementRow);
 		}
 
-		private void InitializeOrchestration(bool installDomModules)
+		private void InitializeOrchestration()
 		{
 			Dms.Agents[123].CreateElement(1001, "Orchestration Dummy Instance 1", "Protocol", "Production");
 			Dms.Agents[124].CreateElement(1001, "Orchestration Dummy Instance 2", "Protocol", "Production");
@@ -383,12 +379,6 @@
 						new Guid("94fa7d96-8cb3-4bdd-a968-dd1192683165"),
 					},
 				});
-
-			if (installDomModules)
-			{
-				var slcOrchestrationDomModule = new SlcOrchestrationDomModule();
-				DomModuleInstaller.Install(_connection.HandleMessages, slcOrchestrationDomModule, x => { });
-			}
 
 			OrchestrationJobConfiguration job = Api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");
 			Guid jobInfoReference = job.JobInfo.ID;

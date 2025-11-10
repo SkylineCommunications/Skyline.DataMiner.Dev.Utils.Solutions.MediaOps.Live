@@ -44,5 +44,15 @@
 
 			return source.SelectMany(x => x);
 		}
+
+		public static ICollection<TSource> AsCollection<TSource>(this IEnumerable<TSource> source)
+		{
+			if (source == null)
+			{
+				throw new ArgumentNullException(nameof(source));
+			}
+
+			return source as ICollection<TSource> ?? source.ToList();
+		}
 	}
 }

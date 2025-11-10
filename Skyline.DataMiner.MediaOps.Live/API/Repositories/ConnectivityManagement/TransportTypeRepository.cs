@@ -84,7 +84,7 @@
 			}
 		}
 
-		private void CheckIfStillInUse(ICollection<TransportType> instances)
+		private void CheckIfStillInUse(ICollection<TransportType> transportTypes)
 		{
 			FilterElement<DomInstance> CreateFilter(TransportType tt) =>
 				new ORFilterElement<DomInstance>(
@@ -95,9 +95,9 @@
 						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
 						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType).Equal(tt.ID)));
 
-			var count = FilterQueryExecutor.CountFilteredItems(instances, CreateFilter, Helper.DomInstances.Count);
+			var instances = FilterQueryExecutor.RetrieveFilteredItems(transportTypes, CreateFilter, Helper.DomInstances.Read);
 
-			if (count > 0)
+			if (instances.Any())
 			{
 				throw new InvalidOperationException("One or more transport types are still in use");
 			}

@@ -11,7 +11,6 @@
 	using Skyline.DataMiner.Net.Apps.Sections.SectionDefinitions;
 	using Skyline.DataMiner.Net.GenericEnums;
 	using Skyline.DataMiner.Net.Sections;
-	using Skyline.DataMiner.Utils.Categories.DOM.Definitions;
 
 	internal class VirtualSignalGroupDefinition : IDomDefinitionInfo
 	{

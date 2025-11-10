@@ -7,9 +7,12 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Take;
@@ -18,6 +21,7 @@
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Utils.Categories.API;
 
 	public class MediaOpsLiveApi
 	{
@@ -86,6 +90,15 @@
 		internal virtual MediaOpsPlanHelper GetMediaOpsPlanHelper()
 		{
 			return new MediaOpsPlanHelper();
+		}
+
+		public void InstallDomModules()
+		{
+			DomModuleInstaller.Install(Connection.HandleMessages, new SlcConnectivityManagementDomModule(), x => { });
+			DomModuleInstaller.Install(Connection.HandleMessages, new SlcOrchestrationDomModule(), x => { });
+
+			var categoriesApi = new CategoriesApi(Connection);
+			categoriesApi.InstallDomModules();
 		}
 
 		public bool IsInstalled()

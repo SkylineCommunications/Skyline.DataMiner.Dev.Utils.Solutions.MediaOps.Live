@@ -349,6 +349,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API
         public Skyline.DataMiner.Core.DataMinerSystem.Common.IDms GetDms() { }
         public virtual Skyline.DataMiner.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider GetLiteConnectivityInfoProvider() { }
         public string GetVersion() { }
+        public void InstallDomModules() { }
         public bool IsInstalled() { }
         public void SetLogger(Skyline.DataMiner.MediaOps.Live.Logging.ILogger logger) { }
     }
@@ -738,12 +739,16 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagemen
     public class VirtualSignalGroupRepository : Skyline.DataMiner.MediaOps.Live.API.Repositories.Repository<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>
     {
         protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinition { get; }
+        public override Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup Create(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup instance) { }
         protected override Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance> CreateFilter(string fieldName, Skyline.DataMiner.Net.Messages.SLDataGateway.Comparer comparer, object value) { }
         protected override Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup CreateInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
+        public override System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> CreateOrUpdate(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> instances) { }
         protected override SLDataGateway.API.Types.Querying.IOrderByElement CreateOrderBy(string fieldName, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }
+        public override void Delete(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> instances) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetByCategory(Skyline.DataMiner.Utils.Categories.API.Objects.ApiObjectReference<Skyline.DataMiner.Utils.Categories.API.Objects.Category> category) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetByEndpointIds(System.Collections.Generic.IEnumerable<System.Guid> endpointIds) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetByEndpoints(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoints) { }
+        public override Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup Update(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup instance) { }
         protected override void ValidateBeforeDelete(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> instances) { }
         protected override void ValidateBeforeSave(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> instances) { }
     }
@@ -785,11 +790,11 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
         protected Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper Helper { get; }
         public virtual long Count(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<T> filter) { }
         public virtual long CountAll() { }
-        public virtual void Create(T instance) { }
+        public virtual T Create(T instance) { }
         protected virtual Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance> CreateFilter(string fieldName, Skyline.DataMiner.Net.Messages.SLDataGateway.Comparer comparer, object value) { }
         protected abstract T CreateInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance);
-        public virtual void CreateOrUpdate(System.Collections.Generic.IEnumerable<T> instances) { }
-        public virtual void CreateOrUpdate(T instance) { }
+        public virtual System.Collections.Generic.IEnumerable<T> CreateOrUpdate(System.Collections.Generic.IEnumerable<T> instances) { }
+        public virtual T CreateOrUpdate(T instance) { }
         protected virtual void CreateOrUpdateWithoutValidation(System.Collections.Generic.IEnumerable<T> instances) { }
         protected virtual SLDataGateway.API.Types.Querying.IOrderByElement CreateOrderBy(string fieldName, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }
         protected virtual void CreateWithoutValidation(T instance) { }
@@ -815,7 +820,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
         protected virtual Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance> TranslateFullFilter(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<T> filter) { }
         protected virtual SLDataGateway.API.Types.Querying.IOrderBy TranslateFullOrderBy(SLDataGateway.API.Types.Querying.IOrderBy order) { }
         protected virtual SLDataGateway.API.Types.Querying.IOrderByElement TranslateOrderBy(SLDataGateway.API.Types.Querying.IOrderByElement orderByElement) { }
-        public virtual void Update(T instance) { }
+        public virtual T Update(T instance) { }
         protected virtual void UpdateWithoutValidation(T instance) { }
         protected abstract void ValidateBeforeDelete(System.Collections.Generic.ICollection<T> instances);
         protected abstract void ValidateBeforeSave(System.Collections.Generic.ICollection<T> instances);
@@ -996,7 +1001,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Tools
     }
     public static class FilterQueryExecutor
     {
-        public static long CountFilteredItems<TId, TFilter>(System.Collections.Generic.IEnumerable<TId> ids, System.Func<TId, Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<TFilter>> filterProvider, System.Func<Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<TFilter>, long> filterCountResolver) { }
         public static System.Collections.Generic.IEnumerable<TResult> RetrieveFilteredItems<TId, TFilter, TResult>(System.Collections.Generic.IEnumerable<TId> ids, System.Func<TId, Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<TFilter>> filterProvider, System.Func<Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<TFilter>, System.Collections.Generic.IEnumerable<TResult>> filterResolver) { }
     }
 }

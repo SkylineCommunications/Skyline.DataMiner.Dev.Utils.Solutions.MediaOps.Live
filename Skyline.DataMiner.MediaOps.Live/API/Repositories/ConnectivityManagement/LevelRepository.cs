@@ -119,9 +119,9 @@
 					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
 					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level).Equal(l.ID));
 
-			var count = FilterQueryExecutor.CountFilteredItems(instances, CreateFilter, Helper.DomInstances.Count);
+			var virtualSignalGroups = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Helper.DomInstances.Read);
 
-			if (count > 0)
+			if (virtualSignalGroups.Any())
 			{
 				throw new InvalidOperationException("One or more levels are still in use");
 			}
