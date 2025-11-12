@@ -39,7 +39,8 @@
 			var existingCategoryItems = RetrieveExistingCategoryItems(virtualSignalGroups)
 				.SafeToDictionary(ci => (ci.Category, ci.ToIdentifier()));
 
-			var categoryItemsToUpdate = new List<CategoryItem>();
+			var categoryItemsToCreate = new HashSet<CategoryItem>();
+			var seenCategoryItemsToKeep = new HashSet<CategoryItem>();
 
 			foreach (var vsg in virtualSignalGroups)
 			{
@@ -52,21 +53,22 @@
 					if (existingCategoryItems.TryGetValue((category, categoryItemIdentifier), out var existing))
 					{
 						// Already exists, keep it
-						categoryItemsToUpdate.Add(existing);
+						seenCategoryItemsToKeep.Add(existing);
 						continue;
 					}
 
 					// New category item
-					categoryItemsToUpdate.Add(categoryItemIdentifier.ToCategoryItem(category));
+					categoryItemsToCreate.Add(categoryItemIdentifier.ToCategoryItem(category));
 				}
 			}
 
 			var categoryItemsToRemove = existingCategoryItems.Values
-				.Except(categoryItemsToUpdate).ToList();
+				.Except(seenCategoryItemsToKeep)
+				.ToList();
 
-			if (categoryItemsToUpdate.Count > 0)
+			if (categoryItemsToCreate.Count > 0)
 			{
-				_api.CategoryItems.CreateOrUpdate(categoryItemsToUpdate);
+				_api.CategoryItems.CreateOrUpdate(categoryItemsToCreate);
 			}
 
 			if (categoryItemsToRemove.Count > 0)
