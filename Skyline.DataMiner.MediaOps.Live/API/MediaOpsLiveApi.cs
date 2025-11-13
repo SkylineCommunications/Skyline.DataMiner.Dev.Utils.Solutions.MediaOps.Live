@@ -21,7 +21,6 @@
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
-	using Skyline.DataMiner.Utils.Categories.API;
 
 	public class MediaOpsLiveApi
 	{
@@ -92,13 +91,13 @@
 			return new MediaOpsPlanHelper();
 		}
 
-		public void InstallDomModules()
+		public void InstallDomModules(Action<string> logAction = null)
 		{
-			DomModuleInstaller.Install(Connection.HandleMessages, new SlcConnectivityManagementDomModule(), x => { });
-			DomModuleInstaller.Install(Connection.HandleMessages, new SlcOrchestrationDomModule(), x => { });
+			// When no logging action is provided, use a no-op.
+			logAction ??= x => { };
 
-			var categoriesApi = new CategoriesApi(Connection);
-			categoriesApi.InstallDomModules();
+			DomModuleInstaller.Install(Connection.HandleMessages, new SlcConnectivityManagementDomModule(), logAction);
+			DomModuleInstaller.Install(Connection.HandleMessages, new SlcOrchestrationDomModule(), logAction);
 		}
 
 		public bool IsInstalled()
