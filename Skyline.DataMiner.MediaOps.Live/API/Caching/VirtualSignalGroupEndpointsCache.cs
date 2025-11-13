@@ -8,13 +8,14 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
+	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+
 	public class VirtualSignalGroupEndpointsCache
 	{
 		private readonly object _lock = new();
 
 		private readonly EndpointsCache _endpoints = new();
 		private readonly VirtualSignalGroupsCache _virtualSignalGroups = new();
-
 
 		public VirtualSignalGroupEndpointsCache()
 		{
@@ -158,6 +159,14 @@
 			lock (_lock)
 			{
 				return _virtualSignalGroups.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
+			}
+		}
+
+		public IReadOnlyCollection<VirtualSignalGroup> GetVirtualSignalGroupsInCategory(Categories.ApiObjectReference<Categories.Category> category)
+		{
+			lock (_lock)
+			{
+				return _virtualSignalGroups.GetVirtualSignalGroupsInCategory(category);
 			}
 		}
 

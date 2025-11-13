@@ -25,33 +25,11 @@
 				throw new ArgumentNullException(nameof(filterResolver));
 			}
 
-			var splitted = SplitFilter(ids, filterProvider).ToList();
+			var split = SplitFilter(ids, filterProvider).ToList();
 
-			return splitted
+			return split
 				.SelectMany(filterResolver)
 				.Distinct();
-		}
-
-		public static long CountFilteredItems<TId, TFilter>(IEnumerable<TId> ids, Func<TId, FilterElement<TFilter>> filterProvider, Func<FilterElement<TFilter>, long> filterCountResolver)
-		{
-			if (ids == null)
-			{
-				throw new ArgumentNullException(nameof(ids));
-			}
-
-			if (filterProvider == null)
-			{
-				throw new ArgumentNullException(nameof(filterProvider));
-			}
-
-			if (filterCountResolver == null)
-			{
-				throw new ArgumentNullException(nameof(filterCountResolver));
-			}
-
-			var splitted = SplitFilter(ids, filterProvider).ToList();
-
-			return splitted.Sum(filterCountResolver);
 		}
 
 		private static IEnumerable<FilterElement<TFilter>> SplitFilter<TId, TFilter>(IEnumerable<TId> ids, Func<TId, FilterElement<TFilter>> filterProvider)

@@ -7,9 +7,12 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Take;
@@ -33,7 +36,6 @@
 			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper, connection);
 			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper, connection);
 			Levels = new LevelRepository(SlcConnectivityManagementHelper, connection);
-			Categories = new CategoryRepository(SlcConnectivityManagementHelper, connection);
 			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper, connection);
 
 			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
@@ -54,8 +56,6 @@
 		public VirtualSignalGroupRepository VirtualSignalGroups { get; }
 
 		public LevelRepository Levels { get; }
-
-		public CategoryRepository Categories { get; }
 
 		public TransportTypeRepository TransportTypes { get; }
 
@@ -89,6 +89,19 @@
 		internal virtual MediaOpsPlanHelper GetMediaOpsPlanHelper()
 		{
 			return new MediaOpsPlanHelper();
+		}
+
+		/// <summary>
+		/// Installs the required DOM modules for the MediaOps.LIVE API.
+		/// </summary>
+		/// <param name="logAction">Optional action to log progress or messages during installation. If null, logging is suppressed.</param>
+		public void InstallDomModules(Action<string> logAction = null)
+		{
+			// When no logging action is provided, use a no-op.
+			logAction ??= x => { };
+
+			DomModuleInstaller.Install(Connection.HandleMessages, new SlcConnectivityManagementDomModule(), logAction);
+			DomModuleInstaller.Install(Connection.HandleMessages, new SlcOrchestrationDomModule(), logAction);
 		}
 
 		public bool IsInstalled()

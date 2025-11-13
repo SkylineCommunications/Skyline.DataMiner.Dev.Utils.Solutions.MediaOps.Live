@@ -193,7 +193,7 @@
 
 			yield return new TicketResponseMessage
 			{
-				Ticket = "<ticket>",
+				Ticket = "<simulated connection>",
 			};
 		}
 

@@ -1,21 +1,12 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
 	[TestClass]
-	[DoNotParallelize]
 	public sealed class MediaOps_LiveApi_Tests_Validation
 	{
-		[TestInitialize]
-		public void TestInitialize()
-		{
-			// Clear the cached data before each test
-			StaticMediaOpsLiveCache.Reset();
-		}
-
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Validation_TransportTypes_CheckDuplicates()
 		{
@@ -154,37 +145,6 @@
 			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.VirtualSignalGroups.Create(new VirtualSignalGroup { Name = "VSG2", Role = EndpointRole.Destination }); });
 			Assert.AreEqual("Cannot save VSGs. The following names are already in use: VSG2", ex.Message);
-		}
-
-		[TestMethod]
-		public void MediaOps_LiveApi_Tests_Validation_Categories_CheckDuplicates()
-		{
-			var api = new MediaOpsLiveApiMock();
-
-			// doesn't throw exception
-			var c = new Category { Name = "C1" };
-			api.Categories.Create(c);
-
-			c.Name = "C2";
-			api.Categories.Update(c);
-
-			// create item with same name
-			var ex = Assert.Throws<InvalidOperationException>(
-				() => { api.Categories.Create(new Category { Name = "C2" }); });
-			Assert.AreEqual("Cannot save categories. The following names are already in use: C2", ex.Message);
-		}
-
-		[TestMethod]
-		public void MediaOps_LiveApi_Tests_Validation_Categories_CheckStillInUse()
-		{
-			var api = new MediaOpsLiveApiMock();
-
-			var category = api.Categories.Query().First(x => x.Name == "Category 1");
-
-			// deleting category that is still in use throws exception
-			var ex = Assert.Throws<InvalidOperationException>(
-				() => { api.Categories.Delete(category); });
-			Assert.AreEqual("One or more categories are still in use", ex.Message);
 		}
 	}
 }

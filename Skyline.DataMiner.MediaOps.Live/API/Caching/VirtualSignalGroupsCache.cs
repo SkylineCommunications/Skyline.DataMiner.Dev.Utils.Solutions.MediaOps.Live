@@ -6,6 +6,8 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
+	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+
 	public class VirtualSignalGroupsCache
 	{
 		private readonly object _lock = new();
@@ -14,6 +16,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 		private readonly Dictionary<string, VirtualSignalGroup> _virtualSignalGroupsByName = new();
 
 		private readonly VirtualSignalGroupEndpointsMapping _virtualSignalGroupEndpointsMapping = new();
+		private readonly VirtualSignalGroupCategoriesMapping _virtualSignalGroupCategoriesMapping = new();
 
 		public VirtualSignalGroupsCache()
 		{
@@ -69,6 +72,14 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 			}
 		}
 
+		public IReadOnlyCollection<VirtualSignalGroup> GetVirtualSignalGroupsInCategory(Categories.ApiObjectReference<Categories.Category> category)
+		{
+			lock (_lock)
+			{
+				return _virtualSignalGroupCategoriesMapping.GetVirtualSignalGroups(category);
+			}
+		}
+
 		public void LoadInitialData(MediaOpsLiveApi api)
 		{
 			if (api is null)
@@ -105,11 +116,13 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 					{
 						_virtualSignalGroupsByName.Remove(existing.Name);
 						_virtualSignalGroupEndpointsMapping.Remove(existing);
+						_virtualSignalGroupCategoriesMapping.Remove(existing);
 					}
 
 					_virtualSignalGroups[item.ID] = item;
 					_virtualSignalGroupsByName[item.Name] = item;
 					_virtualSignalGroupEndpointsMapping.AddOrUpdate(item);
+					_virtualSignalGroupCategoriesMapping.AddOrUpdate(item);
 				}
 
 				foreach (var item in deleted)
@@ -117,6 +130,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 					_virtualSignalGroups.Remove(item.ID);
 					_virtualSignalGroupsByName.Remove(item.Name);
 					_virtualSignalGroupEndpointsMapping.Remove(item);
+					_virtualSignalGroupCategoriesMapping.Remove(item);
 				}
 			}
 		}
