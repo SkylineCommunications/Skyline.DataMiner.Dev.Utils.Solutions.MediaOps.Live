@@ -98,7 +98,7 @@
 				throw new ArgumentNullException(nameof(instance));
 			}
 
-			return CreateOrUpdate(new[] { instance }).FirstOrDefault();
+			return CreateOrUpdate(new[] { instance }).Single();
 		}
 
 		public virtual void Delete(IEnumerable<T> instances)
