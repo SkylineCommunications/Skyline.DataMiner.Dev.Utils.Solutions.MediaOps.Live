@@ -49,6 +49,8 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
         public Skyline.DataMiner.MediaOps.Live.API.Caching.LevelsCache LevelsCache { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Subscriptions.LevelsObserver LevelsObserver { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider LiteConnectivityInfoProvider { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Caching.TransportTypesCache TransportTypesCache { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Subscriptions.TransportTypesObserver TransportTypesObserver { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Subscriptions.VirtualSignalGroupEndpointsObserver VirtualSignalGroupEndpointsObserver { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupEndpointsCache VirtualSignalGroupsCache { get; }
         public void Dispose() { }
@@ -56,6 +58,19 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
         public static Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetOrCreate(Skyline.DataMiner.Net.IConnection baseConnection) { }
         public static Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetOrCreate(System.Func<Skyline.DataMiner.Net.IConnection> connectionFactory) { }
         public static void Reset() { }
+    }
+    public class TransportTypesCache
+    {
+        public TransportTypesCache() { }
+        public TransportTypesCache(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> transportTypes) { }
+        public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> TransportTypes { get; }
+        public System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> TransportTypesByName { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType GetTransportType(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> id) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType GetTransportType(string name) { }
+        public void LoadInitialData(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
+        public bool TryGetTransportType(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> id, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType transportType) { }
+        public bool TryGetTransportType(string name, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType transportType) { }
+        public void UpdateTransportTypes(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> updated, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> deleted) { }
     }
     public class VirtualSignalGroupEndpointsCache
     {
@@ -67,6 +82,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
         public System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> VirtualSignalGroupsByName { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> id) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetEndpoint(string name) { }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsInVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroupRef) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithElement(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithElementAndIdentifier(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, string identifier) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithIdentifier(string identifier) { }
@@ -869,6 +885,19 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
         public Skyline.DataMiner.MediaOps.Live.API.Repositories.Repository<T> Repository { get; }
         public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Subscriptions.ApiObjectsChangedEvent<T>> Changed;
         public void Dispose() { }
+    }
+    public class TransportTypesObserver : System.IDisposable
+    {
+        public TransportTypesObserver(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
+        public TransportTypesObserver(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api, Skyline.DataMiner.MediaOps.Live.API.Caching.TransportTypesCache cache) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Caching.TransportTypesCache Cache { get; }
+        public bool IsSubscribed { get; }
+        public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Subscriptions.ApiObjectsChangedEvent<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>> TransportTypesChanged;
+        public void Dispose() { }
+        protected virtual void Dispose(bool disposing) { }
+        public void LoadInitialData() { }
+        public void Subscribe() { }
+        public void Unsubscribe() { }
     }
     public class VirtualSignalGroupEndpointsObserver : System.IDisposable
     {

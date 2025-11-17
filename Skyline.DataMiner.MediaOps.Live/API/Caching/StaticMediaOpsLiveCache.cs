@@ -17,6 +17,7 @@
 
 		private readonly Lazy<VirtualSignalGroupEndpointsObserver> _lazyVirtualSignalGroupsObserver;
 		private readonly Lazy<LevelsObserver> _lazyLevelsObserver;
+		private readonly Lazy<TransportTypesObserver> _lazyTransportTypesObserver;
 
 		private readonly Lazy<LiteConnectivityInfoProvider> _lazyLiteConnectivityInfoProvider;
 		private readonly Lazy<ConnectivityInfoProvider> _lazyConnectivityInfoProvider;
@@ -31,6 +32,7 @@
 			Api = new MediaOpsLiveApi(Connection);
 
 			_lazyLevelsObserver = new(CreateLevelsObserver);
+			_lazyTransportTypesObserver = new(CreateTransportTypesObserver);
 			_lazyVirtualSignalGroupsObserver = new(CreateVirtualSignalGroupsObserver);
 
 			_lazyLiteConnectivityInfoProvider = new(() => new LiteConnectivityInfoProvider(Api, subscribe: true));
@@ -49,6 +51,10 @@
 		public LevelsObserver LevelsObserver => _lazyLevelsObserver.Value;
 
 		public LevelsCache LevelsCache => LevelsObserver.Cache;
+
+		public TransportTypesObserver TransportTypesObserver => _lazyTransportTypesObserver.Value;
+
+		public TransportTypesCache TransportTypesCache => TransportTypesObserver.Cache;
 
 		public LiteConnectivityInfoProvider LiteConnectivityInfoProvider => _lazyLiteConnectivityInfoProvider.Value;
 
@@ -151,6 +157,11 @@
 				_lazyLiteConnectivityInfoProvider.Value.Dispose();
 			}
 
+			if (_lazyTransportTypesObserver.IsValueCreated)
+			{
+				_lazyTransportTypesObserver.Value.Dispose();
+			}
+
 			if (_lazyLevelsObserver.IsValueCreated)
 			{
 				_lazyLevelsObserver.Value.Dispose();
@@ -175,6 +186,14 @@
 		private LevelsObserver CreateLevelsObserver()
 		{
 			var observer = new LevelsObserver(Api);
+			observer.Subscribe();
+			observer.LoadInitialData();
+			return observer;
+		}
+
+		private TransportTypesObserver CreateTransportTypesObserver()
+		{
+			var observer = new TransportTypesObserver(Api);
 			observer.Subscribe();
 			observer.LoadInitialData();
 			return observer;
