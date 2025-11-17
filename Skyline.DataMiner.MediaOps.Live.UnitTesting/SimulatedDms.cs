@@ -60,7 +60,7 @@
 				return;
 			}
 
-			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, orchestrationScriptInfo) {Folder = "MediaOps/OrchestrationScripts" });
+			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, orchestrationScriptInfo) { Folder = "MediaOps/OrchestrationScripts" });
 		}
 
 		public void AddProfileParameter(string parameterName, Guid parameterId, Parameter.ParameterType type)
@@ -342,22 +342,24 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(GetParameterMessage msg)
 		{
-			if (Agents.TryGetValue(msg.DataMinerID, out SimulatedDma dma) &&
-				dma.Elements.TryGetValue(msg.ElId, out SimulatedElement element) &&
-				element.Parameters.TryGetValue(msg.ParameterId, out StandaloneParameter param))
+			if (!Agents.TryGetValue(msg.DataMinerID, out SimulatedDma dma) ||
+				!dma.Elements.TryGetValue(msg.ElId, out SimulatedElement element))
 			{
-				yield return new GetParameterResponseMessage
-				{
-					DataMinerID = msg.DataMinerID,
-					ElId = msg.ElId,
-					ParameterId = msg.ParameterId,
-					Value = param.ToParameterValue(),
-				};
+				throw new InvalidOperationException($"Element with ID {msg.ElId} not found in DMA {msg.DataMinerID}.");
 			}
-			else
+
+			if (!element.Parameters.TryGetValue(msg.ParameterId, out StandaloneParameter param))
 			{
-				throw new InvalidOperationException($"Element with ID {msg.ElId} not found in DMA {msg.DataMinerID} or parameter with ID {msg.ParameterId} not found.");
+				throw new InvalidOperationException($"Parameter with ID {msg.ParameterId} not found in Element {msg.ElId} on DMA {msg.DataMinerID}.");
 			}
+
+			yield return new GetParameterResponseMessage
+			{
+				DataMinerID = msg.DataMinerID,
+				ElId = msg.ElId,
+				ParameterId = msg.ParameterId,
+				Value = param.ToParameterValue(),
+			};
 		}
 
 		private IEnumerable<DMSMessage> HandleMessage(SetDataMinerInfoMessage msg)
@@ -529,7 +531,7 @@
 			int id = 1;
 			yield return new GetScriptInfoResponseMessage
 			{
-				Parameters = script.Parameters.Select(param => new AutomationParameterInfo { Description = param, ParameterId = id++}).ToArray(),
+				Parameters = script.Parameters.Select(param => new AutomationParameterInfo { Description = param, ParameterId = id++ }).ToArray(),
 				Name = msg.Name,
 				Dummies = script.Dummies.Select(dummy => new AutomationProtocolInfo { ProtocolName = "Protocol", ProtocolVersion = "Production", Description = dummy, ProtocolId = id++ }).ToArray(),
 				Memories = [],
