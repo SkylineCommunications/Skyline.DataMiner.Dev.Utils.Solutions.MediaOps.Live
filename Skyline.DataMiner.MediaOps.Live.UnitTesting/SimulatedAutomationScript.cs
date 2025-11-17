@@ -7,15 +7,15 @@
 
 	public class SimulatedAutomationScript
 	{
-		private readonly List<string> _inputParameters;
-		private readonly List<string> _inputDummies;
+		private readonly ICollection<string> _inputParameters;
+		private readonly ICollection<string> _inputDummies;
 		private readonly ScriptInfo _orchestrationScriptInfo;
 
 		public SimulatedAutomationScript(string name) : this(name, [], [], new ScriptInfo())
 		{
 		}
 
-		public SimulatedAutomationScript(string name, List<string> inputParams, List<string> inputDummies, ScriptInfo orchestrationScriptInfo)
+		public SimulatedAutomationScript(string name, ICollection<string> inputParams, ICollection<string> inputDummies, ScriptInfo orchestrationScriptInfo)
 		{
 			_inputParameters = inputParams;
 			_inputDummies = inputDummies;
@@ -23,9 +23,9 @@
 			Name = name;
 		}
 
-		public List<string> Parameters => _inputParameters;
+		public ICollection<string> Parameters => _inputParameters;
 
-		public List<string> Dummies => _inputDummies;
+		public ICollection<string> Dummies => _inputDummies;
 
 		public ScriptInfo OrchestrationScriptInfo => _orchestrationScriptInfo;
 

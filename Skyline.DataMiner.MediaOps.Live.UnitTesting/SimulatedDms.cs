@@ -52,7 +52,7 @@
 				id => new SimulatedDma(this, id));
 		}
 
-		public void AddScript(string name, List<string> parameters, List<string> dummies, ScriptInfo orchestrationScriptInfo = null)
+		public void AddScript(string name, ICollection<string> parameters, ICollection<string> dummies, ScriptInfo orchestrationScriptInfo = null)
 		{
 			if (orchestrationScriptInfo == null)
 			{
@@ -519,7 +519,12 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(GetScriptInfoMessage msg)
 		{
-			SimulatedAutomationScript script = Scripts.First(s => s.Name == msg.Name);
+			var script = Scripts.FirstOrDefault(s => s.Name == msg.Name);
+
+			if (script == null)
+			{
+				throw new InvalidOperationException($"Script with name '{msg.Name}' not found. Ensure the script is registered using {nameof(AddScript)}() before attempting to retrieve it. Available scripts: [{String.Join(", ", Scripts.Select(s => s.Name))}]");
+			}
 
 			int id = 1;
 			yield return new GetScriptInfoResponseMessage
