@@ -6,18 +6,23 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
+	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Enums;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
@@ -32,6 +37,7 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 		private readonly OrchestrationSettings _settings;
+
 		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, OrchestrationSettings settings)
 		{
 			_api = api;
@@ -48,14 +54,14 @@
 					return;
 				}
 
-				List<SlcOrchestrationIds.Enums.EventState> statesToDiscard =
+				List<EventState> statesToDiscard =
 				[
-					SlcOrchestrationIds.Enums.EventState.Failed,
-					SlcOrchestrationIds.Enums.EventState.Completed,
-					SlcOrchestrationIds.Enums.EventState.Configuring,
+					EventState.Failed,
+					EventState.Completed,
+					EventState.Configuring,
 				];
 
-				ExecuteEvents(events.Where(e => !statesToDiscard.Contains(e.EventState.Value)), performanceTracker);
+				ExecuteEvents(events.Where(e => !statesToDiscard.Contains(e.EventState)), performanceTracker);
 			}
 		}
 
@@ -67,7 +73,7 @@
 				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
 				foreach (OrchestrationEventConfiguration orchestrationEvent in eventConfigurations)
 				{
-					orchestrationEvent.InternalSetState(SlcOrchestrationIds.Enums.EventState.Configuring);
+					orchestrationEvent.InternalSetState(EventState.Configuring);
 					orchestrationEvent.ActualStartTime = DateTimeOffset.UtcNow;
 				}
 
@@ -88,16 +94,18 @@
 					tasks.Add(nodeOrchestrationTask);
 				}
 
-				ProcessConnections(eventConfigurations, performanceTracker);
+				ProcessConnections(eventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
 
 				Task.WaitAll(tasks.ToArray());
 
 				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
 				{
-					if (orchestrationEventConfiguration.EventState != SlcOrchestrationIds.Enums.EventState.Failed)
+					if (orchestrationEventConfiguration.EventState != EventState.Failed)
 					{
-						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Completed);
+						orchestrationEventConfiguration.InternalSetState(EventState.Completed);
 					}
+
+					orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
 				}
 
 				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
@@ -118,7 +126,7 @@
 			}
 		}
 
-		private void ProcessConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
+		internal void ProcessConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -148,17 +156,17 @@
 				catch (ConnectFailedException e)
 				{
 					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
-						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
 				catch (Exception e)
 				{
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
 					{
-						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
@@ -170,17 +178,17 @@
 				catch (DisconnectFailedException e)
 				{
 					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
-						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
 				catch (Exception e)
 				{
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in orchestrationEventConfigurations)
+					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
 					{
-						orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
@@ -221,6 +229,11 @@
 				}
 
 				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
+
+				if (allInvolvedVsgIds.Count != allInvolvedVsgs.Count)
+				{
+					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
+				}
 
 				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
@@ -287,6 +300,11 @@
 
 				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
 
+				if (allInvolvedVsgIds.Count != allInvolvedVsgs.Count)
+				{
+					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
+				}
+
 				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
 
@@ -342,19 +360,21 @@
 					Task nodeOrchestrationTask = Task.Factory.StartNew(
 						() =>
 						{
-							if (TryExecuteOrchestrationScript(
-									Guid.Empty,
-									nodeConfiguration.OrchestrationScriptName,
-									nodeConfiguration.OrchestrationScriptArguments,
-									nodeConfiguration.Profile,
-									performanceTracker,
-									out string[] errorMessages))
+							IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(orchestrationEventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
+
+							OrchestrationScriptResult nodeScriptResult = ExecuteOrchestrationScript(
+								nodeConfiguration.OrchestrationScriptName,
+								nodeConfiguration.OrchestrationScriptArguments.Union(addedInputParams),
+								nodeConfiguration.Profile,
+								performanceTracker);
+
+							if (!nodeScriptResult.HadError)
 							{
 								return;
 							}
 
-							errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: {String.Join("\n", errorMessages)}");
-							orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+							errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: {String.Join("\n", nodeScriptResult.ErrorMessages)}");
+							orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						},
 						CancellationToken.None,
 						TaskCreationOptions.None,
@@ -365,7 +385,7 @@
 
 				Task.WaitAll(nodeOrchestrationTasks.ToArray());
 
-				if (orchestrationEventConfiguration.EventState == SlcOrchestrationIds.Enums.EventState.Failed)
+				if (orchestrationEventConfiguration.EventState == EventState.Failed)
 				{
 					orchestrationEventConfiguration.FailureInfo += String.Join("\n", errors);
 				}
@@ -376,35 +396,93 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				if (!TryExecuteOrchestrationScript(
-						orchestrationEventConfiguration.ID,
-						orchestrationEventConfiguration.GlobalOrchestrationScript,
-						orchestrationEventConfiguration.GlobalOrchestrationScriptArguments,
-						orchestrationEventConfiguration.Profile,
-						performanceTracker,
-						out string[] errorMessages))
+				IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(orchestrationEventConfiguration.ID, OrchestrationLevel.Global).ToMetadataArguments();
+
+				OrchestrationScriptResult globalScriptResult = ExecuteOrchestrationScript(
+					orchestrationEventConfiguration.GlobalOrchestrationScript,
+					orchestrationEventConfiguration.GlobalOrchestrationScriptArguments.Union(addedInputParams),
+					orchestrationEventConfiguration.Profile,
+					performanceTracker);
+
+				if (globalScriptResult.HadError)
 				{
-					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", errorMessages)}";
-					orchestrationEventConfiguration.InternalSetState(SlcOrchestrationIds.Enums.EventState.Failed);
+					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", globalScriptResult.ErrorMessages)}";
+					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 				}
 			}
 		}
 
-		private bool TryExecuteOrchestrationScript(Guid eventId, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, PerformanceTracker performanceTracker, out string[] errorMessages)
+		private OrchestrationScriptResult ExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
-				return TryExecuteOrchestrationScript(_api.Connection, eventId, scriptName, arguments, profile, out errorMessages);
+				return ExecuteOrchestrationScript(_api.Connection, scriptName, arguments, profile);
 			}
 		}
 
-		internal static bool TryExecuteOrchestrationScript(IConnection connection, Guid eventId, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, out string[] errorMessages)
+		internal static OrchestrationScriptResult ExecuteOrchestrationScript(IConnection connection, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile)
 		{
 			IDms dms = connection.GetDms();
-			ProfileHelper profileHelper = new ProfileHelper(connection.HandleMessages);
-
 			IDmsAutomationScript script = dms.GetScript(scriptName);
 			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments = arguments.ToList();
+
+			List<DmsAutomationScriptParamValue> scriptParams = [];
+			OrchestrationScriptResult scriptParamResult = PrepareScriptParams(dms, script, orchestrationScriptArguments, scriptParams, profile);
+			if (scriptParamResult.HadError)
+			{
+				return scriptParamResult;
+			}
+
+			List<DmsAutomationScriptDummyValue> scriptDummies = [];
+			OrchestrationScriptResult scriptDummyResult = PrepareScriptDummies(dms, script, orchestrationScriptArguments, scriptDummies);
+			if (scriptDummyResult.HadError)
+			{
+				return scriptDummyResult;
+			}
+
+			ExecuteScriptResponseMessage result;
+			string[] errorMessages;
+			if (OrchestrationScriptInfoHelper.IsOrchestrationScript(script))
+			{
+				OrchestrationScriptInput input = new(
+					profile.Values.ToDictionary(value => value.Name, value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
+					profile.Instance);
+
+				foreach (OrchestrationScriptArgument orchestrationScriptArgument in orchestrationScriptArguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata))
+				{
+					input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
+				}
+
+				result = OrchestrationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
+			}
+			else
+			{
+				result = OrchestrationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out errorMessages);
+			}
+
+			OrchestrationScriptResult scriptResult = new OrchestrationScriptResult
+			{
+				ErrorMessages = errorMessages,
+				HadError = result.HadError || errorMessages.Any(),
+			};
+
+			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, out string orchestrationOutputString))
+			{
+				OrchestrationScriptOutput orchestrationOutput = JsonConvert.DeserializeObject<OrchestrationScriptOutput>(orchestrationOutputString);
+				scriptResult.ServiceId = String.Join($"/", orchestrationOutput.OrchestrationServiceAgentId, orchestrationOutput.OrchestrationServiceId);
+			}
+
+			return scriptResult;
+		}
+
+		private static OrchestrationScriptResult PrepareScriptParams(
+			IDms dms,
+			IDmsAutomationScript script,
+			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments,
+			List<DmsAutomationScriptParamValue> scriptParams,
+			OrchestrationProfile profile)
+		{
+			ProfileHelper profileHelper = new ProfileHelper(dms.Communication.SendMessages);
 
 			Lazy<ProfileInstance> profileInstance = new(() =>
 			{
@@ -417,7 +495,6 @@
 				return instance;
 			});
 
-			List<DmsAutomationScriptParamValue> scriptParams = [];
 			foreach (IDmsAutomationScriptParameter requiredParameter in script.Parameters)
 			{
 				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredParameter.Description && arg.Type == OrchestrationScriptArgumentType.Parameter);
@@ -430,37 +507,66 @@
 				var profileParameter = profile.Values.FirstOrDefault(value => value.Name == requiredParameter.Description);
 				if (profileParameter != null)
 				{
-					scriptParams.Add(new DmsAutomationScriptParamValue(profileParameter.Name, profileParameter.Value.ToString()));
+					scriptParams.Add(new DmsAutomationScriptParamValue(profileParameter.Name, GetProfileParameterValue(profileParameter.Value).ToString()));
 					continue;
 				}
 
 				var profileInstanceParameter = profileInstance.Value.Values.FirstOrDefault(value => value.Parameter.Name == requiredParameter.Description);
 				if (profileInstanceParameter != null)
 				{
-					scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, profileInstanceParameter.Value.ToString()));
+					scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, GetProfileParameterValue(profileInstanceParameter.Value).ToString()));
 					continue;
 				}
 
-				errorMessages = [$"Missing required script parameter: {requiredParameter.Description}"];
-				return false;
+				return new OrchestrationScriptResult
+				{
+					ErrorMessages = [$"Missing required script parameter: {requiredParameter.Description}"],
+					HadError = true,
+				};
 			}
 
-			List<DmsAutomationScriptDummyValue> scriptDummies = [];
+			return new OrchestrationScriptResult
+			{
+				HadError = false,
+			};
+		}
+
+		private static object GetProfileParameterValue(ParameterValue value)
+		{
+			if (value.Type == ParameterValue.ValueType.Double)
+			{
+				return value.DoubleValue;
+			}
+			else
+			{
+				return value.StringValue;
+			}
+		}
+
+		private static OrchestrationScriptResult PrepareScriptDummies(
+			IDms dms,
+			IDmsAutomationScript script,
+			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments,
+			List<DmsAutomationScriptDummyValue> scriptDummies)
+		{
 			foreach (IDmsAutomationScriptDummy requiredDummy in script.Dummies)
 			{
 				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredDummy.Description && arg.Type == OrchestrationScriptArgumentType.Element);
 
 				if (matchingArgument == null)
 				{
-					errorMessages = [$"Missing required script dummy: {requiredDummy.Description}"];
-					return false;
+					return new OrchestrationScriptResult
+					{
+						ErrorMessages = [$"Missing required script dummy: {requiredDummy.Description}"],
+						HadError = true,
+					};
 				}
 
 				if (matchingArgument.Value.Contains("/")) // By ID
 				{
-					string[] splittedId = matchingArgument.Value.Split('/');
-					int dmaId = Convert.ToInt32(splittedId[0]);
-					int elementId = Convert.ToInt32(splittedId[1]);
+					string[] splitId = matchingArgument.Value.Split('/');
+					int dmaId = Convert.ToInt32(splitId[0]);
+					int elementId = Convert.ToInt32(splitId[1]);
 					scriptDummies.Add(new DmsAutomationScriptDummyValue(matchingArgument.Name, new DmsElementId(dmaId, elementId)));
 				}
 				else // By Name
@@ -470,21 +576,10 @@
 				}
 			}
 
-			OrchestrationScriptInput input = new(
-				profile.Values.ToDictionary(
-					value => value.Name,
-					value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
-				profile.Instance);
-			input.Metadata.Add("{Event ID}", eventId.ToString());
-
-			foreach (OrchestrationScriptArgument orchestrationScriptArgument in orchestrationScriptArguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata))
+			return new OrchestrationScriptResult
 			{
-				input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
-			}
-
-			var result = OrchestrationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
-
-			return !result.HadError && !errorMessages.Any();
+				HadError = false,
+			};
 		}
 	}
 }

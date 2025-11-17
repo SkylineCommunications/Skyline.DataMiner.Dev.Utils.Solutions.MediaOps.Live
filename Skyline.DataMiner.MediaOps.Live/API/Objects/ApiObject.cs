@@ -7,7 +7,7 @@
 	public abstract class ApiObject<T> : IApiObjectReference, IEquatable<ApiObject<T>>
 		where T : ApiObject<T>
 	{
-		protected ApiObject(DomInstanceBase domInstance)
+		internal ApiObject(DomInstanceBase domInstance)
 		{
 			DomInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
 		}
@@ -17,6 +17,14 @@
 		public Guid ID => DomInstance.ID.Id;
 
 		public ApiObjectReference<T> Reference => new ApiObjectReference<T>(DomInstance.ID.Id);
+
+		public DateTimeOffset CreatedAt => DomInstance.CreatedAt;
+
+		public string CreatedBy => DomInstance.CreatedBy;
+
+		public DateTimeOffset LastModified => DomInstance.LastModified;
+
+		public string LastModifiedBy => DomInstance.LastModifiedBy;
 
 		public override int GetHashCode()
 		{
@@ -65,6 +73,11 @@
 
 		public override string ToString()
 		{
+			if (!String.IsNullOrWhiteSpace(DomInstance.Name))
+			{
+				return $"{typeof(T).Name} '{DomInstance.Name}' [{ID}]";
+			}
+
 			return $"{typeof(T).Name} [{ID}]";
 		}
 	}

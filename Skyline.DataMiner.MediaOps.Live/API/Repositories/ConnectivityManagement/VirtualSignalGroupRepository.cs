@@ -9,16 +9,22 @@
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	using SLDataGateway.API.Types.Querying;
 
+	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+
 	public class VirtualSignalGroupRepository : Repository<VirtualSignalGroup>
 	{
+		private readonly CategoriesHelper _categoriesHelper;
+
 		internal VirtualSignalGroupRepository(SlcConnectivityManagementHelper helper, IConnection connection) : base(helper, connection)
 		{
+			_categoriesHelper = new CategoriesHelper(connection);
 		}
 
 		protected internal override DomDefinitionId DomDefinition => VirtualSignalGroup.DomDefinition;
@@ -46,6 +52,83 @@
 			}
 
 			return GetByEndpointIds(endpoints.Select(x => x.ID));
+		}
+
+		public IEnumerable<VirtualSignalGroup> GetByCategory(Categories.ApiObjectReference<Categories.Category> category)
+		{
+			if (category == Categories.ApiObjectReference<Categories.Category>.Empty)
+			{
+				return [];
+			}
+
+			var filter = VirtualSignalGroupExposers.Categories.Contains(category.ID);
+			return Read(filter);
+		}
+
+		public override VirtualSignalGroup Create(VirtualSignalGroup instance)
+		{
+			if (instance is null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			// Create the instance first
+			var newInstance = base.Create(instance);
+
+			// Then update linked category items
+			_categoriesHelper.UpdateLinkedCategoryItems([newInstance]);
+
+			return newInstance;
+		}
+
+		public override VirtualSignalGroup Update(VirtualSignalGroup instance)
+		{
+			if (instance is null)
+			{
+				throw new ArgumentNullException(nameof(instance));
+			}
+
+			// Update the instance first
+			var newInstance = base.Update(instance);
+
+			// Then update linked category items
+			_categoriesHelper.UpdateLinkedCategoryItems([newInstance]);
+
+			return newInstance;
+		}
+
+		public override IEnumerable<VirtualSignalGroup> CreateOrUpdate(IEnumerable<VirtualSignalGroup> instances)
+		{
+			if (instances is null)
+			{
+				throw new ArgumentNullException(nameof(instances));
+			}
+
+			var instancesCollection = instances.AsCollection();
+
+			// First create or update the instances
+			var result = base.CreateOrUpdate(instancesCollection);
+
+			// Then update linked category items
+			_categoriesHelper.UpdateLinkedCategoryItems(instancesCollection);
+
+			return result;
+		}
+
+		public override void Delete(IEnumerable<VirtualSignalGroup> instances)
+		{
+			if (instances is null)
+			{
+				throw new ArgumentNullException(nameof(instances));
+			}
+
+			var instancesCollection = instances.AsCollection();
+
+			// First remove linked category items
+			_categoriesHelper.RemoveLinkedCategoryItems(instancesCollection);
+
+			// Proceed with deletion
+			base.Delete(instancesCollection);
 		}
 
 		protected internal override VirtualSignalGroup CreateInstance(DomInstance domInstance)
@@ -79,9 +162,9 @@
 				case nameof(VirtualSignalGroup.Role):
 					return FilterElementFactory.Create<int>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Role), comparer, value);
 				case nameof(LevelEndpoint.Level):
-					return FilterElementFactory.Create<Guid>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level), comparer, value);
+					return FilterElementFactory.Create<Guid>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level), comparer, value);
 				case nameof(LevelEndpoint.Endpoint):
-					return FilterElementFactory.Create<Guid>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint), comparer, value);
+					return FilterElementFactory.Create<Guid>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint), comparer, value);
 				case nameof(VirtualSignalGroup.Categories):
 					return FilterElementFactory.Create<Guid>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Categories), comparer, value);
 			}
@@ -100,9 +183,9 @@
 				case nameof(VirtualSignalGroup.Role):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Role), sortOrder, naturalSort);
 				case nameof(LevelEndpoint.Level):
-					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level), sortOrder, naturalSort);
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level), sortOrder, naturalSort);
 				case nameof(LevelEndpoint.Endpoint):
-					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint), sortOrder, naturalSort);
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint), sortOrder, naturalSort);
 				case nameof(VirtualSignalGroup.Categories):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Categories), sortOrder, naturalSort);
 			}

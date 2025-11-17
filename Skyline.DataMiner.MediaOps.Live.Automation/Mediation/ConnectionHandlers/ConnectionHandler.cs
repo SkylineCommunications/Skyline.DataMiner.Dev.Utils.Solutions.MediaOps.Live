@@ -10,7 +10,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Automation.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Data;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data;
 
 	public abstract class ConnectionHandler
 	{
@@ -146,8 +146,10 @@
 				var sw = System.Diagnostics.Stopwatch.StartNew();
 				logger.Information($"Start processing connect request.");
 
-				var createConnectionRequest = inputData.Deserialize<CreateConnectionsRequest>();
-				logger.Debug($"Data: {JsonConvert.SerializeObject(createConnectionRequest, Formatting.Indented)}");
+				var createConnectionInputData = inputData.Deserialize<CreateConnectionsInputData>();
+				logger.Debug($"Data: {JsonConvert.SerializeObject(createConnectionInputData, Formatting.Indented)}");
+
+				var createConnectionRequest = TranslateInputDataToRequest(engine, createConnectionInputData);
 
 				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
 				Connect(engine, connectionHandlerEngine, createConnectionRequest);
@@ -171,8 +173,10 @@
 				var sw = System.Diagnostics.Stopwatch.StartNew();
 				logger.Information($"Start processing disconnect request.");
 
-				var disconnectDestinationsRequest = inputData.Deserialize<DisconnectDestinationsRequest>();
-				logger.Debug($"Data: {JsonConvert.SerializeObject(disconnectDestinationsRequest, Formatting.Indented)}");
+				var disconnectDestinationsInputData = inputData.Deserialize<DisconnectDestinationsInputData>();
+				logger.Debug($"Data: {JsonConvert.SerializeObject(disconnectDestinationsInputData, Formatting.Indented)}");
+
+				var disconnectDestinationsRequest = TranslateInputDataToRequest(engine, disconnectDestinationsInputData);
 
 				var connectionHandlerEngine = new ConnectionHandlerEngine(engine, logger);
 				Disconnect(engine, connectionHandlerEngine, disconnectDestinationsRequest);
@@ -187,6 +191,30 @@
 
 				throw;
 			}
+		}
+
+		private static CreateConnectionsRequest TranslateInputDataToRequest(IEngine engine, CreateConnectionsInputData inputData)
+		{
+			var cache = engine.GetStaticMediaOpsLiveApiCache().VirtualSignalGroupsCache;
+
+			var connections = inputData.Connections
+				.Select(x => new CreateConnectionsRequest.ConnectionInfo(
+					cache.GetEndpoint(x.SourceEndpoint.ID),
+					cache.GetEndpoint(x.DestinationEndpoint.ID)))
+				.ToList();
+
+			return new CreateConnectionsRequest(connections);
+		}
+
+		private static DisconnectDestinationsRequest TranslateInputDataToRequest(IEngine engine, DisconnectDestinationsInputData inputData)
+		{
+			var cache = engine.GetStaticMediaOpsLiveApiCache().VirtualSignalGroupsCache;
+
+			var destinations = inputData.Destinations
+				.Select(x => cache.GetEndpoint(x.ID))
+				.ToList();
+
+			return new DisconnectDestinationsRequest(destinations);
 		}
 
 		private string GetConnectionHandlerName()

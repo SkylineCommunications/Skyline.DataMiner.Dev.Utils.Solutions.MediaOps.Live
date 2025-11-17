@@ -23,17 +23,6 @@
 
 		protected internal override DomDefinitionId DomDefinition => TransportType.DomDefinition;
 
-		public void CreatePredefinedTransportTypes()
-		{
-			var existing = Read(PredefinedTransportTypes.ById.Keys);
-			var missing = PredefinedTransportTypes.All.Except(existing.Values).ToList();
-
-			if (missing.Count > 0)
-			{
-				CreateOrUpdateWithoutValidation(missing);
-			}
-		}
-
 		protected internal override TransportType CreateInstance(DomInstance domInstance)
 		{
 			return new TransportType(domInstance);
@@ -41,11 +30,6 @@
 
 		protected override void ValidateBeforeSave(ICollection<TransportType> instances)
 		{
-			if (instances.Any(x => x.IsPredefined))
-			{
-				throw new InvalidOperationException("Modifying a predefined transport type is not allowed.");
-			}
-
 			foreach (var instance in instances)
 			{
 				instance.Validate().ThrowIfInvalid();
@@ -56,11 +40,6 @@
 
 		protected override void ValidateBeforeDelete(ICollection<TransportType> instances)
 		{
-			if (instances.Any(x => x.IsPredefined))
-			{
-				throw new InvalidOperationException("Modifying a predefined transport type is not allowed.");
-			}
-
 			CheckIfStillInUse(instances);
 		}
 
@@ -105,7 +84,7 @@
 			}
 		}
 
-		private void CheckIfStillInUse(ICollection<TransportType> instances)
+		private void CheckIfStillInUse(ICollection<TransportType> transportTypes)
 		{
 			FilterElement<DomInstance> CreateFilter(TransportType tt) =>
 				new ORFilterElement<DomInstance>(
@@ -116,9 +95,9 @@
 						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
 						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType).Equal(tt.ID)));
 
-			var count = FilterQueryExecutor.CountFilteredItems(instances, CreateFilter, Helper.DomInstances.Count);
+			var instances = FilterQueryExecutor.RetrieveFilteredItems(transportTypes, CreateFilter, Helper.DomInstances.Read);
 
-			if (count > 0)
+			if (instances.Any())
 			{
 				throw new InvalidOperationException("One or more transport types are still in use");
 			}

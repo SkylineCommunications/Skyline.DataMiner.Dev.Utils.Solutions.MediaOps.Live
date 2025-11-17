@@ -80,7 +80,6 @@
 			Description = generalInfo[7];
 			IsEnabled = generalInfo[8].ToLower() == "true";
 
-
 			foreach (SA taskActionSa in info[1].Psa)
 			{
 				var actionsInfo = taskActionSa.Sa.ToList();
@@ -234,7 +233,7 @@
 
 		public SchedulerRepeatType RepetitionType { get; }
 
-		public List<SchedulerAction> Actions { get;}
+		public List<SchedulerAction> Actions { get; }
 
 		public SchedulerTask ToSchedulerTaskInfo()
 		{

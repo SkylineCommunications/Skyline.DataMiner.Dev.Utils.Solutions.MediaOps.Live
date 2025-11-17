@@ -9,33 +9,41 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 
 	public sealed class ConnectivityInfoProvider : IDisposable
 	{
 		private readonly object _lock = new();
 
+		private VirtualSignalGroupEndpointsObserver _vsgObserver;
 		private VirtualSignalGroupEndpointsCache _vsgCache;
+		private bool _ownsVsgObserver;
+
+		private LevelsObserver _levelsObserver;
 		private LevelsCache _levelsCache;
+		private bool _ownsLevelsObserver;
+
 		private LiteConnectivityInfoProvider _liteConnectivityInfoProvider;
+		private bool _ownsLiteConnectivityInfoProvider;
 
 		private bool _isDisposed;
 
 		public ConnectivityInfoProvider(
 			MediaOpsLiveApi api,
 			LiteConnectivityInfoProvider liteConnectivityInfoProvider = null,
-			VirtualSignalGroupEndpointsCache virtualSignalGroupsCache = null,
-			LevelsCache levelsCache = null,
+			VirtualSignalGroupEndpointsObserver virtualSignalGroupsObserver = null,
+			LevelsObserver levelsObserver = null,
 			bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 
-			Initialize(liteConnectivityInfoProvider, virtualSignalGroupsCache, levelsCache, subscribe);
+			Initialize(liteConnectivityInfoProvider, virtualSignalGroupsObserver, levelsObserver, subscribe);
 		}
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
 
-		public MediaOpsLiveApi Api { get; }
+		internal MediaOpsLiveApi Api { get; }
 
 		public bool IsSubscribed { get; private set; }
 
@@ -282,8 +290,16 @@
 					return;
 				}
 
-				_vsgCache.Subscribe();
-				_liteConnectivityInfoProvider.Subscribe();
+				_liteConnectivityInfoProvider.EndpointsImpacted += Endpoints_Impacted;
+
+				if (_ownsLevelsObserver)
+					_levelsObserver.Subscribe();
+
+				if (_ownsVsgObserver)
+					_vsgObserver.Subscribe();
+
+				if (_ownsLiteConnectivityInfoProvider)
+					_liteConnectivityInfoProvider.Subscribe();
 
 				IsSubscribed = true;
 			}
@@ -298,8 +314,16 @@
 					return;
 				}
 
-				_vsgCache.Unsubscribe();
-				_liteConnectivityInfoProvider.Unsubscribe();
+				_liteConnectivityInfoProvider.EndpointsImpacted -= Endpoints_Impacted;
+
+				if (_ownsLevelsObserver)
+					_levelsObserver.Unsubscribe();
+
+				if (_ownsVsgObserver)
+					_vsgObserver.Unsubscribe();
+
+				if (_ownsLiteConnectivityInfoProvider)
+					_liteConnectivityInfoProvider.Unsubscribe();
 
 				IsSubscribed = false;
 			}
@@ -312,24 +336,73 @@
 				return;
 			}
 
-			_liteConnectivityInfoProvider.EndpointsImpacted -= Endpoints_Impacted;
 			Unsubscribe();
+
+			if (_ownsLevelsObserver)
+			{
+				_levelsObserver?.Dispose();
+				_levelsObserver = null;
+			}
+
+			if (_ownsVsgObserver)
+			{
+				_vsgObserver?.Dispose();
+				_vsgObserver = null;
+			}
+
+			if (_ownsLiteConnectivityInfoProvider)
+			{
+				_liteConnectivityInfoProvider?.Dispose();
+				_liteConnectivityInfoProvider = null;
+			}
 
 			_isDisposed = true;
 		}
 
-		private void Initialize(LiteConnectivityInfoProvider liteConnectivityInfoProvider, VirtualSignalGroupEndpointsCache virtualSignalGroupsCache, LevelsCache levelsCache, bool subscribe)
+		private void Initialize(
+			LiteConnectivityInfoProvider liteConnectivityInfoProvider,
+			VirtualSignalGroupEndpointsObserver virtualSignalGroupsObserver,
+			LevelsObserver levelsObserver,
+			bool subscribe)
 		{
 			lock (_lock)
 			{
-				_levelsCache = levelsCache ?? new LevelsCache(Api, subscribe);
+				if (liteConnectivityInfoProvider == null)
+				{
+					liteConnectivityInfoProvider = new LiteConnectivityInfoProvider(Api, subscribe);
+					_ownsLiteConnectivityInfoProvider = true;
+				}
 
-				_vsgCache = virtualSignalGroupsCache ?? new VirtualSignalGroupEndpointsCache(Api, subscribe);
+				if (virtualSignalGroupsObserver == null)
+				{
+					virtualSignalGroupsObserver = new VirtualSignalGroupEndpointsObserver(Api);
+					_ownsVsgObserver = true;
+				}
 
-				_liteConnectivityInfoProvider = liteConnectivityInfoProvider ?? new LiteConnectivityInfoProvider(Api, subscribe);
-				_liteConnectivityInfoProvider.EndpointsImpacted += Endpoints_Impacted;
+				if (levelsObserver == null)
+				{
+					levelsObserver = new LevelsObserver(Api);
+					_ownsLevelsObserver = true;
+				}
 
-				IsSubscribed = subscribe;
+				_liteConnectivityInfoProvider = liteConnectivityInfoProvider;
+
+				_levelsObserver = levelsObserver;
+				_levelsCache = levelsObserver.Cache;
+
+				_vsgObserver = virtualSignalGroupsObserver;
+				_vsgCache = virtualSignalGroupsObserver.Cache;
+
+				if (subscribe)
+				{
+					Subscribe();
+				}
+
+				if (_ownsLevelsObserver)
+					_levelsObserver.LoadInitialData();
+
+				if (_ownsVsgObserver)
+					_vsgObserver.LoadInitialData();
 			}
 		}
 

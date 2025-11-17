@@ -7,7 +7,6 @@
 	using Skyline.DataMiner.Net.Async;
 	using Skyline.DataMiner.Net.Messages;
 
-
 	public class AsyncProgressBuilder
 	{
 		public static AsyncProgress CreateInstance(

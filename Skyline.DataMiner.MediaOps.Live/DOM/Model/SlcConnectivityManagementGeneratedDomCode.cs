@@ -8,10 +8,11 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 {
 	using System;
 	using System.ComponentModel;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
 
-	public static class SlcConnectivityManagementIds
+	internal static class SlcConnectivityManagementIds
 	{
 		public const string ModuleId = "(slc)connectivity_management";
 		public static class Enums
@@ -25,15 +26,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 
 		public static class Sections
 		{
-			public static class CategoryInfo
-			{
-				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("11767eb4-9c02-4811-af4d-e6a6f8b460e8"))
-				{ ModuleId = "(slc)connectivity_management" };
-				public static FieldDescriptorID Name { get; } = new FieldDescriptorID(new Guid("6827feae-88af-428b-803e-947713d10318"));
-				public static FieldDescriptorID ParentCategory { get; } = new FieldDescriptorID(new Guid("950fd43f-2c5d-45bf-aa51-a61324cd07f5"));
-			}
-
-			public static class VirtualSignalGroupLevels
+			public static class VirtualSignalGroupLevel
 			{
 				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("5e0dcb70-3dbc-479d-a127-c2e062e49b40"))
 				{ ModuleId = "(slc)connectivity_management" };
@@ -65,20 +58,19 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				public static FieldDescriptorID TransportType { get; } = new FieldDescriptorID(new Guid("64cc245e-5a0a-4479-9766-a93a7c090255"));
 			}
 
-			public static class TransportTypeTsoip
-			{
-				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("6d130f78-b4f4-4ee1-974d-27997a57502e"))
-				{ ModuleId = "(slc)connectivity_management" };
-				public static FieldDescriptorID SourceIP { get; } = new FieldDescriptorID(new Guid("a77067fb-c978-4c19-862c-871015609518"));
-				public static FieldDescriptorID MulticastIP { get; } = new FieldDescriptorID(new Guid("17fd8b18-bce5-4dd5-9892-ace39e8e01b0"));
-				public static FieldDescriptorID Port { get; } = new FieldDescriptorID(new Guid("4608640f-fda1-4bf9-98c2-2e7d752ad6cf"));
-			}
-
 			public static class TransportTypeInfo
 			{
 				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("57558fef-283c-4b4d-84f8-f411a26e546c"))
 				{ ModuleId = "(slc)connectivity_management" };
 				public static FieldDescriptorID Name { get; } = new FieldDescriptorID(new Guid("2442cdc4-aa19-40b5-bb53-281f4a33aa74"));
+			}
+
+			public static class EndpointTransportMetadata
+			{
+				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("b622362c-51cd-48e0-8717-0a5e9a659c9d"))
+				{ ModuleId = "(slc)connectivity_management" };
+				public static FieldDescriptorID FieldName { get; } = new FieldDescriptorID(new Guid("642c27f8-e882-4f12-843e-6f4595367fb0"));
+				public static FieldDescriptorID Value { get; } = new FieldDescriptorID(new Guid("2ab6ddc7-444d-4edb-97cf-d9064738f001"));
 			}
 
 			public static class LevelInfo
@@ -89,13 +81,18 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				public static FieldDescriptorID Name { get; } = new FieldDescriptorID(new Guid("ddc1105e-2213-4ca9-bc1a-0077ee2cb198"));
 				public static FieldDescriptorID TransportType { get; } = new FieldDescriptorID(new Guid("0154f612-029e-4b94-a92e-3572950bfe4d"));
 			}
+
+			public static class TransportTypeField
+			{
+				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("c71da817-f323-4ce2-a02a-91f29b83e6a8"))
+				{ ModuleId = "(slc)connectivity_management" };
+				public static FieldDescriptorID Name { get; } = new FieldDescriptorID(new Guid("021ce486-e060-4d71-b861-87f187597047"));
+			}
 		}
 
 		public static class Definitions
 		{
 			public static DomDefinitionId Level { get; } = new DomDefinitionId(new Guid("3a016709-8fe1-4ad6-aa1d-56873492b80b"))
-			{ ModuleId = "(slc)connectivity_management" };
-			public static DomDefinitionId Category { get; } = new DomDefinitionId(new Guid("9319d52c-7605-4aab-a340-bd54d140a0ba"))
 			{ ModuleId = "(slc)connectivity_management" };
 			public static DomDefinitionId Endpoint { get; } = new DomDefinitionId(new Guid("3d952eea-dd7f-4997-acec-af888160392a"))
 			{ ModuleId = "(slc)connectivity_management" };
@@ -121,6 +118,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 
@@ -128,12 +126,21 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a LevelInstance DOM instance.
 	/// The <see cref="LevelInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class LevelInstance : DomInstanceBase
+	internal partial class LevelInstance : DomInstanceBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="LevelInstance"/> class. Creates an empty <see cref="LevelInstance"/> instance with default settings.
 		/// </summary>
 		public LevelInstance() : base(SlcConnectivityManagementIds.Definitions.Level)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="LevelInstance"/> class. Creates an empty <see cref="LevelInstance"/> instance with default settings and a specific ID.
+		/// </summary>
+		public LevelInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.Level, id)
 		{
 			InitializeProperties();
 			AfterLoad();
@@ -161,8 +168,34 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			return new LevelInstance(instance);
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="LevelInstance"/>.
+		/// </summary>
+		/// <returns>A new <see cref="LevelInstance"/> object that is a deep copy of this instance.</returns>
+		public LevelInstance Clone()
+		{
+			return new LevelInstance((DomInstance)this.ToInstance().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="LevelInstance"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="LevelInstance"/> object that is a copy of this instance but with a different id.</returns>
+		public LevelInstance Duplicate()
+		{
+			var instance = (DomInstance)this.ToInstance().Clone();
+			instance.ID = new DomInstanceId(Guid.NewGuid())
+			{ ModuleId = ModuleId };
+			foreach (var section in instance.Sections)
+			{
+				section.ID = new Skyline.DataMiner.Net.Sections.SectionID(Guid.NewGuid());
+			}
+
+			return new LevelInstance(instance);
+		}
+
 		/// <inheritdoc />
-		protected override DomInstance InternalToInstance()
+		protected sealed override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(LevelInfo.ToSection());
@@ -170,7 +203,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override void Save(DomHelper helper)
+		public sealed override void Save(DomHelper helper)
 		{
 			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
 			var instance = ToInstance();
@@ -199,84 +232,10 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	}
 
 	/// <summary>
-	/// Represents a wrapper class for accessing a CategoryInstance DOM instance.
-	/// The <see cref="CategoryInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
-	/// </summary>
-	public partial class CategoryInstance : DomInstanceBase
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="CategoryInstance"/> class. Creates an empty <see cref="CategoryInstance"/> instance with default settings.
-		/// </summary>
-		public CategoryInstance() : base(SlcConnectivityManagementIds.Definitions.Category)
-		{
-			InitializeProperties();
-			AfterLoad();
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="CategoryInstance"/> class using the specified <paramref name="domInstance"/> for initializing the object.
-		/// </summary>
-		/// <param name="domInstance">The <see cref="DomInstance"/> object that provides data for initializing the <see cref="CategoryInstance"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public CategoryInstance(DomInstance domInstance) : base(domInstance)
-		{
-			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.Category))
-				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.Category)}'", nameof(domInstance));
-			InitializeProperties();
-			AfterLoad();
-		}
-
-		/// <summary>
-		/// Gets or sets the CategoryInfo section of the DOM Instance.
-		/// </summary>
-		public CategoryInfoSection CategoryInfo { get; set; }
-
-		public static explicit operator CategoryInstance(DomInstance instance)
-		{
-			return new CategoryInstance(instance);
-		}
-
-		/// <inheritdoc />
-		protected override DomInstance InternalToInstance()
-		{
-			domInstance.Sections.Clear();
-			domInstance.Sections.Add(CategoryInfo.ToSection());
-			return domInstance;
-		}
-
-		/// <inheritdoc />
-		public override void Save(DomHelper helper)
-		{
-			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
-			var instance = ToInstance();
-			if (exist == null)
-			{
-				domInstance = helper.DomInstances.Create(instance);
-			}
-			else
-			{
-				domInstance = helper.DomInstances.Update(instance);
-			}
-		}
-
-		protected sealed override void InitializeProperties()
-		{
-			var _categoryInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.CategoryInfo.Id));
-			if (_categoryInfo is null)
-			{
-				CategoryInfo = new CategoryInfoSection();
-			}
-			else
-			{
-				CategoryInfo = new CategoryInfoSection(_categoryInfo);
-			}
-		}
-	}
-
-	/// <summary>
 	/// Represents a wrapper class for accessing a EndpointInstance DOM instance.
 	/// The <see cref="EndpointInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class EndpointInstance : DomInstanceBase
+	internal partial class EndpointInstance : DomInstanceBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="EndpointInstance"/> class. Creates an empty <see cref="EndpointInstance"/> instance with default settings.
@@ -287,6 +246,9 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			AfterLoad();
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="EndpointInstance"/> class. Creates an empty <see cref="EndpointInstance"/> instance with default settings and a specific ID.
+		/// </summary>
 		public EndpointInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.Endpoint, id)
 		{
 			InitializeProperties();
@@ -311,30 +273,57 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public EndpointInfoSection EndpointInfo { get; set; }
 
 		/// <summary>
-		/// Gets or sets the TransportTypeTsoip section of the DOM Instance.
+		/// Gets or sets the EndpointTransportMetadata section of the DOM Instance.
 		/// </summary>
-		public TransportTypeTsoipSection TransportTypeTsoip { get; set; }
+		public IList<EndpointTransportMetadataSection> EndpointTransportMetadata { get; private set; }
 
 		public static explicit operator EndpointInstance(DomInstance instance)
 		{
 			return new EndpointInstance(instance);
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="EndpointInstance"/>.
+		/// </summary>
+		/// <returns>A new <see cref="EndpointInstance"/> object that is a deep copy of this instance.</returns>
+		public EndpointInstance Clone()
+		{
+			return new EndpointInstance((DomInstance)this.ToInstance().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="EndpointInstance"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="EndpointInstance"/> object that is a copy of this instance but with a different id.</returns>
+		public EndpointInstance Duplicate()
+		{
+			var instance = (DomInstance)this.ToInstance().Clone();
+			instance.ID = new DomInstanceId(Guid.NewGuid())
+			{ ModuleId = ModuleId };
+			foreach (var section in instance.Sections)
+			{
+				section.ID = new Skyline.DataMiner.Net.Sections.SectionID(Guid.NewGuid());
+			}
+
+			return new EndpointInstance(instance);
+		}
+
 		/// <inheritdoc />
-		protected override DomInstance InternalToInstance()
+		protected sealed override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(EndpointInfo.ToSection());
-			if (TransportTypeTsoip != null && !TransportTypeTsoip.IsEmpty)
+
+			foreach (var item in EndpointTransportMetadata)
 			{
-				domInstance.Sections.Add(TransportTypeTsoip.ToSection());
+				domInstance.Sections.Add(item.ToSection());
 			}
 
 			return domInstance;
 		}
 
 		/// <inheritdoc />
-		public override void Save(DomHelper helper)
+		public sealed override void Save(DomHelper helper)
 		{
 			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
 			var instance = ToInstance();
@@ -360,15 +349,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				EndpointInfo = new EndpointInfoSection(_endpointInfo);
 			}
 
-			var _transportTypeTsoip = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id));
-			if (_transportTypeTsoip is null)
-			{
-				TransportTypeTsoip = new TransportTypeTsoipSection();
-			}
-			else
-			{
-				TransportTypeTsoip = new TransportTypeTsoipSection(_transportTypeTsoip);
-			}
+			EndpointTransportMetadata = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Id)).Select(section => new EndpointTransportMetadataSection(section)).ToList();
 		}
 	}
 
@@ -376,7 +357,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a VirtualSignalGroupInstance DOM instance.
 	/// The <see cref="VirtualSignalGroupInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class VirtualSignalGroupInstance : DomInstanceBase
+	internal partial class VirtualSignalGroupInstance : DomInstanceBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VirtualSignalGroupInstance"/> class. Creates an empty <see cref="VirtualSignalGroupInstance"/> instance with default settings.
@@ -387,6 +368,9 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			AfterLoad();
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupInstance"/> class. Creates an empty <see cref="VirtualSignalGroupInstance"/> instance with default settings and a specific ID.
+		/// </summary>
 		public VirtualSignalGroupInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup, id)
 		{
 			InitializeProperties();
@@ -406,9 +390,9 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <summary>
-		/// Gets or sets the VirtualSignalGroupLevels section of the DOM Instance.
+		/// Gets or sets the VirtualSignalGroupLevel section of the DOM Instance.
 		/// </summary>
-		public IList<VirtualSignalGroupLevelsSection> VirtualSignalGroupLevels { get; private set; }
+		public IList<VirtualSignalGroupLevelSection> VirtualSignalGroupLevel { get; private set; }
 
 		/// <summary>
 		/// Gets or sets the VirtualSignalGroupInfo section of the DOM Instance.
@@ -420,11 +404,37 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			return new VirtualSignalGroupInstance(instance);
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="VirtualSignalGroupInstance"/>.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupInstance"/> object that is a deep copy of this instance.</returns>
+		public VirtualSignalGroupInstance Clone()
+		{
+			return new VirtualSignalGroupInstance((DomInstance)this.ToInstance().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="VirtualSignalGroupInstance"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupInstance"/> object that is a copy of this instance but with a different id.</returns>
+		public VirtualSignalGroupInstance Duplicate()
+		{
+			var instance = (DomInstance)this.ToInstance().Clone();
+			instance.ID = new DomInstanceId(Guid.NewGuid())
+			{ ModuleId = ModuleId };
+			foreach (var section in instance.Sections)
+			{
+				section.ID = new Skyline.DataMiner.Net.Sections.SectionID(Guid.NewGuid());
+			}
+
+			return new VirtualSignalGroupInstance(instance);
+		}
+
 		/// <inheritdoc />
-		protected override DomInstance InternalToInstance()
+		protected sealed override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
-			foreach (var item in VirtualSignalGroupLevels)
+			foreach (var item in VirtualSignalGroupLevel)
 			{
 				domInstance.Sections.Add(item.ToSection());
 			}
@@ -434,7 +444,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <inheritdoc />
-		public override void Save(DomHelper helper)
+		public sealed override void Save(DomHelper helper)
 		{
 			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
 			var instance = ToInstance();
@@ -450,7 +460,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 
 		protected sealed override void InitializeProperties()
 		{
-			VirtualSignalGroupLevels = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Id)).Select(section => new VirtualSignalGroupLevelsSection(section)).ToList();
+			VirtualSignalGroupLevel = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Id)).Select(section => new VirtualSignalGroupLevelSection(section)).ToList();
 			var _virtualSignalGroupInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Id));
 			if (_virtualSignalGroupInfo is null)
 			{
@@ -467,7 +477,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a TransportTypeInstance DOM instance.
 	/// The <see cref="TransportTypeInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class TransportTypeInstance : DomInstanceBase
+	internal partial class TransportTypeInstance : DomInstanceBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="TransportTypeInstance"/> class. Creates an empty <see cref="TransportTypeInstance"/> instance with default settings.
@@ -478,6 +488,9 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			AfterLoad();
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TransportTypeInstance"/> class. Creates an empty <see cref="TransportTypeInstance"/> instance with default settings and a specific ID.
+		/// </summary>
 		public TransportTypeInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.TransportType, id)
 		{
 			InitializeProperties();
@@ -501,21 +514,57 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// </summary>
 		public TransportTypeInfoSection TransportTypeInfo { get; set; }
 
+		/// <summary>
+		/// Gets or sets the TransportTypeField section of the DOM Instance.
+		/// </summary>
+		public IList<TransportTypeFieldSection> TransportTypeField { get; private set; }
+
 		public static explicit operator TransportTypeInstance(DomInstance instance)
 		{
 			return new TransportTypeInstance(instance);
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="TransportTypeInstance"/>.
+		/// </summary>
+		/// <returns>A new <see cref="TransportTypeInstance"/> object that is a deep copy of this instance.</returns>
+		public TransportTypeInstance Clone()
+		{
+			return new TransportTypeInstance((DomInstance)this.ToInstance().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="TransportTypeInstance"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="TransportTypeInstance"/> object that is a copy of this instance but with a different id.</returns>
+		public TransportTypeInstance Duplicate()
+		{
+			var instance = (DomInstance)this.ToInstance().Clone();
+			instance.ID = new DomInstanceId(Guid.NewGuid())
+			{ ModuleId = ModuleId };
+			foreach (var section in instance.Sections)
+			{
+				section.ID = new Skyline.DataMiner.Net.Sections.SectionID(Guid.NewGuid());
+			}
+
+			return new TransportTypeInstance(instance);
+		}
+
 		/// <inheritdoc />
-		protected override DomInstance InternalToInstance()
+		protected sealed override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(TransportTypeInfo.ToSection());
+			foreach (var item in TransportTypeField)
+			{
+				domInstance.Sections.Add(item.ToSection());
+			}
+
 			return domInstance;
 		}
 
 		/// <inheritdoc />
-		public override void Save(DomHelper helper)
+		public sealed override void Save(DomHelper helper)
 		{
 			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
 			var instance = ToInstance();
@@ -540,6 +589,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			{
 				TransportTypeInfo = new TransportTypeInfoSection(_transportTypeInfo);
 			}
+
+			TransportTypeField = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.TransportTypeField.Id)).Select(section => new TransportTypeFieldSection(section)).ToList();
 		}
 	}
 }
@@ -555,145 +606,30 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Apps.Sections.Sections;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Sections;
 
 	/// <summary>
-	/// Represents a wrapper class for accessing a CategoryInfoSection section.
-	/// The <see cref="CategoryInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// Represents a wrapper class for accessing a VirtualSignalGroupLevelSection section.
+	/// The <see cref="VirtualSignalGroupLevelSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class CategoryInfoSection : DomSectionBase
+	internal partial class VirtualSignalGroupLevelSection : DomSectionBase
 	{
 		/// <summary>
-		/// Initializes a new instance of the <see cref="CategoryInfoSection"/> class. Creates an empty <see cref="CategoryInfoSection"/> object with default settings.
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupLevelSection"/> class. Creates an empty <see cref="VirtualSignalGroupLevelSection"/> object with default settings.
 		/// </summary>
-		public CategoryInfoSection() : base(SlcConnectivityManagementIds.Sections.CategoryInfo.Id)
+		public VirtualSignalGroupLevelSection() : base(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Id)
 		{
 		}
 
 		/// <summary>
-		/// Initializes a new instance of the <see cref="CategoryInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupLevelSection"/> class using the specified <paramref name="section"/> for initializing the object.
 		/// </summary>
-		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="CategoryInfoSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public CategoryInfoSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.CategoryInfo.Id)
-		{
-		}
-
-		/// <summary>
-		/// Gets or sets the Name field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public String Name
-		{
-			get
-			{
-				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.CategoryInfo.Name);
-				if (wrapper != null)
-				{
-					return (String)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.CategoryInfo.Name);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.CategoryInfo.Name, (String)value);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the ParentCategory field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public Guid? ParentCategory
-		{
-			get
-			{
-				var wrapper = section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.CategoryInfo.ParentCategory);
-				if (wrapper != null)
-				{
-					return (Guid?)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.CategoryInfo.ParentCategory);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.CategoryInfo.ParentCategory, (Guid)value);
-				}
-			}
-		}
-
-		/// <inheritdoc />
-		protected override Section InternalToSection()
-		{
-			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.CategoryInfo.Name) == null)
-				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			return section;
-		}
-	}
-
-	/// <summary>
-	/// Represents a wrapper class for accessing a VirtualSignalGroupLevelsSection section.
-	/// The <see cref="VirtualSignalGroupLevelsSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
-	/// </summary>
-	public partial class VirtualSignalGroupLevelsSection : DomSectionBase
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="VirtualSignalGroupLevelsSection"/> class. Creates an empty <see cref="VirtualSignalGroupLevelsSection"/> object with default settings.
-		/// </summary>
-		public VirtualSignalGroupLevelsSection() : base(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Id)
-		{
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="VirtualSignalGroupLevelsSection"/> class using the specified <paramref name="section"/> for initializing the object.
-		/// </summary>
-		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="VirtualSignalGroupLevelsSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public VirtualSignalGroupLevelsSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Id)
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="VirtualSignalGroupLevelSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public VirtualSignalGroupLevelSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Id)
 		{
 		}
 
@@ -716,7 +652,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		{
 			get
 			{
-				var wrapper = section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint);
+				var wrapper = section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint);
 				if (wrapper != null)
 				{
 					return (Guid?)wrapper.Value;
@@ -731,11 +667,11 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			{
 				if (value == null)
 				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint);
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint);
 				}
 				else
 				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint, (Guid)value);
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint, (Guid)value);
 				}
 			}
 		}
@@ -759,7 +695,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		{
 			get
 			{
-				var wrapper = section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level);
+				var wrapper = section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level);
 				if (wrapper != null)
 				{
 					return (Guid?)wrapper.Value;
@@ -774,21 +710,41 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			{
 				if (value == null)
 				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level);
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level);
 				}
 				else
 				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level, (Guid)value);
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level, (Guid)value);
 				}
 			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="VirtualSignalGroupLevelSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupLevelSection"/> object that is a deep copy of this section.</returns>
+		public VirtualSignalGroupLevelSection Clone()
+		{
+			return new VirtualSignalGroupLevelSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="VirtualSignalGroupLevelSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupLevelSection"/> object that is a copy of this section but with a different id.</returns>
+		public VirtualSignalGroupLevelSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new VirtualSignalGroupLevelSection(section);
 		}
 
 		/// <inheritdoc />
 		protected override Section InternalToSection()
 		{
-			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Endpoint) == null)
+			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint) == null)
 				throw new InvalidOperationException("'Endpoint' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level) == null)
+			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level) == null)
 				throw new InvalidOperationException("'Level' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
 		}
@@ -798,7 +754,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a VirtualSignalGroupInfoSection section.
 	/// The <see cref="VirtualSignalGroupInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class VirtualSignalGroupInfoSection : DomSectionBase
+	internal partial class VirtualSignalGroupInfoSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VirtualSignalGroupInfoSection"/> class. Creates an empty <see cref="VirtualSignalGroupInfoSection"/> object with default settings.
@@ -964,6 +920,26 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		/// </remarks>
 		public IList<Guid> Categories { get; private set; }
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="VirtualSignalGroupInfoSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupInfoSection"/> object that is a deep copy of this section.</returns>
+		public VirtualSignalGroupInfoSection Clone()
+		{
+			return new VirtualSignalGroupInfoSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="VirtualSignalGroupInfoSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupInfoSection"/> object that is a copy of this section but with a different id.</returns>
+		public VirtualSignalGroupInfoSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new VirtualSignalGroupInfoSection(section);
+		}
+
 		/// <inheritdoc />
 		protected override Section InternalToSection()
 		{
@@ -983,7 +959,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	/// Represents a wrapper class for accessing a EndpointInfoSection section.
 	/// The <see cref="EndpointInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class EndpointInfoSection : DomSectionBase
+	internal partial class EndpointInfoSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="EndpointInfoSection"/> class. Creates an empty <see cref="EndpointInfoSection"/> object with default settings.
@@ -1321,6 +1297,26 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			}
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="EndpointInfoSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="EndpointInfoSection"/> object that is a deep copy of this section.</returns>
+		public EndpointInfoSection Clone()
+		{
+			return new EndpointInfoSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="EndpointInfoSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="EndpointInfoSection"/> object that is a copy of this section but with a different id.</returns>
+		public EndpointInfoSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new EndpointInfoSection(section);
+		}
+
 		/// <inheritdoc />
 		protected override Section InternalToSection()
 		{
@@ -1339,169 +1335,10 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	}
 
 	/// <summary>
-	/// Represents a wrapper class for accessing a TransportTypeTsoipSection section.
-	/// The <see cref="TransportTypeTsoipSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
-	/// </summary>
-	public partial class TransportTypeTsoipSection : DomSectionBase
-	{
-		/// <summary>
-		/// Initializes a new instance of the <see cref="TransportTypeTsoipSection"/> class. Creates an empty <see cref="TransportTypeTsoipSection"/> object with default settings.
-		/// </summary>
-		public TransportTypeTsoipSection() : base(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id)
-		{
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="TransportTypeTsoipSection"/> class using the specified <paramref name="section"/> for initializing the object.
-		/// </summary>
-		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="TransportTypeTsoipSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
-		public TransportTypeTsoipSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id)
-		{
-		}
-
-		/// <summary>
-		/// Gets or sets the SourceIP field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public String SourceIP
-		{
-			get
-			{
-				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP);
-				if (wrapper != null)
-				{
-					return (String)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP, (String)value);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the MulticastIP field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public String MulticastIP
-		{
-			get
-			{
-				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP);
-				if (wrapper != null)
-				{
-					return (String)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP, (String)value);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Gets or sets the Port field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public Int64? Port
-		{
-			get
-			{
-				var wrapper = section.GetValue<Int64>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port);
-				if (wrapper != null)
-				{
-					return (Int64?)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port, (Int64)value);
-				}
-			}
-		}
-
-		/// <inheritdoc />
-		protected override Section InternalToSection()
-		{
-			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP) == null)
-				throw new InvalidOperationException("'MulticastIP' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			return section;
-		}
-	}
-
-	/// <summary>
 	/// Represents a wrapper class for accessing a TransportTypeInfoSection section.
 	/// The <see cref="TransportTypeInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class TransportTypeInfoSection : DomSectionBase
+	internal partial class TransportTypeInfoSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="TransportTypeInfoSection"/> class. Creates an empty <see cref="TransportTypeInfoSection"/> object with default settings.
@@ -1561,6 +1398,26 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			}
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="TransportTypeInfoSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="TransportTypeInfoSection"/> object that is a deep copy of this section.</returns>
+		public TransportTypeInfoSection Clone()
+		{
+			return new TransportTypeInfoSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="TransportTypeInfoSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="TransportTypeInfoSection"/> object that is a copy of this section but with a different id.</returns>
+		public TransportTypeInfoSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new TransportTypeInfoSection(section);
+		}
+
 		/// <inheritdoc />
 		protected override Section InternalToSection()
 		{
@@ -1571,10 +1428,146 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	}
 
 	/// <summary>
+	/// Represents a wrapper class for accessing a EndpointTransportMetadataSection section.
+	/// The <see cref="EndpointTransportMetadataSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class EndpointTransportMetadataSection : DomSectionBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="EndpointTransportMetadataSection"/> class. Creates an empty <see cref="EndpointTransportMetadataSection"/> object with default settings.
+		/// </summary>
+		public EndpointTransportMetadataSection() : base(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Id)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="EndpointTransportMetadataSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// </summary>
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="EndpointTransportMetadataSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public EndpointTransportMetadataSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Id)
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the FieldName field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String FieldName
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.FieldName);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.FieldName);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.FieldName, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the Value field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String Value
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Value);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Value);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Value, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="EndpointTransportMetadataSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="EndpointTransportMetadataSection"/> object that is a deep copy of this section.</returns>
+		public EndpointTransportMetadataSection Clone()
+		{
+			return new EndpointTransportMetadataSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="EndpointTransportMetadataSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="EndpointTransportMetadataSection"/> object that is a copy of this section but with a different id.</returns>
+		public EndpointTransportMetadataSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new EndpointTransportMetadataSection(section);
+		}
+
+		/// <inheritdoc />
+		protected override Section InternalToSection()
+		{
+			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.FieldName) == null)
+				throw new InvalidOperationException("'FieldName' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			return section;
+		}
+	}
+
+	/// <summary>
 	/// Represents a wrapper class for accessing a LevelInfoSection section.
 	/// The <see cref="LevelInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
-	public partial class LevelInfoSection : DomSectionBase
+	internal partial class LevelInfoSection : DomSectionBase
 	{
 		/// <summary>
 		/// Initializes a new instance of the <see cref="LevelInfoSection"/> class. Creates an empty <see cref="LevelInfoSection"/> object with default settings.
@@ -1720,6 +1713,26 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			}
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="LevelInfoSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="LevelInfoSection"/> object that is a deep copy of this section.</returns>
+		public LevelInfoSection Clone()
+		{
+			return new LevelInfoSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="LevelInfoSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="LevelInfoSection"/> object that is a copy of this section but with a different id.</returns>
+		public LevelInfoSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new LevelInfoSection(section);
+		}
+
 		/// <inheritdoc />
 		protected override Section InternalToSection()
 		{
@@ -1729,6 +1742,99 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.LevelInfo.TransportType) == null)
 				throw new InvalidOperationException("'TransportType' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			return section;
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a TransportTypeFieldSection section.
+	/// The <see cref="TransportTypeFieldSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class TransportTypeFieldSection : DomSectionBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TransportTypeFieldSection"/> class. Creates an empty <see cref="TransportTypeFieldSection"/> object with default settings.
+		/// </summary>
+		public TransportTypeFieldSection() : base(SlcConnectivityManagementIds.Sections.TransportTypeField.Id)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TransportTypeFieldSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// </summary>
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="TransportTypeFieldSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public TransportTypeFieldSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.TransportTypeField.Id)
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the Name field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String Name
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeField.Name);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.TransportTypeField.Name);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.TransportTypeField.Name, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="TransportTypeFieldSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="TransportTypeFieldSection"/> object that is a deep copy of this section.</returns>
+		public TransportTypeFieldSection Clone()
+		{
+			return new TransportTypeFieldSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="TransportTypeFieldSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="TransportTypeFieldSection"/> object that is a copy of this section but with a different id.</returns>
+		public TransportTypeFieldSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new TransportTypeFieldSection(section);
+		}
+
+		/// <inheritdoc />
+		protected override Section InternalToSection()
+		{
+			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeField.Name) == null)
+				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
 		}
 	}

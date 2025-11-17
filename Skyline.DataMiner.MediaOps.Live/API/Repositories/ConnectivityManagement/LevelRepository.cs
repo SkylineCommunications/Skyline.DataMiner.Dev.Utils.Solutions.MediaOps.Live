@@ -35,7 +35,8 @@
 				instance.Validate().ThrowIfInvalid();
 			}
 
-			CheckDuplicatesBeforeSave(instances);
+			CheckDuplicateNamesBeforeSave(instances);
+			CheckDuplicateNumbersBeforeSave(instances);
 		}
 
 		protected override void ValidateBeforeDelete(ICollection<Level> instances)
@@ -73,14 +74,12 @@
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
 		}
 
-		private void CheckDuplicatesBeforeSave(ICollection<Level> instances)
+		private void CheckDuplicateNamesBeforeSave(ICollection<Level> instances)
 		{
 			FilterElement<DomInstance> CreateFilter(Level l) =>
 				new ANDFilterElement<DomInstance>(
 					DomInstanceExposers.Id.NotEqual(l.ID),
-					new ORFilterElement<DomInstance>(
-						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Name).Equal(l.Name),
-						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number).Equal(l.Number)));
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Name).Equal(l.Name));
 
 			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Read).ToList();
 
@@ -94,16 +93,35 @@
 			}
 		}
 
+		private void CheckDuplicateNumbersBeforeSave(ICollection<Level> instances)
+		{
+			FilterElement<DomInstance> CreateFilter(Level l) =>
+				new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.Id.NotEqual(l.ID),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number).Equal(l.Number));
+
+			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Read).ToList();
+
+			if (conflicts.Count > 0)
+			{
+				var numbers = String.Join(", ", conflicts
+					.Select(x => x.Number)
+					.OrderBy(x => x));
+
+				throw new InvalidOperationException($"Cannot save levels. The following numbers are already in use: {numbers}");
+			}
+		}
+
 		private void CheckIfStillInUse(ICollection<Level> instances)
 		{
 			FilterElement<DomInstance> CreateFilter(Level l) =>
 				new ANDFilterElement<DomInstance>(
 					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevels.Level).Equal(l.ID));
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level).Equal(l.ID));
 
-			var count = FilterQueryExecutor.CountFilteredItems(instances, CreateFilter, Helper.DomInstances.Count);
+			var virtualSignalGroups = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Helper.DomInstances.Read);
 
-			if (count > 0)
+			if (virtualSignalGroups.Any())
 			{
 				throw new InvalidOperationException("One or more levels are still in use");
 			}

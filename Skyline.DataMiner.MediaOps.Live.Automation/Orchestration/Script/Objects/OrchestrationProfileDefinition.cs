@@ -14,9 +14,9 @@
 	{
 		private readonly string _profileDefinitionName;
 		private readonly Dictionary<string, string> _orchestrationOverrideNames;
+		private readonly Dictionary<string, Parameter> _parameterReferences;
 
 		private ProfileDefinition _profileDefinition;
-		private readonly Dictionary<string, Parameter> _parameterReferences;
 		private bool _isLoaded;
 
 		public OrchestrationProfileDefinition(string profileDefinitionName) : this(profileDefinitionName, new Dictionary<string, string>())

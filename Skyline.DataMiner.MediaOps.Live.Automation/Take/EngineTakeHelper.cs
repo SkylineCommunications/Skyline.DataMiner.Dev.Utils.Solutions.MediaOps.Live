@@ -8,37 +8,38 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Take;
+	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
 	public class EngineTakeHelper : TakeHelper
 	{
-		private readonly IEngine _engine;
-
 		internal EngineTakeHelper(IEngine engine, MediaOpsLiveApi api) : base(api)
 		{
-			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
+			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 		}
 
-		protected override void ExecuteConnectionHandlerScript(string script, ConnectionHandlerScriptAction action, IConnectionHandlerRequest request, PerformanceTracker performanceTracker)
+		public IEngine Engine { get; }
+
+		protected override void ExecuteConnectionHandlerScript(string script, ConnectionHandlerScriptAction action, IConnectionHandlerInputData inputData, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var inputData = JsonConvert.SerializeObject(request);
+				var inputDataSerialized = JsonConvert.SerializeObject(inputData);
 				performanceTracker.AddMetadata("Script", script);
-				performanceTracker.AddMetadata("Input Data", inputData);
+				performanceTracker.AddMetadata("Input Data", inputDataSerialized);
 
-				var subScript = _engine.PrepareSubScript(script);
+				var subScript = Engine.PrepareSubScript(script);
 				subScript.Synchronous = true;
 				subScript.ExtendedErrorInfo = true;
 
 				subScript.SelectScriptParam("Action", Convert.ToString(action));
-				subScript.SelectScriptParam("Input Data", inputData);
+				subScript.SelectScriptParam("Input Data", inputDataSerialized);
 
 				subScript.StartScript();
 
 				if (subScript.HadError)
 				{
-					throw new InvalidOperationException(String.Join(@"\r\n", subScript.GetErrorMessages()));
+					throw new DataMinerException("Script execution failed: " + String.Join(", ", subScript.GetErrorMessages()));
 				}
 			}
 		}

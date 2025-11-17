@@ -6,8 +6,8 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live;
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Async;
 	using Skyline.DataMiner.Net.Exceptions;
@@ -115,18 +115,18 @@
 		public void CreateOrUpdateEventScheduling(IEnumerable<OrchestrationEvent> events)
 		{
 			List<OrchestrationEvent> orchestrationEvents = events.ToList();
-			IEnumerable<IGrouping<SlcOrchestrationIds.Enums.EventState?, OrchestrationEvent>> groupedByState = orchestrationEvents.GroupBy(e => e.EventState);
+			IEnumerable<IGrouping<EventState, OrchestrationEvent>> groupedByState = orchestrationEvents.GroupBy(e => e.EventState);
 
-			foreach (IGrouping<SlcOrchestrationIds.Enums.EventState?, OrchestrationEvent> groupedByStateEvent in groupedByState)
+			foreach (IGrouping<EventState, OrchestrationEvent> groupedByStateEvent in groupedByState)
 			{
 				switch (groupedByStateEvent.Key)
 				{
-					case SlcOrchestrationIds.Enums.EventState.Cancelled:
-					case SlcOrchestrationIds.Enums.EventState.Draft:
+					case EventState.Cancelled:
+					case EventState.Draft:
 						DeleteEventTasks(groupedByStateEvent.Where(e => e.SchedulerReference != null));
 						continue;
 
-					case SlcOrchestrationIds.Enums.EventState.Confirmed:
+					case EventState.Confirmed:
 						CreateOrUpdateEventTasks(groupedByStateEvent);
 						continue;
 				}

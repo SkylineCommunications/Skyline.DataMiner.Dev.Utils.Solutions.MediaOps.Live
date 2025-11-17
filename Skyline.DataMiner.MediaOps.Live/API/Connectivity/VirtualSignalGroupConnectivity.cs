@@ -101,7 +101,7 @@
 				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(ConnectedDestinations);
 				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(PendingConnectedDestinations);
 
-				return hash; 
+				return hash;
 			}
 		}
 

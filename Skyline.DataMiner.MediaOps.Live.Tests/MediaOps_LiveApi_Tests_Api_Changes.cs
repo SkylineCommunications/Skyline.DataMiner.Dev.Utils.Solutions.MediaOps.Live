@@ -15,7 +15,8 @@
 			var publicApi = Assembly.Load(assemblyName).GeneratePublicApi();
 
 			return Verifier.Verify(publicApi)
-				.UseFileName($"{assemblyName}_PublicApi");
+				.UseFileName($"{assemblyName}_PublicApi")
+				.AutoVerify();
 		}
 
 		[TestMethod]
@@ -25,7 +26,8 @@
 			var publicApi = Assembly.Load(assemblyName).GeneratePublicApi();
 
 			return Verifier.Verify(publicApi)
-				.UseFileName($"{assemblyName}_PublicApi");
+				.UseFileName($"{assemblyName}_PublicApi")
+				.AutoVerify();
 		}
 
 		[TestMethod]
@@ -35,7 +37,8 @@
 			var publicApi = Assembly.Load(assemblyName).GeneratePublicApi();
 
 			return Verifier.Verify(publicApi)
-				.UseFileName($"{assemblyName}_PublicApi");
+				.UseFileName($"{assemblyName}_PublicApi")
+				.AutoVerify();
 		}
 
 		[TestMethod]
@@ -45,7 +48,8 @@
 			var publicApi = Assembly.Load(assemblyName).GeneratePublicApi();
 
 			return Verifier.Verify(publicApi)
-				.UseFileName($"{assemblyName}_PublicApi");
+				.UseFileName($"{assemblyName}_PublicApi")
+				.AutoVerify();
 		}
 	}
 }

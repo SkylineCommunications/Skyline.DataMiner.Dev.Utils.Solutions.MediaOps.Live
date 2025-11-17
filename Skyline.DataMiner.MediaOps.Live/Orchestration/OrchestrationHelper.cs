@@ -61,5 +61,23 @@
 
 			return AutomationHelper.ExecuteAutomationScript(connection, messageBuilder.Build(), out errorMessages);
 		}
+
+		public static ExecuteScriptResponseMessage TryExecuteScript(
+			IConnection connection,
+			string scriptName,
+			List<DmsAutomationScriptParamValue> scriptParams,
+			List<DmsAutomationScriptDummyValue> scriptDummies,
+			out string[] errorMessages)
+		{
+			ExecuteScriptMessageBuilder messageBuilder = new(scriptName);
+			messageBuilder.SetCheckSets(false);
+			messageBuilder.SetInformationEvent(false);
+			messageBuilder.SetSynchronous(true);
+			messageBuilder.SetExtendedErrorInfo(true);
+			messageBuilder.SetParameters(scriptParams.ToDictionary(param => param.Description, param => param.Value));
+			messageBuilder.SetDummies(scriptDummies.ToDictionary(dummy => dummy.Description, dummy => dummy.Value));
+
+			return AutomationHelper.ExecuteAutomationScript(connection, messageBuilder.Build(), out errorMessages);
+		}
 	}
 }

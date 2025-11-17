@@ -17,6 +17,7 @@
 			SectionDefinitionLinks =
 			{
 				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Id),
+				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.TransportTypeField.Id) { AllowMultipleSections = true, IsOptional = true },
 			},
 			ModuleSettingsOverrides = new ModuleSettingsOverrides
 			{
@@ -30,12 +31,13 @@
 			},
 		};
 
-		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
+		public IEnumerable<CustomSectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetTransportTypeInfoSectionDefinition(),
+			GetTransportTypeFieldSectionDefinition(),
 		};
 
-		private static SectionDefinition GetTransportTypeInfoSectionDefinition()
+		private static CustomSectionDefinition GetTransportTypeInfoSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{
@@ -48,6 +50,26 @@
 				{
 					FieldType = typeof(string),
 					ID = SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name,
+					Name = "Name",
+					IsOptional = false,
+				});
+
+			return sectionDefinition;
+		}
+
+		private static CustomSectionDefinition GetTransportTypeFieldSectionDefinition()
+		{
+			var sectionDefinition = new CustomSectionDefinition
+			{
+				ID = SlcConnectivityManagementIds.Sections.TransportTypeField.Id,
+				Name = "Transport Type Field",
+			};
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
+					ID = SlcConnectivityManagementIds.Sections.TransportTypeField.Name,
 					Name = "Name",
 					IsOptional = false,
 				});

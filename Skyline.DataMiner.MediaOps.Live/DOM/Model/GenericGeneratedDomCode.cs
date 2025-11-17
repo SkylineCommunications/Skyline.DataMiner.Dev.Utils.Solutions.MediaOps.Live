@@ -8,6 +8,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 {
 	using System;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.ManagerStore;
 	using Skyline.DataMiner.Net.Messages;
@@ -17,7 +18,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 	/// Serves as the abstract base class for wrapper classes that provide access to DOM instances.
 	/// The <see cref="DomInstanceBase"/> class defines the common functionality and structure for interacting with DOM objects stored in the database, serving as a foundation for derived classes that wrap specific DOM instances.
 	/// </summary>
-	public abstract class DomInstanceBase : IEquatable<DomInstanceBase>
+	internal abstract class DomInstanceBase : IEquatable<DomInstanceBase>
 	{
 		protected DomInstanceBase(DomDefinitionId definitionId)
 		{
@@ -107,15 +108,11 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 		/// <summary>
 		/// Gets the datetime when the DOM Instance was created in UTC.
 		/// </summary>
-		public DateTime? CreatedAt
+		public DateTimeOffset CreatedAt
 		{
 			get
 			{
-				var createdAt = ((ITrackCreatedAt)domInstance).CreatedAt;
-				if (createdAt == null)
-					return null;
-				else
-					return createdAt.ToUniversalTime();
+				return ((ITrackCreatedAt)domInstance).CreatedAt;
 			}
 		}
 
@@ -133,15 +130,11 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 		/// <summary>
 		/// Gets the datetime when the DOM Instance was last modified in UTC.
 		/// </summary>
-		public DateTime? LastModified
+		public DateTimeOffset LastModified
 		{
 			get
 			{
-				var lastModified = ((ITrackLastModified)domInstance).LastModified;
-				if (lastModified == null)
-					return null;
-				else
-					return lastModified.ToUniversalTime();
+				return ((ITrackLastModified)domInstance).LastModified;
 			}
 		}
 
@@ -281,10 +274,11 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 {
 	using System;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Sections;
 
-	public abstract class DomSectionBase : IEquatable<DomSectionBase>
+	internal abstract class DomSectionBase : IEquatable<DomSectionBase>
 	{
 		protected Section section;
 		protected DomSectionBase(SectionDefinitionID id)

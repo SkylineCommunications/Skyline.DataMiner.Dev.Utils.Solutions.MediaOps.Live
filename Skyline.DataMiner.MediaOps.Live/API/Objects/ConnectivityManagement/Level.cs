@@ -32,7 +32,12 @@
 		{
 			get
 			{
-				return (long)_domInstance.LevelInfo.Number;
+				if (_domInstance.LevelInfo.Number.HasValue)
+				{
+					return _domInstance.LevelInfo.Number.Value;
+				}
+
+				return default;
 			}
 
 			set
@@ -54,11 +59,16 @@
 			}
 		}
 
-		public ApiObjectReference<TransportType>? TransportType
+		public ApiObjectReference<TransportType> TransportType
 		{
 			get
 			{
-				return _domInstance.LevelInfo.TransportType;
+				if (_domInstance.LevelInfo.TransportType.HasValue)
+				{
+					return _domInstance.LevelInfo.TransportType.Value;
+				}
+
+				return ApiObjectReference<TransportType>.Empty;
 			}
 
 			set
@@ -73,17 +83,17 @@
 
 			if (!NameUtil.Validate(Name, out var error))
 			{
-				result.AddError(error, nameof(Name));
+				result.AddError(error, this, x => x.Name);
 			}
 
 			if (Number < 0)
 			{
-				result.AddError($"{nameof(Number)} cannot be negative.", nameof(Number));
+				result.AddError($"{nameof(Number)} cannot be negative.", this, x => x.Number);
 			}
 
-			if (TransportType == null)
+			if (TransportType == ApiObjectReference<TransportType>.Empty)
 			{
-				result.AddError($"{nameof(TransportType)} cannot be null.", nameof(TransportType));
+				result.AddError($"Transport type is mandatory.", this, x => x.TransportType);
 			}
 
 			return result;

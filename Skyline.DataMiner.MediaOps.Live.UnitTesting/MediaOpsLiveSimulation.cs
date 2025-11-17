@@ -8,14 +8,12 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Utils.Categories.API;
+	using Skyline.DataMiner.Utils.Categories.API.Objects;
 
 	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
@@ -30,14 +28,22 @@
 			_connection = Dms.CreateConnection();
 
 			Api = new MediaOpsLiveApi(_connection);
+			CategoriesApi = new CategoriesApi(_connection);
 
-			InitializeConnectivityManagement(installDomModules, createEndpoints, createVsgs, createConnections, createElements);
-			InitializeOrchestration(installDomModules);
+			if (installDomModules)
+			{
+				Api.InstallDomModules();
+			}
+
+			InitializeConnectivityManagement(createEndpoints, createVsgs, createConnections, createElements);
+			InitializeOrchestration();
 		}
 
 		public SimulatedDms Dms => _dms;
 
 		public MediaOpsLiveApi Api { get; }
+
+		public CategoriesApi CategoriesApi { get; }
 
 		public void CreateTestConnection(Endpoint source, Endpoint destination)
 		{
@@ -46,7 +52,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = Api.MediationElements.GetMediationElement(destination);
+			var mediationElement = Api.MediationElements.GetElementForEndpoint(destination);
 
 			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
@@ -77,7 +83,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = Api.MediationElements.GetMediationElement(destination);
+			var mediationElement = Api.MediationElements.GetElementForEndpoint(destination);
 
 			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
@@ -111,7 +117,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = Api.MediationElements.GetMediationElement(destination);
+			var mediationElement = Api.MediationElements.GetElementForEndpoint(destination);
 
 			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
@@ -140,7 +146,7 @@
 				throw new ArgumentNullException(nameof(destination));
 			}
 
-			var mediationElement = Api.MediationElements.GetMediationElement(destination);
+			var mediationElement = Api.MediationElements.GetElementForEndpoint(destination);
 
 			var simulatedElement = Dms
 				.Agents[mediationElement.DmaId]
@@ -152,27 +158,29 @@
 			pendingActionsTable.DeleteRow(rowKey);
 		}
 
-		private void InitializeConnectivityManagement(bool installDomModules, bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
+		private void InitializeConnectivityManagement( bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
 		{
-			CreateMediationElement(123, 1000, "MediaOps Mediation 1");
-			CreateMediationElement(124, 1000, "MediaOps Mediation 1");
+			var dmaId1 = 123;
+			var dmaId2 = 124;
 
-			if (installDomModules)
-			{
-				var slcConnectivityManagementDomModule = new SlcConnectivityManagementDomModule();
-				DomModuleInstaller.Install(_connection.HandleMessages, slcConnectivityManagementDomModule, x => { });
-			}
+			var mediationElement1 = CreateMediationElement(dmaId1, 1000, "MediaOps Mediation 1");
+			var mediationElement2 = CreateMediationElement(dmaId2, 1000, "MediaOps Mediation 2");
 
-			var category = new Category { Name = "Category 1" };
-			Api.Categories.Create(category);
+			var transportTypeTSoIP = new TsoipTransportType();
+			Api.TransportTypes.Create(transportTypeTSoIP);
 
-			var transportTypeIP = new TransportType { Name = "IP" };
-			Api.TransportTypes.Create(transportTypeIP);
-
-			var videoLevel = new Level { Number = 1, Name = "Video", TransportType = transportTypeIP };
-			var audioLevel = new Level { Number = 2, Name = "Audio", TransportType = transportTypeIP };
-			var dataLevel = new Level { Number = 3, Name = "Data", TransportType = transportTypeIP };
+			var videoLevel = new Level { Number = 1, Name = "Video", TransportType = transportTypeTSoIP };
+			var audioLevel = new Level { Number = 2, Name = "Audio", TransportType = transportTypeTSoIP };
+			var dataLevel = new Level { Number = 3, Name = "Data", TransportType = transportTypeTSoIP };
 			Api.Levels.CreateOrUpdate([videoLevel, audioLevel, dataLevel]);
+
+			var scopeSources = new Scope { Name = VirtualSignalGroupCategoryScopes.Sources };
+			var scopeDestinations = new Scope { Name = VirtualSignalGroupCategoryScopes.Destinations };
+			CategoriesApi.Scopes.CreateOrUpdate([scopeSources, scopeDestinations]);
+
+			var category1Sources = new Category { Name = "Category 1", Scope = scopeSources };
+			var category1Destinations = new Category { Name = "Category 1", Scope = scopeDestinations };
+			CategoriesApi.Categories.CreateOrUpdate([category1Sources, category1Destinations]);
 
 			const int numberOfElements = 2;
 
@@ -180,8 +188,7 @@
 			{
 				for (int eid = 1; eid <= numberOfElements; eid++)
 				{
-					Dms.GetOrCreateAgent(123)
-						.CreateElement(eid, $"MediaOps Simulator {eid}", "Skyline MediaOps Simulator");
+					CreateMediatedElement(dmaId1, eid, mediationElement1);
 				}
 			}
 
@@ -200,35 +207,47 @@
 
 						var videoSource = new Endpoint(Tools.GuidFromString($"Video Source {vsgCounter}"))
 						{
-							Role = Role.Source,
+							Role = EndpointRole.Source,
 							Name = $"Video Source {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
-							Identifier = $"Key-{vsgCounter}",
+							Identifier = $"Video-{vsgCounter}",
+							TransportMetadata =
+							{
+								new TransportMetadata(TsoipTransportType.FieldNames.SourceIp, "10.0.0.1"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastIp, $"239.1.{vsgCounter}.1"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastPort, "5000"),
+							},
 						};
 						var audioSource = new Endpoint(Tools.GuidFromString($"Audio Source {vsgCounter}"))
 						{
-							Role = Role.Source,
+							Role = EndpointRole.Source,
 							Name = $"Audio Source {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
-							Identifier = $"Key-{vsgCounter}",
+							Identifier = $"Audio-{vsgCounter}",
+							TransportMetadata =
+							{
+								new TransportMetadata(TsoipTransportType.FieldNames.SourceIp, "10.0.0.1"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastIp, $"239.1.{vsgCounter}.2"),
+								new TransportMetadata(TsoipTransportType.FieldNames.MulticastPort, "5000"),
+							},
 						};
 						var videoDestination = new Endpoint(Tools.GuidFromString($"Video Destination {vsgCounter}"))
 						{
-							Role = Role.Destination,
+							Role = EndpointRole.Destination,
 							Name = $"Video Destination {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
-							Identifier = $"Key-{vsgCounter}",
+							Identifier = $"Video-{vsgCounter}",
 						};
 						var audioDestination = new Endpoint(Tools.GuidFromString($"Audio Destination {vsgCounter}"))
 						{
-							Role = Role.Destination,
+							Role = EndpointRole.Destination,
 							Name = $"Audio Destination {vsgCounter}",
-							TransportType = transportTypeIP,
+							TransportType = transportTypeTSoIP,
 							Element = elementId,
-							Identifier = $"Key-{vsgCounter}",
+							Identifier = $"Audio-{vsgCounter}",
 						};
 						Api.Endpoints.CreateOrUpdate([videoSource, audioSource, videoDestination, audioDestination]);
 
@@ -236,33 +255,27 @@
 						{
 							var source1 = new VirtualSignalGroup(Tools.GuidFromString($"Source {vsgCounter}"))
 							{
-								Role = Role.Source,
+								Role = EndpointRole.Source,
 								Name = $"Source {vsgCounter}",
 								Description = $"Source {vsgCounter}",
-								Categories =
-								[
-									category,
-								],
 								Levels =
 								[
 									new LevelEndpoint(videoLevel, videoSource),
 									new LevelEndpoint(audioLevel, audioSource),
 								],
+								Categories = [category1Sources],
 							};
 							var destination1 = new VirtualSignalGroup(Tools.GuidFromString($"Destination {vsgCounter}"))
 							{
-								Role = Role.Destination,
+								Role = EndpointRole.Destination,
 								Name = $"Destination {vsgCounter}",
 								Description = $"Destination {vsgCounter}",
-								Categories =
-								[
-									category,
-								],
 								Levels =
 								[
 									new LevelEndpoint(videoLevel, videoDestination),
 									new LevelEndpoint(audioLevel, audioDestination),
 								],
+								Categories = [category1Destinations],
 							};
 							Api.VirtualSignalGroups.CreateOrUpdate([source1, destination1]);
 						}
@@ -277,7 +290,47 @@
 			}
 		}
 
-		private void InitializeOrchestration(bool installDomModules)
+		private SimulatedElement CreateMediationElement(int dmaId, int elementId, string name)
+		{
+			var element = Dms.GetOrCreateAgent(dmaId)
+				.CreateElement(elementId, name, Constants.MediationProtocolName);
+
+			element.CreateTable(MediationElement.ElementsTableId);
+			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
+			element.CreateTable(MediationElement.ConnectionsTableId);
+			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
+
+			var connectionHandlerScriptsTable = element.Tables[MediationElement.ConnectionHandlerScriptsTableId];
+			var simulatorConnectionHandlerScript = "Simulator_ConnectionHandler";
+			connectionHandlerScriptsTable.SetRow(simulatorConnectionHandlerScript, [simulatorConnectionHandlerScript]);
+
+			return element;
+		}
+
+		private void CreateMediatedElement(int dmaId, int elementId, SimulatedElement mediationElement)
+		{
+			var element = Dms.GetOrCreateAgent(dmaId)
+				.CreateElement(elementId, $"MediaOps Simulator {elementId}", "Skyline MediaOps Simulator");
+
+			var mediatedElementsTable = mediationElement.Tables[MediationElement.ElementsTableId];
+
+			var mediatedElementKey = $"{dmaId}/{elementId}";
+
+			var mediatedElementRow = new object[7]
+			{
+				mediatedElementKey,
+				element.Name,
+				"Simulator_ConnectionHandler",
+				null,
+				null,
+				null,
+				1, // Enabled
+			};
+
+			mediatedElementsTable.SetRow(mediatedElementKey, mediatedElementRow);
+		}
+
+		private void InitializeOrchestration()
 		{
 			Dms.Agents[123].CreateElement(1001, "Orchestration Dummy Instance 1", "Protocol", "Production");
 			Dms.Agents[124].CreateElement(1001, "Orchestration Dummy Instance 2", "Protocol", "Production");
@@ -300,7 +353,8 @@
 				"Instance 1",
 				new Guid("279eea1b-2702-4710-be01-ad1d80dd4b9d"),
 				new Guid("94fa7d96-8cb3-4bdd-a968-dd1192683165"),
-				new Dictionary<Guid, object>(){
+				new Dictionary<Guid, object>()
+				{
 					{ new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e"), 500},
 					{ new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f"), "Hello"},
 				});
@@ -326,27 +380,11 @@
 					},
 				});
 
-			if (installDomModules)
-			{
-				var slcOrchestrationDomModule = new SlcOrchestrationDomModule();
-				DomModuleInstaller.Install(_connection.HandleMessages, slcOrchestrationDomModule, x => { });
-			}
-
 			OrchestrationJobConfiguration job = Api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");
 			Guid jobInfoReference = job.JobInfo.ID;
 			job.OrchestrationEvents.AddRange(WithNodes_CreateEventConfigurationInstances(10, 10, jobInfoReference));
 
 			Api.Orchestration.SaveOrchestrationJobConfiguration(job);
-		}
-
-		private void CreateMediationElement(int dmaId, int elementId, string name)
-		{
-			var element = Dms.GetOrCreateAgent(dmaId)
-				.CreateElement(elementId, name, "Skyline MediaOps Mediation");
-
-			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
-			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
-			element.CreateTable(MediationElement.ConnectionsTableId);
 		}
 
 		private IEnumerable<OrchestrationEventConfiguration> WithNodes_CreateEventConfigurationInstances(int count, int nodes, Guid jobReferenceId)
@@ -393,8 +431,8 @@
 				{
 					Name = $"Test Event {i}",
 					EventTime = DateTime.UtcNow + TimeSpan.FromHours(1),
-					EventType = SlcOrchestrationIds.Enums.EventType.Other,
-					EventState = SlcOrchestrationIds.Enums.EventState.Draft,
+					EventType = EventType.Other,
+					EventState = EventState.Draft,
 					Configuration =
 					{
 						Connections = connections,

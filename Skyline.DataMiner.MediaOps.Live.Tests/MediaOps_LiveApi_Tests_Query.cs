@@ -34,10 +34,10 @@
 			}
 
 			{
-				var endpoints = api.Endpoints.Query().Where(x => x.Role == Role.Source).ToList();
+				var endpoints = api.Endpoints.Query().Where(x => x.Role == EndpointRole.Source).ToList();
 				Assert.HasCount(20, endpoints);
 				CollectionAssert.AreEquivalent(
-					api.Endpoints.ReadAll().Where(x => x.Role == Role.Source).ToList(),
+					api.Endpoints.ReadAll().Where(x => x.Role == EndpointRole.Source).ToList(),
 					endpoints);
 			}
 
@@ -71,7 +71,7 @@
 
 				var exception = Assert.ThrowsExactly<NotSupportedException>(
 					() => api.Endpoints.Query()
-						.Where(x => x.Role == Role.Source && !list.Contains(x.ID))
+						.Where(x => x.Role == EndpointRole.Source && !list.Contains(x.ID))
 						.ToList());
 				Assert.AreEqual("Unsupported method call: Boolean Contains(System.Guid)", exception.Message);
 			}
@@ -189,7 +189,7 @@
 
 			{
 				var exception = Assert.ThrowsExactly<InvalidOperationException>(
-					() => api.Endpoints.Query().Single(x => x.Role == Role.Destination));
+					() => api.Endpoints.Query().Single(x => x.Role == EndpointRole.Destination));
 				Assert.AreEqual("Sequence contains more than one matching element", exception.Message);
 			}
 
@@ -237,7 +237,7 @@
 			var api = new MediaOpsLiveApiMock();
 
 			{
-				var result = api.TransportTypes.Query().All(x => x.Name == "IP");
+				var result = api.TransportTypes.Query().All(x => x.Name == "TSoIP");
 				Assert.IsTrue(result);
 			}
 
@@ -248,13 +248,13 @@
 
 			{
 				var result = api.Endpoints.Query()
-					.All(x => x.Role == Role.Source || x.Role == Role.Destination);
+					.All(x => x.Role == EndpointRole.Source || x.Role == EndpointRole.Destination);
 				Assert.IsTrue(result);
 			}
 
 			{
 				var result = api.Endpoints.Query()
-					.Where(x => x.Role == Role.Source)
+					.Where(x => x.Role == EndpointRole.Source)
 					.All(x => x.Name.Contains("Source"));
 				Assert.IsTrue(result);
 			}
@@ -271,7 +271,7 @@
 			}
 
 			{
-				var endpointCount = api.Endpoints.Query().Count(x => x.Role == Role.Source);
+				var endpointCount = api.Endpoints.Query().Count(x => x.Role == EndpointRole.Source);
 				Assert.AreEqual(20, endpointCount);
 			}
 		}
@@ -326,7 +326,7 @@
 			var api = new MediaOpsLiveApiMock();
 
 			{
-				var endpointCount = api.Endpoints.Query().Where(x => x.Role == Role.Source).Count();
+				var endpointCount = api.Endpoints.Query().Where(x => x.Role == EndpointRole.Source).Count();
 				Assert.AreEqual(20, endpointCount);
 			}
 		}
@@ -338,7 +338,7 @@
 
 			{
 				var endpoints = api.Endpoints.Query()
-					.Where(x => x.Role == Role.Source)
+					.Where(x => x.Role == EndpointRole.Source)
 					.Where(x => x.Name == "Video Source 1")
 					.ToList();
 
@@ -354,12 +354,12 @@
 
 			{
 				var endpoints = api.Endpoints.Query()
-					.Where(x => x.Role == Role.Source)
+					.Where(x => x.Role == EndpointRole.Source)
 					.Take(3)
 					.ToList();
 
 				Assert.HasCount(3, endpoints);
-				Assert.IsTrue(endpoints.All(x => x.Role == Role.Source));
+				Assert.IsTrue(endpoints.All(x => x.Role == EndpointRole.Source));
 			}
 		}
 
@@ -370,7 +370,7 @@
 
 			{
 				var result = api.Endpoints.Query()
-					.Where(x => x.Role == Role.Source)
+					.Where(x => x.Role == EndpointRole.Source)
 					.Any();
 
 				Assert.IsTrue(result);
@@ -378,7 +378,7 @@
 
 			{
 				var result = api.Endpoints.Query()
-					.Where(x => x.Role == Role.Source)
+					.Where(x => x.Role == EndpointRole.Source)
 					.Any(x => x.Name == "Video Source 1");
 
 				Assert.IsTrue(result);

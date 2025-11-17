@@ -6,8 +6,13 @@
 
 	using Newtonsoft.Json;
 
+	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages;
 
@@ -16,6 +21,8 @@
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
+		private readonly StaticMediaOpsLiveCache _cache;
+
 		internal ConnectionHandlerEngine(Automation.IEngine engine, ILogger logger)
 		{
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
@@ -23,6 +30,8 @@
 
 			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw);
 			Api.SetLogger(logger);
+
+			_cache = StaticMediaOpsLiveCache.GetOrCreate(Automation.Engine.SLNetRaw);
 		}
 
 		public Automation.IEngine Engine { get; }
@@ -62,7 +71,7 @@
 		{
 			var now = DateTimeOffset.Now;
 
-			var mediationElementMap = Api.MediationElements.GetMediationElements(
+			var mediationElementMap = Api.MediationElements.GetElementsForEndpoints(
 				connections.Select(x => x.DestinationEndpoint));
 
 			foreach (var group in connections
@@ -108,6 +117,59 @@
 					9000000,
 					[typeof(NotifyPendingConnectionActionMessage)]);
 			}
+		}
+
+		public IEnumerable<Endpoint> GetAllEndpoints()
+		{
+			return _cache.VirtualSignalGroupsCache.Endpoints.Values;
+		}
+
+		public IEnumerable<Endpoint> GetAllEndpoints(EndpointRole role)
+		{
+			return GetAllEndpoints().Where(e => e.Role == role);
+		}
+
+		public IEnumerable<VirtualSignalGroup> GetAllVirtualSignalGroups()
+		{
+			return _cache.VirtualSignalGroupsCache.VirtualSignalGroups.Values;
+		}
+
+		public IEnumerable<VirtualSignalGroup> GetAllVirtualSignalGroups(EndpointRole role)
+		{
+			return GetAllVirtualSignalGroups().Where(e => e.Role == role);
+		}
+
+		public IEnumerable<Endpoint> GetEndpointsWithElement(EndpointRole role, DmsElementId elementId)
+		{
+			return _cache.VirtualSignalGroupsCache.GetEndpointsWithElement(elementId).Where(e => e.Role == role);
+		}
+
+		public IEnumerable<Endpoint> GetEndpointsWithIdentifier(EndpointRole role, string identifier)
+		{
+			return _cache.VirtualSignalGroupsCache.GetEndpointsWithIdentifier(identifier).Where(e => e.Role == role);
+		}
+
+		public IEnumerable<Endpoint> GetEndpointsWithElement(EndpointRole role, DmsElementId elementId, string identifier)
+		{
+			return _cache.VirtualSignalGroupsCache.GetEndpointsWithElementAndIdentifier(elementId, identifier).Where(e => e.Role == role);
+		}
+
+		public IEnumerable<Endpoint> GetEndpointsWithTransportType(EndpointRole role, ApiObjectReference<TransportType> transportType)
+		{
+			return _cache.VirtualSignalGroupsCache.GetEndpointsWithTransportType(transportType)
+				.Where(e => e.Role == role);
+		}
+
+		public IEnumerable<Endpoint> GetEndpointsWithTransportMetadata(EndpointRole role, string fieldName, string value)
+		{
+			return _cache.VirtualSignalGroupsCache.GetEndpointsWithTransportMetadata(fieldName, value)
+				.Where(e => e.Role == role);
+		}
+
+		public IEnumerable<Endpoint> GetEndpointsWithTransportMetadata(EndpointRole role, params (string fieldName, string value)[] metadataFilters)
+		{
+			return _cache.VirtualSignalGroupsCache.GetEndpointsWithTransportMetadata(metadataFilters)
+				.Where(e => e.Role == role);
 		}
 	}
 }

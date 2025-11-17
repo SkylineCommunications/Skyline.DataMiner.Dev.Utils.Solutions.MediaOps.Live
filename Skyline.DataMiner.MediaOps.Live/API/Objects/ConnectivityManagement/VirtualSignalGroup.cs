@@ -13,12 +13,14 @@
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
+	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+
 	public class VirtualSignalGroup : ApiObject<VirtualSignalGroup>
 	{
 		private readonly VirtualSignalGroupInstance _domInstance;
 
-		private readonly WrappedList<VirtualSignalGroupLevelsSection, LevelEndpoint> _wrappedLevels;
-		private readonly WrappedList<Guid, ApiObjectReference<Category>> _wrappedCategories;
+		private readonly WrappedList<VirtualSignalGroupLevelSection, LevelEndpoint> _wrappedLevels;
+		private readonly WrappedList<Guid, Categories.ApiObjectReference<Categories.Category>> _wrappedCategories;
 
 		public VirtualSignalGroup() : this(new VirtualSignalGroupInstance())
 		{
@@ -32,14 +34,14 @@
 		{
 			_domInstance = domInstance ?? throw new ArgumentNullException(nameof(domInstance));
 
-			_wrappedLevels = new WrappedList<VirtualSignalGroupLevelsSection, LevelEndpoint>(
-				_domInstance.VirtualSignalGroupLevels,
+			_wrappedLevels = new WrappedList<VirtualSignalGroupLevelSection, LevelEndpoint>(
+				_domInstance.VirtualSignalGroupLevel,
 				x => new LevelEndpoint(x),
 				x => x.DomSection);
 
-			_wrappedCategories = new WrappedList<Guid, ApiObjectReference<Category>>(
+			_wrappedCategories = new WrappedList<Guid, Categories.ApiObjectReference<Categories.Category>>(
 				_domInstance.VirtualSignalGroupInfo.Categories,
-				x => new ApiObjectReference<Category>(x),
+				x => new Categories.ApiObjectReference<Categories.Category>(x),
 				x => x.ID);
 		}
 
@@ -75,11 +77,16 @@
 			}
 		}
 
-		public Role Role
+		public EndpointRole Role
 		{
 			get
 			{
-				return (Role)(int)_domInstance.VirtualSignalGroupInfo.Role;
+				if (_domInstance.VirtualSignalGroupInfo.Role.HasValue)
+				{
+					return (EndpointRole)(int)_domInstance.VirtualSignalGroupInfo.Role.Value;
+				}
+
+				return default;
 			}
 
 			set
@@ -102,7 +109,7 @@
 			}
 		}
 
-		public IList<ApiObjectReference<Category>> Categories
+		public IList<Categories.ApiObjectReference<Categories.Category>> Categories
 		{
 			get
 			{
@@ -116,9 +123,9 @@
 			}
 		}
 
-		public bool IsSource => Role == Role.Source;
+		public bool IsSource => Role == EndpointRole.Source;
 
-		public bool IsDestination => Role == Role.Destination;
+		public bool IsDestination => Role == EndpointRole.Destination;
 
 		public IEnumerable<(ApiObjectReference<Level> Level, ApiObjectReference<Endpoint> Endpoint)> GetLevelEndpoints()
 		{
@@ -281,18 +288,67 @@
 			}
 		}
 
+		/// <summary>
+		/// Checks if the virtual signal group is assigned to the specified category.
+		/// </summary>
+		/// <param name="category">The category to check.</param>
+		/// <returns>True if the virtual signal group is assigned to the category, false otherwise.</returns>
+		public bool IsAssignedToCategory(Categories.ApiObjectReference<Categories.Category> category)
+		{
+			if (Categories == null)
+			{
+				return false;
+			}
+
+			return Categories.Contains(category);
+		}
+
+		/// <summary>
+		/// Assigns the virtual signal group to the specified category.
+		/// </summary>
+		/// <param name="category">The category to assign the virtual signal group to.</param>
+		public void AssignToCategory(Categories.ApiObjectReference<Categories.Category> category)
+		{
+			if (category == null)
+			{
+				throw new ArgumentNullException(nameof(category));
+			}
+
+			if (!IsAssignedToCategory(category))
+			{
+				Categories.Add(category);
+			}
+		}
+
+		/// <summary>
+		/// Unassigns the virtual signal group from the specified category.
+		/// </summary>
+		/// <param name="category">The category to unassign the virtual signal group from.</param>
+		public void UnassignFromCategory(Categories.ApiObjectReference<Categories.Category> category)
+		{
+			if (category == null)
+			{
+				throw new ArgumentNullException(nameof(category));
+			}
+
+			if (IsAssignedToCategory(category))
+			{
+				Categories.Remove(category);
+			}
+		}
+
 		public ValidationResult Validate()
 		{
 			var result = new ValidationResult();
 
 			if (!NameUtil.Validate(Name, out var error))
 			{
-				result.AddError(error, nameof(Name));
+				result.AddError(error, this, x => x.Name);
 			}
 
 			if (Description != null && Description.Length > 200)
 			{
-				result.AddError("Description cannot be longer than 200 characters.", nameof(Description));
+				result.AddError("Description cannot be longer than 200 characters.", this, x => x.Description);
 			}
 
 			return result;
@@ -304,9 +360,9 @@
 		public static readonly Exposer<VirtualSignalGroup, Guid> ID = new Exposer<VirtualSignalGroup, Guid>(x => x.ID, nameof(VirtualSignalGroup.ID));
 		public static readonly Exposer<VirtualSignalGroup, string> Name = new Exposer<VirtualSignalGroup, string>(x => x.Name, nameof(VirtualSignalGroup.Name));
 		public static readonly Exposer<VirtualSignalGroup, string> Description = new Exposer<VirtualSignalGroup, string>(x => x.Description, nameof(VirtualSignalGroup.Description));
-		public static readonly Exposer<VirtualSignalGroup, Role> Role = new Exposer<VirtualSignalGroup, Role>(x => x.Role, nameof(VirtualSignalGroup.Role));
+		public static readonly Exposer<VirtualSignalGroup, EndpointRole> Role = new Exposer<VirtualSignalGroup, EndpointRole>(x => x.Role, nameof(VirtualSignalGroup.Role));
 		public static readonly DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Level>> Level = DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Level>>.CreateFromListExposer(new Exposer<VirtualSignalGroup, IEnumerable>(x => x.Levels.Select(c => c.Level), nameof(LevelEndpoint.Level)));
 		public static readonly DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Endpoint>> Endpoint = DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Endpoint>>.CreateFromListExposer(new Exposer<VirtualSignalGroup, IEnumerable>(x => x.Levels.Select(c => c.Endpoint), nameof(LevelEndpoint.Endpoint)));
-		public static readonly DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Category>> Categories = DynamicListExposer<VirtualSignalGroup, ApiObjectReference<Category>>.CreateFromListExposer(new Exposer<VirtualSignalGroup, IEnumerable>(x => x.Categories.Select(c => c.ID), nameof(VirtualSignalGroup.Categories)));
+		public static readonly DynamicListExposer<VirtualSignalGroup, Categories.ApiObjectReference<Categories.Category>> Categories = DynamicListExposer<VirtualSignalGroup, Categories.ApiObjectReference<Categories.Category>>.CreateFromListExposer(new Exposer<VirtualSignalGroup, IEnumerable>(x => x.Categories.Select(c => c.ID), nameof(VirtualSignalGroup.Categories)));
 	}
 }

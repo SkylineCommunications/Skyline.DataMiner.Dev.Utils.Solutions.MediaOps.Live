@@ -5,7 +5,6 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages;
 
@@ -14,26 +13,26 @@
 	/// </summary>
 	public class OrchestrationJob
 	{
-		private static readonly List<SlcOrchestrationIds.Enums.EventType> StartTypes = new List<SlcOrchestrationIds.Enums.EventType>
+		private static readonly List<EventType> StartTypes = new List<EventType>
 		{
-			SlcOrchestrationIds.Enums.EventType.Start,
-			SlcOrchestrationIds.Enums.EventType.Prerollstart,
+			EventType.Start,
+			EventType.PrerollStart,
 		};
 
-		private static readonly List<SlcOrchestrationIds.Enums.EventType> StopTypes = new List<SlcOrchestrationIds.Enums.EventType>
+		private static readonly List<EventType> StopTypes = new List<EventType>
 		{
-			SlcOrchestrationIds.Enums.EventType.Stop,
-			SlcOrchestrationIds.Enums.EventType.Postrollstop,
+			EventType.Stop,
+			EventType.PostrollStop,
 		};
 
-		private static readonly List<SlcOrchestrationIds.Enums.EventType> ExpectedOrderOfTypes = new List<SlcOrchestrationIds.Enums.EventType>
+		private static readonly List<EventType> ExpectedOrderOfTypes = new List<EventType>
 		{
-			SlcOrchestrationIds.Enums.EventType.Start,
-			SlcOrchestrationIds.Enums.EventType.Prerollstart,
-			SlcOrchestrationIds.Enums.EventType.Prerollstop,
-			SlcOrchestrationIds.Enums.EventType.Postrollstart,
-			SlcOrchestrationIds.Enums.EventType.Postrollstop,
-			SlcOrchestrationIds.Enums.EventType.Stop,
+			EventType.Start,
+			EventType.PrerollStart,
+			EventType.PrerollStop,
+			EventType.PostrollStart,
+			EventType.PostrollStop,
+			EventType.Stop,
 		};
 
 		/// <summary>
@@ -71,7 +70,7 @@
 		/// </summary>
 		public string JobId => JobInfo.JobReference;
 
-		internal OrchestrationJobInfo JobInfo { get; }
+		internal OrchestrationJobInfo JobInfo { get; set; }
 
 		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
@@ -82,7 +81,7 @@
 
 		private static void ValidateEventTypesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			if (orchestrationEvents.All(e => e.EventType == SlcOrchestrationIds.Enums.EventType.Other))
+			if (orchestrationEvents.All(e => e.EventType == EventType.Other))
 			{
 				return;
 			}
@@ -107,7 +106,7 @@
 
 		private static void ValidateEventOrderBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			var eventWithoutOtherType = orchestrationEvents.Where(e => e.EventType != SlcOrchestrationIds.Enums.EventType.Other);
+			var eventWithoutOtherType = orchestrationEvents.Where(e => e.EventType != EventType.Other);
 
 			var orderedByExpectedTypeOrder = eventWithoutOtherType.OrderBy(e => ExpectedOrderOfTypes.IndexOf(e.EventType)).ToList();
 
@@ -137,7 +136,7 @@
 		{
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
-				if (orchestrationEvent.EventState == SlcOrchestrationIds.Enums.EventState.Confirmed)
+				if (orchestrationEvent.EventState == EventState.Confirmed)
 				{
 					ValidateOrchestrationScriptInput(
 						connection,

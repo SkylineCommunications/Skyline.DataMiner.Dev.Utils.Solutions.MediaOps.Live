@@ -3,7 +3,8 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
+
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Net;
 
 	/// <summary>
@@ -46,7 +47,7 @@
 		/// </summary>
 		public string JobId => JobInfo.JobReference;
 
-		internal OrchestrationJobInfo JobInfo { get; }
+		internal OrchestrationJobInfo JobInfo { get; set; }
 
 		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
@@ -74,7 +75,7 @@
 		{
 			foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
 			{
-				if (orchestrationEvent.EventState != SlcOrchestrationIds.Enums.EventState.Confirmed)
+				if (orchestrationEvent.EventState != EventState.Confirmed)
 				{
 					continue;
 				}
@@ -108,7 +109,7 @@
 
 				if (orchestrationEvent.JobInfoReference.Value.ID != jobInfoReference)
 				{
-					throw new InvalidOperationException("One of the job events is already part of another job");
+					throw new InvalidOperationException($"One of the job events is already part of another job (reference: {orchestrationEvent.JobInfoReference.Value.ID}");
 				}
 			}
 		}

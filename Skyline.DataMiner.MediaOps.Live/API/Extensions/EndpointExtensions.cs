@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
@@ -10,6 +11,30 @@
 
 	public static class EndpointExtensions
 	{
+		public static IEnumerable<Endpoint> WithTransportMetadata(
+			this IEnumerable<Endpoint> endpoints,
+			params (string fieldName, string value)[] metadataFilters)
+		{
+			if (endpoints is null)
+			{
+				throw new ArgumentNullException(nameof(endpoints));
+			}
+
+			if (metadataFilters is null)
+			{
+				throw new ArgumentNullException(nameof(metadataFilters));
+			}
+
+			if (metadataFilters.Length == 0)
+			{
+				return Enumerable.Empty<Endpoint>();
+			}
+
+			return endpoints.Where(e =>
+				metadataFilters.All(mf =>
+					e.HasTransportMetadata(mf.fieldName, mf.value)));
+		}
+
 		public static IEnumerable<(Endpoint Endpoint, TransportType TransportType)> JoinTransportTypes(
 			this IEnumerable<Endpoint> endpoints,
 			Repository<TransportType> transportTypesRepository)

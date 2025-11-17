@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 {
-	public partial class EndpointInstance
+	internal partial class EndpointInstance
 	{
 		public bool IsSource => EndpointInfo.Role == SlcConnectivityManagementIds.Enums.Role.Source;
 

@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
@@ -14,26 +15,26 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var categoryX = new Category { Name = "Category X" };
-			var categoryY = new Category { Name = "Category Y" };
+			var endpointX = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
+			var endpointY = new Endpoint { Name = "Endpoint Y", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
 
-			var receivedEvents = new List<ApiObjectsChangedEvent<Category>>();
+			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();
 
-			var filter = CategoryExposers.Name.Equal(categoryX.Name);
-			using var subscription = api.Categories.Subscribe(filter);
+			var filter = EndpointExposers.Name.Equal(endpointX.Name);
+			using var subscription = api.Endpoints.Subscribe(filter);
 			subscription.Changed += (s, e) => receivedEvents.Add(e);
 
 			// Act
-			api.Categories.Create(categoryX); // matches filter
-			api.Categories.Create(categoryY); // does not match filter
+			api.Endpoints.Create(endpointX); // matches filter
+			api.Endpoints.Create(endpointY); // does not match filter
 
 			// Assert
 			Assert.HasCount(1, receivedEvents);
 
 			var receivedEvent = receivedEvents[0];
-			CollectionAssert.AreEquivalent(new[] { categoryX }, receivedEvent.Created.ToArray());
-			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent.Updated.ToArray());
-			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent.Deleted.ToArray());
+			CollectionAssert.AreEquivalent(new[] { endpointX }, receivedEvent.Created.ToArray());
+			CollectionAssert.AreEquivalent(Array.Empty<Endpoint>(), receivedEvent.Updated.ToArray());
+			CollectionAssert.AreEquivalent(Array.Empty<Endpoint>(), receivedEvent.Deleted.ToArray());
 		}
 
 		[TestMethod]
@@ -42,30 +43,30 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var categoryX = new Category { Name = "Category X" };
-			var categoryY = new Category { Name = "Category Y" };
+			var endpointX = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
+			var endpointY = new Endpoint { Name = "Endpoint Y", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
 
-			var receivedEvents = new List<ApiObjectsChangedEvent<Category>>();
+			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();
 
-			using var subscription = api.Categories.Subscribe();
+			using var subscription = api.Endpoints.Subscribe();
 			subscription.Changed += (s, e) => receivedEvents.Add(e);
 
 			// Act
-			api.Categories.Create(categoryX);
-			api.Categories.Create(categoryY);
+			api.Endpoints.Create(endpointX);
+			api.Endpoints.Create(endpointY);
 
 			// Assert
 			Assert.HasCount(2, receivedEvents);
 
 			var receivedEvent1 = receivedEvents[0];
-			CollectionAssert.AreEquivalent(new[] { categoryX }, receivedEvent1.Created.ToArray());
-			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent1.Updated.ToArray());
-			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent1.Deleted.ToArray());
+			CollectionAssert.AreEquivalent(new[] { endpointX }, receivedEvent1.Created.ToArray());
+			CollectionAssert.AreEquivalent(Array.Empty<Endpoint>(), receivedEvent1.Updated.ToArray());
+			CollectionAssert.AreEquivalent(Array.Empty<Endpoint>(), receivedEvent1.Deleted.ToArray());
 
 			var receivedEvent2 = receivedEvents[1];
-			CollectionAssert.AreEquivalent(new[] { categoryY }, receivedEvent2.Created.ToArray());
-			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent2.Updated.ToArray());
-			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent2.Deleted.ToArray());
+			CollectionAssert.AreEquivalent(new[] { endpointY }, receivedEvent2.Created.ToArray());
+			CollectionAssert.AreEquivalent(Array.Empty<Endpoint>(), receivedEvent2.Updated.ToArray());
+			CollectionAssert.AreEquivalent(Array.Empty<Endpoint>(), receivedEvent2.Deleted.ToArray());
 		}
 
 		[TestMethod]
@@ -74,24 +75,24 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var category = new Category { Name = "Category X" };
-			api.Categories.Create(category);
+			var endpoint = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
+			api.Endpoints.Create(endpoint);
 
-			var receivedEvents = new List<ApiObjectsChangedEvent<Category>>();
+			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();
 
-			using var subscription = api.Categories.Subscribe();
+			using var subscription = api.Endpoints.Subscribe();
 			subscription.Changed += (s, e) => receivedEvents.Add(e);
 
 			// Act
-			api.Categories.Update(category);
+			api.Endpoints.Update(endpoint);
 
 			// Assert
 			Assert.HasCount(1, receivedEvents);
 
 			var receivedEvent = receivedEvents[0];
-			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent.Created.ToArray());
-			CollectionAssert.AreEquivalent(new[] { category }, receivedEvent.Updated.ToArray());
-			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent.Deleted.ToArray());
+			CollectionAssert.AreEquivalent(Array.Empty<Endpoint>(), receivedEvent.Created.ToArray());
+			CollectionAssert.AreEquivalent(new[] { endpoint }, receivedEvent.Updated.ToArray());
+			CollectionAssert.AreEquivalent(Array.Empty<Endpoint>(), receivedEvent.Deleted.ToArray());
 		}
 
 		[TestMethod]
@@ -100,24 +101,24 @@
 			// Arrange
 			var api = new MediaOpsLiveApiMock();
 
-			var category = new Category { Name = "Category X" };
-			api.Categories.Create(category);
+			var endpoint = new Endpoint { Name = "Endpoint X", Role = EndpointRole.Source, TransportType = new TsoipTransportType() };
+			api.Endpoints.Create(endpoint);
 
-			var receivedEvents = new List<ApiObjectsChangedEvent<Category>>();
+			var receivedEvents = new List<ApiObjectsChangedEvent<Endpoint>>();
 
-			using var subscription = api.Categories.Subscribe();
+			using var subscription = api.Endpoints.Subscribe();
 			subscription.Changed += (s, e) => receivedEvents.Add(e);
 
 			// Act
-			api.Categories.Delete(category);
+			api.Endpoints.Delete(endpoint);
 
 			// Assert
 			Assert.HasCount(1, receivedEvents);
 
 			var receivedEvent = receivedEvents[0];
-			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent.Created.ToArray());
-			CollectionAssert.AreEquivalent(Array.Empty<Category>(), receivedEvent.Updated.ToArray());
-			CollectionAssert.AreEquivalent(new[] { category }, receivedEvent.Deleted.ToArray());
+			CollectionAssert.AreEquivalent(Array.Empty<Endpoint>(), receivedEvent.Created.ToArray());
+			CollectionAssert.AreEquivalent(Array.Empty<Endpoint>(), receivedEvent.Updated.ToArray());
+			CollectionAssert.AreEquivalent(new[] { endpoint }, receivedEvent.Deleted.ToArray());
 		}
 	}
 }

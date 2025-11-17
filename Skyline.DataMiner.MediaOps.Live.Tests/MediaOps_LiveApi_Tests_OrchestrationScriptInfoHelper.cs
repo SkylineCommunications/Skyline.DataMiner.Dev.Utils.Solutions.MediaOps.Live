@@ -47,7 +47,6 @@
 		[TestMethod]
 		public void MediaOps_Live_Api_Tests_OrchestrationJob_GetValidInstancesForDefinition()
 		{
-
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 
 			OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("OrchestrationScript");

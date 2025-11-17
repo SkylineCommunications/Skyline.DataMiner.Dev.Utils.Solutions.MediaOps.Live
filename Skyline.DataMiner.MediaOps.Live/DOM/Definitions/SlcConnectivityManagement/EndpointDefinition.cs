@@ -20,7 +20,7 @@
 			SectionDefinitionLinks =
 			{
 				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.EndpointInfo.Id),
-				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id) { IsOptional = true },
+				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Id) { AllowMultipleSections = true, IsOptional = true },
 			},
 			ModuleSettingsOverrides = new ModuleSettingsOverrides
 			{
@@ -34,13 +34,13 @@
 			},
 		};
 
-		public IEnumerable<SectionDefinition> SectionDefinitions { get; } = new[]
+		public IEnumerable<CustomSectionDefinition> SectionDefinitions { get; } = new[]
 		{
 			GetEndpointInfoSectionDefinition(),
-			GetTransportTypeTsoipSectionDefinition(),
+			GetTransportTypeMetadataSectionDefinition(),
 		};
 
-		private static SectionDefinition GetEndpointInfoSectionDefinition()
+		private static CustomSectionDefinition GetEndpointInfoSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{
@@ -120,38 +120,29 @@
 			return sectionDefinition;
 		}
 
-		private static SectionDefinition GetTransportTypeTsoipSectionDefinition()
+		private static CustomSectionDefinition GetTransportTypeMetadataSectionDefinition()
 		{
 			var sectionDefinition = new CustomSectionDefinition
 			{
-				ID = SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Id,
-				Name = "Transport Type.TSoIP",
+				ID = SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Id,
+				Name = "Endpoint Transport Metadata",
 			};
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
 				new FieldDescriptor
 				{
 					FieldType = typeof(string),
-					ID = SlcConnectivityManagementIds.Sections.TransportTypeTsoip.SourceIP,
-					Name = "Source IP",
-					IsOptional = true,
-				});
-
-			sectionDefinition.AddOrReplaceFieldDescriptor(
-				new FieldDescriptor
-				{
-					FieldType = typeof(string),
-					ID = SlcConnectivityManagementIds.Sections.TransportTypeTsoip.MulticastIP,
-					Name = "Multicast IP",
+					ID = SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.FieldName,
+					Name = "Field Name",
 					IsOptional = false,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
 				new FieldDescriptor
 				{
-					FieldType = typeof(long),
-					ID = SlcConnectivityManagementIds.Sections.TransportTypeTsoip.Port,
-					Name = "Port",
+					FieldType = typeof(string),
+					ID = SlcConnectivityManagementIds.Sections.EndpointTransportMetadata.Value,
+					Name = "Value",
 					IsOptional = true,
 				});
 
