@@ -229,6 +229,10 @@
 					responses = HandleMessage(msg);
 					return true;
 
+				case CheckAutomationCSharpSyntaxMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
 				case ManagerStoreStartPagingRequest<Parameter> msg:
 					responses = HandleMessage(msg);
 					return true;
@@ -348,7 +352,17 @@
 				throw new InvalidOperationException($"Element with ID {msg.ElId} not found in DMA {msg.DataMinerID}.");
 			}
 
-			if (!element.Parameters.TryGetValue(msg.ParameterId, out StandaloneParameter param))
+			Net.Messages.ParameterValue paramValue;
+
+			if (element.TryGetSpecialParameterValue(msg.ParameterId, out var specialValue))
+			{
+				paramValue = specialValue;
+			}
+			else if (element.Parameters.TryGetValue(msg.ParameterId, out StandaloneParameter param))
+			{
+				paramValue = param.ToParameterValue();
+			}
+			else
 			{
 				throw new InvalidOperationException($"Parameter with ID {msg.ParameterId} not found in Element {msg.ElId} on DMA {msg.DataMinerID}.");
 			}
@@ -358,7 +372,7 @@
 				DataMinerID = msg.DataMinerID,
 				ElId = msg.ElId,
 				ParameterId = msg.ParameterId,
-				Value = param.ToParameterValue(),
+				Value = paramValue,
 			};
 		}
 
@@ -490,11 +504,14 @@
 
 		private IEnumerable<DMSMessage> HandleMessage(ImpersonateMessage msg)
 		{
-			List<DMSMessage> responses = new();
-			foreach (ClientRequestMessage clientRequestMessage in msg.Messages)
+			var responses = new List<DMSMessage>();
+
+			foreach (var clientRequestMessage in msg.Messages)
 			{
-				TryHandleMessage(clientRequestMessage, out IEnumerable<DMSMessage> msgResponses);
-				responses.AddRange(msgResponses);
+				if (TryHandleMessage(clientRequestMessage, out var msgResponses))
+				{
+					responses.AddRange(msgResponses);
+				}
 			}
 
 			return responses;
@@ -544,6 +561,22 @@
 					},
 				],
 				Folder = script.Folder,
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(CheckAutomationCSharpSyntaxMessage msg)
+		{
+			var script = Scripts.FirstOrDefault(s => s.Name == msg.ScriptName);
+
+			if (script == null)
+			{
+				throw new InvalidOperationException($"Script with name '{msg.ScriptName}' not found. Ensure the script is registered using {nameof(AddScript)}() before attempting to retrieve it. Available scripts: [{String.Join(", ", Scripts.Select(s => s.Name))}]");
+			}
+
+			// For simulation purposes, we assume all scripts are syntactically correct.
+			yield return new CheckAutomationCSharpSyntaxResponse
+			{
+				Errors = Array.Empty<string>(),
 			};
 		}
 

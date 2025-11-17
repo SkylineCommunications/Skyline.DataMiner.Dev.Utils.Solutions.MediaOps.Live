@@ -125,5 +125,30 @@
 				State = State,
 			};
 		}
+
+		internal bool TryGetSpecialParameterValue(int parameterId, out ParameterValue specialValue)
+		{
+			switch (parameterId)
+			{
+				case 65003: // Number of active alarms
+					specialValue = new ParameterValue(0);
+					return true;
+				case 65004: // Number of critical alarms
+					specialValue = new ParameterValue(0);
+					return true;
+				case 65005: // Number of major alarms
+					specialValue = new ParameterValue(0);
+					return true;
+				case 65006: // Number of minor alarms
+					specialValue = new ParameterValue(0);
+					return true;
+				case 65007: // Number of warning alarms
+					specialValue = new ParameterValue(0);
+					return true;
+				default:
+					specialValue = null;
+					return false;
+			}
+		}
 	}
 }
