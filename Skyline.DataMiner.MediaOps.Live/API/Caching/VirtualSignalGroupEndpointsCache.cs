@@ -162,6 +162,41 @@
 			}
 		}
 
+
+		/// <summary>
+		/// Gets all endpoints that are part of the specified virtual signal group.
+		/// </summary>
+		/// <param name="virtualSignalGroupRef">The reference to the virtual signal group.</param>
+		/// <returns>A read-only collection of <see cref="Endpoint"/> objects that belong to the specified virtual signal group.</returns>
+		/// <exception cref="InvalidOperationException">
+		/// Thrown if the virtual signal group with the specified reference cannot be found,
+		/// or if any endpoint referenced by the group cannot be found.
+		/// </exception>
+		public IReadOnlyCollection<Endpoint> GetEndpointsInVirtualSignalGroup(ApiObjectReference<VirtualSignalGroup> virtualSignalGroupRef)
+		{
+			lock (_lock)
+			{
+				if (!TryGetVirtualSignalGroup(virtualSignalGroupRef, out var virtualSignalGroup))
+				{
+					throw new InvalidOperationException($"Couldn't find virtual signal group with ID {virtualSignalGroupRef.ID}");
+				}
+
+				var endpoints = new List<Endpoint>();
+
+				foreach (var (_, endpointRef) in virtualSignalGroup.GetLevelEndpoints())
+				{
+					if (!_endpoints.TryGetEndpoint(endpointRef, out var endpoint))
+					{
+						throw new InvalidOperationException($"Couldn't find endpoint with ID {endpointRef.ID}");
+					}
+
+					endpoints.Add(endpoint);
+				}
+
+				return endpoints;
+			}
+		}
+
 		public IReadOnlyCollection<VirtualSignalGroup> GetVirtualSignalGroupsInCategory(Categories.ApiObjectReference<Categories.Category> category)
 		{
 			lock (_lock)
