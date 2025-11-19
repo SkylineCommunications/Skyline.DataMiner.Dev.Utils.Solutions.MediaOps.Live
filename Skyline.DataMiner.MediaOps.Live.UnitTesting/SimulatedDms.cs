@@ -52,8 +52,11 @@
 				id => new SimulatedDma(this, id));
 		}
 
-		public void AddScript(string name, ICollection<string> parameters, ICollection<string> dummies, ScriptInfo orchestrationScriptInfo = null)
+		public void AddScript(string name, ICollection<string> parameters = null, ICollection<string> dummies = null, ScriptInfo orchestrationScriptInfo = null)
 		{
+			parameters ??= [];
+			dummies ??= [];
+
 			if (orchestrationScriptInfo == null)
 			{
 				_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, new ScriptInfo()));

@@ -19,6 +19,8 @@
 
 	public class MediaOpsLiveSimulation
 	{
+		private const string SimulatorConnectionHandlerScriptName = "Simulator_ConnectionHandler";
+
 		private readonly SimulatedDms _dms;
 		private readonly IConnection _connection;
 
@@ -158,13 +160,12 @@
 			pendingActionsTable.DeleteRow(rowKey);
 		}
 
-		private void InitializeConnectivityManagement( bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
+		private void InitializeConnectivityManagement(bool createEndpoints, bool createVsgs, bool createConnections, bool createElements)
 		{
-			var dmaId1 = 123;
-			var dmaId2 = 124;
+			Dms.AddScript(SimulatorConnectionHandlerScriptName, ["Action", "Input Data"]);
 
-			var mediationElement1 = CreateMediationElement(dmaId1, 1000, "MediaOps Mediation 1");
-			var mediationElement2 = CreateMediationElement(dmaId2, 1000, "MediaOps Mediation 2");
+			var mediationElement1 = CreateMediationElement(123, 1000, "MediaOps Mediation 1");
+			var mediationElement2 = CreateMediationElement(124, 1000, "MediaOps Mediation 2");
 
 			var transportTypeTSoIP = new TsoipTransportType();
 			Api.TransportTypes.Create(transportTypeTSoIP);
@@ -188,7 +189,7 @@
 			{
 				for (int eid = 1; eid <= numberOfElements; eid++)
 				{
-					CreateMediatedElement(dmaId1, eid, mediationElement1);
+					CreateMediatedElement(mediationElement1.DmaId, eid, mediationElement1);
 				}
 			}
 
@@ -301,8 +302,7 @@
 			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
 
 			var connectionHandlerScriptsTable = element.Tables[MediationElement.ConnectionHandlerScriptsTableId];
-			var simulatorConnectionHandlerScript = "Simulator_ConnectionHandler";
-			connectionHandlerScriptsTable.SetRow(simulatorConnectionHandlerScript, [simulatorConnectionHandlerScript]);
+			connectionHandlerScriptsTable.SetRow(SimulatorConnectionHandlerScriptName, [SimulatorConnectionHandlerScriptName]);
 
 			return element;
 		}
@@ -320,7 +320,7 @@
 			{
 				mediatedElementKey,
 				element.Name,
-				"Simulator_ConnectionHandler",
+				SimulatorConnectionHandlerScriptName,
 				null,
 				null,
 				null,
