@@ -159,6 +159,11 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				throw new ArgumentNullException(nameof(nodeConfig));
 			}
 
+			if (String.IsNullOrEmpty(nodeConfig.OrchestrationScriptName))
+			{
+				return;
+			}
+
 			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
 
 			OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(_engine.GetUserConnection(), nodeConfig.OrchestrationScriptName, nodeConfig.OrchestrationScriptArguments.Union(addedInputParams), nodeConfig.Profile);

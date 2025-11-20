@@ -26,12 +26,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
 			var utcScheduledTime = simulation.Dms.GetAllDmsSchedulerTasks().First().StartTime.ToUniversalTime();
-			var trimmedEventTime = new DateTimeOffset(
-				new DateTime(ev.EventTime.Value.Ticks - ev.EventTime.Value.Ticks % TimeSpan.TicksPerSecond, DateTimeKind.Utc));
 
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 			Assert.Contains(ev.ID, simulation.Dms.GetAllDmsSchedulerTasks().First().GetOrchestrationSchedulingInputList());
-			Assert.AreEqual(trimmedEventTime, utcScheduledTime);
+			Assert.AreEqual(ev.EventTime, utcScheduledTime);
 
 			Assert.Contains(orchestrationJob.OrchestrationEvents.First().SchedulerReference.DmaId, simulation.Dms.Agents.Keys);
 		}
@@ -227,22 +225,18 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
 			var utcScheduledTime = simulation.Dms.GetAllDmsSchedulerTasks().First().StartTime.ToUniversalTime();
-			var trimmedEventTime = new DateTimeOffset(
-				new DateTime(ev.EventTime.Value.Ticks - ev.EventTime.Value.Ticks % TimeSpan.TicksPerSecond, DateTimeKind.Utc));
 
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
-			Assert.AreEqual(trimmedEventTime, utcScheduledTime);
+			Assert.AreEqual(ev.EventTime, utcScheduledTime);
 
 			var twoHoursForNow = DateTimeOffset.UtcNow + TimeSpan.FromHours(2);
 			ev.EventTime = twoHoursForNow;
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
 			utcScheduledTime = simulation.Dms.GetAllDmsSchedulerTasks().First().StartTime.ToUniversalTime();
-			trimmedEventTime = new DateTimeOffset(
-				new DateTime(ev.EventTime.Value.Ticks - ev.EventTime.Value.Ticks % TimeSpan.TicksPerSecond, DateTimeKind.Utc));
-
+			
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
-			Assert.AreEqual(trimmedEventTime, utcScheduledTime);
+			Assert.AreEqual(ev.EventTime, utcScheduledTime);
 		}
 
 		[TestMethod]

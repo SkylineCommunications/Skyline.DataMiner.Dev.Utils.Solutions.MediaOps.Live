@@ -156,7 +156,15 @@
 
 			set
 			{
-				_domInstance.OrchestrationEventInfo.EventTime = value?.UtcDateTime;
+				if (value == null)
+				{
+					_domInstance.OrchestrationEventInfo.EventTime = null;
+					return;
+				}
+
+				var valueUtcTime = value.Value.UtcDateTime;
+
+				_domInstance.OrchestrationEventInfo.EventTime = new DateTime(valueUtcTime.Ticks - valueUtcTime.Ticks % TimeSpan.TicksPerSecond, DateTimeKind.Utc);
 			}
 		}
 
