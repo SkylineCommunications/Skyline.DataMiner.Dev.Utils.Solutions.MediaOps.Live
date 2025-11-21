@@ -41,7 +41,7 @@
 		<PackageReference Include="Skyline.DataMiner.Core.InterAppCalls.Common" Version="1.1.1.1" />
 		<PackageReference Include="Skyline.DataMiner.Dev.Common" Version="10.5.9.2" />
 		<PackageReference Include="Skyline.DataMiner.Dev.Protocol" Version="10.5.9.2" />
-		<PackageReference Include="Skyline.DataMiner.Utils.DOM" Version="10.5.2.4" />
+		<PackageReference Include="Skyline.DataMiner.Utils.DOM" Version="10.5.2.5" />
 		<PackageReference Include="Skyline.DataMiner.Utils.PerformanceAnalyzer" Version="3.0.2" />
 	</ItemGroup>
 	<ItemGroup>

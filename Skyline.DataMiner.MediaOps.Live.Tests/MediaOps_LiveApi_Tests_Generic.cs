@@ -3,6 +3,7 @@
 	using FluentAssertions;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.GQI.Metrics;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 
@@ -12,13 +13,15 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_IsInstalled()
 		{
-			var simulation = new MediaOpsLiveSimulation(installDomModules: false);
+			var dms = new SimulatedDms();
+			var connection = dms.CreateConnection();
+			var api = connection.GetMediaOpsLiveApi();
 
-			Assert.IsFalse(simulation.Api.IsInstalled());
+			Assert.IsFalse(api.IsInstalled());
 
-			simulation = new MediaOpsLiveSimulation(installDomModules: true);
+			api.InstallDomModules();
 
-			Assert.IsTrue(simulation.Api.IsInstalled());
+			Assert.IsTrue(api.IsInstalled());
 		}
 
 		[TestMethod]

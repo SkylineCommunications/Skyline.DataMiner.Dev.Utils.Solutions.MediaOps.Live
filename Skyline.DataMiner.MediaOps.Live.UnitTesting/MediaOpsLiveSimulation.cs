@@ -24,18 +24,16 @@
 		private readonly SimulatedDms _dms;
 		private readonly IConnection _connection;
 
-		public MediaOpsLiveSimulation(bool installDomModules = true, bool createEndpoints = true, bool createVsgs = true, bool createConnections = false, bool createElements = true)
+		public MediaOpsLiveSimulation(bool createEndpoints = true, bool createVsgs = true, bool createConnections = false, bool createElements = true)
 		{
 			_dms = new SimulatedDms();
 			_connection = Dms.CreateConnection();
 
 			Api = new MediaOpsLiveApi(_connection);
-			CategoriesApi = new CategoriesApi(_connection);
+			Api.InstallDomModules();
 
-			if (installDomModules)
-			{
-				Api.InstallDomModules();
-			}
+			CategoriesApi = new CategoriesApi(_connection);
+			CategoriesApi.InstallDomModules();
 
 			InitializeConnectivityManagement(createEndpoints, createVsgs, createConnections, createElements);
 			InitializeOrchestration();

@@ -28,7 +28,7 @@
 		private readonly ConcurrentBag<Parameter> _profileParameters = [];
 		private readonly ConcurrentBag<ProfileDefinition> _profileDefinitions = [];
 		private readonly ConcurrentBag<ProfileInstance> _profileInstances = [];
-		private readonly DomSLNetMessageHandler _domSlNetMessageHandler = new();
+		private readonly DomSLNetMessageHandler _domSlNetMessageHandler = new(validateAgainstDefinition: true);
 
 		public SimulatedDms()
 		{
