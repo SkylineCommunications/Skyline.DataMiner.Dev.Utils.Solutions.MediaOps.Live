@@ -49,7 +49,7 @@
 			}
 			else
 			{
-				if (existing.Equals(settings))
+				if (settings.Equals(existing))
 				{
 					Log(logAction, "Skipping", settings);
 					return;
@@ -74,7 +74,7 @@
 			}
 			else
 			{
-				if (existing.Equals(definition))
+				if (definition.Equals(existing))
 				{
 					Log(logAction, "Skipping", definition);
 					return;
@@ -100,7 +100,7 @@
 			}
 			else
 			{
-				if (existing.Equals(definition))
+				if (CompareSectionDefinitions(definition, existing))
 				{
 					Log(logAction, "Skipping", definition);
 					return;
@@ -110,6 +110,17 @@
 				MarkExistingFieldDescriptorsAsDeleted(definition, existing);
 				helper.SectionDefinitions.Update(definition);
 			}
+		}
+
+		private static bool CompareSectionDefinitions(SectionDefinition definition, SectionDefinition other)
+		{
+			if (definition is CustomSectionDefinition customDefinition &&
+				other is CustomSectionDefinition customOther)
+			{
+				return customDefinition.Equals(customOther);
+			}
+
+			return definition.Equals(other);
 		}
 
 		private static void MarkExistingSectionDefinitionLinksAsDeleted(DomDefinition newDefinition, DomDefinition existing)
