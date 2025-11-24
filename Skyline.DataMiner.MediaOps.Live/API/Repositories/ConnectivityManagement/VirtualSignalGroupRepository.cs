@@ -64,6 +64,28 @@
 			return Read(filter);
 		}
 
+		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference)
+		{
+			if (virtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroups));
+			}
+
+			// Forward call to VSG state repository
+			Api.VirtualSignalGroupStates.LockVirtualSignalGroups(virtualSignalGroups, user, reason, jobReference);
+		}
+
+		public void UnlockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
+		{
+			if (virtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroups));
+			}
+
+			// Forward call to VSG state repository
+			Api.VirtualSignalGroupStates.UnlockVirtualSignalGroups(virtualSignalGroups);
+		}
+
 		public override VirtualSignalGroup Create(VirtualSignalGroup instance)
 		{
 			if (instance is null)
@@ -104,6 +126,11 @@
 			}
 
 			var instancesCollection = instances.AsCollection();
+			if (instancesCollection.Count == 0)
+			{
+				// Nothing to create or update
+				return instancesCollection;
+			}
 
 			// First create or update the instances
 			var result = base.CreateOrUpdate(instancesCollection);

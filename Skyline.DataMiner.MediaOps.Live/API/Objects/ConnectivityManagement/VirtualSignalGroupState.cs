@@ -110,6 +110,11 @@
 
 			set
 			{
+				if (value == DateTimeOffset.MinValue)
+				{
+					_domInstance.VirtualSignalGroupLock.LockTime = null;
+				}
+
 				_domInstance.VirtualSignalGroupLock.LockTime = value.UtcDateTime;
 			}
 		}

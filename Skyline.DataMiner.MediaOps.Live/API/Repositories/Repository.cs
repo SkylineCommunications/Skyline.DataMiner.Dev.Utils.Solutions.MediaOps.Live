@@ -83,6 +83,12 @@
 
 			var instanceCollection = instances as ICollection<T> ?? instances.ToList();
 
+			if (instanceCollection.Count == 0)
+			{
+				// Nothing to create or update.
+				return instanceCollection;
+			}
+
 			ValidateBeforeSave(instanceCollection);
 
 			var domInstances = instanceCollection.Select(x => x.DomInstance.ToInstance());

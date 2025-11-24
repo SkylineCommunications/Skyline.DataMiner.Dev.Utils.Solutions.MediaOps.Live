@@ -8,6 +8,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
@@ -37,6 +38,86 @@
 				.ToList();
 
 			return virtualSignalGroupStates;
+		}
+
+		public bool TryGetByVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, out VirtualSignalGroupState virtualSignalGroupState)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			virtualSignalGroupState = GetByVirtualSignalGroups([virtualSignalGroup]).SingleOrDefault();
+
+			return virtualSignalGroupState != null;
+		}
+
+		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference)
+		{
+			if (virtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroups));
+			}
+
+			var virtualSignalGroupStates = GetByVirtualSignalGroups(virtualSignalGroups)
+				.SafeToDictionary(x => x.VirtualSignalGroupReference);
+
+			var statesToUpdate = new List<VirtualSignalGroupState>();
+
+			foreach (var vsg in virtualSignalGroups)
+			{
+				if (!virtualSignalGroupStates.TryGetValue(vsg.ID, out var state))
+				{
+					state = new VirtualSignalGroupState
+					{
+						VirtualSignalGroupReference = vsg.ID,
+					};
+				}
+
+				state.IsLocked = true;
+				state.LockedBy = user;
+				state.LockReason = reason;
+				state.LockJobReference = jobReference;
+				state.LockTime = DateTimeOffset.UtcNow;
+
+				statesToUpdate.Add(state);
+			}
+
+			CreateOrUpdate(statesToUpdate);
+		}
+
+		public void UnlockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
+		{
+			if (virtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroups));
+			}
+
+			var virtualSignalGroupStates = GetByVirtualSignalGroups(virtualSignalGroups)
+				.SafeToDictionary(x => x.VirtualSignalGroupReference);
+
+			var statesToUpdate = new List<VirtualSignalGroupState>();
+
+			foreach (var vsg in virtualSignalGroups)
+			{
+				if (!virtualSignalGroupStates.TryGetValue(vsg.ID, out var state))
+				{
+					state = new VirtualSignalGroupState
+					{
+						VirtualSignalGroupReference = vsg.ID,
+					};
+				}
+
+				state.IsLocked = false;
+				state.LockedBy = null;
+				state.LockReason = null;
+				state.LockJobReference = null;
+				state.LockTime = DateTimeOffset.MinValue;
+
+				statesToUpdate.Add(state);
+			}
+
+			CreateOrUpdate(statesToUpdate);
 		}
 
 		public void DeleteByVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
