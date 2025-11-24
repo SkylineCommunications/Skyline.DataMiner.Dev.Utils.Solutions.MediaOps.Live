@@ -11,6 +11,7 @@
 		private readonly object _lock = new();
 
 		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
+		private RepositorySubscription<VirtualSignalGroupState> _subscriptionVirtualSignalGroupStates;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VirtualSignalGroupsObserver"/> class.
@@ -39,6 +40,8 @@
 
 		public event EventHandler<ApiObjectsChangedEvent<VirtualSignalGroup>> VirtualSignalGroupsChanged;
 
+		public event EventHandler<ApiObjectsChangedEvent<VirtualSignalGroupState>> VirtualSignalGroupStatesChanged;
+
 		internal MediaOpsLiveApi Api { get; }
 
 		public VirtualSignalGroupsCache Cache { get; }
@@ -57,6 +60,9 @@
 				_subscriptionVirtualSignalGroups = Api.VirtualSignalGroups.Subscribe();
 				_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
 
+				_subscriptionVirtualSignalGroupStates = Api.VirtualSignalGroupStates.Subscribe();
+				_subscriptionVirtualSignalGroupStates.Changed += VirtualSignalGroupStates_Changed;
+
 				IsSubscribed = true;
 			}
 		}
@@ -72,6 +78,9 @@
 
 				_subscriptionVirtualSignalGroups.Changed -= VirtualSignalGroups_Changed;
 				_subscriptionVirtualSignalGroups.Dispose();
+
+				_subscriptionVirtualSignalGroupStates.Changed -= VirtualSignalGroupStates_Changed;
+				_subscriptionVirtualSignalGroupStates.Dispose();
 
 				IsSubscribed = false;
 			}
@@ -93,6 +102,16 @@
 			}
 
 			VirtualSignalGroupsChanged?.Invoke(this, e);
+		}
+
+		private void VirtualSignalGroupStates_Changed(object sender, ApiObjectsChangedEvent<VirtualSignalGroupState> e)
+		{
+			lock (_lock)
+			{
+				Cache.UpdateVirtualSignalGroupStates(e.Created.Concat(e.Updated), e.Deleted);
+			}
+
+			VirtualSignalGroupStatesChanged?.Invoke(this, e);
 		}
 
 		public void Dispose()

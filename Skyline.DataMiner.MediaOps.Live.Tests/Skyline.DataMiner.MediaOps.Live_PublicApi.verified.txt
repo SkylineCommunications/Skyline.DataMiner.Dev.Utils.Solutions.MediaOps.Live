@@ -107,15 +107,19 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
     {
         public VirtualSignalGroupsCache() { }
         public VirtualSignalGroupsCache(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups) { }
+        public VirtualSignalGroupsCache(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState> virtualSignalGroupStates) { }
         public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> VirtualSignalGroups { get; }
         public System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> VirtualSignalGroupsByName { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> id) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroup(string name) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState GetVirtualSignalGroupState(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsInCategory(Skyline.DataMiner.Utils.Categories.API.Objects.ApiObjectReference<Skyline.DataMiner.Utils.Categories.API.Objects.Category> category) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsThatContainEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
         public void LoadInitialData(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
         public bool TryGetVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> id, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
         public bool TryGetVirtualSignalGroup(string name, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
+        public bool TryGetVirtualSignalGroupState(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState state) { }
+        public void UpdateVirtualSignalGroupStates(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState> updated, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState> deleted) { }
         public void UpdateVirtualSignalGroups(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> updated, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> deleted) { }
     }
 }
@@ -953,6 +957,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
         public VirtualSignalGroupsObserver(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api, Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupsCache cache) { }
         public Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupsCache Cache { get; }
         public bool IsSubscribed { get; }
+        public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Subscriptions.ApiObjectsChangedEvent<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState>> VirtualSignalGroupStatesChanged;
         public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Subscriptions.ApiObjectsChangedEvent<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>> VirtualSignalGroupsChanged;
         public void Dispose() { }
         protected virtual void Dispose(bool disposing) { }
