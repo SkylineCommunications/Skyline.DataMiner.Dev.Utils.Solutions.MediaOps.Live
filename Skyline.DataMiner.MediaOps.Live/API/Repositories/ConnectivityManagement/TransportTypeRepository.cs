@@ -6,7 +6,6 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net;
@@ -17,7 +16,7 @@
 
 	public class TransportTypeRepository : Repository<TransportType>
 	{
-		internal TransportTypeRepository(SlcConnectivityManagementHelper helper, IConnection connection) : base(helper, connection)
+		internal TransportTypeRepository(MediaOpsLiveApi api) : base(api, api.SlcConnectivityManagementHelper)
 		{
 		}
 

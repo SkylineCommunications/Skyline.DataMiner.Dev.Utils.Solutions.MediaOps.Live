@@ -25,18 +25,20 @@
 		private readonly FilterElement<DomInstance> _domDefinitionFilter;
 		private readonly ApiRepositoryQueryProvider<T> _queryProvider;
 
-		protected Repository(DomHelper helper, IConnection connection)
+		protected Repository(MediaOpsLiveApi api, DomHelper helper)
 		{
+			Api = api ?? throw new ArgumentNullException(nameof(api));
 			Helper = helper ?? throw new ArgumentNullException(nameof(helper));
-			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
 			_domDefinitionFilter = DomInstanceExposers.DomDefinitionId.Equal(DomDefinition.Id);
 			_queryProvider = new ApiRepositoryQueryProvider<T>(this);
 		}
 
+		protected internal MediaOpsLiveApi Api { get; }
+
 		protected internal DomHelper Helper { get; }
 
-		protected internal IConnection Connection { get; }
+		protected internal IConnection Connection => Api.Connection;
 
 		protected internal abstract DomDefinitionId DomDefinition { get; }
 

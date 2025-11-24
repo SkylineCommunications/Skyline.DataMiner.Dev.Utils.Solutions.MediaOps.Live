@@ -5,14 +5,12 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
-	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	internal class ConfigurationRepository : Repository<Configuration>
 	{
-		internal ConfigurationRepository(SlcOrchestrationHelper helper, IConnection connection) : base(helper, connection)
+		internal ConfigurationRepository(MediaOpsLiveApi api) : base(api, api.SlcOrchestrationHelper)
 		{
 		}
 

@@ -7,7 +7,6 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
@@ -35,12 +34,11 @@
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEventRepository"/> class.
 		/// </summary>
-		/// <param name="helper">Orchestration helper.</param>
 		/// <param name="api">Api that calls the repository.</param>
-		internal OrchestrationEventRepository(SlcOrchestrationHelper helper, MediaOpsLiveApi api) : base(helper, api.Connection)
+		internal OrchestrationEventRepository(MediaOpsLiveApi api) : base(api, api.SlcOrchestrationHelper)
 		{
-			_configurationHelper = new ConfigurationRepository(helper, api.Connection);
-			_jobInfoHelper = new JobInfoRepository(helper, api.Connection);
+			_configurationHelper = new ConfigurationRepository(api);
+			_jobInfoHelper = new JobInfoRepository(api);
 			_api = api;
 			_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(
 				this,

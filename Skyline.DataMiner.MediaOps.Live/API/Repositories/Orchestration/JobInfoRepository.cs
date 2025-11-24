@@ -6,7 +6,6 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
@@ -14,7 +13,7 @@
 
 	internal class JobInfoRepository : Repository<OrchestrationJobInfo>
 	{
-		internal JobInfoRepository(SlcOrchestrationHelper helper, IConnection connection) : base(helper, connection)
+		internal JobInfoRepository(MediaOpsLiveApi api) : base(api, api.SlcOrchestrationHelper)
 		{
 		}
 

@@ -33,12 +33,12 @@
 
 			MediationElements = new MediationElements(this);
 
-			Endpoints = new EndpointRepository(SlcConnectivityManagementHelper, connection);
-			VirtualSignalGroups = new VirtualSignalGroupRepository(SlcConnectivityManagementHelper, connection);
-			Levels = new LevelRepository(SlcConnectivityManagementHelper, connection);
-			TransportTypes = new TransportTypeRepository(SlcConnectivityManagementHelper, connection);
+			Endpoints = new EndpointRepository(this);
+			VirtualSignalGroups = new VirtualSignalGroupRepository(this);
+			Levels = new LevelRepository(this);
+			TransportTypes = new TransportTypeRepository(this);
 
-			Orchestration = new OrchestrationEventRepository(SlcOrchestrationHelper, this);
+			Orchestration = new OrchestrationEventRepository(this);
 		}
 
 		protected internal IConnection Connection { get; }

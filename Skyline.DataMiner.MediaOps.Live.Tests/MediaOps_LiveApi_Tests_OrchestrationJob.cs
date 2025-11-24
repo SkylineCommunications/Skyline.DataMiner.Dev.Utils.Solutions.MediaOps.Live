@@ -60,7 +60,7 @@
 
 			Assert.AreEqual(12, api.Orchestration.CountAll());
 
-			var configurationHelper = new ConfigurationRepository(api.SlcOrchestrationHelper, api.Connection);
+			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(10, configurationHelper.CountAll());
 		}
 
@@ -92,7 +92,7 @@
 
 			Assert.AreEqual(12, api.Orchestration.CountAll());
 
-			var configurationHelper = new ConfigurationRepository(api.SlcOrchestrationHelper, api.Connection);
+			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(10, configurationHelper.CountAll());
 		}
 
@@ -126,7 +126,7 @@
 				"Job can have only a single starting event (Start, PrerollStart) and a single ending event (Stop, PostrollStop).");
 			Assert.AreEqual(10, api.Orchestration.CountAll());
 
-			var configurationHelper = new ConfigurationRepository(api.SlcOrchestrationHelper, api.Connection);
+			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(10, configurationHelper.CountAll());
 		}
 
@@ -160,7 +160,7 @@
 				"Event of type Stop can not be scheduled before an event of type Start");
 			Assert.AreEqual(10, api.Orchestration.CountAll());
 
-			var configurationHelper = new ConfigurationRepository(api.SlcOrchestrationHelper, api.Connection);
+			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(10, configurationHelper.CountAll());
 		}
 
@@ -185,7 +185,7 @@
 				"Job must have a starting event (Start, PrerollStart) and an ending event (Stop, PostrollStop).");
 			Assert.AreEqual(10, api.Orchestration.CountAll());
 
-			var configurationHelper = new ConfigurationRepository(api.SlcOrchestrationHelper, api.Connection);
+			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(10, configurationHelper.CountAll());
 		}
 	}

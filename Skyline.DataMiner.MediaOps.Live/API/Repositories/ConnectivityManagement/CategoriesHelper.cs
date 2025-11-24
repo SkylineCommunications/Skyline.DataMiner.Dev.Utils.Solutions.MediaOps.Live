@@ -15,6 +15,10 @@
 	using Skyline.DataMiner.Utils.Categories.API.Extensions;
 	using Skyline.DataMiner.Utils.Categories.API.Objects;
 
+	/// <summary>
+	/// Helper class to manage categories of Virtual Signal Groups.
+	/// This class helps to keep the Categories in sync with the Virtual Signal Groups.
+	/// </summary>
 	internal class CategoriesHelper
 	{
 		private readonly CategoriesApi _api;
