@@ -122,9 +122,17 @@
 			}
 
 			var instancesCollection = instances.AsCollection();
+			if (instancesCollection.Count == 0)
+			{
+				// Nothing to delete
+				return;
+			}
 
 			// First remove linked category items
 			_categoriesHelper.RemoveLinkedCategoryItems(instancesCollection);
+
+			// Also remove virtual signal group state instances
+			Api.VirtualSignalGroupStates.DeleteByVirtualSignalGroups(instancesCollection);
 
 			// Proceed with deletion
 			base.Delete(instancesCollection);

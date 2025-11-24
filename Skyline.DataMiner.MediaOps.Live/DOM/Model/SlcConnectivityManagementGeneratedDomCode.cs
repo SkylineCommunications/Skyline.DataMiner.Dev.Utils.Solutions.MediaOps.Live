@@ -34,6 +34,24 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				public static FieldDescriptorID Level { get; } = new FieldDescriptorID(new Guid("764c6435-04c7-448d-a2ec-0a4ea43b4b7d"));
 			}
 
+			public static class VirtualSignalGroupLock
+			{
+				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("1be3bdfe-3150-4352-b8b5-7030a66f0639"))
+				{ ModuleId = "(slc)connectivity_management" };
+				public static FieldDescriptorID IsLocked { get; } = new FieldDescriptorID(new Guid("86a72bf2-51d1-43e0-8d1b-0bc040ae7273"));
+				public static FieldDescriptorID LockedBy { get; } = new FieldDescriptorID(new Guid("36eb43ed-5d2a-4d10-b12f-86059f29c43b"));
+				public static FieldDescriptorID LockReason { get; } = new FieldDescriptorID(new Guid("c41f83c4-06ff-43e5-afd9-1be47ba0d7c9"));
+				public static FieldDescriptorID LockJobReference { get; } = new FieldDescriptorID(new Guid("a62c3e0c-5cd2-457f-9ee8-494290fc3b82"));
+				public static FieldDescriptorID LockTime { get; } = new FieldDescriptorID(new Guid("4b53fa79-7896-47ee-8be4-863194919ce3"));
+			}
+
+			public static class VirtualSignalGroupStateInfo
+			{
+				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("e698ff36-2ada-4773-ac93-4732a726537a"))
+				{ ModuleId = "(slc)connectivity_management" };
+				public static FieldDescriptorID VirtualSignalGroupReference { get; } = new FieldDescriptorID(new Guid("7becf594-ff77-4530-8fa4-d64fed7a5bcc"));
+			}
+
 			public static class VirtualSignalGroupInfo
 			{
 				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("a7d8863e-82d4-4bf3-a4c5-f34b1fb7eac0"))
@@ -97,6 +115,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			public static DomDefinitionId Endpoint { get; } = new DomDefinitionId(new Guid("3d952eea-dd7f-4997-acec-af888160392a"))
 			{ ModuleId = "(slc)connectivity_management" };
 			public static DomDefinitionId VirtualSignalGroup { get; } = new DomDefinitionId(new Guid("f23a6e99-cb88-4282-bbbe-7ade9bc7fb04"))
+			{ ModuleId = "(slc)connectivity_management" };
+			public static DomDefinitionId VirtualSignalGroupState { get; } = new DomDefinitionId(new Guid("7a19a11c-3428-46b1-acfa-2ab0ef8c662f"))
 			{ ModuleId = "(slc)connectivity_management" };
 			public static DomDefinitionId TransportType { get; } = new DomDefinitionId(new Guid("91ddfbfe-00db-4244-b8e3-5a0a08fa3ced"))
 			{ ModuleId = "(slc)connectivity_management" };
@@ -474,6 +494,135 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 	}
 
 	/// <summary>
+	/// Represents a wrapper class for accessing a VirtualSignalGroupStateInstance DOM instance.
+	/// The <see cref="VirtualSignalGroupStateInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class VirtualSignalGroupStateInstance : DomInstanceBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupStateInstance"/> class. Creates an empty <see cref="VirtualSignalGroupStateInstance"/> instance with default settings.
+		/// </summary>
+		public VirtualSignalGroupStateInstance() : base(SlcConnectivityManagementIds.Definitions.VirtualSignalGroupState)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupStateInstance"/> class. Creates an empty <see cref="VirtualSignalGroupStateInstance"/> instance with default settings and a specific ID.
+		/// </summary>
+		public VirtualSignalGroupStateInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.VirtualSignalGroupState, id)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupStateInstance"/> class using the specified <paramref name="domInstance"/> for initializing the object.
+		/// </summary>
+		/// <param name="domInstance">The <see cref="DomInstance"/> object that provides data for initializing the <see cref="VirtualSignalGroupStateInstance"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public VirtualSignalGroupStateInstance(DomInstance domInstance) : base(domInstance)
+		{
+			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.VirtualSignalGroupState))
+				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.VirtualSignalGroupState)}'", nameof(domInstance));
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Gets or sets the VirtualSignalGroupLock section of the DOM Instance.
+		/// </summary>
+		public VirtualSignalGroupLockSection VirtualSignalGroupLock { get; set; }
+
+		/// <summary>
+		/// Gets or sets the VirtualSignalGroupStateInfo section of the DOM Instance.
+		/// </summary>
+		public VirtualSignalGroupStateInfoSection VirtualSignalGroupStateInfo { get; set; }
+
+		public static explicit operator VirtualSignalGroupStateInstance(DomInstance instance)
+		{
+			return new VirtualSignalGroupStateInstance(instance);
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="VirtualSignalGroupStateInstance"/>.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupStateInstance"/> object that is a deep copy of this instance.</returns>
+		public VirtualSignalGroupStateInstance Clone()
+		{
+			return new VirtualSignalGroupStateInstance((DomInstance)this.ToInstance().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="VirtualSignalGroupStateInstance"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupStateInstance"/> object that is a copy of this instance but with a different id.</returns>
+		public VirtualSignalGroupStateInstance Duplicate()
+		{
+			var instance = (DomInstance)this.ToInstance().Clone();
+			instance.ID = new DomInstanceId(Guid.NewGuid())
+			{ ModuleId = ModuleId };
+			foreach (var section in instance.Sections)
+			{
+				section.ID = new Skyline.DataMiner.Net.Sections.SectionID(Guid.NewGuid());
+			}
+
+			return new VirtualSignalGroupStateInstance(instance);
+		}
+
+		/// <inheritdoc />
+		protected sealed override DomInstance InternalToInstance()
+		{
+			domInstance.Sections.Clear();
+			if (VirtualSignalGroupLock != null && !VirtualSignalGroupLock.IsEmpty)
+			{
+				domInstance.Sections.Add(VirtualSignalGroupLock.ToSection());
+			}
+
+			domInstance.Sections.Add(VirtualSignalGroupStateInfo.ToSection());
+			return domInstance;
+		}
+
+		/// <inheritdoc />
+		public sealed override void Save(DomHelper helper)
+		{
+			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
+			var instance = ToInstance();
+			if (exist == null)
+			{
+				domInstance = helper.DomInstances.Create(instance);
+			}
+			else
+			{
+				domInstance = helper.DomInstances.Update(instance);
+			}
+		}
+
+		protected sealed override void InitializeProperties()
+		{
+			var _virtualSignalGroupLock = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.Id));
+			if (_virtualSignalGroupLock is null)
+			{
+				VirtualSignalGroupLock = new VirtualSignalGroupLockSection();
+			}
+			else
+			{
+				VirtualSignalGroupLock = new VirtualSignalGroupLockSection(_virtualSignalGroupLock);
+			}
+
+			var _virtualSignalGroupStateInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupStateInfo.Id));
+			if (_virtualSignalGroupStateInfo is null)
+			{
+				VirtualSignalGroupStateInfo = new VirtualSignalGroupStateInfoSection();
+			}
+			else
+			{
+				VirtualSignalGroupStateInfo = new VirtualSignalGroupStateInfoSection(_virtualSignalGroupStateInfo);
+			}
+		}
+	}
+
+	/// <summary>
 	/// Represents a wrapper class for accessing a TransportTypeInstance DOM instance.
 	/// The <see cref="TransportTypeInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
 	/// </summary>
@@ -746,6 +895,366 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				throw new InvalidOperationException("'Endpoint' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level) == null)
 				throw new InvalidOperationException("'Level' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			return section;
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a VirtualSignalGroupLockSection section.
+	/// The <see cref="VirtualSignalGroupLockSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class VirtualSignalGroupLockSection : DomSectionBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupLockSection"/> class. Creates an empty <see cref="VirtualSignalGroupLockSection"/> object with default settings.
+		/// </summary>
+		public VirtualSignalGroupLockSection() : base(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.Id)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupLockSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// </summary>
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="VirtualSignalGroupLockSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public VirtualSignalGroupLockSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.Id)
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the IsLocked field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public Boolean? IsLocked
+		{
+			get
+			{
+				var wrapper = section.GetValue<Boolean>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.IsLocked);
+				if (wrapper != null)
+				{
+					return (Boolean?)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.IsLocked);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.IsLocked, (Boolean)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the LockedBy field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String LockedBy
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockedBy);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockedBy);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockedBy, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the LockReason field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String LockReason
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockReason);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockReason);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockReason, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the LockJobReference field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String LockJobReference
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockJobReference);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockJobReference);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockJobReference, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the LockTime field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public DateTime? LockTime
+		{
+			get
+			{
+				var wrapper = section.GetValue<DateTime>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockTime);
+				if (wrapper != null)
+				{
+					return (DateTime?)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockTime);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockTime, (DateTime)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="VirtualSignalGroupLockSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupLockSection"/> object that is a deep copy of this section.</returns>
+		public VirtualSignalGroupLockSection Clone()
+		{
+			return new VirtualSignalGroupLockSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="VirtualSignalGroupLockSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupLockSection"/> object that is a copy of this section but with a different id.</returns>
+		public VirtualSignalGroupLockSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new VirtualSignalGroupLockSection(section);
+		}
+
+		/// <inheritdoc />
+		protected override Section InternalToSection()
+		{
+			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockedBy) == null)
+				throw new InvalidOperationException("'LockedBy' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			if (section.GetValue<DateTime>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockTime) == null)
+				throw new InvalidOperationException("'LockTime' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			return section;
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a VirtualSignalGroupStateInfoSection section.
+	/// The <see cref="VirtualSignalGroupStateInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class VirtualSignalGroupStateInfoSection : DomSectionBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupStateInfoSection"/> class. Creates an empty <see cref="VirtualSignalGroupStateInfoSection"/> object with default settings.
+		/// </summary>
+		public VirtualSignalGroupStateInfoSection() : base(SlcConnectivityManagementIds.Sections.VirtualSignalGroupStateInfo.Id)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupStateInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// </summary>
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="VirtualSignalGroupStateInfoSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public VirtualSignalGroupStateInfoSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.VirtualSignalGroupStateInfo.Id)
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the VirtualSignalGroupReference field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public Guid? VirtualSignalGroupReference
+		{
+			get
+			{
+				var wrapper = section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupStateInfo.VirtualSignalGroupReference);
+				if (wrapper != null)
+				{
+					return (Guid?)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupStateInfo.VirtualSignalGroupReference);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupStateInfo.VirtualSignalGroupReference, (Guid)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="VirtualSignalGroupStateInfoSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupStateInfoSection"/> object that is a deep copy of this section.</returns>
+		public VirtualSignalGroupStateInfoSection Clone()
+		{
+			return new VirtualSignalGroupStateInfoSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="VirtualSignalGroupStateInfoSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupStateInfoSection"/> object that is a copy of this section but with a different id.</returns>
+		public VirtualSignalGroupStateInfoSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new VirtualSignalGroupStateInfoSection(section);
+		}
+
+		/// <inheritdoc />
+		protected override Section InternalToSection()
+		{
+			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupStateInfo.VirtualSignalGroupReference) == null)
+				throw new InvalidOperationException("'VirtualSignalGroupReference' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
 		}
 	}

@@ -35,6 +35,7 @@
 
 			Endpoints = new EndpointRepository(this);
 			VirtualSignalGroups = new VirtualSignalGroupRepository(this);
+			VirtualSignalGroupStates = new VirtualSignalGroupStateRepository(this);
 			Levels = new LevelRepository(this);
 			TransportTypes = new TransportTypeRepository(this);
 
@@ -54,6 +55,8 @@
 		public EndpointRepository Endpoints { get; }
 
 		public VirtualSignalGroupRepository VirtualSignalGroups { get; }
+
+		public VirtualSignalGroupStateRepository VirtualSignalGroupStates { get; }
 
 		public LevelRepository Levels { get; }
 
