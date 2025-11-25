@@ -77,6 +77,11 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroups));
 			}
 
+			if (String.IsNullOrWhiteSpace(user))
+			{
+				throw new ArgumentException($"'{nameof(user)}' cannot be null or whitespace.", nameof(user));
+			}
+
 			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Locked, user, reason, jobReference);
 		}
 
@@ -85,6 +90,11 @@
 			if (virtualSignalGroup is null)
 			{
 				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			if (String.IsNullOrWhiteSpace(user))
+			{
+				throw new ArgumentException($"'{nameof(user)}' cannot be null or whitespace.", nameof(user));
 			}
 
 			ProtectVirtualSignalGroups([virtualSignalGroup], user, reason, jobReference);
@@ -205,23 +215,28 @@
 
 			foreach (var vsg in virtualSignalGroups)
 			{
+				// Retrieve or create the state for the current virtual signal group
 				if (!virtualSignalGroupStates.TryGetValue(vsg.ID, out var state))
 				{
-					state = new VirtualSignalGroupState
-					{
-						VirtualSignalGroupReference = vsg.ID,
-					};
+					state = new VirtualSignalGroupState { VirtualSignalGroupReference = vsg.ID };
 				}
 
-				if (state.LockState == lockState)
-				{
-					// No change needed, also don't overwrite existing lock info
-					continue;
-				}
-
+				// Prevent locking if the virtual signal group is protected
 				if (state.IsProtected && lockState == LockState.Locked)
 				{
 					throw new InvalidOperationException($"Virtual Signal Group '{vsg.Name}' is protected and cannot be locked.");
+				}
+
+				// Check if we need to update
+				bool needsUpdate = state.LockState != lockState ||
+					state.LockedBy != user ||
+					state.LockReason != reason ||
+					state.LockJobReference != jobReference;
+
+				if (!needsUpdate)
+				{
+					// No change needed
+					continue;
 				}
 
 				state.LockState = lockState;

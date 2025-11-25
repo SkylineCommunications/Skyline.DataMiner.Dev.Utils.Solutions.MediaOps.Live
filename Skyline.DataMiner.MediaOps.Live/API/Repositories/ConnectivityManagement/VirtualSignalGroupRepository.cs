@@ -71,7 +71,7 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroup));
 			}
 
-			LockVirtualSignalGroups([virtualSignalGroup], user, reason, jobReference);
+			Api.VirtualSignalGroupStates.LockVirtualSignalGroup(virtualSignalGroup, user, reason, jobReference);
 		}
 
 		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference)
@@ -81,7 +81,6 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroups));
 			}
 
-			// Forward call to VSG state repository
 			Api.VirtualSignalGroupStates.LockVirtualSignalGroups(virtualSignalGroups, user, reason, jobReference);
 		}
 
@@ -92,7 +91,7 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroup));
 			}
 
-			ProtectVirtualSignalGroups([virtualSignalGroup], user, reason, jobReference);
+			Api.VirtualSignalGroupStates.ProtectVirtualSignalGroup(virtualSignalGroup, user, reason, jobReference);
 		}
 
 		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference)
@@ -102,7 +101,6 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroups));
 			}
 
-			// Forward call to VSG state repository
 			Api.VirtualSignalGroupStates.ProtectVirtualSignalGroups(virtualSignalGroups, user, reason, jobReference);
 		}
 
@@ -113,7 +111,7 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroup));
 			}
 
-			UnlockVirtualSignalGroups([virtualSignalGroup]);
+			Api.VirtualSignalGroupStates.UnlockVirtualSignalGroup(virtualSignalGroup);
 		}
 
 		public void UnlockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
@@ -123,7 +121,6 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroups));
 			}
 
-			// Forward call to VSG state repository
 			Api.VirtualSignalGroupStates.UnlockVirtualSignalGroups(virtualSignalGroups);
 		}
 
