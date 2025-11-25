@@ -5,6 +5,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
@@ -32,9 +33,13 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 			}
 		}
 
-		public IReadOnlyDictionary<ApiObjectReference<Endpoint>, Endpoint> Endpoints => _endpoints;
-
-		public IReadOnlyDictionary<string, Endpoint> EndpointsByName => _endpointsByName;
+		public IReadOnlyCollection<Endpoint> GetAllEndpoints()
+		{
+			lock (_lock)
+			{
+				return _endpoints.Values.ToList();
+			}
+		}
 
 		public Endpoint GetEndpoint(ApiObjectReference<Endpoint> id)
 		{
@@ -75,6 +80,14 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 			lock (_lock)
 			{
 				return _endpointsByName.TryGetValue(name, out endpoint);
+			}
+		}
+
+		public IReadOnlyCollection<Endpoint> GetEndpointsWithRole(EndpointRole role)
+		{
+			lock (_lock)
+			{
+				return GetAllEndpoints().Where(e => e.Role == role).ToList();
 			}
 		}
 

@@ -121,22 +121,22 @@
 
 		public IEnumerable<Endpoint> GetAllEndpoints()
 		{
-			return _cache.VirtualSignalGroupsCache.Endpoints.Values;
+			return _cache.VirtualSignalGroupsCache.Endpoints.GetAllEndpoints();
 		}
 
 		public IEnumerable<Endpoint> GetAllEndpoints(EndpointRole role)
 		{
-			return GetAllEndpoints().Where(e => e.Role == role);
+			return _cache.VirtualSignalGroupsCache.Endpoints.GetEndpointsWithRole(role);
 		}
 
 		public IEnumerable<VirtualSignalGroup> GetAllVirtualSignalGroups()
 		{
-			return _cache.VirtualSignalGroupsCache.VirtualSignalGroups.Values;
+			return _cache.VirtualSignalGroupsCache.VirtualSignalGroups.GetAllVirtualSignalGroups();
 		}
 
 		public IEnumerable<VirtualSignalGroup> GetAllVirtualSignalGroups(EndpointRole role)
 		{
-			return GetAllVirtualSignalGroups().Where(e => e.Role == role);
+			return _cache.VirtualSignalGroupsCache.VirtualSignalGroups.GetVirtualSignalGroupsWithRole(role);
 		}
 
 		public IEnumerable<Endpoint> GetEndpointsWithElement(EndpointRole role, DmsElementId elementId)

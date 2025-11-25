@@ -2,8 +2,10 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 	using System.Threading.Tasks;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
@@ -47,9 +49,13 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 			}
 		}
 
-		public IReadOnlyDictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> VirtualSignalGroups => _virtualSignalGroups;
-
-		public IReadOnlyDictionary<string, VirtualSignalGroup> VirtualSignalGroupsByName => _virtualSignalGroupsByName;
+		public IReadOnlyCollection<VirtualSignalGroup> GetAllVirtualSignalGroups()
+		{
+			lock (_lock)
+			{
+				return _virtualSignalGroups.Values.ToList();
+			}
+		}
 
 		public VirtualSignalGroup GetVirtualSignalGroup(ApiObjectReference<VirtualSignalGroup> id)
 		{
@@ -90,6 +96,14 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 			lock (_lock)
 			{
 				return _virtualSignalGroupsByName.TryGetValue(name, out virtualSignalGroup);
+			}
+		}
+
+		public IReadOnlyCollection<VirtualSignalGroup> GetVirtualSignalGroupsWithRole(EndpointRole role)
+		{
+			lock (_lock)
+			{
+				return GetAllVirtualSignalGroups().Where(e => e.Role == role).ToList();
 			}
 		}
 
@@ -165,6 +179,14 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 				lockedTime = state.LockTime;
 				reason = state.LockReason;
 				return true;
+			}
+		}
+
+		public bool IsUnlocked(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup)
+		{
+			lock (_lock)
+			{
+				return !TryGetVirtualSignalGroupState(virtualSignalGroup, out var state) || state.IsUnlocked;
 			}
 		}
 
