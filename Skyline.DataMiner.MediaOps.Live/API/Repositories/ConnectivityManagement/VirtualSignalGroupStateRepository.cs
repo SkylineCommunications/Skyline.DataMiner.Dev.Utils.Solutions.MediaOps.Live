@@ -38,6 +38,16 @@
 			return FilterQueryExecutor.RetrieveFilteredItems(virtualSignalGroups, BuildFilter, Read);
 		}
 
+		public VirtualSignalGroupState GetByVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			return GetByVirtualSignalGroups([virtualSignalGroup]).SingleOrDefault();
+		}
+
 		public bool TryGetByVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, out VirtualSignalGroupState virtualSignalGroupState)
 		{
 			if (virtualSignalGroup is null)
@@ -45,9 +55,19 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroup));
 			}
 
-			virtualSignalGroupState = GetByVirtualSignalGroups([virtualSignalGroup]).SingleOrDefault();
+			virtualSignalGroupState = GetByVirtualSignalGroup(virtualSignalGroup);
 
 			return virtualSignalGroupState != null;
+		}
+
+		public void LockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			LockVirtualSignalGroups([virtualSignalGroup], user, reason, jobReference);
 		}
 
 		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference)
@@ -60,6 +80,16 @@
 			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Locked, user, reason, jobReference);
 		}
 
+		public void ProtectVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			ProtectVirtualSignalGroups([virtualSignalGroup], user, reason, jobReference);
+		}
+
 		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference)
 		{
 			if (virtualSignalGroups is null)
@@ -68,6 +98,16 @@
 			}
 
 			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Protected, user, reason, jobReference);
+		}
+
+		public void UnlockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			UnlockVirtualSignalGroups([virtualSignalGroup]);
 		}
 
 		public void UnlockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
@@ -151,13 +191,18 @@
 
 		private void UpdateVirtualSignalGroupLockStates(ICollection<VirtualSignalGroup> virtualSignalGroups, LockState lockState, string user, string reason, string jobReference)
 		{
-			var statesToUpdate = new List<VirtualSignalGroupState>();
+			if (virtualSignalGroups.Count == 0)
+			{
+				return;
+			}
 
 			// Get existing states
 			var virtualSignalGroupStates = GetByVirtualSignalGroups(virtualSignalGroups)
 				.SafeToDictionary(x => x.VirtualSignalGroupReference);
 
 			// Update or create states
+			var statesToUpdate = new List<VirtualSignalGroupState>();
+
 			foreach (var vsg in virtualSignalGroups)
 			{
 				if (!virtualSignalGroupStates.TryGetValue(vsg.ID, out var state))

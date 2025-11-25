@@ -64,6 +64,16 @@
 			return Read(filter);
 		}
 
+		public void LockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			LockVirtualSignalGroups([virtualSignalGroup], user, reason, jobReference);
+		}
+
 		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference)
 		{
 			if (virtualSignalGroups is null)
@@ -75,6 +85,16 @@
 			Api.VirtualSignalGroupStates.LockVirtualSignalGroups(virtualSignalGroups, user, reason, jobReference);
 		}
 
+		public void ProtectVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			ProtectVirtualSignalGroups([virtualSignalGroup], user, reason, jobReference);
+		}
+
 		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference)
 		{
 			if (virtualSignalGroups is null)
@@ -84,6 +104,16 @@
 
 			// Forward call to VSG state repository
 			Api.VirtualSignalGroupStates.ProtectVirtualSignalGroups(virtualSignalGroups, user, reason, jobReference);
+		}
+
+		public void UnlockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			UnlockVirtualSignalGroups([virtualSignalGroup]);
 		}
 
 		public void UnlockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
