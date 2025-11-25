@@ -25,15 +25,6 @@
 		/// <param name="api">Api that calls the repository.</param>
 		internal OrchestrationEventRepository(MediaOpsLiveApi api) : base(api, api.SlcOrchestrationHelper)
 		{
-			_configurationHelper = new ConfigurationRepository(api);
-			_jobInfoHelper = new JobInfoRepository(api);
-			_api = api;
-			_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(
-				this,
-				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
-				TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future));
-
-			_orchestrationScriptInfoHelper = new OrchestrationScriptInfoHelper(api.Connection);
 		}
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;

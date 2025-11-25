@@ -34,9 +34,9 @@ public class OrchestrationHelper
 	{
 		_api = api;
 
-		_orchestrationEventRepository = new OrchestrationEventRepository(helper, api.Connection);
-		_configurationRepository = new ConfigurationRepository(helper, api.Connection);
-		_jobInfoRepository = new JobInfoRepository(helper, api.Connection);
+		_orchestrationEventRepository = new OrchestrationEventRepository(api);
+		_configurationRepository = new ConfigurationRepository(api);
+		_jobInfoRepository = new JobInfoRepository(api);
 
 		_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(
 			_orchestrationEventRepository,
