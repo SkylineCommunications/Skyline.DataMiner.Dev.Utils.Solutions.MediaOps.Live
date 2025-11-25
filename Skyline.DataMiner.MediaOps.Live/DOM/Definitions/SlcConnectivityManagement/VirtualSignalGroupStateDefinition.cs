@@ -5,8 +5,10 @@
 
 	using Skyline.DataMiner.MediaOps.Live.DOM.Interfaces;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Apps.Sections.SectionDefinitions;
+	using Skyline.DataMiner.Net.GenericEnums;
 	using Skyline.DataMiner.Net.Sections;
 
 	internal class VirtualSignalGroupStateDefinition : IDomDefinitionInfo
@@ -60,12 +62,14 @@
 			};
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
-				new FieldDescriptor
+				new GenericEnumFieldDescriptor
 				{
-					FieldType = typeof(bool),
-					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.IsLocked,
-					Name = "Is Locked",
+					FieldType = typeof(GenericEnum<int>),
+					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockState,
+					Name = "Lock State",
 					IsOptional = false,
+					GenericEnumInstance = GenericEnumFactory.Create<SlcConnectivityManagementIds.Enums.LockState>(),
+					DefaultValue = new ValueWrapper<int>((int)SlcConnectivityManagementIds.Enums.LockState.Unlocked),
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(

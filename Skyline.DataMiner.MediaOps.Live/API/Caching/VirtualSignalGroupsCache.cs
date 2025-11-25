@@ -118,7 +118,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 		{
 			lock (_lock)
 			{
-				return TryGetVirtualSignalGroupState(virtualSignalGroup, out var state) && state.IsLocked;
+				return IsLocked(virtualSignalGroup, out _, out _, out _);
 			}
 		}
 
@@ -126,20 +126,45 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 		{
 			lock (_lock)
 			{
-				if (TryGetVirtualSignalGroupState(virtualSignalGroup, out var state) && state.IsLocked)
+				if (!TryGetVirtualSignalGroupState(virtualSignalGroup, out var state) || !state.IsLocked)
 				{
-					lockedBy = state.LockedBy;
-					lockedTime = state.LockTime;
-					reason = state.LockReason;
-					return true;
-				}
-				else
-				{
-					lockedBy = default;
+					lockedBy = null;
 					lockedTime = default;
-					reason = default;
+					reason = null;
 					return false;
 				}
+
+				lockedBy = state.LockedBy;
+				lockedTime = state.LockTime;
+				reason = state.LockReason;
+				return true;
+			}
+		}
+
+		public bool IsProtected(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup)
+		{
+			lock (_lock)
+			{
+				return IsProtected(virtualSignalGroup, out _, out _, out _);
+			}
+		}
+
+		public bool IsProtected(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup, out string lockedBy, out DateTimeOffset lockedTime, out string reason)
+		{
+			lock (_lock)
+			{
+				if (!TryGetVirtualSignalGroupState(virtualSignalGroup, out var state) || !state.IsProtected)
+				{
+					lockedBy = null;
+					lockedTime = default;
+					reason = null;
+					return false;
+				}
+
+				lockedBy = state.LockedBy;
+				lockedTime = state.LockTime;
+				reason = state.LockReason;
+				return true;
 			}
 		}
 

@@ -2,6 +2,7 @@
 {
 	using System;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
@@ -44,16 +45,27 @@
 			}
 		}
 
-		public bool IsLocked
+		public LockState LockState
 		{
 			get
 			{
-				return _domInstance.VirtualSignalGroupLock.IsLocked ?? false;
+				if (_domInstance.VirtualSignalGroupLock.LockState.HasValue)
+				{
+					return (LockState)(int)_domInstance.VirtualSignalGroupLock.LockState.Value;
+				}
+
+				return default;
 			}
 
 			set
 			{
-				_domInstance.VirtualSignalGroupLock.IsLocked = value;
+				if (value == LockState.Unlocked)
+				{
+					_domInstance.VirtualSignalGroupLock.LockState = null;
+					return;
+				}
+
+				_domInstance.VirtualSignalGroupLock.LockState = (SlcConnectivityManagementIds.Enums.LockState)(int)value;
 			}
 		}
 
@@ -113,21 +125,28 @@
 				if (value == DateTimeOffset.MinValue)
 				{
 					_domInstance.VirtualSignalGroupLock.LockTime = null;
+					return;
 				}
 
 				_domInstance.VirtualSignalGroupLock.LockTime = value.UtcDateTime;
 			}
 		}
+
+		public bool IsLocked => LockState == LockState.Locked;
+
+		public bool IsProtected => LockState == LockState.Protected;
+
+		public bool IsUnlocked => LockState == LockState.Unlocked;
 	}
 
 	public static class VirtualSignalGroupStateExposers
 	{
-		public static readonly Exposer<VirtualSignalGroupState, Guid> ID = new Exposer<VirtualSignalGroupState, Guid>(x => x.ID, nameof(VirtualSignalGroupState.ID));
-		public static readonly Exposer<VirtualSignalGroupState, ApiObjectReference<VirtualSignalGroup>> VirtualSignalGroupReference = new Exposer<VirtualSignalGroupState, ApiObjectReference<VirtualSignalGroup>>(x => x.VirtualSignalGroupReference, nameof(VirtualSignalGroupState.VirtualSignalGroupReference));
-		public static readonly Exposer<VirtualSignalGroupState, bool> IsLocked = new Exposer<VirtualSignalGroupState, bool>(x => x.IsLocked, nameof(VirtualSignalGroupState.IsLocked));
-		public static readonly Exposer<VirtualSignalGroupState, string> LockedBy = new Exposer<VirtualSignalGroupState, string>(x => x.LockedBy, nameof(VirtualSignalGroupState.LockedBy));
-		public static readonly Exposer<VirtualSignalGroupState, string> LockReason = new Exposer<VirtualSignalGroupState, string>(x => x.LockReason, nameof(VirtualSignalGroupState.LockReason));
-		public static readonly Exposer<VirtualSignalGroupState, string> LockJobReference = new Exposer<VirtualSignalGroupState, string>(x => x.LockJobReference, nameof(VirtualSignalGroupState.LockJobReference));
-		public static readonly Exposer<VirtualSignalGroupState, DateTimeOffset> LockTime = new Exposer<VirtualSignalGroupState, DateTimeOffset>(x => x.LockTime, nameof(VirtualSignalGroupState.LockTime));
+		public static readonly Exposer<VirtualSignalGroupState, Guid> ID = new(x => x.ID, nameof(VirtualSignalGroupState.ID));
+		public static readonly Exposer<VirtualSignalGroupState, ApiObjectReference<VirtualSignalGroup>> VirtualSignalGroupReference = new(x => x.VirtualSignalGroupReference, nameof(VirtualSignalGroupState.VirtualSignalGroupReference));
+		public static readonly Exposer<VirtualSignalGroupState, LockState> LockState = new(x => x.LockState, nameof(VirtualSignalGroupState.LockState));
+		public static readonly Exposer<VirtualSignalGroupState, string> LockedBy = new(x => x.LockedBy, nameof(VirtualSignalGroupState.LockedBy));
+		public static readonly Exposer<VirtualSignalGroupState, string> LockReason = new(x => x.LockReason, nameof(VirtualSignalGroupState.LockReason));
+		public static readonly Exposer<VirtualSignalGroupState, string> LockJobReference = new(x => x.LockJobReference, nameof(VirtualSignalGroupState.LockJobReference));
+		public static readonly Exposer<VirtualSignalGroupState, DateTimeOffset> LockTime = new(x => x.LockTime, nameof(VirtualSignalGroupState.LockTime));
 	}
 }

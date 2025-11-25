@@ -17,6 +17,13 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		public const string ModuleId = "(slc)connectivity_management";
 		public static class Enums
 		{
+			public enum LockState
+			{
+				Unlocked = 0,
+				Locked = 1,
+				Protected = 2
+			}
+
 			public enum Role
 			{
 				Source = 0,
@@ -38,11 +45,11 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 			{
 				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("1be3bdfe-3150-4352-b8b5-7030a66f0639"))
 				{ ModuleId = "(slc)connectivity_management" };
-				public static FieldDescriptorID IsLocked { get; } = new FieldDescriptorID(new Guid("86a72bf2-51d1-43e0-8d1b-0bc040ae7273"));
 				public static FieldDescriptorID LockedBy { get; } = new FieldDescriptorID(new Guid("36eb43ed-5d2a-4d10-b12f-86059f29c43b"));
 				public static FieldDescriptorID LockReason { get; } = new FieldDescriptorID(new Guid("c41f83c4-06ff-43e5-afd9-1be47ba0d7c9"));
 				public static FieldDescriptorID LockJobReference { get; } = new FieldDescriptorID(new Guid("a62c3e0c-5cd2-457f-9ee8-494290fc3b82"));
 				public static FieldDescriptorID LockTime { get; } = new FieldDescriptorID(new Guid("4b53fa79-7896-47ee-8be4-863194919ce3"));
+				public static FieldDescriptorID LockState { get; } = new FieldDescriptorID(new Guid("86a72bf2-51d1-43e0-8d1b-0bc040ae7273"));
 			}
 
 			public static class VirtualSignalGroupStateInfo
@@ -921,49 +928,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 		}
 
 		/// <summary>
-		/// Gets or sets the IsLocked field of the DOM Instance.
-		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public Boolean? IsLocked
-		{
-			get
-			{
-				var wrapper = section.GetValue<Boolean>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.IsLocked);
-				if (wrapper != null)
-				{
-					return (Boolean?)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
-
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.IsLocked);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.IsLocked, (Boolean)value);
-				}
-			}
-		}
-
-		/// <summary>
 		/// Gets or sets the LockedBy field of the DOM Instance.
 		/// </summary>
 		/// <remarks>
@@ -1131,6 +1095,49 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 				else
 				{
 					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockTime, (DateTime)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the LockState field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public SlcConnectivityManagementIds.Enums.LockState? LockState
+		{
+			get
+			{
+				var wrapper = section.GetValue<Int32>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockState);
+				if (wrapper != null)
+				{
+					return (SlcConnectivityManagementIds.Enums.LockState?)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockState);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockState, (Int32)value);
 				}
 			}
 		}

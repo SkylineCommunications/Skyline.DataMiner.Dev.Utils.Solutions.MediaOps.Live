@@ -4,6 +4,7 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
@@ -22,7 +23,7 @@
 
 		protected internal override DomDefinitionId DomDefinition => VirtualSignalGroupState.DomDefinition;
 
-		public ICollection<VirtualSignalGroupState> GetByVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
+		public IEnumerable<VirtualSignalGroupState> GetByVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
 		{
 			if (virtualSignalGroups is null)
 			{
@@ -34,10 +35,7 @@
 				return VirtualSignalGroupStateExposers.VirtualSignalGroupReference.Equal(vsg.ID);
 			}
 
-			var virtualSignalGroupStates = FilterQueryExecutor.RetrieveFilteredItems(virtualSignalGroups, BuildFilter, Read)
-				.ToList();
-
-			return virtualSignalGroupStates;
+			return FilterQueryExecutor.RetrieveFilteredItems(virtualSignalGroups, BuildFilter, Read);
 		}
 
 		public bool TryGetByVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, out VirtualSignalGroupState virtualSignalGroupState)
@@ -59,31 +57,17 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroups));
 			}
 
-			var virtualSignalGroupStates = GetByVirtualSignalGroups(virtualSignalGroups)
-				.SafeToDictionary(x => x.VirtualSignalGroupReference);
+			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Locked, user, reason, jobReference);
+		}
 
-			var statesToUpdate = new List<VirtualSignalGroupState>();
-
-			foreach (var vsg in virtualSignalGroups)
+		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference)
+		{
+			if (virtualSignalGroups is null)
 			{
-				if (!virtualSignalGroupStates.TryGetValue(vsg.ID, out var state))
-				{
-					state = new VirtualSignalGroupState
-					{
-						VirtualSignalGroupReference = vsg.ID,
-					};
-				}
-
-				state.IsLocked = true;
-				state.LockedBy = user;
-				state.LockReason = reason;
-				state.LockJobReference = jobReference;
-				state.LockTime = DateTimeOffset.UtcNow;
-
-				statesToUpdate.Add(state);
+				throw new ArgumentNullException(nameof(virtualSignalGroups));
 			}
 
-			CreateOrUpdate(statesToUpdate);
+			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Protected, user, reason, jobReference);
 		}
 
 		public void UnlockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
@@ -93,31 +77,7 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroups));
 			}
 
-			var virtualSignalGroupStates = GetByVirtualSignalGroups(virtualSignalGroups)
-				.SafeToDictionary(x => x.VirtualSignalGroupReference);
-
-			var statesToUpdate = new List<VirtualSignalGroupState>();
-
-			foreach (var vsg in virtualSignalGroups)
-			{
-				if (!virtualSignalGroupStates.TryGetValue(vsg.ID, out var state))
-				{
-					state = new VirtualSignalGroupState
-					{
-						VirtualSignalGroupReference = vsg.ID,
-					};
-				}
-
-				state.IsLocked = false;
-				state.LockedBy = null;
-				state.LockReason = null;
-				state.LockJobReference = null;
-				state.LockTime = DateTimeOffset.MinValue;
-
-				statesToUpdate.Add(state);
-			}
-
-			CreateOrUpdate(statesToUpdate);
+			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Unlocked, null, null, null);
 		}
 
 		public void DeleteByVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
@@ -153,8 +113,8 @@
 			{
 				case nameof(VirtualSignalGroupState.VirtualSignalGroupReference):
 					return FilterElementFactory.Create<Guid>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupStateInfo.VirtualSignalGroupReference), comparer, value);
-				case nameof(VirtualSignalGroupState.IsLocked):
-					return FilterElementFactory.Create<bool>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.IsLocked), comparer, value);
+				case nameof(VirtualSignalGroupState.LockState):
+					return FilterElementFactory.Create<int>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockState), comparer, value);
 				case nameof(VirtualSignalGroupState.LockedBy):
 					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockedBy), comparer, value);
 				case nameof(VirtualSignalGroupState.LockReason):
@@ -174,8 +134,8 @@
 			{
 				case nameof(VirtualSignalGroupState.VirtualSignalGroupReference):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupStateInfo.VirtualSignalGroupReference), sortOrder, naturalSort);
-				case nameof(VirtualSignalGroupState.IsLocked):
-					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.IsLocked), sortOrder, naturalSort);
+				case nameof(VirtualSignalGroupState.LockState):
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockState), sortOrder, naturalSort);
 				case nameof(VirtualSignalGroupState.LockedBy):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockedBy), sortOrder, naturalSort);
 				case nameof(VirtualSignalGroupState.LockReason):
@@ -187,6 +147,49 @@
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
+		}
+
+		private void UpdateVirtualSignalGroupLockStates(ICollection<VirtualSignalGroup> virtualSignalGroups, LockState lockState, string user, string reason, string jobReference)
+		{
+			var statesToUpdate = new List<VirtualSignalGroupState>();
+
+			// Get existing states
+			var virtualSignalGroupStates = GetByVirtualSignalGroups(virtualSignalGroups)
+				.SafeToDictionary(x => x.VirtualSignalGroupReference);
+
+			// Update or create states
+			foreach (var vsg in virtualSignalGroups)
+			{
+				if (!virtualSignalGroupStates.TryGetValue(vsg.ID, out var state))
+				{
+					state = new VirtualSignalGroupState
+					{
+						VirtualSignalGroupReference = vsg.ID,
+					};
+				}
+
+				if (state.LockState == lockState)
+				{
+					// No change needed, also don't overwrite existing lock info
+					continue;
+				}
+
+				if (state.IsProtected && lockState == LockState.Locked)
+				{
+					throw new InvalidOperationException($"Virtual Signal Group '{vsg.Name}' is protected and cannot be locked.");
+				}
+
+				state.LockState = lockState;
+				state.LockedBy = user;
+				state.LockReason = reason;
+				state.LockJobReference = jobReference;
+				state.LockTime = lockState != LockState.Unlocked ? DateTimeOffset.UtcNow : DateTimeOffset.MinValue;
+
+				statesToUpdate.Add(state);
+			}
+
+			// Save changes
+			CreateOrUpdate(statesToUpdate);
 		}
 	}
 }
