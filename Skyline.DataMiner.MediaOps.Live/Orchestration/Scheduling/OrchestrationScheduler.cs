@@ -16,7 +16,7 @@
 	/// <summary>
 	/// Class that handled orchestration scheduled tasks that execute the orchestration for orchestration events.
 	/// </summary>
-	public class OrchestrationScheduler
+	internal class OrchestrationScheduler
 	{
 		private readonly IDms _dms;
 		private readonly IConnection _connection;
@@ -28,7 +28,7 @@
 		/// </summary>
 		/// <param name="connection">DataMiner user connection.</param>
 		/// <exception cref="ArgumentNullException">Connection cannot be null.</exception>
-		public OrchestrationScheduler(IConnection connection)
+		internal OrchestrationScheduler(IConnection connection)
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			_dms = connection.GetDms();
@@ -82,7 +82,7 @@
 		/// </summary>
 		/// <param name="time">The reference timestamp.</param>
 		/// <returns>A collection of tasks scheduled before the give time.</returns>
-		public IEnumerable<OrchestrationSchedulerTask> GetEventTasksBeforeTime(DateTimeOffset time)
+		internal IEnumerable<OrchestrationSchedulerTask> GetEventTasksBeforeTime(DateTimeOffset time)
 		{
 			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime < time.ToUniversalTime());
 		}
@@ -92,7 +92,7 @@
 		/// </summary>
 		/// <param name="time">The reference timestamp.</param>
 		/// <returns>A collection of tasks scheduled after the give time.</returns>
-		public IEnumerable<OrchestrationSchedulerTask> GetEventTasksAfterTime(DateTimeOffset time)
+		internal IEnumerable<OrchestrationSchedulerTask> GetEventTasksAfterTime(DateTimeOffset time)
 		{
 			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime > time.ToUniversalTime());
 		}
@@ -103,7 +103,7 @@
 		/// <param name="from">The starting reference timestamp.</param>
 		/// <param name="to">The ending reference timestamp.</param>
 		/// <returns>A collection of task in given time range.</returns>
-		public IEnumerable<OrchestrationSchedulerTask> GetEventTasksInTimeRange(DateTimeOffset from, DateTimeOffset to)
+		internal IEnumerable<OrchestrationSchedulerTask> GetEventTasksInTimeRange(DateTimeOffset from, DateTimeOffset to)
 		{
 			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime <= to.ToUniversalTime() && task.DateTime.UtcDateTime >= from.ToUniversalTime());
 		}
@@ -112,7 +112,7 @@
 		/// Triggers the creation or update of the scheduled task that is linked to the events.
 		/// </summary>
 		/// <param name="events">The list of events for which the scheduled task needs to be updated.</param>
-		public void CreateOrUpdateEventScheduling(IEnumerable<OrchestrationEvent> events)
+		internal void CreateOrUpdateEventScheduling(IEnumerable<OrchestrationEvent> events)
 		{
 			List<OrchestrationEvent> orchestrationEvents = events.ToList();
 			IEnumerable<IGrouping<EventState, OrchestrationEvent>> groupedByState = orchestrationEvents.GroupBy(e => e.EventState);
@@ -137,7 +137,7 @@
 		/// Delete scheduled orchestration task and remove reference on the orchestration event.
 		/// </summary>
 		/// <param name="events">List of event to remove corresponding task for.</param>
-		public void DeleteEventTasks(IEnumerable<OrchestrationEvent> events)
+		internal void DeleteEventTasks(IEnumerable<OrchestrationEvent> events)
 		{
 			IEnumerable<IGrouping<DateTimeOffset?, OrchestrationEvent>> groupedByTimeEvents = events.GroupBy(e => e.EventTime).OrderBy(g => g.Key);
 
