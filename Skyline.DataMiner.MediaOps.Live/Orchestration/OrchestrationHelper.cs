@@ -328,6 +328,17 @@ public class OrchestrationHelper
 	}
 
 	/// <summary>
+	/// Generic method to get a set of event configurations, using a provided filter. The filter can be built using the OrchestrationEventExposers class.
+	/// </summary>
+	/// <param name="filter">A filter (or combination of filters) to get a set of event configurations.</param>
+	/// <returns>A set of event configurations, matching the provided filter information.</returns>
+	public IEnumerable<OrchestrationEventConfiguration> ReadEventConfigurations(FilterElement<OrchestrationEvent> filter)
+	{
+		var events = _orchestrationEventRepository.Read(filter);
+		return GetEventsAsEventConfigurations(events).Values;
+	}
+
+	/// <summary>
 	///     Saves a list of new or updated <see cref="OrchestrationEventConfiguration" /> objects to the DataMiner System.
 	/// </summary>
 	/// <param name="events">A list of configured or updated event configurations.</param>
@@ -432,7 +443,7 @@ public class OrchestrationHelper
 	/// <param name="events">The <see cref="OrchestrationEvent" /> objects to convert.</param>
 	/// <returns>A mapping of each event ID to the converted <see cref="OrchestrationEventConfiguration" /> object.</returns>
 	/// <exception cref="ArgumentNullException">Events can not be null.</exception>
-	internal Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
+	public Dictionary<Guid, OrchestrationEventConfiguration> GetEventsAsEventConfigurations(IEnumerable<OrchestrationEvent> events)
 	{
 		if (events == null)
 		{
