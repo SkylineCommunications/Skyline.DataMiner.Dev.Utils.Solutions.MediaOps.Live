@@ -1,7 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
 {
 	using System;
-	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -10,8 +9,8 @@
 	{
 		private readonly object _lock = new();
 
-		private RepositorySubscription<Endpoint> _subscriptionEndpoints;
-		private RepositorySubscription<VirtualSignalGroup> _subscriptionVirtualSignalGroups;
+		private EndpointsObserver _endpointsObserver;
+		private VirtualSignalGroupsObserver _virtualSignalGroupsObserver;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VirtualSignalGroupEndpointsObserver"/> class.
@@ -27,7 +26,7 @@
 			Cache = cache ?? throw new ArgumentNullException(nameof(cache));
 		}
 
-			/// <summary>
+		/// <summary>
 		/// Initializes a new instance of the <see cref="VirtualSignalGroupEndpointsObserver"/> class.
 		/// This observer can be used to monitor changes in virtual signal groups and endpoints.
 		/// It uses the provided API to subscribe to changes and updates the provided cache accordingly.
@@ -57,11 +56,15 @@
 					return;
 				}
 
-				_subscriptionEndpoints = Api.Endpoints.Subscribe();
-				_subscriptionEndpoints.Changed += Endpoints_Changed;
+				// Initialize and subscribe to endpoints observer
+				_endpointsObserver = new EndpointsObserver(Api, Cache.Endpoints);
+				_endpointsObserver.EndpointsChanged += Endpoints_Changed;
+				_endpointsObserver.Subscribe();
 
-				_subscriptionVirtualSignalGroups = Api.VirtualSignalGroups.Subscribe();
-				_subscriptionVirtualSignalGroups.Changed += VirtualSignalGroups_Changed;
+				// Initialize and subscribe to virtual signal groups observer
+				_virtualSignalGroupsObserver = new VirtualSignalGroupsObserver(Api, Cache.VirtualSignalGroups);
+				_virtualSignalGroupsObserver.VirtualSignalGroupsChanged += VirtualSignalGroups_Changed;
+				_virtualSignalGroupsObserver.Subscribe();
 
 				IsSubscribed = true;
 			}
@@ -76,11 +79,21 @@
 					return;
 				}
 
-				_subscriptionEndpoints.Changed -= Endpoints_Changed;
-				_subscriptionEndpoints.Dispose();
+				if (_endpointsObserver != null)
+				{
+					_endpointsObserver.EndpointsChanged -= Endpoints_Changed;
+					_endpointsObserver.Unsubscribe();
+					_endpointsObserver.Dispose();
+					_endpointsObserver = null;
+				}
 
-				_subscriptionVirtualSignalGroups.Changed -= VirtualSignalGroups_Changed;
-				_subscriptionVirtualSignalGroups.Dispose();
+				if (_virtualSignalGroupsObserver != null)
+				{
+					_virtualSignalGroupsObserver.VirtualSignalGroupsChanged -= VirtualSignalGroups_Changed;
+					_virtualSignalGroupsObserver.Unsubscribe();
+					_virtualSignalGroupsObserver.Dispose();
+					_virtualSignalGroupsObserver = null;
+				}
 
 				IsSubscribed = false;
 			}
@@ -90,27 +103,20 @@
 		{
 			lock (_lock)
 			{
+				// The cache.LoadInitialData will load both endpoints and virtual signal groups
 				Cache.LoadInitialData(Api);
 			}
 		}
 
 		private void Endpoints_Changed(object sender, ApiObjectsChangedEvent<Endpoint> e)
 		{
-			lock (_lock)
-			{
-				Cache.UpdateEndpoints(e.Created.Concat(e.Updated), e.Deleted);
-			}
-
+			// Forward the event from the child observer
 			EndpointsChanged?.Invoke(this, e);
 		}
 
 		private void VirtualSignalGroups_Changed(object sender, ApiObjectsChangedEvent<VirtualSignalGroup> e)
 		{
-			lock (_lock)
-			{
-				Cache.UpdateVirtualSignalGroups(e.Created.Concat(e.Updated), e.Deleted);
-			}
-
+			// Forward the event from the child observer
 			VirtualSignalGroupsChanged?.Invoke(this, e);
 		}
 
@@ -122,7 +128,10 @@
 
 		protected virtual void Dispose(bool disposing)
 		{
-			Unsubscribe();
+			if (disposing)
+			{
+				Unsubscribe();
+			}
 		}
 	}
 }

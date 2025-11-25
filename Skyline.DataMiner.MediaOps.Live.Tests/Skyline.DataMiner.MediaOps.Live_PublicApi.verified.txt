@@ -985,7 +985,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
         public VirtualSignalGroupsObserver(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api, Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupsCache cache) { }
         public Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupsCache Cache { get; }
         public bool IsSubscribed { get; }
-        public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Subscriptions.ApiObjectsChangedEvent<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState>> VirtualSignalGroupStatesChanged;
         public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.API.Subscriptions.ApiObjectsChangedEvent<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>> VirtualSignalGroupsChanged;
         public void Dispose() { }
         protected virtual void Dispose(bool disposing) { }
