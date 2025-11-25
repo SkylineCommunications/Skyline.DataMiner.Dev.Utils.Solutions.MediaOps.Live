@@ -3,14 +3,16 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
 using Skyline.DataMiner.MediaOps.Live.API;
 using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
+using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
 using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
+using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+using Skyline.DataMiner.Net.Messages.SLDataGateway;
 using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
 
@@ -293,6 +295,36 @@ public class OrchestrationHelper
 	{
 		Dictionary<Guid, OrchestrationEventConfiguration> eventConfigs = GetEventsAsEventConfigurations(orchestrationEvents);
 		ExecuteEventsNow(eventConfigs.Values);
+	}
+
+	/// <summary>
+	/// Provides a subscription to orchestration events.
+	/// </summary>
+	/// <returns>A subscription to the orchestration events repository.</returns>
+	public RepositorySubscription<OrchestrationEvent> SubscribeOnEvents()
+	{
+		return _orchestrationEventRepository.Subscribe();
+	}
+
+	/// <summary>
+	/// Retrieve all events in the given time range.
+	/// </summary>
+	/// <param name="start">The start time.</param>
+	/// <param name="end">The end time.</param>
+	/// <returns>The set of events that are found between the given start and end time.</returns>
+	public IEnumerable<OrchestrationEvent> GetAllOrchestrationEventsInTimeRange(DateTime start, DateTime end)
+	{
+		return _orchestrationEventRepository.GetOrchestrationEventsInTimeRange(start, end);
+	}
+
+	/// <summary>
+	/// Generic method to get a set of events, using a provided filter. The filter can be built using the OrchestrationEventExposers class.
+	/// </summary>
+	/// <param name="filter">A filter (or combination of filters) to get a set of events.</param>
+	/// <returns>A set of events, matching the provided filter information.</returns>
+	public IEnumerable<OrchestrationEvent> ReadEvents(FilterElement<OrchestrationEvent> filter)
+	{
+		return _orchestrationEventRepository.Read(filter);
 	}
 
 	/// <summary>
