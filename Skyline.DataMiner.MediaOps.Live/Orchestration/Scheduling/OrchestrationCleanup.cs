@@ -13,7 +13,7 @@
 	/// <summary>
 	/// This class contains all logic to remove unnecessary objects from past orchestration events.
 	/// </summary>
-	public class OrchestrationCleanup
+	internal class OrchestrationCleanup
 	{
 		private readonly OrchestrationScheduler _scheduler;
 		private readonly OrchestrationEventRepository _repository;
@@ -22,7 +22,7 @@
 		/// Initializes a new instance of the <see cref="OrchestrationCleanup"/> class.
 		/// </summary>
 		/// <param name="repository">Repository object needed for DOM updates.</param>
-		public OrchestrationCleanup(OrchestrationEventRepository repository)
+		internal OrchestrationCleanup(OrchestrationEventRepository repository)
 		{
 			_scheduler = new OrchestrationScheduler(repository.Connection);
 			_repository = repository;
@@ -32,7 +32,7 @@
 		/// Cleanup all past scheduler orchestration tasks and remove the task reference from events.
 		/// </summary>
 		/// <param name="time">The reference time.</param>
-		public void CleanupSchedulerTasksBeforeTime(DateTimeOffset time)
+		internal void CleanupSchedulerTasksBeforeTime(DateTimeOffset time)
 		{
 			IEnumerable<OrchestrationSchedulerTask> tasksToRemove = _scheduler.GetEventTasksBeforeTime(time);
 			CleanupTasks(tasksToRemove);

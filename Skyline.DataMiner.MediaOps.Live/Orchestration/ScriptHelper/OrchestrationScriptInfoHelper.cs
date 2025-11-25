@@ -25,7 +25,7 @@
 		/// Initializes a new instance of the <see cref="OrchestrationScriptInfoHelper"/> class.
 		/// </summary>
 		/// <param name="connection">Instance of SLNet connection.</param>
-		public OrchestrationScriptInfoHelper(IConnection connection)
+		internal OrchestrationScriptInfoHelper(IConnection connection)
 		{
 			_connection = connection;
 			_profileHelper = new ProfileHelper(connection.HandleMessages);
@@ -101,7 +101,7 @@
 
 		private ScriptInfo GetScriptOrchestrationInfo(string scriptName)
 		{
-			var response = OrchestrationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName);
+			var response = OrchestrationAutomationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName);
 
 			if (response?.EntryPointResult?.Result == null || response.HadError)
 			{

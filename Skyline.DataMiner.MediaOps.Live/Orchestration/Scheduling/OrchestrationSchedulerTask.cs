@@ -20,7 +20,7 @@
 		/// </summary>
 		/// <param name="dateTimeOffset">Timestamp for the task.</param>
 		/// <param name="orchestrationEventIds">IDs of the events to be orchestrated by the task.</param>
-		public OrchestrationSchedulerTask(DateTimeOffset dateTimeOffset, IEnumerable<Guid> orchestrationEventIds)
+		internal OrchestrationSchedulerTask(DateTimeOffset dateTimeOffset, IEnumerable<Guid> orchestrationEventIds)
 		{
 			if (orchestrationEventIds == null)
 			{
@@ -42,7 +42,7 @@
 		/// <param name="dateTimeOffset">Timestamp for the task.</param>
 		/// <param name="orchestrationEventIds">IDs of the events to be orchestrated by the task.</param>
 		/// <param name="taskId">The task ID.</param>
-		public OrchestrationSchedulerTask(DateTimeOffset dateTimeOffset, IEnumerable<Guid> orchestrationEventIds, ScheduledTaskId taskId) : this(dateTimeOffset, orchestrationEventIds)
+		private OrchestrationSchedulerTask(DateTimeOffset dateTimeOffset, IEnumerable<Guid> orchestrationEventIds, ScheduledTaskId taskId) : this(dateTimeOffset, orchestrationEventIds)
 		{
 			ScheduledTaskId = taskId;
 		}
@@ -50,23 +50,23 @@
 		/// <summary>
 		/// Gets or sets Unique identifier of the scheduled task in the DataMiner system.
 		/// </summary>
-		public ScheduledTaskId ScheduledTaskId { get; set; }
+		internal ScheduledTaskId ScheduledTaskId { get; set; }
 
 		/// <summary>
 		/// Gets the IDs of all events that need to orchestrated by the scheduled task.
 		/// </summary>
-		public List<Guid> OrchestrationEventIds { get; }
+		internal List<Guid> OrchestrationEventIds { get; }
 
 		/// <summary>
 		/// Gets the time of the scheduled task.
 		/// </summary>
-		public DateTimeOffset DateTime { get; }
+		internal DateTimeOffset DateTime { get; }
 
 		/// <summary>
 		/// Generates the full object array data needed to create or update a scheduled orchestration task via IDms Class Library methods.
 		/// </summary>
 		/// <returns>An object array contains all configuration needed to create a scheduled orchestration task.</returns>
-		public object[] GenerateSchedulerTaskData()
+		internal object[] GenerateSchedulerTaskData()
 		{
 			return
 			[
@@ -76,7 +76,7 @@
 			];
 		}
 
-		public static bool TryParseFromSchedulerTask(SchedulerTask task, out OrchestrationSchedulerTask orchestrationTask)
+		internal static bool TryParseFromSchedulerTask(SchedulerTask task, out OrchestrationSchedulerTask orchestrationTask)
 		{
 			orchestrationTask = null;
 

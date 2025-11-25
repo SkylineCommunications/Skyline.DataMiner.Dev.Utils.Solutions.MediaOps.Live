@@ -453,11 +453,11 @@
 					input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
 				}
 
-				result = OrchestrationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
+				result = OrchestrationAutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
 			}
 			else
 			{
-				result = OrchestrationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out errorMessages);
+				result = OrchestrationAutomationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out errorMessages);
 			}
 
 			OrchestrationScriptResult scriptResult = new OrchestrationScriptResult
