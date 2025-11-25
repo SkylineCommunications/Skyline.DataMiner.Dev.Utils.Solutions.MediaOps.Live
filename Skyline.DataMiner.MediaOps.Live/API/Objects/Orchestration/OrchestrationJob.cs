@@ -70,7 +70,10 @@
 		/// </summary>
 		public string JobId => JobInfo.JobReference;
 
-		internal OrchestrationJobInfo JobInfo { get; set; }
+		/// <summary>
+		/// Contains information about the job, such as the job ID and the shared properties for all job events.
+		/// </summary>
+		public OrchestrationJobInfo JobInfo { get; internal set; }
 
 		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
