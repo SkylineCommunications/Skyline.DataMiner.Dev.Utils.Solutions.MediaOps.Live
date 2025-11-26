@@ -60,17 +60,17 @@
 			return virtualSignalGroupState != null;
 		}
 
-		public void LockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference)
+		public void LockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, DateTimeOffset? time = null)
 		{
 			if (virtualSignalGroup is null)
 			{
 				throw new ArgumentNullException(nameof(virtualSignalGroup));
 			}
 
-			LockVirtualSignalGroups([virtualSignalGroup], user, reason, jobReference);
+			LockVirtualSignalGroups([virtualSignalGroup], user, reason, jobReference, time);
 		}
 
-		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference)
+		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference, DateTimeOffset? time = null)
 		{
 			if (virtualSignalGroups is null)
 			{
@@ -82,10 +82,10 @@
 				throw new ArgumentException($"'{nameof(user)}' cannot be null or whitespace.", nameof(user));
 			}
 
-			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Locked, user, reason, jobReference);
+			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Locked, user, reason, jobReference, time);
 		}
 
-		public void ProtectVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference)
+		public void ProtectVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, DateTimeOffset? time = null)
 		{
 			if (virtualSignalGroup is null)
 			{
@@ -97,17 +97,17 @@
 				throw new ArgumentException($"'{nameof(user)}' cannot be null or whitespace.", nameof(user));
 			}
 
-			ProtectVirtualSignalGroups([virtualSignalGroup], user, reason, jobReference);
+			ProtectVirtualSignalGroups([virtualSignalGroup], user, reason, jobReference, time);
 		}
 
-		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference)
+		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference, DateTimeOffset? time = null)
 		{
 			if (virtualSignalGroups is null)
 			{
 				throw new ArgumentNullException(nameof(virtualSignalGroups));
 			}
 
-			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Protected, user, reason, jobReference);
+			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Protected, user, reason, jobReference, time);
 		}
 
 		public void UnlockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup)
@@ -127,7 +127,7 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroups));
 			}
 
-			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Unlocked, null, null, null);
+			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Unlocked, null, null, null, DateTimeOffset.MinValue);
 		}
 
 		public void DeleteByVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
@@ -199,7 +199,7 @@
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
 		}
 
-		private void UpdateVirtualSignalGroupLockStates(ICollection<VirtualSignalGroup> virtualSignalGroups, LockState lockState, string user, string reason, string jobReference)
+		private void UpdateVirtualSignalGroupLockStates(ICollection<VirtualSignalGroup> virtualSignalGroups, LockState lockState, string user, string reason, string jobReference, DateTimeOffset? time = null)
 		{
 			if (virtualSignalGroups.Count == 0)
 			{
@@ -243,7 +243,9 @@
 				state.LockedBy = user;
 				state.LockReason = reason;
 				state.LockJobReference = jobReference;
-				state.LockTime = lockState != LockState.Unlocked ? DateTimeOffset.UtcNow : DateTimeOffset.MinValue;
+				state.LockTime = lockState == LockState.Unlocked
+					? DateTimeOffset.MinValue
+					: time ?? DateTimeOffset.UtcNow;
 
 				statesToUpdate.Add(state);
 			}

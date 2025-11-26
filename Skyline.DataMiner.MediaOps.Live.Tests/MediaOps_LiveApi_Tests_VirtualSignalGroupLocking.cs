@@ -302,5 +302,213 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 				api.VirtualSignalGroups.ProtectVirtualSignalGroup(vsg, String.Empty, "reason", "job");
 			});
 		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroupLocking_LockWithCustomTimestamp()
+		{
+			// Arrange
+			var api = new MediaOpsLiveApiMock();
+			var vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			var user = "TestUser";
+			var reason = "Test reason";
+			var jobReference = "Job123";
+			var customTime = new DateTimeOffset(2024, 1, 15, 10, 30, 0, TimeSpan.Zero);
+
+			// Act
+			api.VirtualSignalGroups.LockVirtualSignalGroup(vsg, user, reason, jobReference, customTime);
+
+			// Assert
+			var state = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg);
+			Assert.IsNotNull(state);
+			Assert.AreEqual(LockState.Locked, state.LockState);
+			Assert.AreEqual(user, state.LockedBy);
+			Assert.AreEqual(reason, state.LockReason);
+			Assert.AreEqual(jobReference, state.LockJobReference);
+			Assert.AreEqual(customTime, state.LockTime);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroupLocking_LockWithoutTimestampUsesUtcNow()
+		{
+			// Arrange
+			var api = new MediaOpsLiveApiMock();
+			var vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			var user = "TestUser";
+			var reason = "Test reason";
+			var jobReference = "Job123";
+			var beforeLock = DateTimeOffset.UtcNow;
+
+			// Act
+			api.VirtualSignalGroups.LockVirtualSignalGroup(vsg, user, reason, jobReference);
+
+			// Assert
+			var afterLock = DateTimeOffset.UtcNow;
+			var state = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg);
+			Assert.IsNotNull(state);
+			Assert.AreEqual(LockState.Locked, state.LockState);
+			
+			// Verify the lock time is between before and after the lock operation
+			Assert.IsTrue(state.LockTime >= beforeLock, $"Lock time {state.LockTime} should be >= {beforeLock}");
+			Assert.IsTrue(state.LockTime <= afterLock, $"Lock time {state.LockTime} should be <= {afterLock}");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroupLocking_ProtectWithCustomTimestamp()
+		{
+			// Arrange
+			var api = new MediaOpsLiveApiMock();
+			var vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			var user = "TestUser";
+			var reason = "Protection test";
+			var jobReference = "ProtectJob123";
+			var customTime = new DateTimeOffset(2024, 2, 20, 14, 45, 30, TimeSpan.Zero);
+
+			// Act
+			api.VirtualSignalGroups.ProtectVirtualSignalGroup(vsg, user, reason, jobReference, customTime);
+
+			// Assert
+			var state = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg);
+			Assert.IsNotNull(state);
+			Assert.AreEqual(LockState.Protected, state.LockState);
+			Assert.AreEqual(user, state.LockedBy);
+			Assert.AreEqual(reason, state.LockReason);
+			Assert.AreEqual(jobReference, state.LockJobReference);
+			Assert.AreEqual(customTime, state.LockTime);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroupLocking_ProtectWithoutTimestampUsesUtcNow()
+		{
+			// Arrange
+			var api = new MediaOpsLiveApiMock();
+			var vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			var user = "TestUser";
+			var reason = "Protection test";
+			var jobReference = "ProtectJob123";
+			var beforeProtect = DateTimeOffset.UtcNow;
+
+			// Act
+			api.VirtualSignalGroups.ProtectVirtualSignalGroup(vsg, user, reason, jobReference);
+
+			// Assert
+			var afterProtect = DateTimeOffset.UtcNow;
+			var state = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg);
+			Assert.IsNotNull(state);
+			Assert.AreEqual(LockState.Protected, state.LockState);
+			
+			// Verify the lock time is between before and after the protect operation
+			Assert.IsTrue(state.LockTime >= beforeProtect, $"Lock time {state.LockTime} should be >= {beforeProtect}");
+			Assert.IsTrue(state.LockTime <= afterProtect, $"Lock time {state.LockTime} should be <= {afterProtect}");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroupLocking_LockMultipleVSGsWithCustomTimestamp()
+		{
+			// Arrange
+			var api = new MediaOpsLiveApiMock();
+			var vsg1 = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			var vsg2 = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 2");
+			var vsgs = new[] { vsg1, vsg2 };
+			var user = "TestUser";
+			var reason = "Bulk lock test";
+			var jobReference = "BulkJob123";
+			var customTime = new DateTimeOffset(2024, 3, 10, 8, 15, 0, TimeSpan.Zero);
+
+			// Act
+			api.VirtualSignalGroups.LockVirtualSignalGroups(vsgs, user, reason, jobReference, customTime);
+
+			// Assert
+			var state1 = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg1);
+			var state2 = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg2);
+
+			Assert.IsNotNull(state1);
+			Assert.IsNotNull(state2);
+
+			Assert.AreEqual(LockState.Locked, state1.LockState);
+			Assert.AreEqual(LockState.Locked, state2.LockState);
+
+			Assert.AreEqual(customTime, state1.LockTime);
+			Assert.AreEqual(customTime, state2.LockTime);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroupLocking_ProtectMultipleVSGsWithCustomTimestamp()
+		{
+			// Arrange
+			var api = new MediaOpsLiveApiMock();
+			var vsg1 = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			var vsg2 = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 2");
+			var vsgs = new[] { vsg1, vsg2 };
+			var user = "TestUser";
+			var reason = "Bulk protection test";
+			var jobReference = "BulkProtectJob123";
+			var customTime = new DateTimeOffset(2024, 4, 5, 16, 20, 45, TimeSpan.Zero);
+
+			// Act
+			api.VirtualSignalGroups.ProtectVirtualSignalGroups(vsgs, user, reason, jobReference, customTime);
+
+			// Assert
+			var state1 = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg1);
+			var state2 = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg2);
+
+			Assert.IsNotNull(state1);
+			Assert.IsNotNull(state2);
+
+			Assert.AreEqual(LockState.Protected, state1.LockState);
+			Assert.AreEqual(LockState.Protected, state2.LockState);
+
+			Assert.AreEqual(customTime, state1.LockTime);
+			Assert.AreEqual(customTime, state2.LockTime);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroupLocking_RelockWithDifferentTimestamp()
+		{
+			// Arrange
+			var api = new MediaOpsLiveApiMock();
+			var vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			var firstTime = new DateTimeOffset(2024, 1, 1, 12, 0, 0, TimeSpan.Zero);
+			var secondTime = new DateTimeOffset(2024, 1, 2, 12, 0, 0, TimeSpan.Zero);
+
+			// Act - Lock first time
+			api.VirtualSignalGroups.LockVirtualSignalGroup(vsg, "User1", "First lock", "Job1", firstTime);
+			var firstState = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg);
+			Assert.AreEqual(firstTime, firstState.LockTime);
+
+			// Act - Lock second time with different timestamp
+			api.VirtualSignalGroups.LockVirtualSignalGroup(vsg, "User2", "Second lock", "Job2", secondTime);
+
+			// Assert
+			var state = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg);
+			Assert.IsNotNull(state);
+			Assert.AreEqual(LockState.Locked, state.LockState);
+			Assert.AreEqual("User2", state.LockedBy);
+			Assert.AreEqual("Second lock", state.LockReason);
+			Assert.AreEqual("Job2", state.LockJobReference);
+			Assert.AreEqual(secondTime, state.LockTime);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroupLocking_UnlockSetsLockTimeToMinValue()
+		{
+			// Arrange
+			var api = new MediaOpsLiveApiMock();
+			var vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			var customTime = new DateTimeOffset(2024, 1, 15, 10, 30, 0, TimeSpan.Zero);
+
+			// Lock with custom time
+			api.VirtualSignalGroups.LockVirtualSignalGroup(vsg, "TestUser", "Test lock", "Job123", customTime);
+			var lockedState = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg);
+			Assert.AreEqual(customTime, lockedState.LockTime);
+
+			// Act - Unlock
+			api.VirtualSignalGroups.UnlockVirtualSignalGroup(vsg);
+
+			// Assert
+			var state = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg);
+			Assert.IsNotNull(state);
+			Assert.AreEqual(LockState.Unlocked, state.LockState);
+			Assert.AreEqual(DateTimeOffset.MinValue, state.LockTime);
+		}
 	}
 }
