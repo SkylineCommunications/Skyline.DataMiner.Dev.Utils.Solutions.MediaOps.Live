@@ -28,10 +28,10 @@
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw);
+			Api = engine.GetMediaOpsLiveApi();
 			Api.SetLogger(logger);
 
-			_cache = StaticMediaOpsLiveCache.GetOrCreate(Automation.Engine.SLNetRaw);
+			_cache = engine.GetStaticMediaOpsLiveApiCache();
 		}
 
 		public Automation.IEngine Engine { get; }

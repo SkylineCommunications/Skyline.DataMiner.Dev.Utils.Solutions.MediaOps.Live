@@ -698,11 +698,13 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
     public class OrchestrationJob
     {
         public string JobId { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobInfo JobInfo { get; }
         public System.Collections.Generic.List<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> OrchestrationEvents { get; }
     }
     public class OrchestrationJobConfiguration
     {
         public string JobId { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobInfo JobInfo { get; }
         public System.Collections.Generic.List<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventConfiguration> OrchestrationEvents { get; }
     }
     public class OrchestrationJobInfo : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobInfo>
@@ -1338,11 +1340,14 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration
         public void ExecuteEventsNow(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> orchestrationEvents) { }
         public void ExecuteEventsNow(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventConfiguration> orchestrationEvents, Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationSettings settings = null) { }
         public void ExecuteEventsNow(System.Collections.Generic.IEnumerable<System.Guid> orchestrationIds, Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationSettings settings = null) { }
+        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> GetAllOrchestrationEventsInTimeRange(System.DateTime start, System.DateTime end) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationJob GetOrCreateNewOrchestrationJob(string jobReference) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobConfiguration GetOrCreateNewOrchestrationJobConfiguration(string jobReference) { }
+        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> ReadEvents(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> filter) { }
         public void SaveOrchestrationJob(Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationJob job) { }
         public void SaveOrchestrationJobConfiguration(Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobConfiguration job) { }
         public void SetupSlidingWindowSchedulerTasks() { }
+        public Skyline.DataMiner.MediaOps.Live.API.Subscriptions.RepositorySubscription<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> SubscribeOnEvents() { }
         public void SyncCurrentSlidingWindow() { }
     }
 }
