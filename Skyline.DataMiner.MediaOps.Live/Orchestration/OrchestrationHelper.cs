@@ -15,6 +15,7 @@ using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 using Skyline.DataMiner.Net.Messages.SLDataGateway;
 using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
+using static Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration.SlcOrchestrationIds.Sections;
 
 /// <summary>
 /// Exposes API methods to interact with and orchestrate MediaOps Live Orchestration events.
@@ -86,14 +87,12 @@ public class OrchestrationHelper
 			OrchestrationJobInfo jobInfo = _jobInfoRepository.GetJobInfoByJobReference(jobReference);
 			IEnumerable<OrchestrationEvent> events = _orchestrationEventRepository.GetEventsByJobInfoReference(jobInfo, performanceTracker);
 
-			OrchestrationJob job = new(jobReference, events);
-
 			if (jobInfo != null)
 			{
-				job.JobInfo = jobInfo;
+				return new OrchestrationJob(jobInfo, events);
 			}
 
-			return job;
+			return new OrchestrationJob(jobReference, events);
 		}
 	}
 
@@ -117,15 +116,122 @@ public class OrchestrationHelper
 			OrchestrationJobInfo jobInfo = _jobInfoRepository.GetJobInfoByJobReference(jobReference);
 			IEnumerable<OrchestrationEventConfiguration> events = GetEventConfigurationsByJobInfoReference(jobInfo, performanceTracker);
 
-			OrchestrationJobConfiguration job = new(jobReference, events);
-
 			if (jobInfo != null)
 			{
-				job.JobInfo = jobInfo;
+				return new OrchestrationJobConfiguration(jobInfo, events);
 			}
 
-			return job;
+			return new OrchestrationJobConfiguration(jobReference, events);
 		}
+	}
+
+	/// <summary>
+	///     Creates a dictionary with <see cref="OrchestrationJob" /> objects with all events for the given jobs
+	///     reference.
+	/// </summary>
+	/// <param name="jobReferences">The IDs of the jobs to retrieve.</param>
+	/// <returns>
+	///     A dictionary with <see cref="OrchestrationJob" /> objects with all event configurations found for the given jobs
+	///     reference.
+	/// </returns>
+	public IEnumerable<OrchestrationJob> GetOrCreateNewOrchestrationJobs(IEnumerable<string> jobReferences)
+	{
+		Dictionary<string, OrchestrationJobInfo> jobInfos = _jobInfoRepository.GetJobInfosByJobReference(jobReferences);
+		List<OrchestrationEvent> events = _orchestrationEventRepository.Read(
+			new ORFilterElement<OrchestrationEvent>(jobInfos.Values.Select(reference => OrchestrationEventExposers.JobInfoReference.Equal(reference.ID)).ToArray())).ToList();
+
+		List<OrchestrationJob> jobs = new List<OrchestrationJob>();
+
+		foreach (OrchestrationJobInfo orchestrationJobInfo in jobInfos.Values)
+		{
+			var jobEvents = events.Where(ev => ev.JobInfoReference.Value.ID == orchestrationJobInfo.ID);
+
+			var job = new OrchestrationJob(orchestrationJobInfo, jobEvents);
+
+			jobs.Add(job);
+		}
+
+		return jobs;
+	}
+
+	/// <summary>
+	///     Creates a collection <see cref="OrchestrationJobConfiguration" /> object with all event configurations for the given jobs
+	///     reference.
+	/// </summary>
+	/// <param name="jobReferences">The ID of the job to retrieve.</param>
+	/// <returns>
+	///     A collection of <see cref="OrchestrationJobConfiguration" /> objects with all event configurations found for the given job
+	///     reference.
+	/// </returns>
+	public IEnumerable<OrchestrationJobConfiguration> GetOrCreateNewOrchestrationJobConfigurations(IEnumerable<string> jobReferences)
+	{
+		Dictionary<string, OrchestrationJobInfo> jobInfos = _jobInfoRepository.GetJobInfosByJobReference(jobReferences);
+		List<OrchestrationEvent> events = _orchestrationEventRepository.Read(
+			new ORFilterElement<OrchestrationEvent>(jobInfos.Values.Select(reference => OrchestrationEventExposers.JobInfoReference.Equal(reference.ID)).ToArray())).ToList();
+
+		List<OrchestrationEventConfiguration> allEventConfigurations = GetEventsAsEventConfigurations(events).Values.ToList();
+
+		List<OrchestrationJobConfiguration> jobs = new List<OrchestrationJobConfiguration>();
+
+		foreach (OrchestrationJobInfo orchestrationJobInfo in jobInfos.Values)
+		{
+			var jobEvents = allEventConfigurations.Where(ev => ev.JobInfoReference.Value.ID == orchestrationJobInfo.ID);
+
+			var job = new OrchestrationJobConfiguration(orchestrationJobInfo, jobEvents);
+
+			jobs.Add(job);
+		}
+
+		return jobs;
+	}
+
+	/// <summary>
+	/// Get all <see cref="OrchestrationJob" /> objects in the DataMiner system.
+	/// </summary>
+	/// <returns>All <see cref="OrchestrationJob" /> objects.</returns>
+	public IEnumerable<OrchestrationJob> GetAllJobs()
+	{
+		List<OrchestrationEvent> allEvents = _orchestrationEventRepository.ReadAll().ToList();
+		List<OrchestrationJobInfo> allJobInfos = _jobInfoRepository.ReadAll().ToList();
+		List<Configuration> allConfigurations = _configurationRepository.ReadAll().ToList();
+
+		List<OrchestrationJob> jobs = new List<OrchestrationJob>();
+
+		foreach (OrchestrationJobInfo orchestrationJobInfo in allJobInfos)
+		{
+			var jobEvents = allEvents.Where(ev => ev.JobInfoReference.Value.ID == orchestrationJobInfo.ID);
+
+			var job = new OrchestrationJob(orchestrationJobInfo, jobEvents);
+
+			jobs.Add(job);
+		}
+
+		return jobs;
+	}
+
+	/// <summary>
+	/// Get all <see cref="OrchestrationJobConfiguration" /> objects in the DataMiner system.
+	/// </summary>
+	/// <returns>All <see cref="OrchestrationJobConfiguration" /> objects.</returns>
+	public IEnumerable<OrchestrationJobConfiguration> GetAllJobConfigurations()
+	{
+		List<OrchestrationEvent> allEvents = _orchestrationEventRepository.ReadAll().ToList();
+		List<OrchestrationJobInfo> allJobInfos = _jobInfoRepository.ReadAll().ToList();
+
+		List<OrchestrationEventConfiguration> allEventConfigurations = GetEventsAsEventConfigurations(allEvents).Values.ToList();
+
+		List<OrchestrationJobConfiguration> jobs = new List<OrchestrationJobConfiguration>();
+
+		foreach (OrchestrationJobInfo orchestrationJobInfo in allJobInfos)
+		{
+			var jobEvents = allEventConfigurations.Where(ev => ev.JobInfoReference.Value.ID == orchestrationJobInfo.ID);
+
+			var job = new OrchestrationJobConfiguration(orchestrationJobInfo, jobEvents);
+
+			jobs.Add(job);
+		}
+
+		return jobs;
 	}
 
 	/// <summary>
@@ -211,9 +317,28 @@ public class OrchestrationHelper
 	}
 
 	/// <summary>
-	///     Deletes all events and configurations for the given job from the DataMiner system.
+	///     Deletes all events and configurations for the given jobs from the DataMiner system.
 	/// </summary>
-	/// <param name="job">Job to remove.</param>
+	/// <param name="jobs">Jobs to remove.</param>
+	public void DeleteJobs(IEnumerable<OrchestrationJob> jobs)
+	{
+		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
+		PerformanceFileLogger performanceFileLogger = new("ORC-DeleteJobs", performanceLogFilename);
+
+		using (PerformanceCollector collector = new(performanceFileLogger))
+		using (PerformanceTracker performanceTracker = new(collector))
+		{
+			IEnumerable<OrchestrationJob> orchestrationJobs = jobs.ToList();
+			DeleteOrchestrationEvents(orchestrationJobs.SelectMany(job => job.OrchestrationEvents), performanceTracker);
+
+			_jobInfoRepository.Delete(orchestrationJobs.Select(job => job.JobInfo));
+		}
+	}
+
+	/// <summary>
+	///     Deletes all events and configurations for the given job configuration from the DataMiner system.
+	/// </summary>
+	/// <param name="job">Job configuration to remove.</param>
 	public void DeleteJobConfiguration(OrchestrationJobConfiguration job)
 	{
 		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
@@ -225,6 +350,25 @@ public class OrchestrationHelper
 			DeleteOrchestrationEvents(job.OrchestrationEvents, performanceTracker);
 
 			_jobInfoRepository.Delete(job.JobInfo);
+		}
+	}
+
+	/// <summary>
+	///     Deletes all events and configurations for the given job configurations from the DataMiner system.
+	/// </summary>
+	/// <param name="jobs">Job configurations to remove.</param>
+	public void DeleteJobConfigurations(IEnumerable<OrchestrationJobConfiguration> jobs)
+	{
+		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
+		PerformanceFileLogger performanceFileLogger = new("ORC-DeleteJobConfigurations", performanceLogFilename);
+
+		using (PerformanceCollector collector = new(performanceFileLogger))
+		using (PerformanceTracker performanceTracker = new(collector))
+		{
+			IEnumerable<OrchestrationJobConfiguration> orchestrationJobs = jobs.ToList();
+			DeleteOrchestrationEvents(orchestrationJobs.SelectMany(job => job.OrchestrationEvents), performanceTracker);
+
+			_jobInfoRepository.Delete(orchestrationJobs.Select(job => job.JobInfo));
 		}
 	}
 

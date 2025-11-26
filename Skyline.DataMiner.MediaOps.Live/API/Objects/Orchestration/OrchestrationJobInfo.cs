@@ -6,6 +6,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	/// <summary>
 	/// Information about the job where this event is part of.
@@ -71,5 +72,10 @@
 				_domInstance.JobInfo.MonitoringService = value == default ? null : String.Join("/", value.AgentId, value.ServiceId);
 			}
 		}
+	}
+
+	public static class OrchestrationJobInfoExposers
+	{
+		public static readonly Exposer<OrchestrationJobInfo, string> JobReference = new Exposer<OrchestrationJobInfo, string>(x => x.JobReference, nameof(OrchestrationJobInfo.JobReference));
 	}
 }

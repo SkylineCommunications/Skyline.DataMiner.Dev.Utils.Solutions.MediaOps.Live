@@ -66,14 +66,28 @@
 		}
 
 		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationJob"/> class, with a given list of events.
+		/// </summary>
+		/// <param name="jobInfo">The job info of the job.</param>
+		/// <param name="orchestrationEvents">The list of events to assign to the job.</param>
+		internal OrchestrationJob(OrchestrationJobInfo jobInfo, IEnumerable<OrchestrationEvent> orchestrationEvents)
+		{
+			JobInfo = jobInfo;
+
+			IEnumerable<OrchestrationEvent> events = orchestrationEvents.ToList();
+			OrchestrationEvents = events.ToList();
+			_initialEventIds = events.Select(e => e.ID).ToList();
+		}
+
+		/// <summary>
 		/// Gets the job reference ID.
 		/// </summary>
 		public string JobId => JobInfo.JobReference;
 
 		/// <summary>
-		/// Contains information about the job, such as the job ID and the shared properties for all job events.
+		/// Gets the job info object, which contains information about the job, such as the job ID and the shared properties for all job events.
 		/// </summary>
-		public OrchestrationJobInfo JobInfo { get; internal set; }
+		public OrchestrationJobInfo JobInfo { get; }
 
 		internal IEnumerable<Guid> RemovedIds => _initialEventIds.Except(OrchestrationEvents.Select(e => e.ID));
 
