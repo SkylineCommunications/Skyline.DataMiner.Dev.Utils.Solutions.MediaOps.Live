@@ -346,7 +346,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var state = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg);
 			Assert.IsNotNull(state);
 			Assert.AreEqual(LockState.Locked, state.LockState);
-			
+
 			// Verify the lock time is between before and after the lock operation
 			Assert.IsTrue(state.LockTime >= beforeLock, $"Lock time {state.LockTime} should be >= {beforeLock}");
 			Assert.IsTrue(state.LockTime <= afterLock, $"Lock time {state.LockTime} should be <= {afterLock}");
@@ -395,7 +395,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 			var state = api.VirtualSignalGroupStates.GetByVirtualSignalGroup(vsg);
 			Assert.IsNotNull(state);
 			Assert.AreEqual(LockState.Protected, state.LockState);
-			
+
 			// Verify the lock time is between before and after the protect operation
 			Assert.IsTrue(state.LockTime >= beforeProtect, $"Lock time {state.LockTime} should be >= {beforeProtect}");
 			Assert.IsTrue(state.LockTime <= afterProtect, $"Lock time {state.LockTime} should be <= {afterProtect}");
