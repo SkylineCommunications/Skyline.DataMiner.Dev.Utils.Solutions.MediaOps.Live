@@ -460,10 +460,11 @@
 			{
 				// gather all virtual signal groups that contain any of the updated levels
 				impactedVirtualSignalGroups = _vsgCache.VirtualSignalGroups
-					.Values
+					.GetAllVirtualSignalGroups()
 					.Where(vsg => allUpdatedLevels.Any(level => vsg.ContainsLevel(level)))
 					.Select(x => x.Reference)
-					.ToHashSet();
+					.Distinct()
+					.ToList();
 			}
 
 			// Make sure to raise the event outside the lock
