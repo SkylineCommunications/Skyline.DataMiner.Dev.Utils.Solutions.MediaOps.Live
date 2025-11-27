@@ -79,31 +79,9 @@
 
 				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
 
-				List<Task> tasks = [];
-				var tasks1 = GetGlobalOrchestrationTasks(eventConfigurations, taskScheduler, performanceTracker);
-
-				Task connectionsTask = Task.Factory.StartNew(
-					() =>
-					{
-						ProcessConnections(eventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
-
-						foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
-						{
-							if (orchestrationEventConfiguration.EventState != EventState.Failed)
-							{
-								orchestrationEventConfiguration.InternalSetState(EventState.Completed);
-							}
-
-							orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
-						}
-
-						_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
-					},
-					CancellationToken.None,
-					TaskCreationOptions.None,
-					taskScheduler);
-
-				tasks.Add(connectionsTask);
+				List<Task> tasks = GetGlobalOrchestrationTasks(eventConfigurations.Where(config => !String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker);
+				tasks.AddRange(GetNodeByNodeOrchestrationTasks(eventConfigurations.Where(config => config.HasScripts() && String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker));
+				tasks.Add(GetProcessConnectionTask(eventConfigurations.Where(config => !config.HasScripts()), taskScheduler, true, performanceTracker));
 
 				Task.WaitAll(tasks.ToArray());
 			}
@@ -190,7 +168,7 @@
 					TaskCreationOptions.None,
 					taskScheduler);
 
-				return connectionsTask; 
+				return connectionsTask;
 			}
 		}
 
