@@ -80,20 +80,7 @@
 				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
 
 				List<Task> tasks = [];
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(e => e.HasScripts()))
-				{
-					Task scriptsExecutionTask = Task.Factory.StartNew(
-						() =>
-						{
-							ExecuteEventConfigurationScripts(orchestrationEventConfiguration, taskScheduler, performanceTracker);
-							_api.Orchestration.SaveEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
-						},
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler);
-
-					tasks.Add(scriptsExecutionTask);
-				}
+				var tasks1 = GetGlobalOrchestrationTasks(eventConfigurations, taskScheduler, performanceTracker);
 
 				Task connectionsTask = Task.Factory.StartNew(
 					() =>
@@ -122,6 +109,115 @@
 			}
 		}
 
+		private List<Task> GetGlobalOrchestrationTasks(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				List<Task> tasks = [];
+				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(e => e.HasScripts()))
+				{
+					Task scriptsExecutionTask = Task.Factory.StartNew(
+						() =>
+						{
+							ExecuteGlobalConfiguration(orchestrationEventConfiguration, performanceTracker);
+
+							SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
+						},
+						CancellationToken.None,
+						TaskCreationOptions.None,
+						taskScheduler);
+
+					tasks.Add(scriptsExecutionTask);
+				}
+
+				return tasks;
+			}
+		}
+
+		private List<Task> GetNodeByNodeOrchestrationTasks(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				List<Task> tasks = [];
+				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(e => e.HasScripts()))
+				{
+					Task nodeScriptsTask = Task.Factory.StartNew(
+						() =>
+						{
+							ExecuteNodesConfiguration(orchestrationEventConfiguration, taskScheduler, performanceTracker);
+						},
+						CancellationToken.None,
+						TaskCreationOptions.None,
+						taskScheduler);
+
+					Task connectionsTask = GetProcessConnectionTask(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, taskScheduler, false, performanceTracker);
+
+					Task combinedTask = Task.Factory.StartNew(
+						() =>
+						{
+							Task.WaitAll(nodeScriptsTask, connectionsTask);
+
+							SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
+						},
+						CancellationToken.None,
+						TaskCreationOptions.None,
+						taskScheduler);
+
+					tasks.Add(combinedTask);
+				}
+
+				return tasks;
+			}
+		}
+
+		private Task GetProcessConnectionTask(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, bool pushResults, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations = eventConfigurations.ToList();
+
+				Task connectionsTask = Task.Factory.StartNew(
+					() =>
+					{
+						ProcessConnections(orchestrationEventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
+
+						if (pushResults)
+						{
+							SaveOrchestrationResults(orchestrationEventConfigurations, performanceTracker);
+						}
+					},
+					CancellationToken.None,
+					TaskCreationOptions.None,
+					taskScheduler);
+
+				return connectionsTask; 
+			}
+		}
+
+		private void SaveOrchestrationResults(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
+				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
+				{
+					if (orchestrationEventConfiguration.ActualStartTime != null)
+					{
+						orchestrationEventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - orchestrationEventConfiguration.ActualStartTime;
+					}
+
+					if (orchestrationEventConfiguration.EventState != EventState.Failed)
+					{
+						orchestrationEventConfiguration.InternalSetState(EventState.Completed);
+					}
+
+					orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
+				}
+
+				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker); 
+			}
+		}
+
 		private void ExecuteEventConfigurationScripts(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
@@ -129,6 +225,7 @@
 				if (!String.IsNullOrEmpty(orchestrationEventConfiguration.GlobalOrchestrationScript))
 				{
 					ExecuteGlobalConfiguration(orchestrationEventConfiguration, performanceTracker);
+					_api.Orchestration.SaveEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
 					return;
 				}
 
@@ -201,11 +298,6 @@
 						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
-				}
-
-				foreach (OrchestrationEventConfiguration eventConfiguration in eventConfigurations.Where(e => e.ActualStartTime != null))
-				{
-					eventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - eventConfiguration.ActualStartTime;
 				}
 			}
 		}
@@ -419,19 +511,6 @@
 					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", globalScriptResult.ErrorMessages)}";
 					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 				}
-				else
-				{
-					orchestrationEventConfiguration.InternalSetState(EventState.Completed);
-				}
-
-				orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
-
-				if (orchestrationEventConfiguration.ActualStartTime == null)
-				{
-					return;
-				}
-
-				orchestrationEventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - orchestrationEventConfiguration.ActualStartTime;
 			}
 		}
 
