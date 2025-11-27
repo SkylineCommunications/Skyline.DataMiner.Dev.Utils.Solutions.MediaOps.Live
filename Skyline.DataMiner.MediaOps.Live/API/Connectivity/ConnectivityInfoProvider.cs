@@ -240,6 +240,24 @@
 			}
 		}
 
+		public VirtualSignalGroupConnectivity GetConnectivity(ApiObjectReference<VirtualSignalGroup> virtualSignalGroupRef)
+		{
+			if (virtualSignalGroupRef == ApiObjectReference<VirtualSignalGroup>.Empty)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroupRef));
+			}
+
+			lock (_lock)
+			{
+				if (!_vsgCache.TryGetVirtualSignalGroup(virtualSignalGroupRef, out var virtualSignalGroup))
+				{
+					throw new InvalidOperationException($"VSG {virtualSignalGroupRef.ID} not found");
+				}
+
+				return GetConnectivity(virtualSignalGroup);
+			}
+		}
+
 		public IReadOnlyDictionary<Endpoint, EndpointConnectivity> GetConnectivity(ICollection<Endpoint> endpoints)
 		{
 			if (endpoints is null)
@@ -290,6 +308,8 @@
 					return;
 				}
 
+				_levelsObserver.LevelsChanged += LevelsObserver_LevelsChanged;
+				_vsgObserver.VirtualSignalGroupsChanged += VsgObserver_VirtualSignalGroupsChanged;
 				_liteConnectivityInfoProvider.EndpointsImpacted += Endpoints_Impacted;
 
 				if (_ownsLevelsObserver)
@@ -314,6 +334,8 @@
 					return;
 				}
 
+				_levelsObserver.LevelsChanged -= LevelsObserver_LevelsChanged;
+				_vsgObserver.VirtualSignalGroupsChanged -= VsgObserver_VirtualSignalGroupsChanged;
 				_liteConnectivityInfoProvider.EndpointsImpacted -= Endpoints_Impacted;
 
 				if (_ownsLevelsObserver)
@@ -413,9 +435,44 @@
 			RaiseConnectionsUpdated(impactedEndpoints);
 		}
 
+		private void VsgObserver_VirtualSignalGroupsChanged(object sender, ApiObjectsChangedEvent<VirtualSignalGroup> e)
+		{
+			Debug.WriteLine($"VSGs changed: Created={String.Join(", ", e.Created)}, Updated={String.Join(", ", e.Updated)}, Deleted={String.Join(", ", e.Deleted)}");
+
+			var allUpdatedVirtualSignalGroups = e.Created.Concat(e.Updated).Concat(e.Deleted)
+				.Select(x => x.Reference)
+				.ToList();
+
+			RaiseConnectionsUpdated(allUpdatedVirtualSignalGroups);
+		}
+
+		private void LevelsObserver_LevelsChanged(object sender, ApiObjectsChangedEvent<Level> e)
+		{
+			Debug.WriteLine($"Levels changed: Created={String.Join(", ", e.Created)}, Updated={String.Join(", ", e.Updated)}, Deleted={String.Join(", ", e.Deleted)}");
+
+			var allUpdatedLevels = e.Created.Concat(e.Updated).Concat(e.Deleted)
+				.Select(x => x.Reference)
+				.ToList();
+
+			ICollection<ApiObjectReference<VirtualSignalGroup>> impactedVirtualSignalGroups;
+
+			lock (_lock)
+			{
+				// gather all virtual signal groups that contain any of the updated levels
+				impactedVirtualSignalGroups = _vsgCache.VirtualSignalGroups
+					.Values
+					.Where(vsg => allUpdatedLevels.Any(level => vsg.ContainsLevel(level)))
+					.Select(x => x.Reference)
+					.ToHashSet();
+			}
+
+			// Make sure to raise the event outside the lock
+			RaiseConnectionsUpdated(impactedVirtualSignalGroups);
+		}
+
 		private void RaiseConnectionsUpdated(ICollection<ApiObjectReference<Endpoint>> impactedEndpoints)
 		{
-			if (impactedEndpoints.Count <= 0)
+			if (impactedEndpoints.Count == 0)
 			{
 				return;
 			}
@@ -425,7 +482,33 @@
 			lock (_lock)
 			{
 				var impactedVirtualSignalGroups = impactedEndpoints
-					.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x))
+					.SelectMany(_vsgCache.GetVirtualSignalGroupsThatContainEndpoint)
+					.Distinct()
+					.ToList();
+
+				eventArgs = new ConnectionsUpdatedEvent(
+					impactedEndpoints.Select(GetConnectivity).ToList(),
+					impactedVirtualSignalGroups.Select(GetConnectivity).ToList());
+			}
+
+			// Invoke event outside lock to prevent potential deadlocks
+			// This could happen when event handlers try to call back into this class
+			ConnectionsUpdated?.Invoke(this, eventArgs);
+		}
+
+		private void RaiseConnectionsUpdated(ICollection<ApiObjectReference<VirtualSignalGroup>> impactedVirtualSignalGroups)
+		{
+			if (impactedVirtualSignalGroups.Count == 0)
+			{
+				return;
+			}
+
+			ConnectionsUpdatedEvent eventArgs;
+
+			lock (_lock)
+			{
+				var impactedEndpoints = impactedVirtualSignalGroups
+					.SelectMany(_vsgCache.GetEndpointsInVirtualSignalGroup)
 					.Distinct()
 					.ToList();
 

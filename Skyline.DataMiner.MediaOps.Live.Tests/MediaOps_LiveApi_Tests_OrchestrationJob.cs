@@ -58,7 +58,8 @@
 			job.OrchestrationEvents.Add(event2);
 			api.Orchestration.SaveOrchestrationJob(job);
 
-			Assert.AreEqual(12, api.Orchestration.CountAll());
+			var orchestrationEventHelper = new OrchestrationEventRepository(api);
+			Assert.AreEqual(12, orchestrationEventHelper.CountAll());
 
 			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(10, configurationHelper.CountAll());
@@ -90,7 +91,8 @@
 			job.OrchestrationEvents.Add(event2);
 			api.Orchestration.SaveOrchestrationJobConfiguration(job);
 
-			Assert.AreEqual(12, api.Orchestration.CountAll());
+			var orchestrationEventHelper = new OrchestrationEventRepository(api);
+			Assert.AreEqual(12, orchestrationEventHelper.CountAll());
 
 			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(10, configurationHelper.CountAll());
@@ -124,7 +126,9 @@
 			Assert.Throws<InvalidOperationException>(
 				() => api.Orchestration.SaveOrchestrationJobConfiguration(job),
 				"Job can have only a single starting event (Start, PrerollStart) and a single ending event (Stop, PostrollStop).");
-			Assert.AreEqual(10, api.Orchestration.CountAll());
+			var orchestrationEventHelper = new OrchestrationEventRepository(api);
+
+			Assert.AreEqual(10, orchestrationEventHelper.CountAll());
 
 			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(10, configurationHelper.CountAll());
@@ -158,7 +162,9 @@
 			Assert.Throws<InvalidOperationException>(
 				() => api.Orchestration.SaveOrchestrationJobConfiguration(job),
 				"Event of type Stop can not be scheduled before an event of type Start");
-			Assert.AreEqual(10, api.Orchestration.CountAll());
+
+			var orchestrationEventHelper = new OrchestrationEventRepository(api);
+			Assert.AreEqual(10, orchestrationEventHelper.CountAll());
 
 			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(10, configurationHelper.CountAll());
@@ -183,7 +189,9 @@
 			Assert.Throws<InvalidOperationException>(
 				() => api.Orchestration.SaveOrchestrationJobConfiguration(job),
 				"Job must have a starting event (Start, PrerollStart) and an ending event (Stop, PostrollStop).");
-			Assert.AreEqual(10, api.Orchestration.CountAll());
+
+			var orchestrationEventHelper = new OrchestrationEventRepository(api);
+			Assert.AreEqual(10, orchestrationEventHelper.CountAll());
 
 			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(10, configurationHelper.CountAll());
