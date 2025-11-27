@@ -440,10 +440,24 @@
 			Debug.WriteLine($"VSGs changed: Created={String.Join(", ", e.Created)}, Updated={String.Join(", ", e.Updated)}, Deleted={String.Join(", ", e.Deleted)}");
 
 			var allUpdatedVirtualSignalGroups = e.Created.Concat(e.Updated).Concat(e.Deleted)
-				.Select(x => x.Reference)
 				.ToList();
 
-			RaiseConnectionsUpdated(allUpdatedVirtualSignalGroups);
+			var impactedVirtualSignalGroups = new HashSet<VirtualSignalGroup>();
+
+			foreach (var vsg in allUpdatedVirtualSignalGroups)
+			{
+				impactedVirtualSignalGroups.Add(vsg);
+
+				// gather all virtual signal groups that are connected to the updated virtual signal group
+				var connectivity = GetConnectivity(vsg);
+
+				impactedVirtualSignalGroups.UnionWith(connectivity.ConnectedSources);
+				impactedVirtualSignalGroups.UnionWith(connectivity.ConnectedDestinations);
+				impactedVirtualSignalGroups.UnionWith(connectivity.PendingConnectedSources);
+				impactedVirtualSignalGroups.UnionWith(connectivity.PendingConnectedDestinations);
+			}
+
+			RaiseConnectionsUpdated(impactedVirtualSignalGroups.Select(x => x.Reference).ToList());
 		}
 
 		private void LevelsObserver_LevelsChanged(object sender, ApiObjectsChangedEvent<Level> e)
@@ -451,7 +465,6 @@
 			Debug.WriteLine($"Levels changed: Created={String.Join(", ", e.Created)}, Updated={String.Join(", ", e.Updated)}, Deleted={String.Join(", ", e.Deleted)}");
 
 			var allUpdatedLevels = e.Created.Concat(e.Updated).Concat(e.Deleted)
-				.Select(x => x.Reference)
 				.ToList();
 
 			ICollection<ApiObjectReference<VirtualSignalGroup>> impactedVirtualSignalGroups;
@@ -463,7 +476,8 @@
 					.Values
 					.Where(vsg => allUpdatedLevels.Any(level => vsg.ContainsLevel(level)))
 					.Select(x => x.Reference)
-					.ToHashSet();
+					.Distinct()
+					.ToList();
 			}
 
 			// Make sure to raise the event outside the lock
