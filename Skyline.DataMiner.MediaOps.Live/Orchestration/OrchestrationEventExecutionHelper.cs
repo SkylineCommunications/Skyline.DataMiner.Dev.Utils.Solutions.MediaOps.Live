@@ -82,33 +82,43 @@
 				List<Task> tasks = [];
 				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(e => e.HasScripts()))
 				{
-					Task nodeOrchestrationTask = Task.Factory.StartNew(
+					Task scriptsExecutionTask = Task.Factory.StartNew(
 						() =>
 						{
 							ExecuteEventConfigurationScripts(orchestrationEventConfiguration, taskScheduler, performanceTracker);
+							_api.Orchestration.SaveEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
 						},
 						CancellationToken.None,
 						TaskCreationOptions.None,
 						taskScheduler);
 
-					tasks.Add(nodeOrchestrationTask);
+					tasks.Add(scriptsExecutionTask);
 				}
 
-				ProcessConnections(eventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
+				Task connectionsTask = Task.Factory.StartNew(
+					() =>
+					{
+						ProcessConnections(eventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
+
+						foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
+						{
+							if (orchestrationEventConfiguration.EventState != EventState.Failed)
+							{
+								orchestrationEventConfiguration.InternalSetState(EventState.Completed);
+							}
+
+							orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
+						}
+
+						_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
+					},
+					CancellationToken.None,
+					TaskCreationOptions.None,
+					taskScheduler);
+
+				tasks.Add(connectionsTask);
 
 				Task.WaitAll(tasks.ToArray());
-
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
-				{
-					if (orchestrationEventConfiguration.EventState != EventState.Failed)
-					{
-						orchestrationEventConfiguration.InternalSetState(EventState.Completed);
-					}
-
-					orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
-				}
-
-				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
 			}
 		}
 
@@ -409,6 +419,19 @@
 					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", globalScriptResult.ErrorMessages)}";
 					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
 				}
+				else
+				{
+					orchestrationEventConfiguration.InternalSetState(EventState.Completed);
+				}
+
+				orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
+
+				if (orchestrationEventConfiguration.ActualStartTime == null)
+				{
+					return;
+				}
+
+				orchestrationEventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - orchestrationEventConfiguration.ActualStartTime;
 			}
 		}
 
