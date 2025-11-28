@@ -13,6 +13,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
+	using Skyline.DataMiner.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
@@ -231,11 +232,11 @@
 
 					if (state.IsLocked)
 					{
-						throw new API.Exceptions.DestinationLockedException(vsg, state.LockTime, state.LockedBy, state.LockReason);
+						throw new DestinationLockedException(vsg, state.LockTime, state.LockedBy, state.LockReason);
 					}
 					else if (state.IsProtected)
 					{
-						throw new API.Exceptions.DestinationProtectedException(vsg, state.LockTime, state.LockedBy, state.LockReason);
+						throw new DestinationProtectedException(vsg, state.LockTime, state.LockedBy, state.LockReason);
 					}
 				}
 			}
@@ -501,12 +502,20 @@
 						}
 					});
 
-				var result = Task.WhenAll(tasks).GetAwaiter().GetResult();
-				var failedCount = result.Count(x => x == false);
+				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
 
-				if (failedCount > 0)
+				var failedRequests = takeContexts.Select(x => x.ConnectionRequest)
+					.Zip(results, (request, result) => new { request, result })
+					.Where(x => !x.result)
+					.Select(x => x.request)
+					.Distinct()
+					.ToList();
+
+				if (failedRequests.Count > 0)
 				{
-					throw new TimeoutException($"Failed to connect {failedCount} connections within the specified timeout of {timeout.TotalSeconds} seconds.");
+					throw new ConnectFailedException(
+						$"Failed to connect {failedRequests.Count} connections within the specified timeout of {timeout.TotalSeconds} seconds.",
+						failedRequests);
 				}
 			}
 		}
@@ -561,12 +570,20 @@
 						}
 					});
 
-				var result = Task.WhenAll(tasks).GetAwaiter().GetResult();
-				var failedCount = result.Count(x => x == false);
+				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
 
-				if (failedCount > 0)
+				var failedRequests = takeContexts.Select(x => x.DisconnectRequest)
+					.Zip(results, (request, result) => new { request, result })
+					.Where(x => !x.result)
+					.Select(x => x.request)
+					.Distinct()
+					.ToList();
+
+				if (failedRequests.Count > 0)
 				{
-					throw new TimeoutException($"Failed to disconnect {failedCount} connections within the specified timeout of {timeout.TotalSeconds} seconds.");
+					throw new DisconnectFailedException(
+						$"Failed to disconnect {failedRequests.Count} connections within the specified timeout of {timeout.TotalSeconds} seconds.",
+						failedRequests);
 				}
 			}
 		}

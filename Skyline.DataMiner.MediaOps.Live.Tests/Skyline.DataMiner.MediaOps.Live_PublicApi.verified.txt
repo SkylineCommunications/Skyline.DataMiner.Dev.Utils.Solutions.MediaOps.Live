@@ -309,6 +309,33 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Enums
         Metadata = 3,
     }
 }
+namespace Skyline.DataMiner.MediaOps.Live.API.Exceptions
+{
+    public class DestinationLockedException : System.Exception
+    {
+        public DestinationLockedException() { }
+        public DestinationLockedException(string message) { }
+        public DestinationLockedException(string message, System.Exception innerException) { }
+        public DestinationLockedException(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, System.DateTimeOffset lockTime, string lockedBy, string lockReason) { }
+        public string LockReason { get; }
+        public System.DateTimeOffset LockTime { get; }
+        public string LockedBy { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup VirtualSignalGroup { get; }
+        public override string ToString() { }
+    }
+    public class DestinationProtectedException : System.Exception
+    {
+        public DestinationProtectedException() { }
+        public DestinationProtectedException(string message) { }
+        public DestinationProtectedException(string message, System.Exception innerException) { }
+        public DestinationProtectedException(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, System.DateTimeOffset lockTime, string lockedBy, string lockReason) { }
+        public string LockReason { get; }
+        public System.DateTimeOffset LockTime { get; }
+        public string LockedBy { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup VirtualSignalGroup { get; }
+        public override string ToString() { }
+    }
+}
 namespace Skyline.DataMiner.MediaOps.Live.API.Extensions
 {
     public static class ConnectionExtensions
@@ -1520,6 +1547,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
     public class VsgConnectionResult
     {
         public VsgConnectionResult(Skyline.DataMiner.MediaOps.Live.Take.VsgConnectionRequest request) { }
+        public System.Threading.Tasks.Task CompletionTask { get; }
         public Skyline.DataMiner.MediaOps.Live.Take.VsgConnectionRequest Request { get; }
     }
     public class VsgDisconnectRequest
@@ -1533,6 +1561,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
     public class VsgDisconnectResult
     {
         public VsgDisconnectResult(Skyline.DataMiner.MediaOps.Live.Take.VsgDisconnectRequest request) { }
+        public System.Threading.Tasks.Task CompletionTask { get; }
         public Skyline.DataMiner.MediaOps.Live.Take.VsgDisconnectRequest Request { get; }
     }
 }
