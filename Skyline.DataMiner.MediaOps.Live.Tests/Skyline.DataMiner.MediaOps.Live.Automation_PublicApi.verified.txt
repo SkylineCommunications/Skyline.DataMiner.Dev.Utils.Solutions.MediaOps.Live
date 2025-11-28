@@ -217,3 +217,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Take
         protected override void ExecuteConnectionHandlerScript(string script, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.ConnectionHandlerScriptAction action, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerInputData inputData, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
     }
 }
+namespace Skyline.DataMiner.MediaOps.Live.Automation.Tools
+{
+    public static class StaticEngineConnectionProvider
+    {
+        public static Skyline.DataMiner.Net.IConnection GetConnection() { }
+        public static void Reset() { }
+        public static void SetConnection(Skyline.DataMiner.Net.IConnection connection) { }
+    }
+}

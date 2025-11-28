@@ -351,6 +351,17 @@
 				result.AddError("Description cannot be longer than 200 characters.", this, x => x.Description);
 			}
 
+			// Error when multiple endpoints are assigned to the same level
+			var duplicateLevels = Levels
+				.GroupBy(x => x.Level)
+				.Where(g => g.Count() > 1)
+				.Select(g => g.Key);
+
+			foreach (var level in duplicateLevels)
+			{
+				result.AddError($"Multiple endpoints are assigned to level with ID '{level.ID}'.", this, x => x.Levels);
+			}
+
 			return result;
 		}
 	}
