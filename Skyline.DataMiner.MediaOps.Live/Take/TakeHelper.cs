@@ -231,11 +231,11 @@
 
 					if (state.IsLocked)
 					{
-						throw new InvalidOperationException($"Virtual Signal Group '{vsg.Name}' is locked by '{state.LockedBy}' for reason: '{state.LockReason}'");
+						throw new API.Exceptions.DestinationLockedException(vsg, state.LockTime, state.LockedBy, state.LockReason);
 					}
 					else if (state.IsProtected)
 					{
-						throw new InvalidOperationException($"Virtual Signal Group '{vsg.Name}' is protected by '{state.LockedBy}' for reason: '{state.LockReason}'");
+						throw new API.Exceptions.DestinationProtectedException(vsg, state.LockTime, state.LockedBy, state.LockReason);
 					}
 				}
 			}
@@ -496,6 +496,7 @@
 						}
 						finally
 						{
+							takeContext.SetCompleted();
 							semaphore.Release();
 						}
 					});
@@ -514,10 +515,7 @@
 		{
 			try
 			{
-				return await connectionMonitor.WaitUntilConnectedAsync(
-					takeContext.Source,
-					takeContext.Destination,
-					cancellationToken)
+				return await connectionMonitor.WaitUntilConnectedAsync(takeContext.Source, takeContext.Destination, cancellationToken)
 					.ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
@@ -558,6 +556,7 @@
 						}
 						finally
 						{
+							takeContext.SetCompleted();
 							semaphore.Release();
 						}
 					});
@@ -576,9 +575,7 @@
 		{
 			try
 			{
-				return await connectionMonitor.WaitUntilDisconnectedAsync(
-					takeContext.Destination,
-					cancellationToken)
+				return await connectionMonitor.WaitUntilDisconnectedAsync(takeContext.Destination, cancellationToken)
 					.ConfigureAwait(false);
 			}
 			catch (OperationCanceledException)
@@ -589,18 +586,40 @@
 
 		private ICollection<VsgConnectionResult> GenerateResults(ICollection<ConnectOperationContext> takeContexts)
 		{
-			return takeContexts
-				.GroupBy(x => x.ConnectionRequest)
-				.Select(g => new VsgConnectionResult(g.Key))
-				.ToList();
+			var results = new List<VsgConnectionResult>();
+
+			foreach (var group in takeContexts.GroupBy(x => x.ConnectionRequest))
+			{
+				var completionTask = Task.WhenAll(group.Select(x => x.CompletionTask));
+
+				var result = new VsgConnectionResult(group.Key)
+				{
+					CompletionTask = completionTask,
+				};
+
+				results.Add(result);
+			}
+
+			return results;
 		}
 
 		private ICollection<VsgDisconnectResult> GenerateResults(ICollection<DisconnectOperationContext> takeContexts)
 		{
-			return takeContexts
-				.GroupBy(x => x.DisconnectRequest)
-				.Select(g => new VsgDisconnectResult(g.Key))
-				.ToList();
+			var results = new List<VsgDisconnectResult>();
+
+			foreach (var group in takeContexts.GroupBy(x => x.DisconnectRequest))
+			{
+				var completionTask = Task.WhenAll(group.Select(x => x.CompletionTask));
+
+				var result = new VsgDisconnectResult(group.Key)
+				{
+					CompletionTask = completionTask,
+				};
+
+				results.Add(result);
+			}
+
+			return results;
 		}
 
 		private static string FormatConnectionRequests(ICollection<VsgConnectionRequest> requests)
