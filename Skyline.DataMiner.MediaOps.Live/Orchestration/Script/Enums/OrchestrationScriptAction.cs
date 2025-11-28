@@ -1,6 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums
 {
-	public enum OrchestrationScriptAction
+	internal enum OrchestrationScriptAction
 	{
 		OrchestrationScriptInfo = 0,
 
