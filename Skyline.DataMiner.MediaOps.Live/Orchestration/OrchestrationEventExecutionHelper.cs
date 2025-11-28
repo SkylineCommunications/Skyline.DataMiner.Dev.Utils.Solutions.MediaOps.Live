@@ -262,9 +262,11 @@
 				}
 
 				var takeHelper = _api.GetConnectionHandler();
-				takeHelper.EnableWaitForCompletion(_settings.Timeout);
 
-				takeHelper.Disconnect(requests, performanceTracker);
+				takeHelper.Disconnect(
+					requests,
+					performanceTracker,
+					new() { WaitForCompletion = true, Timeout = _settings.Timeout, });
 			}
 		}
 
@@ -337,9 +339,11 @@
 				}
 
 				var takeHelper = _api.GetConnectionHandler();
-				takeHelper.EnableWaitForCompletion(_settings.Timeout);
 
-				takeHelper.Take(requests, performanceTracker);
+				takeHelper.Take(
+					requests,
+					performanceTracker,
+					new() { WaitForCompletion = true, Timeout = _settings.Timeout });
 			}
 		}
 

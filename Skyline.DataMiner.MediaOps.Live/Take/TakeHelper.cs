@@ -23,40 +23,12 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 
-		private bool _waitForCompletion = false;
-		private TimeSpan _timeout;
-		private ConnectionMonitor _connectionMonitor;
-
 		protected internal TakeHelper(MediaOpsLiveApi api)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
 
-		public void EnableWaitForCompletion(TimeSpan timeout, ConnectionMonitor connectionMonitor = null)
-		{
-			if (timeout < TimeSpan.Zero)
-			{
-				throw new ArgumentException("Timeout cannot be negative.", nameof(timeout));
-			}
-
-			_api.Logger?.Information($"Enabling wait for completion with timeout of {timeout.TotalSeconds} seconds.");
-
-			_connectionMonitor = connectionMonitor ??
-				StaticMediaOpsLiveCache.GetOrCreate(_api.Connection).ConnectionMonitor;
-
-			_waitForCompletion = true;
-			_timeout = timeout;
-		}
-
-		public void DisableWaitForCompletion()
-		{
-			_api.Logger?.Information("Disabling wait for completion.");
-
-			_waitForCompletion = false;
-			_connectionMonitor = null;
-		}
-
-		public void Take(ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker)
+		public void Take(ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
 		{
 			if (connectionRequests == null)
 			{
@@ -82,11 +54,7 @@
 
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
-
-					if (_waitForCompletion)
-					{
-						WaitUntilAllConnected(takeContexts, performanceTracker);
-					}
+					WaitUntilAllConnected(takeContexts, performanceTracker, options);
 				}
 
 				_api.Logger?.Information("Take finished successfully.");
@@ -98,7 +66,7 @@
 			}
 		}
 
-		public void Take(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
+		public void Take(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
 		{
 			if (vsgConnectionRequests == null)
 			{
@@ -118,7 +86,7 @@
 				{
 					var connectionRequests = ConvertConnectionRequestsFromVsg(vsgConnectionRequests, performanceTracker);
 
-					Take(connectionRequests, performanceTracker);
+					Take(connectionRequests, performanceTracker, options);
 				}
 
 				_api.Logger?.Information("Take VSGs finished successfully.");
@@ -130,7 +98,7 @@
 			}
 		}
 
-		public void Disconnect(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker)
+		public void Disconnect(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
 		{
 			if (disconnectRequests == null)
 			{
@@ -151,11 +119,7 @@
 
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
-
-					if (_waitForCompletion)
-					{
-						WaitUntilAllDisconnected(takeContexts, performanceTracker);
-					}
+					WaitUntilAllDisconnected(takeContexts, performanceTracker, options);
 				}
 
 				_api.Logger?.Information("Disconnecting finished successfully.");
@@ -167,7 +131,7 @@
 			}
 		}
 
-		public void Disconnect(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
+		public void Disconnect(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
 		{
 			if (vsgDisconnectRequests == null)
 			{
@@ -187,7 +151,7 @@
 				{
 					var disconnectRequests = ConvertDisconnectRequestsFromVsg(vsgDisconnectRequests, performanceTracker);
 
-					Disconnect(disconnectRequests, performanceTracker);
+					Disconnect(disconnectRequests, performanceTracker, options);
 				}
 
 				_api.Logger?.Information("Disconnecting VSGs finished successfully.");
@@ -471,17 +435,17 @@
 					IConnectionHandlerInputData inputData = action switch
 					{
 						ConnectionHandlerScriptAction.Connect => new CreateConnectionsInputData
-							{
-								Connections = group
+						{
+							Connections = group
 									.Select(x => new Mediation.ConnectionHandlers.Data.ConnectionInfo(x.Source, x.Destination))
 									.ToArray(),
-							},
+						},
 						ConnectionHandlerScriptAction.Disconnect => new DisconnectDestinationsInputData
-							{
-								Destinations = group
+						{
+							Destinations = group
 									.Select(x => new Mediation.ConnectionHandlers.Data.EndpointInfo(x.Destination))
 									.ToArray(),
-							},
+						},
 						_ => throw new InvalidOperationException($"Invalid action: {action}"),
 					};
 
@@ -511,21 +475,31 @@
 			}
 		}
 
-		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
 		{
-			_api.Logger?.Information("Waiting for all connections to be established...");
+			if (options == null || options.WaitForCompletion == false)
+			{
+				// No need to wait
+				return;
+			}
+
+			var timeout = options?.Timeout ?? TimeSpan.FromSeconds(30);
+			_api.Logger?.Information($"Waiting for all connections to be established... ({timeout.TotalSeconds} seconds)");
 
 			using (new PerformanceTracker(performanceTracker))
-			using (var cts = new CancellationTokenSource(_timeout))
+			using (var cts = new CancellationTokenSource(timeout))
 			using (var semaphore = new SemaphoreSlim(100))
 			{
+				var connectionMonitor = options?.ConnectionMonitor ??
+					StaticMediaOpsLiveCache.GetOrCreate(_api.Connection).ConnectionMonitor;
+
 				var tasks = takeContexts
 					.Select(async takeContext =>
 					{
 						try
 						{
 							await semaphore.WaitAsync(cts.Token).ConfigureAwait(false);
-							return await WaitUntilConnectedAsync(takeContext, cts.Token).ConfigureAwait(false);
+							return await WaitUntilConnectedAsync(takeContext, connectionMonitor, cts.Token).ConfigureAwait(false);
 						}
 						catch (Exception)
 						{
@@ -542,16 +516,16 @@
 
 				if (failedCount > 0)
 				{
-					throw new TimeoutException($"Failed to connect {failedCount} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
+					throw new TimeoutException($"Failed to connect {failedCount} connections within the specified timeout of {timeout.TotalSeconds} seconds.");
 				}
 			}
 		}
 
-		private async Task<bool> WaitUntilConnectedAsync(ConnectionOperationContext takeContext, CancellationToken cancellationToken)
+		private async Task<bool> WaitUntilConnectedAsync(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
 		{
 			try
 			{
-				return await _connectionMonitor.WaitUntilConnectedAsync(
+				return await connectionMonitor.WaitUntilConnectedAsync(
 					takeContext.Source,
 					takeContext.Destination,
 					cancellationToken)
@@ -563,13 +537,23 @@
 			}
 		}
 
-		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
 		{
+			if (options == null || options.WaitForCompletion == false)
+			{
+				// No need to wait
+				return;
+			}
+
+			var timeout = options?.Timeout ?? TimeSpan.FromSeconds(30);
+			_api.Logger?.Information($"Waiting for all disconnections to complete... ({timeout.TotalSeconds} seconds)");
+
 			using (new PerformanceTracker(performanceTracker))
-			using (var cts = new CancellationTokenSource(_timeout))
+			using (var cts = new CancellationTokenSource(timeout))
 			using (var semaphore = new SemaphoreSlim(100))
 			{
-				_api.Logger?.Information("Waiting for all disconnections to complete...");
+				var connectionMonitor = options?.ConnectionMonitor ??
+					StaticMediaOpsLiveCache.GetOrCreate(_api.Connection).ConnectionMonitor;
 
 				var tasks = takeContexts
 					.Select(async takeContext =>
@@ -577,7 +561,7 @@
 						try
 						{
 							await semaphore.WaitAsync(cts.Token).ConfigureAwait(false);
-							return await WaitUntilDisconnectedAsync(takeContext, cts.Token).ConfigureAwait(false);
+							return await WaitUntilDisconnectedAsync(takeContext, connectionMonitor, cts.Token).ConfigureAwait(false);
 						}
 						catch (Exception)
 						{
@@ -594,16 +578,16 @@
 
 				if (failedCount > 0)
 				{
-					throw new TimeoutException($"Failed to disconnect {failedCount} connections within the specified timeout of {_timeout.TotalSeconds} seconds.");
+					throw new TimeoutException($"Failed to disconnect {failedCount} connections within the specified timeout of {timeout.TotalSeconds} seconds.");
 				}
 			}
 		}
 
-		private async Task<bool> WaitUntilDisconnectedAsync(ConnectionOperationContext takeContext, CancellationToken cancellationToken)
+		private async Task<bool> WaitUntilDisconnectedAsync(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
 		{
 			try
 			{
-				return await _connectionMonitor.WaitUntilDisconnectedAsync(
+				return await connectionMonitor.WaitUntilDisconnectedAsync(
 					takeContext.Destination,
 					cancellationToken)
 					.ConfigureAwait(false);
