@@ -196,21 +196,6 @@
 			}
 		}
 
-		private void ExecuteEventConfigurationScripts(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				if (!String.IsNullOrEmpty(orchestrationEventConfiguration.GlobalOrchestrationScript))
-				{
-					ExecuteGlobalConfiguration(orchestrationEventConfiguration, performanceTracker);
-					_api.Orchestration.SaveEventConfigurations(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
-					return;
-				}
-
-				ExecuteNodesConfiguration(orchestrationEventConfiguration, taskScheduler, performanceTracker);
-			}
-		}
-
 		internal void ProcessConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))

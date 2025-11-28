@@ -11,11 +11,9 @@ using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
 using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
 using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
-using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 using Skyline.DataMiner.Net.Messages.SLDataGateway;
 using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
-using static Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration.SlcOrchestrationIds.Sections;
 
 /// <summary>
 /// Exposes API methods to interact with and orchestrate MediaOps Live Orchestration events.
@@ -404,7 +402,7 @@ public class OrchestrationHelper
 	}
 
 	/// <summary>
-	///     Start execution for an event, based on ID.
+	///     Start execution for a set of events.
 	/// </summary>
 	/// <param name="orchestrationEvents">The events to execute.</param>
 	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
@@ -432,7 +430,7 @@ public class OrchestrationHelper
 	}
 
 	/// <summary>
-	///     Start execution for an event, based on ID.
+	///     Start execution for a set of events.
 	/// </summary>
 	/// <param name="orchestrationEvents">The events to execute.</param>
 	public void ExecuteEventsNow(IEnumerable<OrchestrationEvent> orchestrationEvents)
