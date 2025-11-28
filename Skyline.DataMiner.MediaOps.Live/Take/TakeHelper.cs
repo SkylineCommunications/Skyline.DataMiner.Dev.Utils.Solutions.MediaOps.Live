@@ -14,6 +14,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
@@ -28,7 +29,7 @@
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
 
-		public void Take(ICollection<VsgConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
+		public ICollection<VsgConnectionResult> Take(ICollection<VsgConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
 		{
 			if (connectionRequests == null)
 			{
@@ -44,18 +45,22 @@
 			{
 				_api.Logger?.Information($"Start connecting endpoints with {connectionRequests.Count} requests:\n{FormatConnectionRequests(connectionRequests)}");
 
+				var takeContexts = ConvertConnectionRequests(connectionRequests, performanceTracker);
+
 				using (performanceTracker = new PerformanceTracker(performanceTracker))
 				{
-					var takeContexts = ConvertConnectionRequestsFromVsg(connectionRequests, performanceTracker);
+					var destinationVsgs = connectionRequests.Select(x => x.Destination).Distinct().ToList();
+					CheckDestinationLocks(destinationVsgs, options, performanceTracker);
 
 					PrepareData(takeContexts, performanceTracker);
-
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					WaitUntilAllConnected(takeContexts, performanceTracker, options);
 				}
 
 				_api.Logger?.Information("Take finished successfully.");
+
+				return GenerateResults(takeContexts);
 			}
 			catch (Exception ex)
 			{
@@ -64,7 +69,7 @@
 			}
 		}
 
-		public void Disconnect(ICollection<VsgDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
+		public ICollection<VsgDisconnectResult> Disconnect(ICollection<VsgDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
 		{
 			if (disconnectRequests == null)
 			{
@@ -75,18 +80,22 @@
 			{
 				_api.Logger?.Information($"Start disconnecting with {disconnectRequests.Count} requests:\n{FormatDisconnectRequests(disconnectRequests)}");
 
+				var takeContexts = ConvertDisconnectRequests(disconnectRequests, performanceTracker);
+
 				using (performanceTracker = new PerformanceTracker(performanceTracker))
 				{
-					var takeContexts = ConvertDisconnectRequestsFromVsg(disconnectRequests, performanceTracker);
+					var destinationVsgs = disconnectRequests.Select(x => x.Destination).Distinct().ToList();
+					CheckDestinationLocks(destinationVsgs, options, performanceTracker);
 
 					PrepareData(takeContexts, performanceTracker);
-
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					WaitUntilAllDisconnected(takeContexts, performanceTracker, options);
 				}
 
 				_api.Logger?.Information("Disconnecting finished successfully.");
+
+				return GenerateResults(takeContexts);
 			}
 			catch (Exception ex)
 			{
@@ -95,7 +104,7 @@
 			}
 		}
 
-		private ICollection<ConnectOperationContext> ConvertConnectionRequestsFromVsg(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
+		private ICollection<ConnectOperationContext> ConvertConnectionRequests(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -158,7 +167,7 @@
 			}
 		}
 
-		private ICollection<DisconnectOperationContext> ConvertDisconnectRequestsFromVsg(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
+		private ICollection<DisconnectOperationContext> ConvertDisconnectRequests(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -198,6 +207,37 @@
 				}
 
 				return disconnectRequests;
+			}
+		}
+
+		private void CheckDestinationLocks(ICollection<VirtualSignalGroup> destinationVsgs, TakeOptions options, PerformanceTracker performanceTracker)
+		{
+			if (options != null && options.BypassLockValidation)
+			{
+				return;
+			}
+
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				var dict = destinationVsgs.SafeToDictionary(x => x.Reference);
+
+				var states = _api.VirtualSignalGroupStates.GetByVirtualSignalGroups(destinationVsgs)
+					.SafeToDictionary(x => dict[x.VirtualSignalGroupReference], x => x);
+
+				foreach (var kvp in states)
+				{
+					var vsg = kvp.Key;
+					var state = kvp.Value;
+
+					if (state.IsLocked)
+					{
+						throw new InvalidOperationException($"Virtual Signal Group '{vsg.Name}' is locked by '{state.LockedBy}' for reason: '{state.LockReason}'");
+					}
+					else if (state.IsProtected)
+					{
+						throw new InvalidOperationException($"Virtual Signal Group '{vsg.Name}' is protected by '{state.LockedBy}' for reason: '{state.LockReason}'");
+					}
+				}
 			}
 		}
 
@@ -545,6 +585,22 @@
 			{
 				return false;
 			}
+		}
+
+		private ICollection<VsgConnectionResult> GenerateResults(ICollection<ConnectOperationContext> takeContexts)
+		{
+			return takeContexts
+				.GroupBy(x => x.ConnectionRequest)
+				.Select(g => new VsgConnectionResult(g.Key))
+				.ToList();
+		}
+
+		private ICollection<VsgDisconnectResult> GenerateResults(ICollection<DisconnectOperationContext> takeContexts)
+		{
+			return takeContexts
+				.GroupBy(x => x.DisconnectRequest)
+				.Select(g => new VsgDisconnectResult(g.Key))
+				.ToList();
 		}
 
 		private static string FormatConnectionRequests(ICollection<VsgConnectionRequest> requests)

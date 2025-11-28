@@ -26,5 +26,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
 		/// </summary>
 		public ConnectionMonitor ConnectionMonitor { get; set; }
 
+		/// <summary>
+		/// Gets or sets a value indicating whether to bypass lock validation.
+		/// </summary>
+		public bool BypassLockValidation { get; set; }
 	}
 }
