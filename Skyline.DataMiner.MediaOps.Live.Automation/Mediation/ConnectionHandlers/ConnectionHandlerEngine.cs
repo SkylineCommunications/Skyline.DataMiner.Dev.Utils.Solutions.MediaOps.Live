@@ -69,7 +69,7 @@
 
 		private void NotifyConnectionChanges(ICollection<ConnectionUpdate> connections)
 		{
-			var now = DateTimeOffset.Now;
+			var now = DateTimeOffset.UtcNow;
 
 			var mediationElementMap = Api.MediationElements.GetElementsForEndpoints(
 				connections.Select(x => x.DestinationEndpoint));

@@ -155,7 +155,10 @@
 				}
 				catch (ConnectFailedException e)
 				{
-					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
+					IEnumerable<string> eventsForFailedRequests = e.FailedRequests
+						.OfType<VsgConnectionRequestWithMetaData>()
+						.Select(fail => Convert.ToString(fail.MetaData));
+
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
 						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
@@ -320,7 +323,7 @@
 
 						if (connection.LevelMappings == null || !connection.LevelMappings.Any())
 						{
-							requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup)
+							requests.Add(new VsgConnectionRequestWithMetaData(srcVirtualSignalGroup, dstVirtualSignalGroup)
 							{
 								MetaData = eventId.ToString(),
 							});
@@ -331,7 +334,7 @@
 							allInvolvedLevels.FirstOrDefault(level => level.Number == map.Source.Number),
 							allInvolvedLevels.FirstOrDefault(level => level.Number == map.Destination.Number))).ToList();
 
-						requests.Add(new VsgConnectionRequest(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings)
+						requests.Add(new VsgConnectionRequestWithMetaData(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings)
 						{
 							MetaData = eventId.ToString(),
 						});

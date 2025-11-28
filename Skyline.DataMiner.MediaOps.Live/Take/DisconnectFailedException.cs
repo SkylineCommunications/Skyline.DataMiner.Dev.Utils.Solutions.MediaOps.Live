@@ -5,9 +5,9 @@
 
 	public class DisconnectFailedException : Exception
 	{
-		public ICollection<DisconnectRequest> FailedRequests { get; }
+		public ICollection<VsgDisconnectRequest> FailedRequests { get; }
 
-		public DisconnectFailedException(string message, ICollection<DisconnectRequest> failedRequests)
+		public DisconnectFailedException(string message, ICollection<VsgDisconnectRequest> failedRequests)
 			: base(message)
 		{
 			FailedRequests = failedRequests ?? throw new ArgumentNullException(nameof(failedRequests));

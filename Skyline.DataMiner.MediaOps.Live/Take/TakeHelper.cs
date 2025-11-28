@@ -28,7 +28,7 @@
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
 
-		public void Take(ICollection<ConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
+		public void Take(ICollection<VsgConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
 		{
 			if (connectionRequests == null)
 			{
@@ -46,9 +46,7 @@
 
 				using (performanceTracker = new PerformanceTracker(performanceTracker))
 				{
-					var takeContexts = connectionRequests
-						.Select(x => new ConnectionOperationContext(x))
-						.ToList();
+					var takeContexts = ConvertConnectionRequestsFromVsg(connectionRequests, performanceTracker);
 
 					PrepareData(takeContexts, performanceTracker);
 
@@ -66,39 +64,7 @@
 			}
 		}
 
-		public void Take(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
-		{
-			if (vsgConnectionRequests == null)
-			{
-				throw new ArgumentNullException(nameof(vsgConnectionRequests));
-			}
-
-			if (performanceTracker == null)
-			{
-				throw new ArgumentNullException(nameof(performanceTracker));
-			}
-
-			try
-			{
-				_api.Logger?.Information($"Start connecting VSGs with {vsgConnectionRequests.Count} requests:\n{FormatConnectionRequests(vsgConnectionRequests)}");
-
-				using (performanceTracker = new PerformanceTracker(performanceTracker))
-				{
-					var connectionRequests = ConvertConnectionRequestsFromVsg(vsgConnectionRequests, performanceTracker);
-
-					Take(connectionRequests, performanceTracker, options);
-				}
-
-				_api.Logger?.Information("Take VSGs finished successfully.");
-			}
-			catch (Exception ex)
-			{
-				_api.Logger?.Error("Take VSGs failed", ex);
-				throw;
-			}
-		}
-
-		public void Disconnect(ICollection<DisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
+		public void Disconnect(ICollection<VsgDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
 		{
 			if (disconnectRequests == null)
 			{
@@ -111,9 +77,7 @@
 
 				using (performanceTracker = new PerformanceTracker(performanceTracker))
 				{
-					var takeContexts = disconnectRequests
-						.Select(x => new ConnectionOperationContext(x))
-						.ToList();
+					var takeContexts = ConvertDisconnectRequestsFromVsg(disconnectRequests, performanceTracker);
 
 					PrepareData(takeContexts, performanceTracker);
 
@@ -131,44 +95,12 @@
 			}
 		}
 
-		public void Disconnect(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
-		{
-			if (vsgDisconnectRequests == null)
-			{
-				throw new ArgumentNullException(nameof(vsgDisconnectRequests));
-			}
-
-			if (performanceTracker == null)
-			{
-				throw new ArgumentNullException(nameof(performanceTracker));
-			}
-
-			try
-			{
-				_api.Logger?.Information($"Start disconnecting VSGs with {vsgDisconnectRequests.Count} requests:\n{FormatDisconnectRequests(vsgDisconnectRequests)}");
-
-				using (performanceTracker = new PerformanceTracker(performanceTracker))
-				{
-					var disconnectRequests = ConvertDisconnectRequestsFromVsg(vsgDisconnectRequests, performanceTracker);
-
-					Disconnect(disconnectRequests, performanceTracker, options);
-				}
-
-				_api.Logger?.Information("Disconnecting VSGs finished successfully.");
-			}
-			catch (Exception ex)
-			{
-				_api.Logger?.Error("Disconnecting VSGs failed", ex);
-				throw;
-			}
-		}
-
-		private ICollection<ConnectionRequest> ConvertConnectionRequestsFromVsg(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
+		private ICollection<ConnectOperationContext> ConvertConnectionRequestsFromVsg(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				// create connection requests between endpoints
-				var connectionRequests = new List<ConnectionRequest>();
+				var connectionRequests = new List<ConnectOperationContext>();
 
 				// load all endpoints
 				var endpointIds = vsgConnectionRequests
@@ -216,10 +148,7 @@
 							throw new InvalidOperationException($"Couldn't find destination endpoint for level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
 						}
 
-						var request = new ConnectionRequest(sourceEndpoint, destinationEndpoint)
-						{
-							MetaData = vsgConnectionRequest.MetaData,
-						};
+						var request = new ConnectOperationContext(vsgConnectionRequest, sourceEndpoint, destinationEndpoint);
 
 						connectionRequests.Add(request);
 					}
@@ -229,12 +158,12 @@
 			}
 		}
 
-		private ICollection<DisconnectRequest> ConvertDisconnectRequestsFromVsg(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
+		private ICollection<DisconnectOperationContext> ConvertDisconnectRequestsFromVsg(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				// create disconnect requests
-				var disconnectRequests = new List<DisconnectRequest>();
+				var disconnectRequests = new List<DisconnectOperationContext>();
 
 				// load all endpoints
 				var endpointIds = vsgDisconnectRequests
@@ -262,10 +191,7 @@
 							throw new InvalidOperationException($"Couldn't find endpoint with ID '{levelEndpoint.Endpoint.ID}'");
 						}
 
-						var request = new DisconnectRequest(destinationEndpoint)
-						{
-							MetaData = vsgDisconnectRequest.MetaData,
-						};
+						var request = new DisconnectOperationContext(vsgDisconnectRequest, destinationEndpoint);
 
 						disconnectRequests.Add(request);
 					}
@@ -275,7 +201,7 @@
 			}
 		}
 
-		private void PrepareData(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void PrepareData(IEnumerable<TakeOperationContextBase> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -299,7 +225,7 @@
 			}
 		}
 
-		private void GetDestinationElements(IDms dms, ICollection<ConnectionOperationContext> connectionContexts, PerformanceTracker performanceTracker)
+		private void GetDestinationElements(IDms dms, IEnumerable<TakeOperationContextBase> connectionContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -326,7 +252,7 @@
 			}
 		}
 
-		private void GetMediationElements(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void GetMediationElements(IEnumerable<TakeOperationContextBase> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -352,7 +278,7 @@
 			}
 		}
 
-		private void FindConnectionHandlerScripts(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void FindConnectionHandlerScripts(IEnumerable<TakeOperationContextBase> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -371,11 +297,11 @@
 			}
 		}
 
-		private void NotifyPendingConnectionActions(ConnectionHandlerScriptAction action, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void NotifyPendingConnectionActions(ConnectionHandlerScriptAction action, IEnumerable<TakeOperationContextBase> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var now = DateTimeOffset.Now;
+				var now = DateTimeOffset.UtcNow;
 
 				foreach (var group in takeContexts.GroupBy(x => x.MediationElement))
 				{
@@ -383,28 +309,49 @@
 
 					var requests = new List<PendingConnectionAction>();
 
-					foreach (var connection in group)
+					if (action == ConnectionHandlerScriptAction.Connect)
 					{
-						var request = new PendingConnectionAction
+						foreach (var connection in group.OfType<ConnectOperationContext>())
 						{
-							Time = now,
-							Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
-						};
+							var request = new PendingConnectionAction
+							{
+								Time = now,
+								Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
+							};
 
-						switch (action)
-						{
-							case ConnectionHandlerScriptAction.Connect:
-								request.Action = ConnectionAction.Connect;
-								request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(connection.Source);
-								break;
-							case ConnectionHandlerScriptAction.Disconnect:
-								request.Action = ConnectionAction.Disconnect;
-								break;
-							default:
-								throw new InvalidOperationException($"Invalid action: {action}");
+							switch (action)
+							{
+								case ConnectionHandlerScriptAction.Connect:
+									request.Action = ConnectionAction.Connect;
+									request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(connection.Source);
+									break;
+								case ConnectionHandlerScriptAction.Disconnect:
+									request.Action = ConnectionAction.Disconnect;
+									break;
+								default:
+									throw new InvalidOperationException($"Invalid action: {action}");
+							}
+
+							requests.Add(request);
 						}
+					}
+					else if (action == ConnectionHandlerScriptAction.Disconnect)
+					{
+						foreach (var connection in group.OfType<DisconnectOperationContext>())
+						{
+							var request = new PendingConnectionAction
+							{
+								Action = ConnectionAction.Disconnect,
+								Time = now,
+								Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
+							};
 
-						requests.Add(request);
+							requests.Add(request);
+						}
+					}
+					else
+					{
+						throw new InvalidOperationException($"Invalid action: {action}");
 					}
 
 					_api.Logger?.Information($"Notifying {requests.Count} pending connection actions to mediation element '{mediationElement.DmsElementId}'");
@@ -424,7 +371,7 @@
 			}
 		}
 
-		private void ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction action, ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction action, IEnumerable<TakeOperationContextBase> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -437,14 +384,16 @@
 						ConnectionHandlerScriptAction.Connect => new CreateConnectionsInputData
 						{
 							Connections = group
-									.Select(x => new Mediation.ConnectionHandlers.Data.ConnectionInfo(x.Source, x.Destination))
-									.ToArray(),
+								.OfType<ConnectOperationContext>()
+								.Select(x => new Mediation.ConnectionHandlers.Data.ConnectionInfo(x.Source, x.Destination))
+								.ToArray(),
 						},
 						ConnectionHandlerScriptAction.Disconnect => new DisconnectDestinationsInputData
 						{
 							Destinations = group
-									.Select(x => new Mediation.ConnectionHandlers.Data.EndpointInfo(x.Destination))
-									.ToArray(),
+								.OfType<DisconnectOperationContext>()
+								.Select(x => new Mediation.ConnectionHandlers.Data.EndpointInfo(x.Destination))
+								.ToArray(),
 						},
 						_ => throw new InvalidOperationException($"Invalid action: {action}"),
 					};
@@ -475,7 +424,7 @@
 			}
 		}
 
-		private void WaitUntilAllConnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
+		private void WaitUntilAllConnected(ICollection<ConnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
 		{
 			if (options == null || options.WaitForCompletion == false)
 			{
@@ -521,7 +470,7 @@
 			}
 		}
 
-		private async Task<bool> WaitUntilConnectedAsync(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
+		private async Task<bool> WaitUntilConnectedAsync(ConnectOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
 		{
 			try
 			{
@@ -537,7 +486,7 @@
 			}
 		}
 
-		private void WaitUntilAllDisconnected(ICollection<ConnectionOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
+		private void WaitUntilAllDisconnected(ICollection<DisconnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
 		{
 			if (options == null || options.WaitForCompletion == false)
 			{
@@ -583,7 +532,7 @@
 			}
 		}
 
-		private async Task<bool> WaitUntilDisconnectedAsync(ConnectionOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
+		private async Task<bool> WaitUntilDisconnectedAsync(DisconnectOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
 		{
 			try
 			{
@@ -596,14 +545,6 @@
 			{
 				return false;
 			}
-		}
-
-		private static string FormatConnectionRequests(ICollection<ConnectionRequest> requests)
-		{
-			return String.Join(
-				Environment.NewLine,
-				requests
-					.Select(r => $" - {r.Source.Name} [{r.Source.ID}] -> {r.Destination.Name} [{r.Destination.ID}]"));
 		}
 
 		private static string FormatConnectionRequests(ICollection<VsgConnectionRequest> requests)
@@ -619,14 +560,6 @@
 
 						return $" - {r.Source.Name} [{r.Source.ID}] -> {r.Destination.Name} [{r.Destination.ID}] ({levels})";
 					}));
-		}
-
-		private static string FormatDisconnectRequests(ICollection<DisconnectRequest> requests)
-		{
-			return String.Join(
-				Environment.NewLine,
-				requests
-					.Select(r => $" - {r.Destination.Name} [{r.Destination.ID}]"));
 		}
 
 		private static string FormatDisconnectRequests(ICollection<VsgDisconnectRequest> requests)

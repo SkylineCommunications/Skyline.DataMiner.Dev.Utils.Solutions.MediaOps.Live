@@ -5,9 +5,9 @@
 
 	public class ConnectFailedException : Exception
 	{
-		public ICollection<ConnectionRequest> FailedRequests { get; }
+		public ICollection<VsgConnectionRequest> FailedRequests { get; }
 
-		public ConnectFailedException(string message, ICollection<ConnectionRequest> failedRequests)
+		public ConnectFailedException(string message, ICollection<VsgConnectionRequest> failedRequests)
 			: base(message)
 		{
 			FailedRequests = failedRequests ?? throw new ArgumentNullException(nameof(failedRequests));
