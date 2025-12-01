@@ -24,34 +24,13 @@
 
 		public string ConnectionHandlerScript { get; set; }
 
+		public bool IsSuccessful { get; set; }
+
 		public Task CompletionTask => _taskCompletionSource.Task;
 
 		public void SetCompleted()
 		{
 			_taskCompletionSource.TrySetResult(true);
 		}
-	}
-
-	internal class ConnectOperationContext : TakeOperationContextBase
-	{
-		public ConnectOperationContext(VsgConnectionRequest connectionRequest, Endpoint source, Endpoint destination) : base(destination)
-		{
-			ConnectionRequest = connectionRequest ?? throw new ArgumentNullException(nameof(connectionRequest));
-			Source = source ?? throw new ArgumentNullException(nameof(source));
-		}
-
-		public VsgConnectionRequest ConnectionRequest { get; }
-
-		public Endpoint Source { get; }
-	}
-
-	internal class DisconnectOperationContext : TakeOperationContextBase
-	{
-		public DisconnectOperationContext(VsgDisconnectRequest disconnectRequest, Endpoint destination) : base(destination)
-		{
-			DisconnectRequest = disconnectRequest ?? throw new ArgumentNullException(nameof(disconnectRequest));
-		}
-
-		public VsgDisconnectRequest DisconnectRequest { get; }
 	}
 }

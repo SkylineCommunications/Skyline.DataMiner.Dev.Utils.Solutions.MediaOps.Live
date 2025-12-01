@@ -19,12 +19,12 @@
 		{
 		}
 
-		public ConnectFailedException(string message, ICollection<VsgConnectionRequest> failedRequests)
+		public ConnectFailedException(string message, ICollection<ConnectionRequest> failedRequests)
 			: base(message)
 		{
 			FailedRequests = failedRequests ?? throw new ArgumentNullException(nameof(failedRequests));
 		}
 
-		public ICollection<VsgConnectionRequest> FailedRequests { get; }
+		public ICollection<ConnectionRequest> FailedRequests { get; }
 	}
 }

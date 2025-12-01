@@ -19,12 +19,12 @@
 		{
 		}
 
-		public DisconnectFailedException(string message, ICollection<VsgDisconnectRequest> failedRequests)
+		public DisconnectFailedException(string message, ICollection<DisconnectRequest> failedRequests)
 			: base(message)
 		{
 			FailedRequests = failedRequests ?? throw new ArgumentNullException(nameof(failedRequests));
 		}
 
-		public ICollection<VsgDisconnectRequest> FailedRequests { get; }
+		public ICollection<DisconnectRequest> FailedRequests { get; }
 	}
 }

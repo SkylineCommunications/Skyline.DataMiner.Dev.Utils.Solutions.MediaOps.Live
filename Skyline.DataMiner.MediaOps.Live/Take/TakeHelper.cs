@@ -30,6 +30,48 @@
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
 
+		public ICollection<EndpointConnectionResult> Take(ICollection<EndpointConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
+		{
+			if (connectionRequests == null)
+			{
+				throw new ArgumentNullException(nameof(connectionRequests));
+			}
+
+			if (performanceTracker == null)
+			{
+				throw new ArgumentNullException(nameof(performanceTracker));
+			}
+
+			try
+			{
+				ICollection<EndpointConnectionResult> results;
+
+				_api.Logger?.Information($"Start connecting with {connectionRequests.Count} requests:\n" +
+					$"{FormatConnectionRequests(connectionRequests)}");
+
+				using (performanceTracker = new PerformanceTracker(performanceTracker))
+				{
+					var takeContexts = connectionRequests.Select(x => new EndpointConnectOperationContext(x)).ToList();
+
+					PrepareData(takeContexts, performanceTracker);
+					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
+					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
+					WaitUntilAllConnected(takeContexts, performanceTracker, options);
+
+					_api.Logger?.Information("Take finished successfully.");
+
+					results = GenerateResults(takeContexts);
+				}
+
+				return results;
+			}
+			catch (Exception ex)
+			{
+				_api.Logger?.Error("Take failed", ex);
+				throw;
+			}
+		}
+
 		public ICollection<VsgConnectionResult> Take(ICollection<VsgConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
 		{
 			if (connectionRequests == null)
@@ -44,28 +86,74 @@
 
 			try
 			{
-				_api.Logger?.Information($"Start connecting endpoints with {connectionRequests.Count} requests:\n{FormatConnectionRequests(connectionRequests)}");
+				ICollection<VsgConnectionResult> results;
 
-				var takeContexts = ConvertConnectionRequests(connectionRequests, performanceTracker);
+				_api.Logger?.Information($"Start connecting with {connectionRequests.Count} requests:\n" +
+					$"{FormatConnectionRequests(connectionRequests)}");
 
 				using (performanceTracker = new PerformanceTracker(performanceTracker))
 				{
 					var destinationVsgs = connectionRequests.Select(x => x.Destination).Distinct().ToList();
 					CheckDestinationLocks(destinationVsgs, options, performanceTracker);
 
+					var takeContexts = ConvertConnectionRequests(connectionRequests, performanceTracker);
+
 					PrepareData(takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					WaitUntilAllConnected(takeContexts, performanceTracker, options);
+
+					_api.Logger?.Information("Take finished successfully.");
+
+					results = GenerateResults(takeContexts);
 				}
 
-				_api.Logger?.Information("Take finished successfully.");
-
-				return GenerateResults(takeContexts);
+				return results;
 			}
 			catch (Exception ex)
 			{
 				_api.Logger?.Error("Take failed", ex);
+				throw;
+			}
+		}
+
+		public ICollection<EndpointDisconnectResult> Disconnect(ICollection<EndpointDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
+		{
+			if (disconnectRequests == null)
+			{
+				throw new ArgumentNullException(nameof(disconnectRequests));
+			}
+
+			if (performanceTracker == null)
+			{
+				throw new ArgumentNullException(nameof(performanceTracker));
+			}
+
+			try
+			{
+				ICollection<EndpointDisconnectResult> results;
+
+				_api.Logger?.Information($"Start disconnecting with {disconnectRequests.Count} requests:\n" +
+					$"{FormatDisconnectRequests(disconnectRequests)}");
+
+				using (performanceTracker = new PerformanceTracker(performanceTracker))
+				{
+					var takeContexts = disconnectRequests.Select(x => new EndpointDisconnectOperationContext(x)).ToList();
+
+					PrepareData(takeContexts, performanceTracker);
+					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
+					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
+					WaitUntilAllDisconnected(takeContexts, performanceTracker, options);
+
+					results = GenerateResults(takeContexts);
+				}
+
+				_api.Logger?.Information("Disconnecting finished successfully.");
+				return results;
+			}
+			catch (Exception ex)
+			{
+				_api.Logger?.Error("Disconnecting failed", ex);
 				throw;
 			}
 		}
@@ -77,26 +165,34 @@
 				throw new ArgumentNullException(nameof(disconnectRequests));
 			}
 
+			if (performanceTracker == null)
+			{
+				throw new ArgumentNullException(nameof(performanceTracker));
+			}
+
 			try
 			{
-				_api.Logger?.Information($"Start disconnecting with {disconnectRequests.Count} requests:\n{FormatDisconnectRequests(disconnectRequests)}");
+				ICollection<VsgDisconnectResult> results;
 
-				var takeContexts = ConvertDisconnectRequests(disconnectRequests, performanceTracker);
+				_api.Logger?.Information($"Start disconnecting with {disconnectRequests.Count} requests:\n" +
+					$"{FormatDisconnectRequests(disconnectRequests)}");
 
 				using (performanceTracker = new PerformanceTracker(performanceTracker))
 				{
 					var destinationVsgs = disconnectRequests.Select(x => x.Destination).Distinct().ToList();
 					CheckDestinationLocks(destinationVsgs, options, performanceTracker);
 
+					var takeContexts = ConvertDisconnectRequests(disconnectRequests, performanceTracker);
 					PrepareData(takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					WaitUntilAllDisconnected(takeContexts, performanceTracker, options);
+
+					results = GenerateResults(takeContexts);
 				}
 
 				_api.Logger?.Information("Disconnecting finished successfully.");
-
-				return GenerateResults(takeContexts);
+				return results;
 			}
 			catch (Exception ex)
 			{
@@ -105,12 +201,12 @@
 			}
 		}
 
-		private ICollection<ConnectOperationContext> ConvertConnectionRequests(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
+		private ICollection<VsgConnectOperationContext> ConvertConnectionRequests(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				// create connection requests between endpoints
-				var connectionRequests = new List<ConnectOperationContext>();
+				var connectionRequests = new List<VsgConnectOperationContext>();
 
 				// load all endpoints
 				var endpointIds = vsgConnectionRequests
@@ -158,7 +254,7 @@
 							throw new InvalidOperationException($"Couldn't find destination endpoint for level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
 						}
 
-						var request = new ConnectOperationContext(vsgConnectionRequest, sourceEndpoint, destinationEndpoint);
+						var request = new VsgConnectOperationContext(vsgConnectionRequest, sourceEndpoint, destinationEndpoint);
 
 						connectionRequests.Add(request);
 					}
@@ -168,12 +264,12 @@
 			}
 		}
 
-		private ICollection<DisconnectOperationContext> ConvertDisconnectRequests(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
+		private ICollection<VsgDisconnectOperationContext> ConvertDisconnectRequests(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				// create disconnect requests
-				var disconnectRequests = new List<DisconnectOperationContext>();
+				var disconnectRequests = new List<VsgDisconnectOperationContext>();
 
 				// load all endpoints
 				var endpointIds = vsgDisconnectRequests
@@ -201,7 +297,7 @@
 							throw new InvalidOperationException($"Couldn't find endpoint with ID '{levelEndpoint.Endpoint.ID}'");
 						}
 
-						var request = new DisconnectOperationContext(vsgDisconnectRequest, destinationEndpoint);
+						var request = new VsgDisconnectOperationContext(vsgDisconnectRequest, destinationEndpoint);
 
 						disconnectRequests.Add(request);
 					}
@@ -465,153 +561,136 @@
 			}
 		}
 
-		private void WaitUntilAllConnected(ICollection<ConnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
+		private void WaitUntilAllConnected(IEnumerable<ConnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
 		{
-			if (options == null || options.WaitForCompletion == false)
-			{
-				// No need to wait
-				return;
-			}
-
 			var timeout = options?.Timeout ?? TimeSpan.FromSeconds(30);
 			_api.Logger?.Information($"Waiting for all connections to be established... ({timeout.TotalSeconds} seconds)");
 
 			using (new PerformanceTracker(performanceTracker))
 			using (var cts = new CancellationTokenSource(timeout))
-			using (var semaphore = new SemaphoreSlim(100))
 			{
 				var connectionMonitor = options?.ConnectionMonitor ??
 					StaticMediaOpsLiveCache.GetOrCreate(_api.Connection).ConnectionMonitor;
 
 				var tasks = takeContexts
-					.Select(async takeContext =>
-					{
-						try
-						{
-							await semaphore.WaitAsync(cts.Token).ConfigureAwait(false);
-							return await WaitUntilConnectedAsync(takeContext, connectionMonitor, cts.Token).ConfigureAwait(false);
-						}
-						catch (Exception)
-						{
-							return false;
-						}
-						finally
-						{
-							takeContext.SetCompleted();
-							semaphore.Release();
-						}
-					});
+					.Select(takeContext => WaitUntilConnectedAsync(takeContext, connectionMonitor, cts.Token))
+					.ToArray();
 
-				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
-
-				var failedRequests = takeContexts.Select(x => x.ConnectionRequest)
-					.Zip(results, (request, result) => new { request, result })
-					.Where(x => !x.result)
-					.Select(x => x.request)
-					.Distinct()
-					.ToList();
-
-				if (failedRequests.Count > 0)
+				if (options?.WaitForCompletion == true)
 				{
-					throw new ConnectFailedException(
-						$"Failed to connect {failedRequests.Count} connections within the specified timeout of {timeout.TotalSeconds} seconds.",
-						failedRequests);
+					Task.WaitAll(tasks);
+
+					var failedRequests = takeContexts.Where(x => !x.IsSuccessful).Select(x => x.ConnectionRequest).ToList();
+
+					if (failedRequests.Count > 0)
+					{
+						throw new ConnectFailedException(
+							$"Failed to connect {failedRequests.Count} connections within the specified timeout of {timeout.TotalSeconds} seconds.",
+							failedRequests);
+					}
 				}
 			}
 		}
 
 		private async Task<bool> WaitUntilConnectedAsync(ConnectOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
 		{
+			bool result;
+
 			try
 			{
-				return await connectionMonitor.WaitUntilConnectedAsync(takeContext.Source, takeContext.Destination, cancellationToken)
+				result = await connectionMonitor.WaitUntilConnectedAsync(takeContext.Source, takeContext.Destination, cancellationToken)
 					.ConfigureAwait(false);
 			}
-			catch (OperationCanceledException)
+			catch (Exception)
 			{
-				return false;
+				result = false;
 			}
+
+			takeContext.IsSuccessful = result;
+			takeContext.SetCompleted();
+
+			return result;
 		}
 
-		private void WaitUntilAllDisconnected(ICollection<DisconnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
+		private void WaitUntilAllDisconnected(IEnumerable<DisconnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
 		{
-			if (options == null || options.WaitForCompletion == false)
-			{
-				// No need to wait
-				return;
-			}
-
 			var timeout = options?.Timeout ?? TimeSpan.FromSeconds(30);
 			_api.Logger?.Information($"Waiting for all disconnections to complete... ({timeout.TotalSeconds} seconds)");
 
 			using (new PerformanceTracker(performanceTracker))
 			using (var cts = new CancellationTokenSource(timeout))
-			using (var semaphore = new SemaphoreSlim(100))
 			{
 				var connectionMonitor = options?.ConnectionMonitor ??
 					StaticMediaOpsLiveCache.GetOrCreate(_api.Connection).ConnectionMonitor;
 
 				var tasks = takeContexts
-					.Select(async takeContext =>
-					{
-						try
-						{
-							await semaphore.WaitAsync(cts.Token).ConfigureAwait(false);
-							return await WaitUntilDisconnectedAsync(takeContext, connectionMonitor, cts.Token).ConfigureAwait(false);
-						}
-						catch (Exception)
-						{
-							return false;
-						}
-						finally
-						{
-							takeContext.SetCompleted();
-							semaphore.Release();
-						}
-					});
+					.Select(takeContext => WaitUntilDisconnectedAsync(takeContext, connectionMonitor, cts.Token))
+					.ToArray();
 
-				var results = Task.WhenAll(tasks).GetAwaiter().GetResult();
-
-				var failedRequests = takeContexts.Select(x => x.DisconnectRequest)
-					.Zip(results, (request, result) => new { request, result })
-					.Where(x => !x.result)
-					.Select(x => x.request)
-					.Distinct()
-					.ToList();
-
-				if (failedRequests.Count > 0)
+				if (options?.WaitForCompletion == true)
 				{
-					throw new DisconnectFailedException(
-						$"Failed to disconnect {failedRequests.Count} connections within the specified timeout of {timeout.TotalSeconds} seconds.",
-						failedRequests);
+					Task.WaitAll(tasks);
+
+					var failedRequests = takeContexts.Where(x => !x.IsSuccessful).Select(x => x.DisconnectRequest).ToList();
+
+					if (failedRequests.Count > 0)
+					{
+						throw new DisconnectFailedException(
+							$"Failed to disconnect {failedRequests.Count} connections within the specified timeout of {timeout.TotalSeconds} seconds.",
+							failedRequests);
+					}
 				}
 			}
 		}
 
 		private async Task<bool> WaitUntilDisconnectedAsync(DisconnectOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
 		{
+			bool result;
+
 			try
 			{
-				return await connectionMonitor.WaitUntilDisconnectedAsync(takeContext.Destination, cancellationToken)
+				result = await connectionMonitor.WaitUntilDisconnectedAsync(takeContext.Destination, cancellationToken)
 					.ConfigureAwait(false);
 			}
-			catch (OperationCanceledException)
+			catch (Exception)
 			{
-				return false;
+				result = false;
 			}
+
+			takeContext.IsSuccessful = result;
+			takeContext.SetCompleted();
+
+			return result;
 		}
 
-		private ICollection<VsgConnectionResult> GenerateResults(ICollection<ConnectOperationContext> takeContexts)
+		private ICollection<EndpointConnectionResult> GenerateResults(IEnumerable<EndpointConnectOperationContext> takeContexts)
+		{
+			var results = new List<EndpointConnectionResult>();
+
+			foreach (var context in takeContexts)
+			{
+				var result = new EndpointConnectionResult(context.EndpointConnectionRequest)
+				{
+					IsSuccessful = context.IsSuccessful,
+					CompletionTask = context.CompletionTask,
+				};
+
+				results.Add(result);
+			}
+
+			return results;
+		}
+
+		private ICollection<VsgConnectionResult> GenerateResults(IEnumerable<VsgConnectOperationContext> takeContexts)
 		{
 			var results = new List<VsgConnectionResult>();
 
-			foreach (var group in takeContexts.GroupBy(x => x.ConnectionRequest))
+			foreach (var group in takeContexts.GroupBy(x => x.VsgConnectionRequest))
 			{
-				var completionTask = Task.WhenAll(group.Select(x => x.CompletionTask));
-
 				var result = new VsgConnectionResult(group.Key)
 				{
-					CompletionTask = completionTask,
+					IsSuccessful = group.All(x => x.IsSuccessful),
+					CompletionTask = Task.WhenAll(group.Select(x => x.CompletionTask)),
 				};
 
 				results.Add(result);
@@ -620,17 +699,34 @@
 			return results;
 		}
 
-		private ICollection<VsgDisconnectResult> GenerateResults(ICollection<DisconnectOperationContext> takeContexts)
+		private ICollection<EndpointDisconnectResult> GenerateResults(IEnumerable<EndpointDisconnectOperationContext> takeContexts)
+		{
+			var results = new List<EndpointDisconnectResult>();
+
+			foreach (var context in takeContexts)
+			{
+				var result = new EndpointDisconnectResult(context.EndpointDisconnectRequest)
+				{
+					IsSuccessful = context.IsSuccessful,
+					CompletionTask = context.CompletionTask,
+				};
+
+				results.Add(result);
+			}
+
+			return results;
+		}
+
+		private ICollection<VsgDisconnectResult> GenerateResults(IEnumerable<VsgDisconnectOperationContext> takeContexts)
 		{
 			var results = new List<VsgDisconnectResult>();
 
-			foreach (var group in takeContexts.GroupBy(x => x.DisconnectRequest))
+			foreach (var group in takeContexts.GroupBy(x => x.VsgDisconnectRequest))
 			{
-				var completionTask = Task.WhenAll(group.Select(x => x.CompletionTask));
-
 				var result = new VsgDisconnectResult(group.Key)
 				{
-					CompletionTask = completionTask,
+					IsSuccessful = group.All(x => x.IsSuccessful),
+					CompletionTask = Task.WhenAll(group.Select(x => x.CompletionTask)),
 				};
 
 				results.Add(result);
@@ -639,7 +735,15 @@
 			return results;
 		}
 
-		private static string FormatConnectionRequests(ICollection<VsgConnectionRequest> requests)
+		private static string FormatConnectionRequests(IEnumerable<EndpointConnectionRequest> requests)
+		{
+			return String.Join(
+				Environment.NewLine,
+				requests
+					.Select(r => $" - {r.Source.Name} [{r.Source.ID}] -> {r.Destination.Name} [{r.Destination.ID}]"));
+		}
+
+		private static string FormatConnectionRequests(IEnumerable<VsgConnectionRequest> requests)
 		{
 			return String.Join(
 				Environment.NewLine,
@@ -654,7 +758,15 @@
 					}));
 		}
 
-		private static string FormatDisconnectRequests(ICollection<VsgDisconnectRequest> requests)
+		private static string FormatDisconnectRequests(IEnumerable<EndpointDisconnectRequest> requests)
+		{
+			return String.Join(
+				Environment.NewLine,
+				requests
+					.Select(r => $" - {r.Destination.Name} [{r.Destination.ID}]"));
+		}
+
+		private static string FormatDisconnectRequests(IEnumerable<VsgDisconnectRequest> requests)
 		{
 			return String.Join(
 				Environment.NewLine,
