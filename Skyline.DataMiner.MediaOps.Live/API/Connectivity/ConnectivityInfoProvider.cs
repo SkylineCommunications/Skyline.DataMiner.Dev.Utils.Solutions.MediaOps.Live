@@ -16,6 +16,9 @@
 	{
 		private readonly object _lock = new();
 
+		private readonly Dictionary<ApiObjectReference<Endpoint>, EndpointConnectivity> _endpointConnectivityCache = new();
+		private readonly Dictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroupConnectivity> _vsgConnectivityCache = new();
+
 		private VirtualSignalGroupEndpointsObserver _vsgObserver;
 		private VirtualSignalGroupEndpointsCache _vsgCache;
 		private bool _ownsVsgObserver;
@@ -141,18 +144,13 @@
 
 			lock (_lock)
 			{
-				if (endpoint.IsDestination)
+				if (!_endpointConnectivityCache.TryGetValue(endpoint, out var connectivity))
 				{
-					return GetConnectivityForDestination(endpoint);
+					connectivity = BuildEndpointConnectivity(endpoint);
+					_endpointConnectivityCache[endpoint] = connectivity;
 				}
-				else if (endpoint.IsSource)
-				{
-					return GetConnectivityForSource(endpoint);
-				}
-				else
-				{
-					throw new InvalidOperationException($"Endpoint has invalid role: {endpoint.Role}");
-				}
+
+				return connectivity;
 			}
 		}
 
@@ -183,60 +181,13 @@
 
 			lock (_lock)
 			{
-				var levelsConnectivity = new Dictionary<Level, EndpointConnectivity>();
-				var connectedSources = new HashSet<VirtualSignalGroup>();
-				var pendingConnectedSources = new HashSet<VirtualSignalGroup>();
-				var connectedDestinations = new HashSet<VirtualSignalGroup>();
-				var pendingConnectedDestinations = new HashSet<VirtualSignalGroup>();
-
-				foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
+				if (!_vsgConnectivityCache.TryGetValue(virtualSignalGroup, out var connectivity))
 				{
-					if (!_vsgCache.TryGetEndpoint(levelEndpoint.Endpoint, out var endpoint))
-					{
-						throw new InvalidOperationException($"Endpoint {levelEndpoint.Endpoint.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
-					}
-
-					if (!_levelsCache.TryGetLevel(levelEndpoint.Level, out var level))
-					{
-						throw new InvalidOperationException($"Level {levelEndpoint.Level.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
-					}
-
-					var connectivity = GetConnectivity(endpoint);
-
-					levelsConnectivity[level] = connectivity;
-
-					if (connectivity.ConnectedSource != null)
-					{
-						var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(connectivity.ConnectedSource);
-						connectedSources.UnionWith(virtualSignalGroups);
-					}
-
-					if (connectivity.PendingConnectedSource != null)
-					{
-						var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(connectivity.PendingConnectedSource);
-						pendingConnectedSources.UnionWith(virtualSignalGroups);
-					}
-
-					if (connectivity.ConnectedDestinations.Any())
-					{
-						var virtualSignalGroups = connectivity.ConnectedDestinations.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x));
-						connectedDestinations.UnionWith(virtualSignalGroups);
-					}
-
-					if (connectivity.PendingConnectedDestinations.Any())
-					{
-						var virtualSignalGroups = connectivity.PendingConnectedDestinations.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x));
-						pendingConnectedDestinations.UnionWith(virtualSignalGroups);
-					}
+					connectivity = BuildVirtualSignalGroupConnectivity(virtualSignalGroup);
+					_vsgConnectivityCache[virtualSignalGroup] = connectivity;
 				}
 
-				return new VirtualSignalGroupConnectivity(
-					virtualSignalGroup,
-					levelsConnectivity,
-					connectedSources,
-					pendingConnectedSources,
-					connectedDestinations,
-					pendingConnectedDestinations);
+				return connectivity;
 			}
 		}
 
@@ -425,6 +376,9 @@
 
 				if (_ownsVsgObserver)
 					_vsgObserver.LoadInitialData();
+
+				InitializeEndpointConnectivityCache();
+				InitializeVsgConnectivityCache();
 			}
 		}
 
@@ -536,7 +490,51 @@
 			ConnectionsUpdated?.Invoke(this, eventArgs);
 		}
 
-		private EndpointConnectivity GetConnectivityForDestination(Endpoint endpoint)
+		private void InitializeEndpointConnectivityCache()
+		{
+			lock (_lock)
+			{
+				_endpointConnectivityCache.Clear();
+
+				foreach (var endpoint in _vsgCache.Endpoints.Values)
+				{
+					var connectivity = BuildEndpointConnectivity(endpoint);
+					_endpointConnectivityCache[endpoint] = connectivity;
+				}
+			}
+		}
+
+		private void InitializeVsgConnectivityCache()
+		{
+			lock (_lock)
+			{
+				_vsgConnectivityCache.Clear();
+
+				foreach (var vsg in _vsgCache.VirtualSignalGroups.Values)
+				{
+					var connectivity = BuildVirtualSignalGroupConnectivity(vsg);
+					_vsgConnectivityCache[vsg] = connectivity;
+				}
+			}
+		}
+
+		private EndpointConnectivity BuildEndpointConnectivity(Endpoint endpoint)
+		{
+			if (endpoint.IsDestination)
+			{
+				return BuildEndpointConnectivityForDestination(endpoint);
+			}
+			else if (endpoint.IsSource)
+			{
+				return BuildEndpointConnectivityForSource(endpoint);
+			}
+			else
+			{
+				throw new InvalidOperationException($"Endpoint has invalid role: {endpoint.Role}");
+			}
+		}
+
+		private EndpointConnectivity BuildEndpointConnectivityForDestination(Endpoint endpoint)
 		{
 			if (endpoint == null)
 			{
@@ -603,7 +601,7 @@
 			}
 		}
 
-		private EndpointConnectivity GetConnectivityForSource(Endpoint endpoint)
+		private EndpointConnectivity BuildEndpointConnectivityForSource(Endpoint endpoint)
 		{
 			if (endpoint == null)
 			{
@@ -669,6 +667,64 @@
 					virtualSignalGroups,
 					destinationConnections);
 			}
+		}
+
+		private VirtualSignalGroupConnectivity BuildVirtualSignalGroupConnectivity(VirtualSignalGroup virtualSignalGroup)
+		{
+			var levelsConnectivity = new Dictionary<Level, EndpointConnectivity>();
+			var connectedSources = new HashSet<VirtualSignalGroup>();
+			var pendingConnectedSources = new HashSet<VirtualSignalGroup>();
+			var connectedDestinations = new HashSet<VirtualSignalGroup>();
+			var pendingConnectedDestinations = new HashSet<VirtualSignalGroup>();
+
+			foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
+			{
+				if (!_vsgCache.TryGetEndpoint(levelEndpoint.Endpoint, out var endpoint))
+				{
+					throw new InvalidOperationException($"Endpoint {levelEndpoint.Endpoint.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
+				}
+
+				if (!_levelsCache.TryGetLevel(levelEndpoint.Level, out var level))
+				{
+					throw new InvalidOperationException($"Level {levelEndpoint.Level.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
+				}
+
+				var connectivity = GetConnectivity(endpoint);
+
+				levelsConnectivity[level] = connectivity;
+
+				if (connectivity.ConnectedSource != null)
+				{
+					var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(connectivity.ConnectedSource);
+					connectedSources.UnionWith(virtualSignalGroups);
+				}
+
+				if (connectivity.PendingConnectedSource != null)
+				{
+					var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(connectivity.PendingConnectedSource);
+					pendingConnectedSources.UnionWith(virtualSignalGroups);
+				}
+
+				if (connectivity.ConnectedDestinations.Any())
+				{
+					var virtualSignalGroups = connectivity.ConnectedDestinations.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x));
+					connectedDestinations.UnionWith(virtualSignalGroups);
+				}
+
+				if (connectivity.PendingConnectedDestinations.Any())
+				{
+					var virtualSignalGroups = connectivity.PendingConnectedDestinations.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x));
+					pendingConnectedDestinations.UnionWith(virtualSignalGroups);
+				}
+			}
+
+			return new VirtualSignalGroupConnectivity(
+				virtualSignalGroup,
+				levelsConnectivity,
+				connectedSources,
+				pendingConnectedSources,
+				connectedDestinations,
+				pendingConnectedDestinations);
 		}
 	}
 }
