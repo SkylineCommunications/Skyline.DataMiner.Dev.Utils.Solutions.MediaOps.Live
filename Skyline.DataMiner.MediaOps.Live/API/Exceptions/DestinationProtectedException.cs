@@ -45,8 +45,14 @@
 			string lockedBy,
 			string lockReason)
 		{
-			return $"Virtual Signal Group '{virtualSignalGroup?.Name}' is protected by '{lockedBy}'.\n" +
-				$"Reason: '{lockReason}'";
+			var message = $"Virtual Signal Group '{virtualSignalGroup?.Name}' is protected by '{lockedBy}'.";
+
+			if (!String.IsNullOrEmpty(lockReason))
+			{
+				message += $"\nReason: '{lockReason}'";
+			}
+
+			return message;
 		}
 
 		public override string ToString()
