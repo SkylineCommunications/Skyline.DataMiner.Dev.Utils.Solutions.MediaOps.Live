@@ -46,7 +46,7 @@
 
 		public VirtualSignalGroupEndpointsObserver VirtualSignalGroupEndpointsObserver => _lazyVirtualSignalGroupsObserver.Value;
 
-		public VirtualSignalGroupEndpointsCache VirtualSignalGroupsCache => VirtualSignalGroupEndpointsObserver.Cache;
+		public VirtualSignalGroupEndpointsCache VirtualSignalGroupEndpointsCache => VirtualSignalGroupEndpointsObserver.Cache;
 
 		public LevelsObserver LevelsObserver => _lazyLevelsObserver.Value;
 

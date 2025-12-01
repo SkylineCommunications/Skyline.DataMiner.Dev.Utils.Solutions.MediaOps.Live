@@ -51,8 +51,8 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
         public Skyline.DataMiner.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider LiteConnectivityInfoProvider { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Caching.TransportTypesCache TransportTypesCache { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Subscriptions.TransportTypesObserver TransportTypesObserver { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupEndpointsCache VirtualSignalGroupEndpointsCache { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Subscriptions.VirtualSignalGroupEndpointsObserver VirtualSignalGroupEndpointsObserver { get; }
-        public Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupEndpointsCache VirtualSignalGroupsCache { get; }
         public void Dispose() { }
         public static Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache Get() { }
         public static Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetOrCreate(Skyline.DataMiner.Net.IConnection baseConnection) { }
