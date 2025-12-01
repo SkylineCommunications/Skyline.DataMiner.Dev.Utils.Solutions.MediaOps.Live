@@ -313,7 +313,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 
 			using var observer = new VirtualSignalGroupEndpointsObserver(api);
 
-			// Do NOT subscribe
+			//// Do NOT subscribe
 
 			var receivedEvents = new List<ApiObjectsChangedEvent<VirtualSignalGroup>>();
 			observer.VirtualSignalGroupsChanged += (sender, e) => receivedEvents.Add(e);

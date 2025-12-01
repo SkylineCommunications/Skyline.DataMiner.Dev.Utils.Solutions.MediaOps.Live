@@ -24,7 +24,7 @@
 			DateTimeOffset lockTime,
 			string lockedBy,
 			string lockReason)
-			: base(GenerateMessage(virtualSignalGroup, lockTime, lockedBy, lockReason))
+			: base(GenerateMessage(virtualSignalGroup, lockedBy, lockReason))
 		{
 			VirtualSignalGroup = virtualSignalGroup;
 			LockTime = lockTime;
@@ -42,7 +42,6 @@
 
 		private static string GenerateMessage(
 			VirtualSignalGroup virtualSignalGroup,
-			DateTimeOffset lockTime,
 			string lockedBy,
 			string lockReason)
 		{

@@ -7,11 +7,11 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 
-	internal class TakeOperationContextBase
+	internal abstract class TakeOperationContext
 	{
 		private readonly TaskCompletionSource<bool> _taskCompletionSource = new TaskCompletionSource<bool>();
 
-		public TakeOperationContextBase(Endpoint destination)
+		protected TakeOperationContext(Endpoint destination)
 		{
 			Destination = destination ?? throw new ArgumentNullException(nameof(destination));
 		}

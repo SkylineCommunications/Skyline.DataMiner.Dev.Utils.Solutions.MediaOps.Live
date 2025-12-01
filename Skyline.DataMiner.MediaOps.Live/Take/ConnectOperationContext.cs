@@ -4,9 +4,9 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	internal abstract class ConnectOperationContext : TakeOperationContextBase
+	internal abstract class ConnectOperationContext : TakeOperationContext
 	{
-		public ConnectOperationContext(ConnectionRequest connectRequest, Endpoint source, Endpoint destination)
+		protected ConnectOperationContext(ConnectionRequest connectRequest, Endpoint source, Endpoint destination)
 			: base(destination)
 		{
 			ConnectionRequest = connectRequest ?? throw new ArgumentNullException(nameof(connectRequest));

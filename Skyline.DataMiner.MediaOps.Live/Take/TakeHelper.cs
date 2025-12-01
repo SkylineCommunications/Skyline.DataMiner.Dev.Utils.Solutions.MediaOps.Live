@@ -314,7 +314,7 @@
 				return;
 			}
 
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (new PerformanceTracker(performanceTracker))
 			{
 				var dict = destinationVsgs.SafeToDictionary(x => x.Reference);
 
@@ -338,7 +338,7 @@
 			}
 		}
 
-		private void PrepareData(IEnumerable<TakeOperationContextBase> takeContexts, PerformanceTracker performanceTracker)
+		private void PrepareData(IEnumerable<TakeOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -362,7 +362,7 @@
 			}
 		}
 
-		private void GetDestinationElements(IDms dms, IEnumerable<TakeOperationContextBase> connectionContexts, PerformanceTracker performanceTracker)
+		private void GetDestinationElements(IDms dms, IEnumerable<TakeOperationContext> connectionContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -389,7 +389,7 @@
 			}
 		}
 
-		private void GetMediationElements(IEnumerable<TakeOperationContextBase> takeContexts, PerformanceTracker performanceTracker)
+		private void GetMediationElements(IEnumerable<TakeOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -415,7 +415,7 @@
 			}
 		}
 
-		private void FindConnectionHandlerScripts(IEnumerable<TakeOperationContextBase> takeContexts, PerformanceTracker performanceTracker)
+		private void FindConnectionHandlerScripts(IEnumerable<TakeOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -434,7 +434,7 @@
 			}
 		}
 
-		private void NotifyPendingConnectionActions(ConnectionHandlerScriptAction action, IEnumerable<TakeOperationContextBase> takeContexts, PerformanceTracker performanceTracker)
+		private void NotifyPendingConnectionActions(ConnectionHandlerScriptAction action, IEnumerable<TakeOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -508,7 +508,7 @@
 			}
 		}
 
-		private void ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction action, IEnumerable<TakeOperationContextBase> takeContexts, PerformanceTracker performanceTracker)
+		private void ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction action, IEnumerable<TakeOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{

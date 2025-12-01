@@ -5,7 +5,7 @@
 
 	public abstract class ConnectionResult
 	{
-		public ConnectionResult(ConnectionRequest request)
+		protected ConnectionResult(ConnectionRequest request)
 		{
 			ConnectionRequest = request ?? throw new ArgumentNullException(nameof(request));
 		}

@@ -4,9 +4,9 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	internal abstract class DisconnectOperationContext : TakeOperationContextBase
+	internal abstract class DisconnectOperationContext : TakeOperationContext
 	{
-		public DisconnectOperationContext(DisconnectRequest disconnectRequest, Endpoint destination)
+		protected DisconnectOperationContext(DisconnectRequest disconnectRequest, Endpoint destination)
 			: base(destination)
 		{
 			DisconnectRequest = disconnectRequest ?? throw new ArgumentNullException(nameof(disconnectRequest));

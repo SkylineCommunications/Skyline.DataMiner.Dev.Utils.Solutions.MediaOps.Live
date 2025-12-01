@@ -5,7 +5,7 @@
 
 	public abstract class DisconnectResult
 	{
-		public DisconnectResult(DisconnectRequest request)
+		protected DisconnectResult(DisconnectRequest request)
 		{
 			DisconnectRequest = request ?? throw new ArgumentNullException(nameof(request));
 		}

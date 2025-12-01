@@ -1521,13 +1521,14 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
 {
     public abstract class ConnectionRequest
     {
-        public ConnectionRequest() { }
+        protected ConnectionRequest() { }
     }
     public abstract class ConnectionResult
     {
-        public ConnectionResult(Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest request) { }
+        protected ConnectionResult(Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest request) { }
         public System.Threading.Tasks.Task CompletionTask { get; }
         public Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest ConnectionRequest { get; }
+        public bool IsSuccessful { get; }
     }
     public abstract class DisconnectRequest
     {
@@ -1536,9 +1537,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
     }
     public abstract class DisconnectResult
     {
-        public DisconnectResult(Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest request) { }
+        protected DisconnectResult(Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest request) { }
         public System.Threading.Tasks.Task CompletionTask { get; }
         public Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest DisconnectRequest { get; }
+        public bool IsSuccessful { get; }
     }
     public class EndpointConnectionRequest : Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest
     {
