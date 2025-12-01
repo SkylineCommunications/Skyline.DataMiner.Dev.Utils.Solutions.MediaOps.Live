@@ -10,6 +10,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.Automation.API;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Logging;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Tools;
 
 	public static class Extensions
 	{
@@ -19,9 +20,6 @@
 			{
 				throw new ArgumentNullException(nameof(engine));
 			}
-
-			// Ensure the cache is initialized with Engine.SLNetRaw
-			_ = StaticMediaOpsLiveCache.GetOrCreate(Engine.SLNetRaw);
 
 			var api = new EngineMediaOpsLiveApi(engine);
 			api.SetLogger(new EngineLogger(engine));
@@ -36,7 +34,7 @@
 				throw new ArgumentNullException(nameof(engine));
 			}
 
-			return StaticMediaOpsLiveCache.GetOrCreate(Engine.SLNetRaw);
+			return StaticMediaOpsLiveCache.GetOrCreate(StaticEngineConnectionProvider.GetConnection);
 		}
 
 		public static IList<T> ReadScriptParamListFromApp<T>(this IEngine engine, string name)
