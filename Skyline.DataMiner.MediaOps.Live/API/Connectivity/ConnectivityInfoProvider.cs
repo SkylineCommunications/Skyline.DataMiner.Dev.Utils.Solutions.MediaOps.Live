@@ -55,7 +55,7 @@
 		{
 			if (endpoint == ApiObjectReference<Endpoint>.Empty)
 			{
-				throw new ArgumentNullException(nameof(endpoint));
+				return false;
 			}
 
 			lock (_lock)
@@ -66,14 +66,9 @@
 
 		public bool IsConnected(ApiObjectReference<Endpoint> source, ApiObjectReference<Endpoint> destination)
 		{
-			if (source == ApiObjectReference<Endpoint>.Empty)
+			if (source == ApiObjectReference<Endpoint>.Empty || destination == ApiObjectReference<Endpoint>.Empty)
 			{
-				throw new ArgumentNullException(nameof(source));
-			}
-
-			if (destination == ApiObjectReference<Endpoint>.Empty)
-			{
-				throw new ArgumentNullException(nameof(destination));
+				return false;
 			}
 
 			lock (_lock)
