@@ -11,21 +11,21 @@
 	{
 		public EndpointConnectivity(
 			Endpoint endpoint,
+			IReadOnlyCollection<VirtualSignalGroup> virtualSignalGroups,
 			bool isConnected,
 			bool isConnecting,
 			bool isDisconnecting,
 			Endpoint connectedSource,
 			Endpoint pendingConnectedSource,
-			IReadOnlyCollection<VirtualSignalGroup> virtualSignalGroups,
 			IReadOnlyCollection<EndpointConnection> destinationConnections)
 		{
 			Endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
+			VirtualSignalGroups = virtualSignalGroups ?? [];
 			IsConnected = isConnected;
 			IsConnecting = isConnecting;
 			IsDisconnecting = isDisconnecting;
 			ConnectedSource = connectedSource;
 			PendingConnectedSource = pendingConnectedSource;
-			VirtualSignalGroups = virtualSignalGroups ?? [];
 			DestinationConnections = destinationConnections ?? [];
 		}
 
