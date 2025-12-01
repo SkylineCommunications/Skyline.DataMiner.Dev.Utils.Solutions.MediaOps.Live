@@ -663,7 +663,7 @@
 			return result;
 		}
 
-		private ICollection<EndpointConnectionResult> GenerateResults(IEnumerable<EndpointConnectOperationContext> takeContexts)
+		private ICollection<EndpointConnectionResult> GenerateResults(ICollection<EndpointConnectOperationContext> takeContexts)
 		{
 			var results = new List<EndpointConnectionResult>();
 
@@ -681,7 +681,7 @@
 			return results;
 		}
 
-		private ICollection<VsgConnectionResult> GenerateResults(IEnumerable<VsgConnectOperationContext> takeContexts)
+		private ICollection<VsgConnectionResult> GenerateResults(ICollection<VsgConnectOperationContext> takeContexts)
 		{
 			var results = new List<VsgConnectionResult>();
 
@@ -699,7 +699,7 @@
 			return results;
 		}
 
-		private ICollection<EndpointDisconnectResult> GenerateResults(IEnumerable<EndpointDisconnectOperationContext> takeContexts)
+		private ICollection<EndpointDisconnectResult> GenerateResults(ICollection<EndpointDisconnectOperationContext> takeContexts)
 		{
 			var results = new List<EndpointDisconnectResult>();
 
@@ -717,7 +717,7 @@
 			return results;
 		}
 
-		private ICollection<VsgDisconnectResult> GenerateResults(IEnumerable<VsgDisconnectOperationContext> takeContexts)
+		private ICollection<VsgDisconnectResult> GenerateResults(ICollection<VsgDisconnectOperationContext> takeContexts)
 		{
 			var results = new List<VsgDisconnectResult>();
 
@@ -735,7 +735,7 @@
 			return results;
 		}
 
-		private static string FormatConnectionRequests(IEnumerable<EndpointConnectionRequest> requests)
+		private static string FormatConnectionRequests(ICollection<EndpointConnectionRequest> requests)
 		{
 			return String.Join(
 				Environment.NewLine,
@@ -743,7 +743,7 @@
 					.Select(r => $" - {r.Source.Name} [{r.Source.ID}] -> {r.Destination.Name} [{r.Destination.ID}]"));
 		}
 
-		private static string FormatConnectionRequests(IEnumerable<VsgConnectionRequest> requests)
+		private static string FormatConnectionRequests(ICollection<VsgConnectionRequest> requests)
 		{
 			return String.Join(
 				Environment.NewLine,
@@ -758,7 +758,7 @@
 					}));
 		}
 
-		private static string FormatDisconnectRequests(IEnumerable<EndpointDisconnectRequest> requests)
+		private static string FormatDisconnectRequests(ICollection<EndpointDisconnectRequest> requests)
 		{
 			return String.Join(
 				Environment.NewLine,
@@ -766,7 +766,7 @@
 					.Select(r => $" - {r.Destination.Name} [{r.Destination.ID}]"));
 		}
 
-		private static string FormatDisconnectRequests(IEnumerable<VsgDisconnectRequest> requests)
+		private static string FormatDisconnectRequests(ICollection<VsgDisconnectRequest> requests)
 		{
 			return String.Join(
 				Environment.NewLine,
