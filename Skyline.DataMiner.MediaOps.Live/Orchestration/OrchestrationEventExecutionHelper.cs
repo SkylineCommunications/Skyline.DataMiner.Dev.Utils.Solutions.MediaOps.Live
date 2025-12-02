@@ -338,7 +338,7 @@
 				takeHelper.Disconnect(
 					requests,
 					performanceTracker,
-					new() { WaitForCompletion = true, Timeout = _settings.Timeout, });
+					new() { WaitForCompletion = true, Timeout = _settings.Timeout, BypassLockValidation = true });
 			}
 		}
 
@@ -415,9 +415,7 @@
 				takeHelper.Take(
 					requests,
 					performanceTracker,
-					new() { WaitForCompletion = true, Timeout = _settings.Timeout });
-
-
+					new() { WaitForCompletion = true, Timeout = _settings.Timeout, BypassLockValidation = true });
 			}
 		}
 
