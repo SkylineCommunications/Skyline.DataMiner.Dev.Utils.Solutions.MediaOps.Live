@@ -372,6 +372,29 @@
 
 				if (_ownsVsgObserver)
 					_vsgObserver.LoadInitialData();
+
+				InitializeConnectivity();
+			}
+		}
+
+		private void InitializeConnectivity()
+		{
+			lock (_lock)
+			{
+				_endpointConnectivityCache.Clear();
+				_vsgConnectivityCache.Clear();
+
+				foreach (var endpoint in _vsgCache.Endpoints.Values)
+				{
+					var connectivity = BuildEndpointConnectivity(endpoint);
+					_endpointConnectivityCache[endpoint] = connectivity;
+				}
+
+				foreach (var vsg in _vsgCache.VirtualSignalGroups.Values)
+				{
+					var connectivity = BuildVirtualSignalGroupConnectivity(vsg);
+					_vsgConnectivityCache[vsg] = connectivity;
+				}
 			}
 		}
 
@@ -424,8 +447,7 @@
 				return;
 			}
 
-			var changedEndpoints = new HashSet<EndpointConnectivity>();
-			var changedVirtualSignalGroups = new HashSet<VirtualSignalGroupConnectivity>();
+			var context = new InvalidationContext();
 
 			lock (_lock)
 			{
@@ -433,13 +455,13 @@
 				{
 					if (_vsgCache.TryGetEndpoint(endpointRef, out var endpoint))
 					{
-						InvalidateConnectivity(endpoint, changedEndpoints, changedVirtualSignalGroups);
+						InvalidateConnectivity(endpoint, context);
 					}
 				}
 			}
 
 			// Invoke event outside lock to prevent potential deadlocks
-			RaiseConnectionsUpdated(changedEndpoints, changedVirtualSignalGroups);
+			RaiseConnectionsUpdated(context);
 		}
 
 		private void RaiseConnectionsUpdated(ICollection<ApiObjectReference<VirtualSignalGroup>> impactedVirtualSignalGroups)
@@ -449,8 +471,7 @@
 				return;
 			}
 
-			var changedEndpoints = new HashSet<EndpointConnectivity>();
-			var changedVirtualSignalGroups = new HashSet<VirtualSignalGroupConnectivity>();
+			var context = new InvalidationContext();
 
 			lock (_lock)
 			{
@@ -458,96 +479,110 @@
 				{
 					if (_vsgCache.TryGetVirtualSignalGroup(vsgRef, out var virtualSignalGroup))
 					{
-						InvalidateConnectivity(virtualSignalGroup, changedEndpoints, changedVirtualSignalGroups);
+						InvalidateConnectivity(virtualSignalGroup, context);
 					}
 				}
 			}
 
 			// Invoke event outside lock to prevent potential deadlocks
-			RaiseConnectionsUpdated(changedEndpoints, changedVirtualSignalGroups);
+			RaiseConnectionsUpdated(context);
 		}
 
-		private void RaiseConnectionsUpdated(IReadOnlyCollection<EndpointConnectivity> endpoints, IReadOnlyCollection<VirtualSignalGroupConnectivity> virtualSignalGroups)
+		private void RaiseConnectionsUpdated(InvalidationContext context)
 		{
-			// Ensure we are not holding the lock when raising events
-			// This could lead to deadlocks if event handlers try to call back into this class
-			Debug.Assert(!Monitor.IsEntered(_lock), "Lock must not be held when raising events to prevent deadlocks from event handlers calling back into this class");
-
-			if (endpoints.Count == 0 && virtualSignalGroups.Count == 0)
+			if (!context.HasChanges)
 			{
 				return;
 			}
 
+			// Ensure we are not holding the lock when raising events
+			// This could lead to deadlocks if event handlers try to call back into this class
+			Debug.Assert(!Monitor.IsEntered(_lock), "Lock must not be held when raising events to prevent deadlocks from event handlers calling back into this class");
+
 			var eventArgs = new ConnectionsUpdatedEvent(
-				endpoints,
-				virtualSignalGroups);
+				context.ChangedEndpoints,
+				context.ChangedVirtualSignalGroups);
 
 			ConnectionsUpdated?.Invoke(this, eventArgs);
 		}
 
-		private void InvalidateConnectivity(Endpoint endpoint, ISet<EndpointConnectivity> changedEndpoints, ISet<VirtualSignalGroupConnectivity> changedVirtualSignalGroups)
+		private void InvalidateConnectivity(Endpoint endpoint, InvalidationContext context)
 		{
+			if (!context.VisitedEndpoints.Add(endpoint))
+			{
+				return;
+			}
+
 			var newConnectivity = BuildEndpointConnectivity(endpoint);
 
-			if (!_endpointConnectivityCache.TryGetValue(endpoint, out var existingConnectivity) ||
-				existingConnectivity != newConnectivity)
+			if (_endpointConnectivityCache.TryGetValue(endpoint, out var oldConnectivity) &&
+				oldConnectivity == newConnectivity)
 			{
-				// Add to changed endpoints
-				changedEndpoints.Add(newConnectivity);
+				// No changes, exit early
+				return;
+			}
 
-				// Update cache
-				_endpointConnectivityCache[endpoint] = newConnectivity;
+			// Update cache and add to list
+			_endpointConnectivityCache[endpoint] = newConnectivity;
+			context.ChangedEndpoints.Add(newConnectivity);
 
-				// Also invalidate all endpoints that are linked to this endpoint
-				var linkedEndpoints = GetLinkedEndpoints(existingConnectivity)
-					.Union(GetLinkedEndpoints(newConnectivity))
-					.Where(x => x != endpoint);
+			// Also invalidate all endpoints that are linked to this endpoint
+			var linkedEndpoints = GetLinkedEndpoints(oldConnectivity)
+				.Union(GetLinkedEndpoints(newConnectivity))
+				.Where(x => x != endpoint);
 
-				foreach (var linkedEndpoint in linkedEndpoints)
-				{
-					InvalidateConnectivity(linkedEndpoint, changedEndpoints, changedVirtualSignalGroups);
-				}
+			foreach (var linkedEndpoint in linkedEndpoints)
+			{
+				InvalidateConnectivity(linkedEndpoint, context);
+			}
 
-				// Invalidate all virtual signal groups that contain this endpoint
-				var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(endpoint);
-				foreach (var vsg in virtualSignalGroups)
-				{
-					InvalidateConnectivity(vsg, changedEndpoints, changedVirtualSignalGroups);
-				}
+			// Invalidate all virtual signal groups that contain this endpoint
+			var virtualSignalGroups = GetLinkedVirtualSignalGroups(oldConnectivity)
+				.Union(GetLinkedVirtualSignalGroups(newConnectivity));
+
+			foreach (var vsg in virtualSignalGroups)
+			{
+				InvalidateConnectivity(vsg, context);
 			}
 		}
 
-		private void InvalidateConnectivity(VirtualSignalGroup virtualSignalGroup, ISet<EndpointConnectivity> changedEndpoints, ISet<VirtualSignalGroupConnectivity> changedVirtualSignalGroups)
+		private void InvalidateConnectivity(VirtualSignalGroup virtualSignalGroup, InvalidationContext context)
 		{
+			if (!context.VisitedVirtualSignalGroups.Add(virtualSignalGroup))
+			{
+				return;
+			}
+
 			var newConnectivity = BuildVirtualSignalGroupConnectivity(virtualSignalGroup);
 
-			if (!_vsgConnectivityCache.TryGetValue(virtualSignalGroup, out var existingConnectivity) ||
-				existingConnectivity != newConnectivity)
+			if (_vsgConnectivityCache.TryGetValue(virtualSignalGroup, out var oldConnectivity) &&
+				oldConnectivity == newConnectivity)
 			{
-				// Add to changed virtual signal groups
-				changedVirtualSignalGroups.Add(newConnectivity);
+				// No changes, exit early
+				return;
+			}
 
-				// Update cache
-				_vsgConnectivityCache[virtualSignalGroup] = newConnectivity;
+			// Update cache and add to list
+			_vsgConnectivityCache[virtualSignalGroup] = newConnectivity;
+			context.ChangedVirtualSignalGroups.Add(newConnectivity);
 
-				// Also invalidate all endpoints in this virtual signal group
-				foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
-				{
-					if (_vsgCache.TryGetEndpoint(levelEndpoint.Endpoint, out var endpoint))
-					{
-						InvalidateConnectivity(endpoint, changedEndpoints, changedVirtualSignalGroups);
-					}
-				}
+			// Also invalidate all endpoints in this virtual signal group
+			var linkedEndpoints = GetLinkedEndpoints(oldConnectivity)
+				.Union(GetLinkedEndpoints(newConnectivity));
 
-				// Also invalidate all virtual signal groups that are linked to this virtual signal group
-				var linkedVirtualSignalGroups = GetLinkedVirtualSignalGroups(existingConnectivity)
-					.Union(GetLinkedVirtualSignalGroups(newConnectivity))
-					.Where(x => x != virtualSignalGroup);
+			foreach (var linkedEndpoint in linkedEndpoints)
+			{
+				InvalidateConnectivity(linkedEndpoint, context);
+			}
 
-				foreach (var linkedVsg in linkedVirtualSignalGroups)
-				{
-					InvalidateConnectivity(linkedVsg, changedEndpoints, changedVirtualSignalGroups);
-				}
+			// Also invalidate all virtual signal groups that are linked to this virtual signal group
+			var linkedVirtualSignalGroups = GetLinkedVirtualSignalGroups(oldConnectivity)
+				.Union(GetLinkedVirtualSignalGroups(newConnectivity))
+				.Where(x => x != virtualSignalGroup);
+
+			foreach (var linkedVsg in linkedVirtualSignalGroups)
+			{
+				InvalidateConnectivity(linkedVsg, context);
 			}
 		}
 
@@ -555,7 +590,7 @@
 		/// Gets all endpoints that are linked to the given connectivity.
 		/// Linked endpoints are those that are connected to or from the endpoint in the connectivity.
 		/// </summary>
-		private ICollection<Endpoint> GetLinkedEndpoints(EndpointConnectivity connectivity)
+		private IEnumerable<Endpoint> GetLinkedEndpoints(EndpointConnectivity connectivity)
 		{
 			if (connectivity == null)
 			{
@@ -579,11 +614,34 @@
 			return linkedEndpoints;
 		}
 
+		private IEnumerable<Endpoint> GetLinkedEndpoints(VirtualSignalGroupConnectivity connectivity)
+		{
+			if (connectivity == null)
+			{
+				return [];
+			}
+
+			return connectivity.Levels.Values.Select(x => x.Endpoint);
+		}
+
+		/// <summary>
+		/// Gets all virtual signal groups that are linked to the given connectivity.
+		/// </summary>
+		private IEnumerable<VirtualSignalGroup> GetLinkedVirtualSignalGroups(EndpointConnectivity connectivity)
+		{
+			if (connectivity == null)
+			{
+				return [];
+			}
+
+			return connectivity.VirtualSignalGroups;
+		}
+
 		/// <summary>
 		/// Gets all virtual signal groups that are linked to the given connectivity.
 		/// Linked virtual signal groups are those that are connected to or from the virtual signal group in the connectivity.
 		/// </summary>
-		private ICollection<VirtualSignalGroup> GetLinkedVirtualSignalGroups(VirtualSignalGroupConnectivity connectivity)
+		private IEnumerable<VirtualSignalGroup> GetLinkedVirtualSignalGroups(VirtualSignalGroupConnectivity connectivity)
 		{
 			if (connectivity == null)
 			{
@@ -753,23 +811,9 @@
 
 		private VirtualSignalGroupConnectivity BuildVirtualSignalGroupConnectivity(VirtualSignalGroup virtualSignalGroup)
 		{
-			if (virtualSignalGroup.IsSource)
-			{
-				return BuildVirtualSignalGroupConnectivityForSource(virtualSignalGroup);
-			}
-			else if (virtualSignalGroup.IsDestination)
-			{
-				return BuildVirtualSignalGroupConnectivityForDestination(virtualSignalGroup);
-			}
-			else
-			{
-				throw new InvalidOperationException($"Virtual signal group has invalid role: {virtualSignalGroup.Role}");
-			}
-		}
-
-		private VirtualSignalGroupConnectivity BuildVirtualSignalGroupConnectivityForSource(VirtualSignalGroup virtualSignalGroup)
-		{
 			var levelsConnectivity = new Dictionary<Level, EndpointConnectivity>();
+			var connectedSources = new HashSet<VirtualSignalGroup>();
+			var pendingConnectedSources = new HashSet<VirtualSignalGroup>();
 			var connectedDestinations = new HashSet<VirtualSignalGroup>();
 			var pendingConnectedDestinations = new HashSet<VirtualSignalGroup>();
 
@@ -785,45 +829,7 @@
 					throw new InvalidOperationException($"Level {levelEndpoint.Level.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
 				}
 
-				var connectivity = GetConnectivity(endpoint);
-
-				levelsConnectivity[level] = connectivity;
-
-				var connectedVsgs = connectivity.ConnectedDestinations.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x));
-				connectedDestinations.UnionWith(connectedVsgs);
-
-				var pendingVsgs = connectivity.PendingConnectedDestinations.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x));
-				pendingConnectedDestinations.UnionWith(pendingVsgs);
-			}
-
-			return new VirtualSignalGroupConnectivity(
-				virtualSignalGroup,
-				levelsConnectivity,
-				[],
-				[],
-				connectedDestinations,
-				pendingConnectedDestinations);
-		}
-
-		private VirtualSignalGroupConnectivity BuildVirtualSignalGroupConnectivityForDestination(VirtualSignalGroup virtualSignalGroup)
-		{
-			var levelsConnectivity = new Dictionary<Level, EndpointConnectivity>();
-			var connectedSources = new HashSet<VirtualSignalGroup>();
-			var pendingConnectedSources = new HashSet<VirtualSignalGroup>();
-
-			foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
-			{
-				if (!_vsgCache.TryGetEndpoint(levelEndpoint.Endpoint, out var endpoint))
-				{
-					throw new InvalidOperationException($"Endpoint {levelEndpoint.Endpoint.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
-				}
-
-				if (!_levelsCache.TryGetLevel(levelEndpoint.Level, out var level))
-				{
-					throw new InvalidOperationException($"Level {levelEndpoint.Level.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
-				}
-
-				var connectivity = GetConnectivity(endpoint);
+				var connectivity = BuildEndpointConnectivity(endpoint);
 
 				levelsConnectivity[level] = connectivity;
 
@@ -838,6 +844,12 @@
 					var virtualSignalGroups = _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(connectivity.PendingConnectedSource);
 					pendingConnectedSources.UnionWith(virtualSignalGroups);
 				}
+
+				var connectedVsgs = connectivity.ConnectedDestinations.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x));
+				connectedDestinations.UnionWith(connectedVsgs);
+
+				var pendingVsgs = connectivity.PendingConnectedDestinations.SelectMany(x => _vsgCache.GetVirtualSignalGroupsThatContainEndpoint(x));
+				pendingConnectedDestinations.UnionWith(pendingVsgs);
 			}
 
 			return new VirtualSignalGroupConnectivity(
@@ -845,8 +857,23 @@
 				levelsConnectivity,
 				connectedSources,
 				pendingConnectedSources,
-				[],
-				[]);
+				connectedDestinations,
+				pendingConnectedDestinations);
+		}
+
+		private sealed class InvalidationContext
+		{
+			public HashSet<EndpointConnectivity> ChangedEndpoints { get; } = new();
+
+			public HashSet<VirtualSignalGroupConnectivity> ChangedVirtualSignalGroups { get; } = new();
+
+			public HashSet<Endpoint> VisitedEndpoints { get; } = new();
+
+			public HashSet<VirtualSignalGroup> VisitedVirtualSignalGroups { get; } = new();
+
+			public bool HasChanges =>
+				ChangedEndpoints.Count > 0 ||
+				ChangedVirtualSignalGroups.Count > 0;
 		}
 	}
 }
