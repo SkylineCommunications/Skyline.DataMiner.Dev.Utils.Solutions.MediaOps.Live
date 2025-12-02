@@ -384,13 +384,13 @@
 				_endpointConnectivityCache.Clear();
 				_vsgConnectivityCache.Clear();
 
-				foreach (var endpoint in _vsgCache.Endpoints.Values)
+				foreach (var endpoint in _vsgCache.Endpoints.GetAllEndpoints())
 				{
 					var connectivity = BuildEndpointConnectivity(endpoint);
 					_endpointConnectivityCache[endpoint] = connectivity;
 				}
 
-				foreach (var vsg in _vsgCache.VirtualSignalGroups.Values)
+				foreach (var vsg in _vsgCache.VirtualSignalGroups.GetAllVirtualSignalGroups())
 				{
 					var connectivity = BuildVirtualSignalGroupConnectivity(vsg);
 					_vsgConnectivityCache[vsg] = connectivity;
