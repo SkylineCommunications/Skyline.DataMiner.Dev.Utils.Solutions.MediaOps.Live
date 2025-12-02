@@ -4,6 +4,7 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
@@ -73,6 +74,11 @@
 		public IDms GetDms()
 		{
 			return Connection.GetDms();
+		}
+
+		public virtual StaticMediaOpsLiveCache GetStaticCache()
+		{
+			return StaticMediaOpsLiveCache.GetOrCreate(Connection);
 		}
 
 		public virtual TakeHelper GetConnectionHandler()

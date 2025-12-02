@@ -569,8 +569,7 @@
 			using (new PerformanceTracker(performanceTracker))
 			using (var cts = new CancellationTokenSource(timeout))
 			{
-				var connectionMonitor = options?.ConnectionMonitor ??
-					StaticMediaOpsLiveCache.GetOrCreate(_api.Connection).ConnectionMonitor;
+				var connectionMonitor = options?.ConnectionMonitor ?? _api.GetStaticCache().ConnectionMonitor;
 
 				var tasks = takeContexts
 					.Select(takeContext => WaitUntilConnectedAsync(takeContext, connectionMonitor, cts.Token))
@@ -620,8 +619,7 @@
 			using (new PerformanceTracker(performanceTracker))
 			using (var cts = new CancellationTokenSource(timeout))
 			{
-				var connectionMonitor = options?.ConnectionMonitor ??
-					StaticMediaOpsLiveCache.GetOrCreate(_api.Connection).ConnectionMonitor;
+				var connectionMonitor = options?.ConnectionMonitor ?? _api.GetStaticCache().ConnectionMonitor;
 
 				var tasks = takeContexts
 					.Select(takeContext => WaitUntilDisconnectedAsync(takeContext, connectionMonitor, cts.Token))

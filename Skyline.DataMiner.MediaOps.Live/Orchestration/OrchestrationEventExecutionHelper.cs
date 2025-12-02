@@ -425,7 +425,8 @@
 							dstVirtualSignalGroup,
 							"Orchestration Engine",
 							$"Locked for job: {jobInfo.JobReference}",
-							$"{jobInfo.JobReference}"));
+							$"{jobInfo.JobReference}",
+							eventConfig.EventTime));
 					}
 				}
 

@@ -3,6 +3,16 @@
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.MediaOps.Live.GQI.Tests")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.MediaOps.Live.GQI.UnitTesting")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8", FrameworkDisplayName=".NET Framework 4.8")]
+namespace Skyline.DataMiner.MediaOps.Live.GQI.API
+{
+    public class GqiMediaOpsLiveApi : Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi
+    {
+        public GqiMediaOpsLiveApi(Skyline.DataMiner.Analytics.GenericInterface.GQIDMS gqiDms) { }
+        public GqiMediaOpsLiveApi(Skyline.DataMiner.Analytics.GenericInterface.GQIDMS gqiDms, Skyline.DataMiner.Net.IConnection connection) { }
+        public Skyline.DataMiner.Analytics.GenericInterface.GQIDMS GqiDms { get; }
+        public override Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetStaticCache() { }
+    }
+}
 namespace Skyline.DataMiner.MediaOps.Live.GQI
 {
     public static class Extensions

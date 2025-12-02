@@ -424,6 +424,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API
         public virtual Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectivityInfoProvider GetConnectivityInfoProvider() { }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.IDms GetDms() { }
         public virtual Skyline.DataMiner.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider GetLiteConnectivityInfoProvider() { }
+        public virtual Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetStaticCache() { }
         public string GetVersion() { }
         public void InstallDomModules(System.Action<string> logAction = null) { }
         public bool IsInstalled() { }
