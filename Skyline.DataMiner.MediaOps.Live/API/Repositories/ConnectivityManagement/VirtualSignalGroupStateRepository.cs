@@ -89,14 +89,14 @@
 			UpdateVirtualSignalGroupLockStates(LockState.Locked, requests);
 		}
 
-		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroupLockRequest> lockMetadataCollection)
+		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroupLockRequest> lockRequests)
 		{
-			if (lockMetadataCollection is null)
+			if (lockRequests is null)
 			{
-				throw new ArgumentNullException(nameof(lockMetadataCollection));
+				throw new ArgumentNullException(nameof(lockRequests));
 			}
 
-			UpdateVirtualSignalGroupLockStates(LockState.Locked, lockMetadataCollection);
+			UpdateVirtualSignalGroupLockStates(LockState.Locked, lockRequests);
 		}
 
 		public void ProtectVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, DateTimeOffset? time = null)
@@ -128,14 +128,14 @@
 			UpdateVirtualSignalGroupLockStates(LockState.Protected, requests);
 		}
 
-		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroupLockRequest> lockMetadataCollection)
+		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroupLockRequest> protectRequests)
 		{
-			if (lockMetadataCollection is null)
+			if (protectRequests is null)
 			{
-				throw new ArgumentNullException(nameof(lockMetadataCollection));
+				throw new ArgumentNullException(nameof(protectRequests));
 			}
 
-			UpdateVirtualSignalGroupLockStates(LockState.Protected, lockMetadataCollection);
+			UpdateVirtualSignalGroupLockStates(LockState.Protected, protectRequests);
 		}
 
 		public void UnlockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup)

@@ -193,7 +193,7 @@
 					orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
 				}
 
-				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker); 
+				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
 			}
 		}
 
@@ -282,9 +282,11 @@
 				}
 
 				List<VsgDisconnectRequest> requests = [];
+				List<VirtualSignalGroup> virtualSignalGroupsToUnlock = [];
 
 				HashSet<Guid> allInvolvedVsgIds = [];
 				HashSet<int> allInvolvedLevelNumbers = [];
+
 				foreach (Connection connection in disconnectsPerEvent.SelectMany(kv => kv.Value))
 				{
 					allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
@@ -307,7 +309,7 @@
 					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
 				}
 
-				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
+				ORFilterElement<Level> filter = new(allInvolvedLevelNumbers.Select(number => LevelExposers.Number.Equal(number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
 
 				foreach (KeyValuePair<OrchestrationEventConfiguration, List<Connection>> keyValuePair in disconnectsPerEvent)
@@ -317,6 +319,7 @@
 					foreach (Connection connection in keyValuePair.Value)
 					{
 						VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
+						virtualSignalGroupsToUnlock.Add(dstVirtualSignalGroup);
 
 						ICollection<ApiObjectReference<Level>> levels = null;
 
@@ -335,12 +338,16 @@
 					}
 				}
 
+				// Perform disconnects
 				var takeHelper = _api.GetConnectionHandler();
 
 				takeHelper.Disconnect(
 					requests,
 					performanceTracker,
 					new() { WaitForCompletion = true, Timeout = _settings.Timeout, BypassLockValidation = true });
+
+				// Unlock all involved VSGs after disconnect
+				_api.VirtualSignalGroups.UnlockVirtualSignalGroups(virtualSignalGroupsToUnlock);
 			}
 		}
 
@@ -354,6 +361,7 @@
 				}
 
 				List<VsgConnectionRequest> requests = [];
+				List<VirtualSignalGroupLockRequest> lockRequests = [];
 
 				HashSet<Guid> allInvolvedVsgIds = [];
 				HashSet<int> allInvolvedLevelNumbers = [];
@@ -381,12 +389,16 @@
 					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
 				}
 
-				ORFilterElement<DomInstance> filter = new(allInvolvedLevelNumbers.Select(number => _api.Levels.CreateFilter(nameof(Level.Number), Comparer.Equals, number)).ToArray());
+				ORFilterElement<Level> filter = new(allInvolvedLevelNumbers.Select(number => LevelExposers.Number.Equal(number)).ToArray());
 				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
 
 				foreach (KeyValuePair<OrchestrationEventConfiguration, List<Connection>> keyValuePair in connectionsPerEvent)
 				{
-					Guid eventId = keyValuePair.Key.ID;
+					OrchestrationEventConfiguration eventConfig = keyValuePair.Key;
+					Guid eventId = eventConfig.ID;
+
+					OrchestrationJobInfo jobInfo = eventConfig.GetJobInfo(_api)
+						?? throw new InvalidOperationException($"No job info found for orchestration event with ID '{eventConfig.ID}'.");
 
 					foreach (Connection connection in keyValuePair.Value)
 					{
@@ -408,9 +420,19 @@
 						{
 							MetaData = eventId.ToString(),
 						});
+
+						lockRequests.Add(new VirtualSignalGroupLockRequest(
+							dstVirtualSignalGroup,
+							"Orchestration Engine",
+							$"Locked for job: {jobInfo.JobReference}",
+							$"{jobInfo.JobReference}"));
 					}
 				}
 
+				// Lock all involved VSGs before connecting
+				_api.VirtualSignalGroups.LockVirtualSignalGroups(lockRequests);
+
+				// Perform connections
 				var takeHelper = _api.GetConnectionHandler();
 
 				takeHelper.Take(
