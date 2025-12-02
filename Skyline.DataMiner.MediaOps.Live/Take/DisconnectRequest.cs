@@ -2,6 +2,5 @@
 {
 	public abstract class DisconnectRequest
 	{
-		public object MetaData { get; set; }
 	}
 }

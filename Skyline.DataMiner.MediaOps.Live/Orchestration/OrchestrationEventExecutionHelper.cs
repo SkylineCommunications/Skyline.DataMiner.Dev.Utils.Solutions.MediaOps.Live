@@ -251,7 +251,10 @@
 				}
 				catch (DisconnectFailedException e)
 				{
-					IEnumerable<string> eventsForFailedRequests = e.FailedRequests.Select(fail => Convert.ToString(fail.MetaData));
+					IEnumerable<string> eventsForFailedRequests = e.FailedRequests
+						.OfType<VsgDisconnectRequestWithMetaData>()
+						.Select(fail => Convert.ToString(fail.MetaData));
+
 					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
 					{
 						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
@@ -316,14 +319,14 @@
 
 						if (connection.LevelMappings == null || !connection.LevelMappings.Any())
 						{
-							requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup)
+							requests.Add(new VsgDisconnectRequestWithMetaData(dstVirtualSignalGroup)
 							{
 								MetaData = eventId.ToString(),
 							});
 							continue;
 						}
 
-						requests.Add(new VsgDisconnectRequest(dstVirtualSignalGroup, Enumerable.ToHashSet(allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID))))
+						requests.Add(new VsgDisconnectRequestWithMetaData(dstVirtualSignalGroup, Enumerable.ToHashSet(allInvolvedLevels.Select(level => new ApiObjectReference<Level>(level.ID))))
 						{
 							MetaData = eventId.ToString(),
 						});
@@ -413,6 +416,8 @@
 					requests,
 					performanceTracker,
 					new() { WaitForCompletion = true, Timeout = _settings.Timeout });
+
+
 			}
 		}
 

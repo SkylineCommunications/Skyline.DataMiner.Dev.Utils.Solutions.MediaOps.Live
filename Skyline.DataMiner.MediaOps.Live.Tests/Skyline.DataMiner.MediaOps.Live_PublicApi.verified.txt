@@ -1485,7 +1485,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
     public abstract class DisconnectRequest
     {
         protected DisconnectRequest() { }
-        public object MetaData { get; set; }
     }
     public abstract class DisconnectResult
     {
