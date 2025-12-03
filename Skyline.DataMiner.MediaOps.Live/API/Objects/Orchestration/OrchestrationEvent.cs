@@ -9,8 +9,6 @@
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
-	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler;
-	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums;
 
 	/// <summary>
 	/// Information about an orchestration event.
@@ -299,45 +297,7 @@
 				return;
 			}
 
-			OrchestrationJobInfo info = GetJobInfo(api);
-
-			if (info == null)
-			{
-				return;
-			}
-
-			SetJobOrchestrationStateAction setStateAction = new SetJobOrchestrationStateAction
-			{
-				DomJobId = Guid.Parse(info.JobReference),
-				Event = GetEventTypeAsPlanJobEvent(),
-				EventState = EventState == Enums.EventState.Failed || !String.IsNullOrEmpty(FailureInfo) ? OrchestrationEventState.Failed : OrchestrationEventState.Succeeded,
-				Message = FailureInfo,
-			};
-
-			api.GetMediaOpsPlanHelper().UpdateJobState(setStateAction);
-		}
-
-		private OrchestrationEventType GetEventTypeAsPlanJobEvent()
-		{
-			switch (EventType)
-			{
-				case EventType.PostrollStart:
-				case EventType.Stop:
-					return OrchestrationEventType.PostrollStart;
-
-				case EventType.PrerollStart:
-				case EventType.Start:
-					return OrchestrationEventType.PrerollStart;
-
-				case EventType.PostrollStop:
-					return OrchestrationEventType.PostrollStop;
-
-				case EventType.PrerollStop:
-					return OrchestrationEventType.PrerollStop;
-
-				default:
-					throw new NotSupportedException("Event type cannot be translated to PLAN job event");
-			}
+			api.GetMediaOpsPlanHelper().UpdateJobState(this);
 		}
 
 		private void PublicSetState(EventState state)

@@ -4,10 +4,10 @@
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.Automation.Plan;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Take;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Tools;
+	using Skyline.DataMiner.MediaOps.Live.Plan;
 	using Skyline.DataMiner.MediaOps.Live.Take;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 
 	public class EngineMediaOpsLiveApi : MediaOpsLiveApi
@@ -30,7 +30,7 @@
 
 		internal override MediaOpsPlanHelper GetMediaOpsPlanHelper()
 		{
-			return new EngineMediaOpsPlanHelper(Engine);
+			return new EngineMediaOpsPlanHelper(Engine, this);
 		}
 	}
 }
