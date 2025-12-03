@@ -148,27 +148,51 @@
 			}
 		}
 
-		private Task GetProcessConnectionTask(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, bool pushResults, PerformanceTracker performanceTracker)
+		private List<Task> GetProcessConnectionTasks(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, bool pushResults, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
+				var tasks = new List<Task>();
 				IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations = eventConfigurations.ToList();
 
-				Task connectionsTask = Task.Factory.StartNew(
-					() =>
-					{
-						ProcessConnections(orchestrationEventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
+				var connectionTasksPerEvent = ProcessConnections(orchestrationEventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
 
-						if (pushResults)
+				foreach (KeyValuePair<OrchestrationEventConfiguration, ICollection<Task>> keyValuePair in connectionTasksPerEvent)
+				{
+					OrchestrationEventConfiguration eventConfig = keyValuePair.Key;
+					var tasksForEvent = keyValuePair.Value;
+
+					var eventConnectionTask = Task.Factory.StartNew(
+						() =>
 						{
-							SaveOrchestrationResults(orchestrationEventConfigurations, performanceTracker);
-						}
-					},
-					CancellationToken.None,
-					TaskCreationOptions.None,
-					taskScheduler);
+							var connectionTasksPerEvent = ProcessConnections(orchestrationEventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
 
-				return connectionsTask;
+							Task.WaitAll(tasksForEvent.ToArray());
+
+							foreach (Task completedTask in tasksForEvent)
+							{
+								if (!completedTask.IsFaulted)
+								{
+									continue;
+								}
+
+								eventConfig.InternalSetState(EventState.Failed);
+								eventConfig.FailureInfo += $"\n{completedTask.Exception?.GetBaseException().Message}";
+							}
+
+							if (pushResults)
+							{
+								SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { eventConfig }, performanceTracker);
+							}
+						},
+						CancellationToken.None,
+						TaskCreationOptions.None,
+						taskScheduler);
+
+					tasks.Add(eventConnectionTask);
+				}
+
+				return tasks;
 			}
 		}
 
@@ -196,7 +220,7 @@
 			}
 		}
 
-		internal void ProcessConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
+		internal Dictionary<OrchestrationEventConfiguration, ICollection<Task>> ProcessConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -219,20 +243,26 @@
 					}
 				}
 
+				var resultTasksByEvent = new Dictionary<OrchestrationEventConfiguration, ICollection<Task>>();
 				try
 				{
-					ExecuteConnections(connectionsToConfigureByEvent, performanceTracker);
-				}
-				catch (ConnectFailedException e)
-				{
-					IEnumerable<string> eventsForFailedRequests = e.FailedRequests
-						.OfType<VsgConnectionRequestWithMetaData>()
-						.Select(fail => Convert.ToString(fail.MetaData));
-
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					var connectionResults = ExecuteConnections(connectionsToConfigureByEvent, performanceTracker);
+					foreach (VsgConnectionResult vsgConnectionResult in connectionResults)
 					{
-						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+						var metaDataConnectionResult = (VsgConnectionRequestWithMetaData)vsgConnectionResult.Request;
+						OrchestrationEventConfiguration matchingEvent = eventConfigurations.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
+
+						if (matchingEvent == null)
+						{
+							continue;
+						}
+
+						if (!resultTasksByEvent.ContainsKey(matchingEvent))
+						{
+							resultTasksByEvent[matchingEvent] = [];
+						}
+
+						resultTasksByEvent[matchingEvent].Add(vsgConnectionResult.CompletionTask);
 					}
 				}
 				catch (Exception e)
@@ -246,19 +276,24 @@
 
 				try
 				{
-					ExecuteDisconnects(disconnectsToConfigureByEvent, performanceTracker);
-				}
-				catch (DisconnectFailedException e)
-				{
+					var disconnectResults = ExecuteDisconnects(disconnectsToConfigureByEvent, performanceTracker);
 
-					IEnumerable<string> eventsForFailedRequests = e.FailedRequests
-						.OfType<VsgDisconnectRequestWithMetadata>()
-						.Select(fail => Convert.ToString(fail.MetaData));
-
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(eventConfig => eventsForFailedRequests.Contains(eventConfig.ID.ToString())))
+					foreach (VsgDisconnectResult vsgDisconnectResult in disconnectResults)
 					{
-						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+						var metaDataConnectionResult = (VsgDisconnectRequestWithMetadata)vsgDisconnectResult.Request;
+						OrchestrationEventConfiguration matchingEvent = eventConfigurations.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
+
+						if (matchingEvent == null)
+						{
+							continue;
+						}
+
+						if (!resultTasksByEvent.ContainsKey(matchingEvent))
+						{
+							resultTasksByEvent[matchingEvent] = [];
+						}
+
+						resultTasksByEvent[matchingEvent].Add(vsgDisconnectResult.CompletionTask);
 					}
 				}
 				catch (Exception e)
@@ -272,13 +307,13 @@
 			}
 		}
 
-		private void ExecuteDisconnects(Dictionary<Guid, List<Connection>> disconnectsPerId, PerformanceTracker performanceTracker)
+		private ICollection<VsgDisconnectResult> ExecuteDisconnects(Dictionary<Guid, List<Connection>> disconnectsPerId, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				if (!disconnectsPerId.Any())
 				{
-					return;
+					return new List<VsgDisconnectResult>();
 				}
 
 				List<VsgDisconnectRequest> requests = [];
@@ -335,20 +370,20 @@
 
 				var takeHelper = _api.GetConnectionHandler();
 
-				takeHelper.Disconnect(
+				return takeHelper.Disconnect(
 					requests,
 					performanceTracker,
 					new() { WaitForCompletion = true, Timeout = _settings.Timeout, });
 			}
 		}
 
-		private void ExecuteConnections(Dictionary<Guid, List<Connection>> connectionsPerEventId, PerformanceTracker performanceTracker)
+		private ICollection<VsgConnectionResult> ExecuteConnections(Dictionary<Guid, List<Connection>> connectionsPerEventId, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
 				if (!connectionsPerEventId.Any())
 				{
-					return;
+					return new List<VsgConnectionResult>();
 				}
 
 				List<VsgConnectionRequest> requests = [];
@@ -412,12 +447,38 @@
 
 				var takeHelper = _api.GetConnectionHandler();
 
-				takeHelper.Take(
+				return takeHelper.Take(
 					requests,
 					performanceTracker,
 					new() { WaitForCompletion = true, Timeout = _settings.Timeout });
 			}
 		}
+
+		public static Task<Task<T>>[] Interleaved<T>(IEnumerable<Task<T>> tasks)
+		{
+			var inputTasks = tasks.ToList();
+
+			var buckets = new TaskCompletionSource<Task<T>>[inputTasks.Count];
+			var results = new Task<Task<T>>[buckets.Length];
+			for (int i = 0; i < buckets.Length; i++)
+			{
+				buckets[i] = new TaskCompletionSource<Task<T>>();
+				results[i] = buckets[i].Task;
+			}
+
+			int nextTaskIndex = -1;
+			Action<Task<T>> continuation = completed =>
+			{
+				var bucket = buckets[Interlocked.Increment(ref nextTaskIndex)];
+				bucket.TrySetResult(completed);
+			};
+
+			foreach (var inputTask in inputTasks)
+				inputTask.ContinueWith(continuation, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+
+			return results;
+		}
+
 
 		private void ExecuteNodesConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
 		{
