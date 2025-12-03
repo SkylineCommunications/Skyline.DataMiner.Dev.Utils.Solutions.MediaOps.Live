@@ -6,9 +6,9 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Take;
 
-	internal class VsgDisconnectRequestWithMetaData : VsgDisconnectRequest
+	internal class VsgDisconnectRequestWithMetadata : VsgDisconnectRequest
 	{
-		public VsgDisconnectRequestWithMetaData(VirtualSignalGroup destination, ICollection<ApiObjectReference<Level>> levels = null)
+		public VsgDisconnectRequestWithMetadata(VirtualSignalGroup destination, ICollection<ApiObjectReference<Level>> levels = null)
 			: base(destination, levels)
 		{
 		}

@@ -81,7 +81,7 @@
 
 				List<Task> tasks = GetGlobalOrchestrationTasks(eventConfigurations.Where(config => !String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker);
 				tasks.AddRange(GetNodeByNodeOrchestrationTasks(eventConfigurations.Where(config => config.HasScripts() && String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker));
-				tasks.Add(GetProcessConnectionTask(eventConfigurations.Where(config => !config.HasScripts()), taskScheduler, true, performanceTracker));
+				tasks.AddRange(GetProcessConnectionTasks(eventConfigurations.Where(config => !config.HasScripts()), taskScheduler, true, performanceTracker));
 
 				Task.WaitAll(tasks.ToArray());
 			}
@@ -119,6 +119,8 @@
 				List<Task> tasks = [];
 				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(e => e.HasScripts()))
 				{
+					List<Task> connectionsTasks = GetProcessConnectionTasks(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, taskScheduler, false, performanceTracker);
+
 					Task nodeScriptsTask = Task.Factory.StartNew(
 						() =>
 						{
@@ -128,12 +130,12 @@
 						TaskCreationOptions.None,
 						taskScheduler);
 
-					Task connectionsTask = GetProcessConnectionTask(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, taskScheduler, false, performanceTracker);
+					connectionsTasks.Add(nodeScriptsTask);
 
 					Task combinedTask = Task.Factory.StartNew(
 						() =>
 						{
-							Task.WaitAll(nodeScriptsTask, connectionsTask);
+							Task.WaitAll(connectionsTasks.ToArray());
 
 							SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
 						},
@@ -165,8 +167,6 @@
 					var eventConnectionTask = Task.Factory.StartNew(
 						() =>
 						{
-							var connectionTasksPerEvent = ProcessConnections(orchestrationEventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
-
 							Task.WaitAll(tasksForEvent.ToArray());
 
 							foreach (Task completedTask in tasksForEvent)
@@ -249,7 +249,7 @@
 					var connectionResults = ExecuteConnections(connectionsToConfigureByEvent, performanceTracker);
 					foreach (VsgConnectionResult vsgConnectionResult in connectionResults)
 					{
-						var metaDataConnectionResult = (VsgConnectionRequestWithMetaData)vsgConnectionResult.Request;
+						var metaDataConnectionResult = (VsgConnectionRequestWithMetaData)vsgConnectionResult.VsgConnectionRequest;
 						OrchestrationEventConfiguration matchingEvent = eventConfigurations.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
 
 						if (matchingEvent == null)
@@ -280,7 +280,7 @@
 
 					foreach (VsgDisconnectResult vsgDisconnectResult in disconnectResults)
 					{
-						var metaDataConnectionResult = (VsgDisconnectRequestWithMetadata)vsgDisconnectResult.Request;
+						var metaDataConnectionResult = (VsgDisconnectRequestWithMetadata)vsgDisconnectResult.VsgDisconnectRequest;
 						OrchestrationEventConfiguration matchingEvent = eventConfigurations.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
 
 						if (matchingEvent == null)
@@ -304,10 +304,12 @@
 						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
 					}
 				}
+
+				return resultTasksByEvent;
 			}
 		}
 
-		private ICollection<VsgDisconnectResult> ExecuteDisconnects(Dictionary<Guid, List<Connection>> disconnectsPerId, PerformanceTracker performanceTracker)
+		private ICollection<VsgDisconnectResult> ExecuteDisconnects(Dictionary<OrchestrationEventConfiguration, List<Connection>> disconnectsPerEvent, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -324,7 +326,10 @@
 
 				foreach (Connection connection in disconnectsPerEvent.SelectMany(kv => kv.Value))
 				{
-					allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
+					if (connection.DestinationVsg.HasValue)
+					{
+						allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
+					}
 
 					if (connection.LevelMappings == null || !connection.LevelMappings.Any())
 					{
@@ -353,6 +358,11 @@
 
 					foreach (Connection connection in keyValuePair.Value)
 					{
+						if (!connection.HasDestination())
+						{
+							continue;
+						}
+
 						VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
 						virtualSignalGroupsToUnlock.Add(dstVirtualSignalGroup);
 
@@ -366,7 +376,7 @@
 								.ToList();
 						}
 
-						requests.Add(new VsgDisconnectRequestWithMetaData(dstVirtualSignalGroup, levels)
+						requests.Add(new VsgDisconnectRequestWithMetadata(dstVirtualSignalGroup, levels)
 						{
 							MetaData = eventId.ToString(),
 						});
@@ -386,7 +396,7 @@
 			}
 		}
 
-		private ICollection<VsgConnectionResult> ExecuteConnections(Dictionary<Guid, List<Connection>> connectionsPerEventId, PerformanceTracker performanceTracker)
+		private ICollection<VsgConnectionResult> ExecuteConnections(Dictionary<OrchestrationEventConfiguration, List<Connection>> connectionsPerEvent, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
@@ -495,32 +505,6 @@
 					new() { WaitForCompletion = true, Timeout = _settings.Timeout, BypassLockValidation = true });
 			}
 		}
-
-		public static Task<Task<T>>[] Interleaved<T>(IEnumerable<Task<T>> tasks)
-		{
-			var inputTasks = tasks.ToList();
-
-			var buckets = new TaskCompletionSource<Task<T>>[inputTasks.Count];
-			var results = new Task<Task<T>>[buckets.Length];
-			for (int i = 0; i < buckets.Length; i++)
-			{
-				buckets[i] = new TaskCompletionSource<Task<T>>();
-				results[i] = buckets[i].Task;
-			}
-
-			int nextTaskIndex = -1;
-			Action<Task<T>> continuation = completed =>
-			{
-				var bucket = buckets[Interlocked.Increment(ref nextTaskIndex)];
-				bucket.TrySetResult(completed);
-			};
-
-			foreach (var inputTask in inputTasks)
-				inputTask.ContinueWith(continuation, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
-
-			return results;
-		}
-
 
 		private void ExecuteNodesConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
 		{
