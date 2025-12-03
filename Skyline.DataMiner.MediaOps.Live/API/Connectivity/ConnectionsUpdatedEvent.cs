@@ -2,15 +2,16 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	public sealed class ConnectionsUpdatedEvent
 	{
 		public ConnectionsUpdatedEvent(
-			IReadOnlyCollection<EndpointConnectivity> endpoints,
-			IReadOnlyCollection<VirtualSignalGroupConnectivity> virtualSignalGroups)
+			IEnumerable<EndpointConnectivity> endpoints,
+			IEnumerable<VirtualSignalGroupConnectivity> virtualSignalGroups)
 		{
-			Endpoints = endpoints ?? throw new ArgumentNullException(nameof(endpoints));
-			VirtualSignalGroups = virtualSignalGroups ?? throw new ArgumentNullException(nameof(virtualSignalGroups));
+			Endpoints = (endpoints ?? []).ToList();
+			VirtualSignalGroups = (virtualSignalGroups ?? []).ToList();
 		}
 
 		public IReadOnlyCollection<EndpointConnectivity> Endpoints { get; }

@@ -132,7 +132,6 @@
 			}
 		}
 
-
 		/// <summary>
 		/// Resolves a collection of <see cref="VirtualSignalGroup"/> references to their corresponding objects.
 		/// </summary>

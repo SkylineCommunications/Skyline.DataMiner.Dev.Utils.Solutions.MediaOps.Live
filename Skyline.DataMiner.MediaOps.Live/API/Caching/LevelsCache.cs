@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -28,6 +29,14 @@
 		public IReadOnlyDictionary<ApiObjectReference<Level>, Level> Levels => _levels;
 
 		public IReadOnlyDictionary<string, Level> LevelsByName => _levelsByName;
+
+		public IReadOnlyCollection<Level> GetAllLevels()
+		{
+			lock (_lock)
+			{
+				return _levels.Values.ToList();
+			}
+		}
 
 		public Level GetLevel(ApiObjectReference<Level> id)
 		{

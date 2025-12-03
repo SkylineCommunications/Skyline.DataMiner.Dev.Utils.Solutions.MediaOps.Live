@@ -46,7 +46,7 @@
 
 		public VirtualSignalGroupEndpointsObserver VirtualSignalGroupEndpointsObserver => _lazyVirtualSignalGroupsObserver.Value;
 
-		public VirtualSignalGroupEndpointsCache VirtualSignalGroupsCache => VirtualSignalGroupEndpointsObserver.Cache;
+		public VirtualSignalGroupEndpointsCache VirtualSignalGroupEndpointsCache => VirtualSignalGroupEndpointsObserver.Cache;
 
 		public LevelsObserver LevelsObserver => _lazyLevelsObserver.Value;
 
@@ -201,25 +201,34 @@
 
 		private static IConnection CloneConnection(IConnection baseConnection)
 		{
-			if (baseConnection.GetType().FullName == "Skyline.DataMiner.MediaOps.Live.UnitTesting.SLNetConnectionMock")
+			Exception exception;
+
+			try
 			{
-				// If the connection is a mock connection used for unit testing, use the existing connection directly.
-				// Such connection cannot be cloned.
-				return baseConnection;
+				if (baseConnection.GetType().FullName == "Skyline.DataMiner.MediaOps.Live.UnitTesting.SLNetConnectionMock")
+				{
+					// If the connection is a mock connection used for unit testing, use the existing connection directly.
+					// Such connection cannot be cloned.
+					return baseConnection;
+				}
+
+				if (ConnectionHelper.IsManagedDataMinerModule(baseConnection))
+				{
+					// If the connection is a managed DataMiner module (e.g. Engine.SLNetRaw), use the existing connection directly.
+					return baseConnection;
+				}
+
+				if (ConnectionHelper.TryCloneConnection(baseConnection, "MediaOps.Live - Connection", out var clonedConnection, out exception))
+				{
+					return clonedConnection;
+				}
+			}
+			catch (Exception ex)
+			{
+				exception = ex;
 			}
 
-			if (ConnectionHelper.IsManagedDataMinerModule(baseConnection))
-			{
-				// If the connection is a managed DataMiner module (e.g. Engine.SLNetRaw), use the existing connection directly.
-				return baseConnection;
-			}
-
-			if (ConnectionHelper.TryCloneConnection(baseConnection, "MediaOps.Live - Connection", out var clonedConnection))
-			{
-				return clonedConnection;
-			}
-
-			throw new InvalidOperationException("Failed to clone the provided connection.");
+			throw new InvalidOperationException("Failed to clone the provided connection.", exception);
 		}
 	}
 }

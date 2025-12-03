@@ -82,7 +82,21 @@
 				throw new ArgumentException($"'{nameof(user)}' cannot be null or whitespace.", nameof(user));
 			}
 
-			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Locked, user, reason, jobReference, time);
+			var requests = virtualSignalGroups
+				.Select(vsg => new VirtualSignalGroupLockRequest(vsg, user, reason, jobReference, time))
+				.ToList();
+
+			UpdateVirtualSignalGroupLockStates(LockState.Locked, requests);
+		}
+
+		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroupLockRequest> lockRequests)
+		{
+			if (lockRequests is null)
+			{
+				throw new ArgumentNullException(nameof(lockRequests));
+			}
+
+			UpdateVirtualSignalGroupLockStates(LockState.Locked, lockRequests);
 		}
 
 		public void ProtectVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, DateTimeOffset? time = null)
@@ -107,7 +121,21 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroups));
 			}
 
-			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Protected, user, reason, jobReference, time);
+			var requests = virtualSignalGroups
+				.Select(vsg => new VirtualSignalGroupLockRequest(vsg, user, reason, jobReference, time))
+				.ToList();
+
+			UpdateVirtualSignalGroupLockStates(LockState.Protected, requests);
+		}
+
+		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroupLockRequest> protectRequests)
+		{
+			if (protectRequests is null)
+			{
+				throw new ArgumentNullException(nameof(protectRequests));
+			}
+
+			UpdateVirtualSignalGroupLockStates(LockState.Protected, protectRequests);
 		}
 
 		public void UnlockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup)
@@ -127,7 +155,9 @@
 				throw new ArgumentNullException(nameof(virtualSignalGroups));
 			}
 
-			UpdateVirtualSignalGroupLockStates(virtualSignalGroups, LockState.Unlocked, null, null, null, DateTimeOffset.MinValue);
+			var requests = virtualSignalGroups.Select(vsg => new VirtualSignalGroupLockRequest(vsg)).ToList();
+
+			UpdateVirtualSignalGroupLockStates(LockState.Unlocked, requests);
 		}
 
 		public void DeleteByVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
@@ -199,22 +229,34 @@
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
 		}
 
-		private void UpdateVirtualSignalGroupLockStates(ICollection<VirtualSignalGroup> virtualSignalGroups, LockState lockState, string user, string reason, string jobReference, DateTimeOffset? time = null)
+		private void UpdateVirtualSignalGroupLockStates(LockState lockState, ICollection<VirtualSignalGroupLockRequest> requests)
 		{
-			if (virtualSignalGroups.Count == 0)
+			if (requests.Count == 0)
 			{
 				return;
 			}
 
+			// Get all virtual signal groups
+			var virtualSignalGroups = requests.Select(x => x.VirtualSignalGroup).ToList();
+
 			// Get existing states
 			var virtualSignalGroupStates = GetByVirtualSignalGroups(virtualSignalGroups)
 				.SafeToDictionary(x => x.VirtualSignalGroupReference);
+
+			// Create a mapping of VSG to request
+			var requestsByVsg = requests.SafeToDictionary(x => x.VirtualSignalGroup.ID, x => x);
 
 			// Update or create states
 			var statesToUpdate = new List<VirtualSignalGroupState>();
 
 			foreach (var vsg in virtualSignalGroups)
 			{
+				// Get the request for this VSG
+				if (!requestsByVsg.TryGetValue(vsg.ID, out var request))
+				{
+					continue; // Skip if no request found
+				}
+
 				// Retrieve or create the state for the current virtual signal group
 				if (!virtualSignalGroupStates.TryGetValue(vsg.ID, out var state))
 				{
@@ -227,25 +269,35 @@
 					throw new InvalidOperationException($"Virtual Signal Group '{vsg.Name}' is protected and cannot be locked.");
 				}
 
-				// Check if we need to update
-				bool needsUpdate = state.LockState != lockState ||
-					state.LockedBy != user ||
-					state.LockReason != reason ||
-					state.LockJobReference != jobReference;
+				if (lockState != LockState.Unlocked && String.IsNullOrWhiteSpace(request.User))
+				{
+					throw new InvalidOperationException($"A user must be specified when locking or protecting Virtual Signal Group '{vsg.Name}'.");
+				}
+
+				// Determine expected values
+				var expectedLockedBy = lockState == LockState.Unlocked ? default : request.User;
+				var expectedReason = lockState == LockState.Unlocked ? default : request.Reason;
+				var expectedJobRef = lockState == LockState.Unlocked ? default : request.JobReference;
+				var expectedTime = lockState == LockState.Unlocked ? default : (request.Time ?? DateTimeOffset.UtcNow);
+
+				// Check if an update is needed
+				bool needsUpdate =
+					state.LockState != lockState ||
+					state.LockedBy != expectedLockedBy ||
+					state.LockReason != expectedReason ||
+					state.LockJobReference != expectedJobRef;
 
 				if (!needsUpdate)
 				{
-					// No change needed
 					continue;
 				}
 
+				// Apply update
 				state.LockState = lockState;
-				state.LockedBy = user;
-				state.LockReason = reason;
-				state.LockJobReference = jobReference;
-				state.LockTime = lockState == LockState.Unlocked
-					? DateTimeOffset.MinValue
-					: time ?? DateTimeOffset.UtcNow;
+				state.LockedBy = expectedLockedBy;
+				state.LockReason = expectedReason;
+				state.LockJobReference = expectedJobRef;
+				state.LockTime = expectedTime;
 
 				statesToUpdate.Add(state);
 			}

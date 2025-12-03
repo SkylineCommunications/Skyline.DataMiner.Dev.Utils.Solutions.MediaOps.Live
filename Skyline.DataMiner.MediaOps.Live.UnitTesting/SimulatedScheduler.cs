@@ -27,7 +27,7 @@
 
 			if (!_tasks.TryAdd(orchestrationSchedulerTask.ScheduledTaskId.TaskId, task))
 			{
-				throw new InvalidOperationException($"Element with ID {orchestrationSchedulerTask.ScheduledTaskId.TaskId} already exists.");
+				throw new InvalidOperationException($"Task with ID {orchestrationSchedulerTask.ScheduledTaskId.TaskId} already exists.");
 			}
 
 			return task;

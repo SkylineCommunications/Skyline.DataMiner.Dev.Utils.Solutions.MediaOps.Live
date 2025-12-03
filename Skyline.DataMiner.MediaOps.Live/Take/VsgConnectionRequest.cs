@@ -5,7 +5,7 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	public class VsgConnectionRequest
+	public class VsgConnectionRequest : ConnectionRequest
 	{
 		public VsgConnectionRequest(VirtualSignalGroup source, VirtualSignalGroup destination, ICollection<LevelMapping> levelMappings = null)
 		{

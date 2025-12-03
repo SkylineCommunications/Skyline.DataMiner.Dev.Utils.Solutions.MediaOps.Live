@@ -5,6 +5,7 @@
 	using Skyline.DataMiner.Analytics.GenericInterface;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.MediaOps.Live.GQI.API;
 
 	public static class Extensions
 	{
@@ -15,7 +16,7 @@
 				throw new ArgumentNullException(nameof(gqiDms));
 			}
 
-			var api = new MediaOpsLiveApi(gqiDms.GetConnection());
+			var api = new GqiMediaOpsLiveApi(gqiDms);
 
 			return api;
 		}

@@ -28,10 +28,10 @@
 			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-			Api = new MediaOpsLiveApi(Automation.Engine.SLNetRaw);
+			Api = engine.GetMediaOpsLiveApi();
 			Api.SetLogger(logger);
 
-			_cache = StaticMediaOpsLiveCache.GetOrCreate(Automation.Engine.SLNetRaw);
+			_cache = engine.GetStaticMediaOpsLiveApiCache();
 		}
 
 		public Automation.IEngine Engine { get; }
@@ -121,54 +121,54 @@
 
 		public IEnumerable<Endpoint> GetAllEndpoints()
 		{
-			return _cache.VirtualSignalGroupsCache.Endpoints.GetAllEndpoints();
+			return _cache.VirtualSignalGroupEndpointsCache.Endpoints.GetAllEndpoints();
 		}
 
 		public IEnumerable<Endpoint> GetAllEndpoints(EndpointRole role)
 		{
-			return _cache.VirtualSignalGroupsCache.Endpoints.GetEndpointsWithRole(role);
+			return _cache.VirtualSignalGroupEndpointsCache.Endpoints.GetEndpointsWithRole(role);
 		}
 
 		public IEnumerable<VirtualSignalGroup> GetAllVirtualSignalGroups()
 		{
-			return _cache.VirtualSignalGroupsCache.VirtualSignalGroups.GetAllVirtualSignalGroups();
+			return _cache.VirtualSignalGroupEndpointsCache.VirtualSignalGroups.GetAllVirtualSignalGroups();
 		}
 
 		public IEnumerable<VirtualSignalGroup> GetAllVirtualSignalGroups(EndpointRole role)
 		{
-			return _cache.VirtualSignalGroupsCache.VirtualSignalGroups.GetVirtualSignalGroupsWithRole(role);
+			return _cache.VirtualSignalGroupEndpointsCache.VirtualSignalGroups.GetVirtualSignalGroupsWithRole(role);
 		}
 
 		public IEnumerable<Endpoint> GetEndpointsWithElement(EndpointRole role, DmsElementId elementId)
 		{
-			return _cache.VirtualSignalGroupsCache.GetEndpointsWithElement(elementId).Where(e => e.Role == role);
+			return _cache.VirtualSignalGroupEndpointsCache.GetEndpointsWithElement(elementId).Where(e => e.Role == role);
 		}
 
 		public IEnumerable<Endpoint> GetEndpointsWithIdentifier(EndpointRole role, string identifier)
 		{
-			return _cache.VirtualSignalGroupsCache.GetEndpointsWithIdentifier(identifier).Where(e => e.Role == role);
+			return _cache.VirtualSignalGroupEndpointsCache.GetEndpointsWithIdentifier(identifier).Where(e => e.Role == role);
 		}
 
 		public IEnumerable<Endpoint> GetEndpointsWithElement(EndpointRole role, DmsElementId elementId, string identifier)
 		{
-			return _cache.VirtualSignalGroupsCache.GetEndpointsWithElementAndIdentifier(elementId, identifier).Where(e => e.Role == role);
+			return _cache.VirtualSignalGroupEndpointsCache.GetEndpointsWithElementAndIdentifier(elementId, identifier).Where(e => e.Role == role);
 		}
 
 		public IEnumerable<Endpoint> GetEndpointsWithTransportType(EndpointRole role, ApiObjectReference<TransportType> transportType)
 		{
-			return _cache.VirtualSignalGroupsCache.GetEndpointsWithTransportType(transportType)
+			return _cache.VirtualSignalGroupEndpointsCache.GetEndpointsWithTransportType(transportType)
 				.Where(e => e.Role == role);
 		}
 
 		public IEnumerable<Endpoint> GetEndpointsWithTransportMetadata(EndpointRole role, string fieldName, string value)
 		{
-			return _cache.VirtualSignalGroupsCache.GetEndpointsWithTransportMetadata(fieldName, value)
+			return _cache.VirtualSignalGroupEndpointsCache.GetEndpointsWithTransportMetadata(fieldName, value)
 				.Where(e => e.Role == role);
 		}
 
 		public IEnumerable<Endpoint> GetEndpointsWithTransportMetadata(EndpointRole role, params (string fieldName, string value)[] metadataFilters)
 		{
-			return _cache.VirtualSignalGroupsCache.GetEndpointsWithTransportMetadata(metadataFilters)
+			return _cache.VirtualSignalGroupEndpointsCache.GetEndpointsWithTransportMetadata(metadataFilters)
 				.Where(e => e.Role == role);
 		}
 	}

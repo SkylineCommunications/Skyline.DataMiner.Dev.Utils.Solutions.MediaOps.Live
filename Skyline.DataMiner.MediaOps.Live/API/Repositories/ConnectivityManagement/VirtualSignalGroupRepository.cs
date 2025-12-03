@@ -84,6 +84,16 @@
 			Api.VirtualSignalGroupStates.LockVirtualSignalGroups(virtualSignalGroups, user, reason, jobReference, time);
 		}
 
+		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroupLockRequest> lockRequests)
+		{
+			if (lockRequests is null)
+			{
+				throw new ArgumentNullException(nameof(lockRequests));
+			}
+
+			Api.VirtualSignalGroupStates.LockVirtualSignalGroups(lockRequests);
+		}
+
 		public void ProtectVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, DateTimeOffset? time = null)
 		{
 			if (virtualSignalGroup is null)
@@ -102,6 +112,16 @@
 			}
 
 			Api.VirtualSignalGroupStates.ProtectVirtualSignalGroups(virtualSignalGroups, user, reason, jobReference, time);
+		}
+
+		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroupLockRequest> protectRequests)
+		{
+			if (protectRequests is null)
+			{
+				throw new ArgumentNullException(nameof(protectRequests));
+			}
+
+			Api.VirtualSignalGroupStates.ProtectVirtualSignalGroups(protectRequests);
 		}
 
 		public void UnlockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup)

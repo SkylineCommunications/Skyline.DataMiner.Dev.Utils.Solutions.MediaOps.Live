@@ -25,7 +25,7 @@
 				throw new ArgumentNullException(nameof(filterResolver));
 			}
 
-			var split = SplitFilter(ids, filterProvider);
+			var split = SplitFilter(ids, filterProvider).ToList();
 
 			return split
 				.SelectMany(filterResolver)
