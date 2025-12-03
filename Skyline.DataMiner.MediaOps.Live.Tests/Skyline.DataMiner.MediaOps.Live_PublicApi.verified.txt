@@ -703,6 +703,9 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
         public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.LevelMapping> LevelMappings { get; set; }
         public string SourceNodeId { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>? SourceVsg { get; set; }
+        public bool HasDestination() { }
+        public bool HasSource() { }
+        public bool HasSourceAndDestination() { }
     }
     public class Level
     {
@@ -768,7 +771,9 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
     public class OrchestrationJobInfo : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobInfo>
     {
         public OrchestrationJobInfo() { }
+        public string JobName { get; set; }
         public string JobReference { get; set; }
+        public string JobUrl { get; set; }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId MonitoringService { get; }
     }
     public static class OrchestrationJobInfoExposers
