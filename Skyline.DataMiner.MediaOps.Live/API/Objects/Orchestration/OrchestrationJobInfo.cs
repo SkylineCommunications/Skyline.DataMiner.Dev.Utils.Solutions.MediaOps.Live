@@ -34,7 +34,7 @@
 		internal static DomDefinitionId DomDefinition => SlcOrchestrationIds.Definitions.OrchestrationJobInfo;
 
 		/// <summary>
-		/// Gets or sets the identifier of the job.
+		/// Gets or sets the unique identifier of the job.
 		/// </summary>
 		public string JobReference
 		{
@@ -46,6 +46,38 @@
 			set
 			{
 				_domInstance.JobInfo.JobReference = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the friendly of the job.
+		/// </summary>
+		public string JobName
+		{
+			get
+			{
+				return _domInstance.JobInfo.JobName;
+			}
+
+			set
+			{
+				_domInstance.JobInfo.JobName = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the access URL of the job.
+		/// </summary>
+		public string JobUrl
+		{
+			get
+			{
+				return _domInstance.JobInfo.JobURL;
+			}
+
+			set
+			{
+				_domInstance.JobInfo.JobURL = value;
 			}
 		}
 

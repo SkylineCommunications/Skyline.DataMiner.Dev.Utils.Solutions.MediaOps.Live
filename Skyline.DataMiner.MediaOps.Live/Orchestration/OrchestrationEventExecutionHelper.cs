@@ -22,7 +22,6 @@
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
-	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
@@ -367,8 +366,15 @@
 				HashSet<int> allInvolvedLevelNumbers = [];
 				foreach (Connection connection in connectionsPerEvent.SelectMany(kv => kv.Value))
 				{
-					allInvolvedVsgIds.Add(connection.SourceVsg.Value.ID);
-					allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
+					if (connection.SourceVsg.HasValue)
+					{
+						allInvolvedVsgIds.Add(connection.SourceVsg.Value.ID);
+					}
+
+					if (connection.DestinationVsg.HasValue)
+					{
+						allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
+					}
 
 					if (connection.LevelMappings == null || !connection.LevelMappings.Any())
 					{
@@ -402,8 +408,26 @@
 
 					foreach (Connection connection in keyValuePair.Value)
 					{
-						VirtualSignalGroup srcVirtualSignalGroup = allInvolvedVsgs[connection.SourceVsg.Value.ID];
+						if (!connection.HasDestination())
+						{
+							continue;
+						}
+
 						VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
+
+						lockRequests.Add(new VirtualSignalGroupLockRequest(
+							dstVirtualSignalGroup,
+							"Orchestration Engine",
+							$"Locked for job: {jobInfo.JobReference}",
+							$"{jobInfo.JobReference}",
+							eventConfig.EventTime));
+
+						if (!connection.HasSource())
+						{
+							continue;
+						}
+
+						VirtualSignalGroup srcVirtualSignalGroup = allInvolvedVsgs[connection.SourceVsg.Value.ID];
 
 						ICollection<Take.LevelMapping> levelMappings = null;
 
@@ -420,13 +444,6 @@
 						{
 							MetaData = eventId.ToString(),
 						});
-
-						lockRequests.Add(new VirtualSignalGroupLockRequest(
-							dstVirtualSignalGroup,
-							"Orchestration Engine",
-							$"Locked for job: {jobInfo.JobReference}",
-							$"{jobInfo.JobReference}",
-							eventConfig.EventTime));
 					}
 				}
 
