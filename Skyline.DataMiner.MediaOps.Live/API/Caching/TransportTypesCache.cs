@@ -2,6 +2,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -29,34 +30,54 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 
 		public IReadOnlyDictionary<string, TransportType> TransportTypesByName => _transportTypesByName;
 
+		public IReadOnlyCollection<TransportType> GetAllTransportTypes()
+		{
+			lock (_lock)
+			{
+				return _transportTypes.Values.ToList();
+			}
+		}
+
 		public TransportType GetTransportType(ApiObjectReference<TransportType> id)
 		{
-			if (!TryGetTransportType(id, out var transportType))
+			lock (_lock)
 			{
-				throw new ArgumentException($"Couldn't find transport type with ID {id.ID}", nameof(id));
-			}
+				if (!TryGetTransportType(id, out var transportType))
+				{
+					throw new ArgumentException($"Couldn't find transport type with ID {id.ID}", nameof(id));
+				}
 
-			return transportType;
+				return transportType;
+			}
 		}
 
 		public TransportType GetTransportType(string name)
 		{
-			if (!TryGetTransportType(name, out var transportType))
+			lock (_lock)
 			{
-				throw new ArgumentException($"Couldn't find transport type with name '{name}'", nameof(name));
-			}
+				if (!TryGetTransportType(name, out var transportType))
+				{
+					throw new ArgumentException($"Couldn't find transport type with name '{name}'", nameof(name));
+				}
 
-			return transportType;
+				return transportType;
+			}
 		}
 
 		public bool TryGetTransportType(ApiObjectReference<TransportType> id, out TransportType transportType)
 		{
-			return _transportTypes.TryGetValue(id, out transportType);
+			lock (_lock)
+			{
+				return _transportTypes.TryGetValue(id, out transportType);
+			}
 		}
 
 		public bool TryGetTransportType(string name, out TransportType transportType)
 		{
-			return _transportTypesByName.TryGetValue(name, out transportType);
+			lock (_lock)
+			{
+				return _transportTypesByName.TryGetValue(name, out transportType);
+			}
 		}
 
 		public void LoadInitialData(MediaOpsLiveApi api)

@@ -13,27 +13,27 @@
 	/// </summary>
 	public class OrchestrationJob
 	{
-		private static readonly List<EventType> StartTypes = new List<EventType>
-		{
+		private static readonly List<EventType> StartTypes =
+		[
 			EventType.Start,
 			EventType.PrerollStart,
-		};
+		];
 
-		private static readonly List<EventType> StopTypes = new List<EventType>
-		{
+		private static readonly List<EventType> StopTypes =
+		[
 			EventType.Stop,
 			EventType.PostrollStop,
-		};
+		];
 
-		private static readonly List<EventType> ExpectedOrderOfTypes = new List<EventType>
-		{
+		private static readonly List<EventType> ExpectedOrderOfTypes =
+		[
 			EventType.Start,
 			EventType.PrerollStart,
 			EventType.PrerollStop,
 			EventType.PostrollStart,
 			EventType.PostrollStop,
 			EventType.Stop,
-		};
+		];
 
 		/// <summary>
 		/// Holds the list of event IDs at the start of this objects creation.

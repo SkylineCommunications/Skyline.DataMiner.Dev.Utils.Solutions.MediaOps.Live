@@ -83,6 +83,12 @@
 
 			var instanceCollection = instances as ICollection<T> ?? instances.ToList();
 
+			if (instanceCollection.Count == 0)
+			{
+				// Nothing to create or update.
+				return instanceCollection;
+			}
+
 			ValidateBeforeSave(instanceCollection);
 
 			var domInstances = instanceCollection.Select(x => x.DomInstance.ToInstance());
@@ -110,7 +116,12 @@
 				throw new ArgumentNullException(nameof(instances));
 			}
 
-			var instanceCollection = instances as ICollection<T> ?? instances.ToList();
+			var instanceCollection = instances.AsCollection();
+			if (instanceCollection.Count == 0)
+			{
+				// Nothing to delete.
+				return;
+			}
 
 			ValidateBeforeDelete(instanceCollection);
 

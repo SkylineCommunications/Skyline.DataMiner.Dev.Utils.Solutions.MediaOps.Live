@@ -288,13 +288,13 @@
 
 	public static class EndpointExposers
 	{
-		public static readonly Exposer<Endpoint, Guid> ID = new Exposer<Endpoint, Guid>(x => x.ID, nameof(Endpoint.ID));
-		public static readonly Exposer<Endpoint, string> Name = new Exposer<Endpoint, string>(x => x.Name, nameof(Endpoint.Name));
-		public static readonly Exposer<Endpoint, EndpointRole> Role = new Exposer<Endpoint, EndpointRole>(x => x.Role, nameof(Endpoint.Role));
-		public static readonly Exposer<Endpoint, DmsElementId?> Element = new Exposer<Endpoint, DmsElementId?>(x => x.Element, nameof(Endpoint.Element));
-		public static readonly Exposer<Endpoint, string> Identifier = new Exposer<Endpoint, string>(x => x.Identifier, nameof(Endpoint.Identifier));
-		public static readonly Exposer<Endpoint, DmsElementId?> ControlElement = new Exposer<Endpoint, DmsElementId?>(x => x.ControlElement, nameof(Endpoint.ControlElement));
-		public static readonly Exposer<Endpoint, string> ControlIdentifier = new Exposer<Endpoint, string>(x => x.ControlIdentifier, nameof(Endpoint.ControlIdentifier));
-		public static readonly Exposer<Endpoint, ApiObjectReference<TransportType>?> TransportType = new Exposer<Endpoint, ApiObjectReference<TransportType>?>(x => x.TransportType, nameof(Endpoint.TransportType));
+		public static readonly Exposer<Endpoint, Guid> ID = new(x => x.ID, nameof(Endpoint.ID));
+		public static readonly Exposer<Endpoint, string> Name = new(x => x.Name, nameof(Endpoint.Name));
+		public static readonly Exposer<Endpoint, EndpointRole> Role = new(x => x.Role, nameof(Endpoint.Role));
+		public static readonly Exposer<Endpoint, DmsElementId?> Element = new(x => x.Element, nameof(Endpoint.Element));
+		public static readonly Exposer<Endpoint, string> Identifier = new(x => x.Identifier, nameof(Endpoint.Identifier));
+		public static readonly Exposer<Endpoint, DmsElementId?> ControlElement = new(x => x.ControlElement, nameof(Endpoint.ControlElement));
+		public static readonly Exposer<Endpoint, string> ControlIdentifier = new(x => x.ControlIdentifier, nameof(Endpoint.ControlIdentifier));
+		public static readonly Exposer<Endpoint, ApiObjectReference<TransportType>?> TransportType = new(x => x.TransportType, nameof(Endpoint.TransportType));
 	}
 }

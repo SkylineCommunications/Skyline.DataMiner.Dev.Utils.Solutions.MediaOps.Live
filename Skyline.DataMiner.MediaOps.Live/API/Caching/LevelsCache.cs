@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -29,34 +30,54 @@
 
 		public IReadOnlyDictionary<string, Level> LevelsByName => _levelsByName;
 
+		public IReadOnlyCollection<Level> GetAllLevels()
+		{
+			lock (_lock)
+			{
+				return _levels.Values.ToList();
+			}
+		}
+
 		public Level GetLevel(ApiObjectReference<Level> id)
 		{
-			if (!TryGetLevel(id, out var level))
+			lock (_lock)
 			{
-				throw new ArgumentException($"Couldn't find level with ID {id.ID}", nameof(id));
-			}
+				if (!TryGetLevel(id, out var level))
+				{
+					throw new ArgumentException($"Couldn't find level with ID {id.ID}", nameof(id));
+				}
 
-			return level;
+				return level;
+			}
 		}
 
 		public Level GetLevel(string name)
 		{
-			if (!TryGetLevel(name, out var level))
+			lock (_lock)
 			{
-				throw new ArgumentException($"Couldn't find level with name '{name}'", nameof(name));
-			}
+				if (!TryGetLevel(name, out var level))
+				{
+					throw new ArgumentException($"Couldn't find level with name '{name}'", nameof(name));
+				}
 
-			return level;
+				return level;
+			}
 		}
 
 		public bool TryGetLevel(ApiObjectReference<Level> id, out Level level)
 		{
-			return _levels.TryGetValue(id, out level);
+			lock (_lock)
+			{
+				return _levels.TryGetValue(id, out level);
+			}
 		}
 
 		public bool TryGetLevel(string name, out Level level)
 		{
-			return _levelsByName.TryGetValue(name, out level);
+			lock (_lock)
+			{
+				return _levelsByName.TryGetValue(name, out level);
+			}
 		}
 
 		public void LoadInitialData(MediaOpsLiveApi api)

@@ -12,13 +12,13 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
     {
         public EndpointsCache() { }
         public EndpointsCache(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoints) { }
-        public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> Endpoints { get; }
-        public System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> EndpointsByName { get; }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetAllEndpoints() { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> id) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetEndpoint(string name) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithElement(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithElementAndIdentifier(Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, string identifier) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithIdentifier(string identifier) { }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithRole(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithTransportMetadata([System.Runtime.CompilerServices.TupleElementNames(new string[] {
                 "fieldName",
                 "value"})] params System.ValueTuple<string, string>[] metadataFilters) { }
@@ -35,6 +35,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
         public LevelsCache(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> levels) { }
         public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level>, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> Levels { get; }
         public System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> LevelsByName { get; }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> GetAllLevels() { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level GetLevel(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> id) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level GetLevel(string name) { }
         public void LoadInitialData(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
@@ -65,6 +66,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
         public TransportTypesCache(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> transportTypes) { }
         public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType>, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> TransportTypes { get; }
         public System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> TransportTypesByName { get; }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> GetAllTransportTypes() { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType GetTransportType(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> id) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType GetTransportType(string name) { }
         public void LoadInitialData(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
@@ -76,10 +78,8 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
     {
         public VirtualSignalGroupEndpointsCache() { }
         public VirtualSignalGroupEndpointsCache(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoints) { }
-        public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> Endpoints { get; }
-        public System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> EndpointsByName { get; }
-        public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> VirtualSignalGroups { get; }
-        public System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> VirtualSignalGroupsByName { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Caching.EndpointsCache Endpoints { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupsCache VirtualSignalGroups { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> id) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetEndpoint(string name) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsInVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroupRef) { }
@@ -93,6 +93,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithTransportType(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> transportType) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> id) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroup(string name) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState GetVirtualSignalGroupState(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsInCategory(Skyline.DataMiner.Utils.Categories.API.Objects.ApiObjectReference<Skyline.DataMiner.Utils.Categories.API.Objects.Category> category) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsThatContainEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
         public void LoadInitialData(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
@@ -100,6 +101,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
         public bool TryGetEndpoint(string name, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint endpoint) { }
         public bool TryGetVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> id, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
         public bool TryGetVirtualSignalGroup(string name, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
+        public bool TryGetVirtualSignalGroupState(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState state) { }
         public void UpdateEndpoints(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> updated, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> deleted) { }
         public void UpdateVirtualSignalGroups(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> updated, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> deleted) { }
     }
@@ -107,15 +109,24 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
     {
         public VirtualSignalGroupsCache() { }
         public VirtualSignalGroupsCache(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups) { }
-        public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> VirtualSignalGroups { get; }
-        public System.Collections.Generic.IReadOnlyDictionary<string, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> VirtualSignalGroupsByName { get; }
+        public VirtualSignalGroupsCache(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState> virtualSignalGroupStates) { }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetAllVirtualSignalGroups() { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> id) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroup(string name) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState GetVirtualSignalGroupState(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsInCategory(Skyline.DataMiner.Utils.Categories.API.Objects.ApiObjectReference<Skyline.DataMiner.Utils.Categories.API.Objects.Category> category) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsThatContainEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsWithRole(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role) { }
+        public bool IsLocked(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup) { }
+        public bool IsLocked(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup, out string lockedBy, out System.DateTimeOffset lockedTime, out string reason) { }
+        public bool IsProtected(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup) { }
+        public bool IsProtected(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup, out string lockedBy, out System.DateTimeOffset lockedTime, out string reason) { }
+        public bool IsUnlocked(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup) { }
         public void LoadInitialData(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
         public bool TryGetVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> id, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
         public bool TryGetVirtualSignalGroup(string name, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
+        public bool TryGetVirtualSignalGroupState(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState state) { }
+        public void UpdateVirtualSignalGroupStates(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState> updated, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState> deleted) { }
         public void UpdateVirtualSignalGroups(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> updated, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> deleted) { }
     }
 }
@@ -156,7 +167,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
     }
     public sealed class ConnectionsUpdatedEvent
     {
-        public ConnectionsUpdatedEvent(System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Connectivity.EndpointConnectivity> endpoints, System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Connectivity.VirtualSignalGroupConnectivity> virtualSignalGroups) { }
+        public ConnectionsUpdatedEvent(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Connectivity.EndpointConnectivity> endpoints, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Connectivity.VirtualSignalGroupConnectivity> virtualSignalGroups) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Connectivity.EndpointConnectivity> Endpoints { get; }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Connectivity.VirtualSignalGroupConnectivity> VirtualSignalGroups { get; }
         public override string ToString() { }
@@ -286,12 +297,61 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Enums
         Start = 5,
         Stop = 6,
     }
+    public enum LockState
+    {
+        Unlocked = 0,
+        Locked = 1,
+        Protected = 2,
+    }
     public enum OrchestrationScriptArgumentType
     {
         Element = 0,
         Parameter = 1,
         Preset = 2,
         Metadata = 3,
+    }
+}
+namespace Skyline.DataMiner.MediaOps.Live.API.Exceptions
+{
+    public class ConnectFailedException : System.Exception
+    {
+        public ConnectFailedException() { }
+        public ConnectFailedException(string message) { }
+        public ConnectFailedException(string message, System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest> failedRequests) { }
+        public ConnectFailedException(string message, System.Exception innerException) { }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest> FailedRequests { get; }
+    }
+    public class DestinationLockedException : System.Exception
+    {
+        public DestinationLockedException() { }
+        public DestinationLockedException(string message) { }
+        public DestinationLockedException(string message, System.Exception innerException) { }
+        public DestinationLockedException(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, System.DateTimeOffset lockTime, string lockedBy, string lockReason) { }
+        public string LockReason { get; }
+        public System.DateTimeOffset LockTime { get; }
+        public string LockedBy { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup VirtualSignalGroup { get; }
+        public override string ToString() { }
+    }
+    public class DestinationProtectedException : System.Exception
+    {
+        public DestinationProtectedException() { }
+        public DestinationProtectedException(string message) { }
+        public DestinationProtectedException(string message, System.Exception innerException) { }
+        public DestinationProtectedException(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, System.DateTimeOffset lockTime, string lockedBy, string lockReason) { }
+        public string LockReason { get; }
+        public System.DateTimeOffset LockTime { get; }
+        public string LockedBy { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup VirtualSignalGroup { get; }
+        public override string ToString() { }
+    }
+    public class DisconnectFailedException : System.Exception
+    {
+        public DisconnectFailedException() { }
+        public DisconnectFailedException(string message) { }
+        public DisconnectFailedException(string message, System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest> failedRequests) { }
+        public DisconnectFailedException(string message, System.Exception innerException) { }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest> FailedRequests { get; }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Extensions
@@ -360,11 +420,13 @@ namespace Skyline.DataMiner.MediaOps.Live.API
         public Skyline.DataMiner.MediaOps.Live.Mediation.Element.MediationElements MediationElements { get; }
         public Skyline.DataMiner.MediaOps.Live.Orchestration.OrchestrationHelper Orchestration { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.TransportTypeRepository TransportTypes { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.VirtualSignalGroupStateRepository VirtualSignalGroupStates { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.VirtualSignalGroupRepository VirtualSignalGroups { get; }
         public virtual Skyline.DataMiner.MediaOps.Live.Take.TakeHelper GetConnectionHandler() { }
         public virtual Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectivityInfoProvider GetConnectivityInfoProvider() { }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.IDms GetDms() { }
         public virtual Skyline.DataMiner.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider GetLiteConnectivityInfoProvider() { }
+        public virtual Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetStaticCache() { }
         public string GetVersion() { }
         public void InstallDomModules(System.Action<string> logAction = null) { }
         public bool IsInstalled() { }
@@ -590,6 +652,40 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, string> Name;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole> Role;
     }
+    public class VirtualSignalGroupLockRequest
+    {
+        public VirtualSignalGroupLockRequest(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
+        public VirtualSignalGroupLockRequest(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
+        public string JobReference { get; }
+        public string Reason { get; }
+        public System.DateTimeOffset? Time { get; }
+        public string User { get; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup VirtualSignalGroup { get; }
+    }
+    public class VirtualSignalGroupState : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState>
+    {
+        public VirtualSignalGroupState() { }
+        public VirtualSignalGroupState(System.Guid id) { }
+        public bool IsLocked { get; }
+        public bool IsProtected { get; }
+        public bool IsUnlocked { get; }
+        public string LockJobReference { get; set; }
+        public string LockReason { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.API.Enums.LockState LockState { get; set; }
+        public System.DateTimeOffset LockTime { get; set; }
+        public string LockedBy { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> VirtualSignalGroupReference { get; set; }
+    }
+    public static class VirtualSignalGroupStateExposers
+    {
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, System.Guid> ID;
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, string> LockJobReference;
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, string> LockReason;
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, Skyline.DataMiner.MediaOps.Live.API.Enums.LockState> LockState;
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, System.DateTimeOffset> LockTime;
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, string> LockedBy;
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>> VirtualSignalGroupReference;
+    }
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
 {
@@ -607,6 +703,9 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
         public System.Collections.Generic.IList<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.LevelMapping> LevelMappings { get; set; }
         public string SourceNodeId { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>? SourceVsg { get; set; }
+        public bool HasDestination() { }
+        public bool HasSource() { }
+        public bool HasSourceAndDestination() { }
     }
     public class Level
     {
@@ -672,7 +771,9 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
     public class OrchestrationJobInfo : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobInfo>
     {
         public OrchestrationJobInfo() { }
+        public string JobName { get; set; }
         public string JobReference { get; set; }
+        public string JobUrl { get; set; }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId MonitoringService { get; }
     }
     public static class OrchestrationJobInfoExposers
@@ -772,9 +873,38 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagemen
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetByCategory(Skyline.DataMiner.Utils.Categories.API.Objects.ApiObjectReference<Skyline.DataMiner.Utils.Categories.API.Objects.Category> category) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetByEndpointIds(System.Collections.Generic.IEnumerable<System.Guid> endpointIds) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetByEndpoints(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoints) { }
+        public void LockVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
+        public void LockVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupLockRequest> lockRequests) { }
+        public void LockVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
+        public void ProtectVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
+        public void ProtectVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupLockRequest> protectRequests) { }
+        public void ProtectVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
+        public void UnlockVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
+        public void UnlockVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups) { }
         public override Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup Update(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup instance) { }
         protected override void ValidateBeforeDelete(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> instances) { }
         protected override void ValidateBeforeSave(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> instances) { }
+    }
+    public class VirtualSignalGroupStateRepository : Skyline.DataMiner.MediaOps.Live.API.Repositories.Repository<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState>
+    {
+        protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinition { get; }
+        protected override Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance> CreateFilter(string fieldName, Skyline.DataMiner.Net.Messages.SLDataGateway.Comparer comparer, object value) { }
+        protected override Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState CreateInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
+        protected override SLDataGateway.API.Types.Querying.IOrderByElement CreateOrderBy(string fieldName, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }
+        public void DeleteByVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups) { }
+        public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState GetByVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
+        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState> GetByVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups) { }
+        public void LockVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
+        public void LockVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupLockRequest> lockRequests) { }
+        public void LockVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
+        public void ProtectVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
+        public void ProtectVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupLockRequest> protectRequests) { }
+        public void ProtectVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
+        public bool TryGetByVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState virtualSignalGroupState) { }
+        public void UnlockVirtualSignalGroup(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
+        public void UnlockVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups) { }
+        protected override void ValidateBeforeDelete(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState> instances) { }
+        protected override void ValidateBeforeSave(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState> instances) { }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
@@ -1363,28 +1493,48 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
 }
 namespace Skyline.DataMiner.MediaOps.Live.Take
 {
-    public class ConnectFailedException : System.Exception
+    public abstract class ConnectionRequest
     {
-        public ConnectFailedException(string message, System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest> failedRequests) { }
-        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest> FailedRequests { get; }
+        protected ConnectionRequest() { }
     }
-    public class ConnectionRequest
+    public abstract class ConnectionResult
     {
-        public ConnectionRequest(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint source, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint destination) { }
+        protected ConnectionResult(Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest request) { }
+        public System.Threading.Tasks.Task CompletionTask { get; }
+        public Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest ConnectionRequest { get; }
+        public bool IsSuccessful { get; }
+    }
+    public abstract class DisconnectRequest
+    {
+        protected DisconnectRequest() { }
+    }
+    public abstract class DisconnectResult
+    {
+        protected DisconnectResult(Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest request) { }
+        public System.Threading.Tasks.Task CompletionTask { get; }
+        public Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest DisconnectRequest { get; }
+        public bool IsSuccessful { get; }
+    }
+    public class EndpointConnectionRequest : Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest
+    {
+        public EndpointConnectionRequest(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint source, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint destination) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint Destination { get; }
-        public object MetaData { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint Source { get; }
     }
-    public class DisconnectFailedException : System.Exception
+    public class EndpointConnectionResult : Skyline.DataMiner.MediaOps.Live.Take.ConnectionResult
     {
-        public DisconnectFailedException(string message, System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest> failedRequests) { }
-        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest> FailedRequests { get; }
+        public EndpointConnectionResult(Skyline.DataMiner.MediaOps.Live.Take.EndpointConnectionRequest request) { }
+        public Skyline.DataMiner.MediaOps.Live.Take.EndpointConnectionRequest EndpointConnectionRequest { get; }
     }
-    public class DisconnectRequest
+    public class EndpointDisconnectRequest : Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest
     {
-        public DisconnectRequest(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint destination) { }
+        public EndpointDisconnectRequest(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint destination) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint Destination { get; }
-        public object MetaData { get; set; }
+    }
+    public class EndpointDisconnectResult : Skyline.DataMiner.MediaOps.Live.Take.DisconnectResult
+    {
+        public EndpointDisconnectResult(Skyline.DataMiner.MediaOps.Live.Take.EndpointDisconnectRequest request) { }
+        public Skyline.DataMiner.MediaOps.Live.Take.EndpointDisconnectRequest EndpointDisconnectRequest { get; }
     }
     public class LevelMapping
     {
@@ -1397,30 +1547,44 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
     public class TakeHelper
     {
         protected TakeHelper(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
-        public void DisableWaitForCompletion() { }
-        public void Disconnect(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest> disconnectRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
-        public void Disconnect(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgDisconnectRequest> vsgDisconnectRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
-        public void EnableWaitForCompletion(System.TimeSpan timeout, Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectionMonitor connectionMonitor = null) { }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.EndpointDisconnectResult> Disconnect(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.EndpointDisconnectRequest> disconnectRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker, Skyline.DataMiner.MediaOps.Live.Take.TakeOptions options = null) { }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgDisconnectResult> Disconnect(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgDisconnectRequest> disconnectRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker, Skyline.DataMiner.MediaOps.Live.Take.TakeOptions options = null) { }
         protected virtual void ExecuteConnectionHandlerScript(string script, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.ConnectionHandlerScriptAction action, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerInputData inputData, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
-        public void Take(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest> connectionRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
-        public void Take(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgConnectionRequest> vsgConnectionRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.EndpointConnectionResult> Take(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.EndpointConnectionRequest> connectionRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker, Skyline.DataMiner.MediaOps.Live.Take.TakeOptions options = null) { }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgConnectionResult> Take(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgConnectionRequest> connectionRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker, Skyline.DataMiner.MediaOps.Live.Take.TakeOptions options = null) { }
     }
-    public class VsgConnectionRequest
+    public class TakeOptions
+    {
+        public TakeOptions() { }
+        public bool BypassLockValidation { get; set; }
+        public Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectionMonitor ConnectionMonitor { get; set; }
+        public System.TimeSpan Timeout { get; set; }
+        public bool WaitForCompletion { get; set; }
+    }
+    public class VsgConnectionRequest : Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest
     {
         public VsgConnectionRequest(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup source, Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup destination, System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.LevelMapping> levelMappings = null) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup Destination { get; }
         public bool IsConnectAllLevels { get; }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.LevelMapping> LevelMappings { get; }
-        public object MetaData { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup Source { get; }
     }
-    public class VsgDisconnectRequest
+    public class VsgConnectionResult : Skyline.DataMiner.MediaOps.Live.Take.ConnectionResult
+    {
+        public VsgConnectionResult(Skyline.DataMiner.MediaOps.Live.Take.VsgConnectionRequest request) { }
+        public Skyline.DataMiner.MediaOps.Live.Take.VsgConnectionRequest VsgConnectionRequest { get; }
+    }
+    public class VsgDisconnectRequest : Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest
     {
         public VsgDisconnectRequest(Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup destination, System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level>> levels = null) { }
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup Destination { get; }
         public bool IsDisconnectAllLevels { get; }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level>> Levels { get; }
-        public object MetaData { get; set; }
+    }
+    public class VsgDisconnectResult : Skyline.DataMiner.MediaOps.Live.Take.DisconnectResult
+    {
+        public VsgDisconnectResult(Skyline.DataMiner.MediaOps.Live.Take.VsgDisconnectRequest request) { }
+        public Skyline.DataMiner.MediaOps.Live.Take.VsgDisconnectRequest VsgDisconnectRequest { get; }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.Tools

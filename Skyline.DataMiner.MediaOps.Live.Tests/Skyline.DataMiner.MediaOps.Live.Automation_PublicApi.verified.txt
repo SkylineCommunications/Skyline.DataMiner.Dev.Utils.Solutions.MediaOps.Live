@@ -11,6 +11,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.API
         public EngineMediaOpsLiveApi(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Net.IConnection connection) { }
         public Skyline.DataMiner.Automation.IEngine Engine { get; }
         public override Skyline.DataMiner.MediaOps.Live.Take.TakeHelper GetConnectionHandler() { }
+        public override Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetStaticCache() { }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.Automation

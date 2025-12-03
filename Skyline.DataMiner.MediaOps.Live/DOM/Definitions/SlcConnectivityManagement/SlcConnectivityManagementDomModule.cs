@@ -32,6 +32,7 @@
 			new EndpointDefinition(),
 			new LevelDefinition(),
 			new VirtualSignalGroupDefinition(),
+			new VirtualSignalGroupStateDefinition(),
 		};
 	}
 }

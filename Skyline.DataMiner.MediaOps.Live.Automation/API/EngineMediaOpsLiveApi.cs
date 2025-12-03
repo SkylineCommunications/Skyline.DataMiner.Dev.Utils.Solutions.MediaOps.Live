@@ -4,6 +4,7 @@
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Plan;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Take;
 	using Skyline.DataMiner.MediaOps.Live.Plan;
@@ -22,6 +23,11 @@
 		}
 
 		public IEngine Engine { get; }
+
+		public override StaticMediaOpsLiveCache GetStaticCache()
+		{
+			return Engine.GetStaticMediaOpsLiveApiCache();
+		}
 
 		public override TakeHelper GetConnectionHandler()
 		{

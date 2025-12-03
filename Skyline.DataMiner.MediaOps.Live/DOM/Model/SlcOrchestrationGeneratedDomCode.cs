@@ -86,11 +86,11 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 				public static FieldDescriptorID EventType { get; } = new FieldDescriptorID(new Guid("e85fbaf6-15a9-485c-92f3-d17cbe10f914"));
 				public static FieldDescriptorID EventState { get; } = new FieldDescriptorID(new Guid("2d7ececb-585e-4786-8a89-329486b59f92"));
 				public static FieldDescriptorID EventTime { get; } = new FieldDescriptorID(new Guid("184b3213-2839-472a-8438-84797fcc2e3b"));
+				public static FieldDescriptorID JobInformation { get; } = new FieldDescriptorID(new Guid("8508f700-a734-4efa-a76a-1b220c71b2f6"));
 				public static FieldDescriptorID FailureInfo { get; } = new FieldDescriptorID(new Guid("25395e30-97fd-44e3-9878-36f4fc64ec53"));
 				public static FieldDescriptorID SchedulerReference { get; } = new FieldDescriptorID(new Guid("3a637566-62a1-4448-b1cc-66c1d8f29946"));
 				public static FieldDescriptorID ActualStartTime { get; } = new FieldDescriptorID(new Guid("b344ff54-e25e-4bac-9d4f-9c8f241e9572"));
 				public static FieldDescriptorID OrchestrationDuration { get; } = new FieldDescriptorID(new Guid("c584c1f5-a603-4d80-a449-e35f3dd2da95"));
-				public static FieldDescriptorID JobInformation { get; } = new FieldDescriptorID(new Guid("8508f700-a734-4efa-a76a-1b220c71b2f6"));
 			}
 
 			public static class JobInfo
@@ -99,6 +99,8 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 				{ ModuleId = "(slc)orchestration" };
 				public static FieldDescriptorID JobReference { get; } = new FieldDescriptorID(new Guid("e7bf0e2c-dc04-4620-8a19-eb24ede81b91"));
 				public static FieldDescriptorID MonitoringService { get; } = new FieldDescriptorID(new Guid("1ad30bca-9282-49da-8d79-3acc197489ff"));
+				public static FieldDescriptorID JobName { get; } = new FieldDescriptorID(new Guid("af147772-ca9c-4638-b28f-0f8db6cc7619"));
+				public static FieldDescriptorID JobURL { get; } = new FieldDescriptorID(new Guid("771a106d-b114-441a-851e-57ed923dde4d"));
 			}
 		}
 
@@ -128,7 +130,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 
@@ -142,6 +143,15 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		/// Initializes a new instance of the <see cref="OrchestrationEventInstance"/> class. Creates an empty <see cref="OrchestrationEventInstance"/> instance with default settings.
 		/// </summary>
 		public OrchestrationEventInstance() : base(SlcOrchestrationIds.Definitions.OrchestrationEvent)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationEventInstance"/> class. Creates an empty <see cref="OrchestrationEventInstance"/> instance with default settings and a specific ID.
+		/// </summary>
+		public OrchestrationEventInstance(Guid id) : base(SlcOrchestrationIds.Definitions.OrchestrationEvent, id)
 		{
 			InitializeProperties();
 			AfterLoad();
@@ -179,8 +189,34 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			return new OrchestrationEventInstance(instance);
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="OrchestrationEventInstance"/>.
+		/// </summary>
+		/// <returns>A new <see cref="OrchestrationEventInstance"/> object that is a deep copy of this instance.</returns>
+		public OrchestrationEventInstance Clone()
+		{
+			return new OrchestrationEventInstance((DomInstance)this.ToInstance().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="OrchestrationEventInstance"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="OrchestrationEventInstance"/> object that is a copy of this instance but with a different id.</returns>
+		public OrchestrationEventInstance Duplicate()
+		{
+			var instance = (DomInstance)this.ToInstance().Clone();
+			instance.ID = new DomInstanceId(Guid.NewGuid())
+			{ ModuleId = ModuleId };
+			foreach (var section in instance.Sections)
+			{
+				section.ID = new Skyline.DataMiner.Net.Sections.SectionID(Guid.NewGuid());
+			}
+
+			return new OrchestrationEventInstance(instance);
+		}
+
 		/// <inheritdoc />
-		protected override DomInstance InternalToInstance()
+		protected sealed override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			if (ConfigurationInfo != null && !ConfigurationInfo.IsEmpty)
@@ -198,7 +234,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <inheritdoc />
-		public override void Save(DomHelper helper)
+		public sealed override void Save(DomHelper helper)
 		{
 			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
 			var instance = ToInstance();
@@ -212,7 +248,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			}
 		}
 
-		protected override void InitializeProperties()
+		protected sealed override void InitializeProperties()
 		{
 			var _configurationInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.ConfigurationInfo.Id));
 			if (_configurationInfo is null)
@@ -262,6 +298,15 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationJobInfoInstance"/> class. Creates an empty <see cref="OrchestrationJobInfoInstance"/> instance with default settings and a specific ID.
+		/// </summary>
+		public OrchestrationJobInfoInstance(Guid id) : base(SlcOrchestrationIds.Definitions.OrchestrationJobInfo, id)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationJobInfoInstance"/> class using the specified <paramref name="domInstance"/> for initializing the object.
 		/// </summary>
 		/// <param name="domInstance">The <see cref="DomInstance"/> object that provides data for initializing the <see cref="OrchestrationJobInfoInstance"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
@@ -274,7 +319,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <summary>
-		/// Gets or sets the OrchestrationJobInfo section of the DOM Instance.
+		/// Gets or sets the JobInfo section of the DOM Instance.
 		/// </summary>
 		public JobInfoSection JobInfo { get; set; }
 
@@ -283,8 +328,34 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			return new OrchestrationJobInfoInstance(instance);
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="OrchestrationJobInfoInstance"/>.
+		/// </summary>
+		/// <returns>A new <see cref="OrchestrationJobInfoInstance"/> object that is a deep copy of this instance.</returns>
+		public OrchestrationJobInfoInstance Clone()
+		{
+			return new OrchestrationJobInfoInstance((DomInstance)this.ToInstance().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="OrchestrationJobInfoInstance"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="OrchestrationJobInfoInstance"/> object that is a copy of this instance but with a different id.</returns>
+		public OrchestrationJobInfoInstance Duplicate()
+		{
+			var instance = (DomInstance)this.ToInstance().Clone();
+			instance.ID = new DomInstanceId(Guid.NewGuid())
+			{ ModuleId = ModuleId };
+			foreach (var section in instance.Sections)
+			{
+				section.ID = new Skyline.DataMiner.Net.Sections.SectionID(Guid.NewGuid());
+			}
+
+			return new OrchestrationJobInfoInstance(instance);
+		}
+
 		/// <inheritdoc />
-		protected override DomInstance InternalToInstance()
+		protected sealed override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			domInstance.Sections.Add(JobInfo.ToSection());
@@ -292,7 +363,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <inheritdoc />
-		public override void Save(DomHelper helper)
+		public sealed override void Save(DomHelper helper)
 		{
 			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
 			var instance = ToInstance();
@@ -306,7 +377,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			}
 		}
 
-		protected override void InitializeProperties()
+		protected sealed override void InitializeProperties()
 		{
 			var _jobInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.JobInfo.Id));
 			if (_jobInfo is null)
@@ -330,6 +401,15 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		/// Initializes a new instance of the <see cref="ConfigurationInstance"/> class. Creates an empty <see cref="ConfigurationInstance"/> instance with default settings.
 		/// </summary>
 		public ConfigurationInstance() : base(SlcOrchestrationIds.Definitions.Configuration)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ConfigurationInstance"/> class. Creates an empty <see cref="ConfigurationInstance"/> instance with default settings and a specific ID.
+		/// </summary>
+		public ConfigurationInstance(Guid id) : base(SlcOrchestrationIds.Definitions.Configuration, id)
 		{
 			InitializeProperties();
 			AfterLoad();
@@ -362,8 +442,34 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			return new ConfigurationInstance(instance);
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="ConfigurationInstance"/>.
+		/// </summary>
+		/// <returns>A new <see cref="ConfigurationInstance"/> object that is a deep copy of this instance.</returns>
+		public ConfigurationInstance Clone()
+		{
+			return new ConfigurationInstance((DomInstance)this.ToInstance().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="ConfigurationInstance"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="ConfigurationInstance"/> object that is a copy of this instance but with a different id.</returns>
+		public ConfigurationInstance Duplicate()
+		{
+			var instance = (DomInstance)this.ToInstance().Clone();
+			instance.ID = new DomInstanceId(Guid.NewGuid())
+			{ ModuleId = ModuleId };
+			foreach (var section in instance.Sections)
+			{
+				section.ID = new Skyline.DataMiner.Net.Sections.SectionID(Guid.NewGuid());
+			}
+
+			return new ConfigurationInstance(instance);
+		}
+
 		/// <inheritdoc />
-		protected override DomInstance InternalToInstance()
+		protected sealed override DomInstance InternalToInstance()
 		{
 			domInstance.Sections.Clear();
 			foreach (var item in Connection)
@@ -380,7 +486,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <inheritdoc />
-		public override void Save(DomHelper helper)
+		public sealed override void Save(DomHelper helper)
 		{
 			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
 			var instance = ToInstance();
@@ -394,7 +500,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			}
 		}
 
-		protected override void InitializeProperties()
+		protected sealed override void InitializeProperties()
 		{
 			Connection = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.Connection.Id)).Select(section => new ConnectionSection(section)).ToList();
 			NodeConfiguration = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.NodeConfiguration.Id)).Select(section => new NodeConfigurationSection(section)).ToList();
@@ -413,7 +519,6 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 	using System.Collections.Generic;
 	using System.Collections.ObjectModel;
 	using System.Linq;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Apps.Sections.Sections;
 	using Skyline.DataMiner.Net.Messages;
@@ -481,6 +586,26 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.ConfigurationInfo.Configuration, (Guid)value);
 				}
 			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="ConfigurationInfoSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="ConfigurationInfoSection"/> object that is a deep copy of this section.</returns>
+		public ConfigurationInfoSection Clone()
+		{
+			return new ConfigurationInfoSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="ConfigurationInfoSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="ConfigurationInfoSection"/> object that is a copy of this section but with a different id.</returns>
+		public ConfigurationInfoSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new ConfigurationInfoSection(section);
 		}
 
 		/// <inheritdoc />
@@ -728,18 +853,24 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			}
 		}
 
-		/// <inheritdoc />
-		protected override Section InternalToSection()
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="ConnectionSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="ConnectionSection"/> object that is a deep copy of this section.</returns>
+		public ConnectionSection Clone()
 		{
-			if (section.GetValue<String>(SlcOrchestrationIds.Sections.Connection.DestinationNodeID) == null)
-				throw new InvalidOperationException("'DestinationNodeID' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			if (section.GetValue<String>(SlcOrchestrationIds.Sections.Connection.SourceNodeID) == null)
-				throw new InvalidOperationException("'SourceNodeID' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			if (section.GetValue<Guid>(SlcOrchestrationIds.Sections.Connection.DestinationVSG) == null)
-				throw new InvalidOperationException("'DestinationVSG' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			if (section.GetValue<Guid>(SlcOrchestrationIds.Sections.Connection.SourceVSG) == null)
-				throw new InvalidOperationException("'SourceVSG' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
-			return section;
+			return new ConnectionSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="ConnectionSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="ConnectionSection"/> object that is a copy of this section but with a different id.</returns>
+		public ConnectionSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new ConnectionSection(section);
 		}
 	}
 
@@ -891,6 +1022,26 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.GlobalConfiguration.OrchestrationProfile, (String)value);
 				}
 			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="GlobalConfigurationSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="GlobalConfigurationSection"/> object that is a deep copy of this section.</returns>
+		public GlobalConfigurationSection Clone()
+		{
+			return new GlobalConfigurationSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="GlobalConfigurationSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="GlobalConfigurationSection"/> object that is a copy of this section but with a different id.</returns>
+		public GlobalConfigurationSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new GlobalConfigurationSection(section);
 		}
 	}
 
@@ -1130,6 +1281,26 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 			}
 		}
 
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="NodeConfigurationSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="NodeConfigurationSection"/> object that is a deep copy of this section.</returns>
+		public NodeConfigurationSection Clone()
+		{
+			return new NodeConfigurationSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="NodeConfigurationSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="NodeConfigurationSection"/> object that is a copy of this section but with a different id.</returns>
+		public NodeConfigurationSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new NodeConfigurationSection(section);
+		}
+
 		/// <inheritdoc />
 		protected override Section InternalToSection()
 		{
@@ -1333,6 +1504,49 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <summary>
+		/// Gets or sets the JobInformation field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public Guid? JobInformation
+		{
+			get
+			{
+				var wrapper = section.GetValue<Guid>(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobInformation);
+				if (wrapper != null)
+				{
+					return (Guid?)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobInformation);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobInformation, (Guid)value);
+				}
+			}
+		}
+
+		/// <summary>
 		/// Gets or sets the FailureInfo field of the DOM Instance.
 		/// </summary>
 		/// <remarks>
@@ -1505,46 +1719,23 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 		}
 
 		/// <summary>
-		/// Gets or sets the JobInformation field of the DOM Instance.
+		/// Creates a deep copy of the current <see cref="OrchestrationEventInfoSection"/>.
 		/// </summary>
-		/// <remarks>
-		/// When retrieving the value:
-		/// <list type="bullet">
-		/// <item>If the field has been set, it will return the value.</item>
-		/// <item>If the field is not set it will return <see langword="null"/>.</item>
-		/// </list>
-		/// When setting the value:
-		/// <list type="bullet">
-		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
-		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
-		/// </list>
-		/// </remarks>
-		public Guid? JobInformation
+		/// <returns>A new <see cref="OrchestrationEventInfoSection"/> object that is a deep copy of this section.</returns>
+		public OrchestrationEventInfoSection Clone()
 		{
-			get
-			{
-				var wrapper = section.GetValue<Guid>(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobInformation);
-				if (wrapper != null)
-				{
-					return (Guid?)wrapper.Value;
-				}
-				else
-				{
-					return null;
-				}
-			}
+			return new OrchestrationEventInfoSection((Section)this.ToSection().Clone());
+		}
 
-			set
-			{
-				if (value == null)
-				{
-					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobInformation);
-				}
-				else
-				{
-					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobInformation, (Guid)value);
-				}
-			}
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="OrchestrationEventInfoSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="OrchestrationEventInfoSection"/> object that is a copy of this section but with a different id.</returns>
+		public OrchestrationEventInfoSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new OrchestrationEventInfoSection(section);
 		}
 
 		/// <inheritdoc />
@@ -1669,6 +1860,112 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
 					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.JobInfo.MonitoringService, (String)value);
 				}
 			}
+		}
+
+		/// <summary>
+		/// Gets or sets the JobName field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String JobName
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.JobInfo.JobName);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.JobInfo.JobName);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.JobInfo.JobName, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the JobURL field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String JobURL
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.JobInfo.JobURL);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.JobInfo.JobURL);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.JobInfo.JobURL, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="JobInfoSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="JobInfoSection"/> object that is a deep copy of this section.</returns>
+		public JobInfoSection Clone()
+		{
+			return new JobInfoSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="JobInfoSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="JobInfoSection"/> object that is a copy of this section but with a different id.</returns>
+		public JobInfoSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new JobInfoSection(section);
 		}
 
 		/// <inheritdoc />

@@ -5,6 +5,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
@@ -32,53 +33,80 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 			}
 		}
 
-		public IReadOnlyDictionary<ApiObjectReference<Endpoint>, Endpoint> Endpoints => _endpoints;
-
-		public IReadOnlyDictionary<string, Endpoint> EndpointsByName => _endpointsByName;
+		public IReadOnlyCollection<Endpoint> GetAllEndpoints()
+		{
+			lock (_lock)
+			{
+				return _endpoints.Values.ToList();
+			}
+		}
 
 		public Endpoint GetEndpoint(ApiObjectReference<Endpoint> id)
 		{
-			if (!TryGetEndpoint(id, out var endpoint))
+			lock (_lock)
 			{
-				throw new ArgumentException($"Couldn't find endpoint with ID {id.ID}", nameof(id));
-			}
+				if (!TryGetEndpoint(id, out var endpoint))
+				{
+					throw new ArgumentException($"Couldn't find endpoint with ID {id.ID}", nameof(id));
+				}
 
-			return endpoint;
+				return endpoint;
+			}
 		}
 
 		public Endpoint GetEndpoint(string name)
 		{
-			if (!TryGetEndpoint(name, out var endpoint))
+			lock (_lock)
 			{
-				throw new ArgumentException($"Couldn't find endpoint with name '{name}'", nameof(name));
-			}
+				if (!TryGetEndpoint(name, out var endpoint))
+				{
+					throw new ArgumentException($"Couldn't find endpoint with name '{name}'", nameof(name));
+				}
 
-			return endpoint;
+				return endpoint;
+			}
 		}
 
 		public bool TryGetEndpoint(ApiObjectReference<Endpoint> id, out Endpoint endpoint)
 		{
-			return _endpoints.TryGetValue(id, out endpoint);
+			lock (_lock)
+			{
+				return _endpoints.TryGetValue(id, out endpoint);
+			}
 		}
 
 		public bool TryGetEndpoint(string name, out Endpoint endpoint)
 		{
-			return _endpointsByName.TryGetValue(name, out endpoint);
+			lock (_lock)
+			{
+				return _endpointsByName.TryGetValue(name, out endpoint);
+			}
+		}
+
+		public IReadOnlyCollection<Endpoint> GetEndpointsWithRole(EndpointRole role)
+		{
+			lock (_lock)
+			{
+				return GetAllEndpoints().Where(e => e.Role == role).ToList();
+			}
 		}
 
 		public IReadOnlyCollection<Endpoint> GetEndpointsWithTransportMetadata(string fieldName, string value)
 		{
-			if (String.IsNullOrWhiteSpace(fieldName))
+			lock (_lock)
 			{
-				throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
-			}
+				if (String.IsNullOrWhiteSpace(fieldName))
+				{
+					throw new ArgumentException($"'{nameof(fieldName)}' cannot be null or whitespace.", nameof(fieldName));
+				}
 
-			if (_endpointsByTransportMetaData.TryGetForward((fieldName, value), out var endpoints))
-			{
-				return endpoints.ToList();
-			}
+				if (_endpointsByTransportMetaData.TryGetForward((fieldName, value), out var endpoints))
+				{
+					return endpoints.ToList();
+				}
 
-			return [];
+				return [];
+			}
 		}
 
 		public IReadOnlyCollection<Endpoint> GetEndpointsWithTransportMetadata(params (string fieldName, string value)[] metadataFilters)
@@ -93,65 +121,80 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 				return [];
 			}
 
-			var result = new HashSet<Endpoint>();
-
-			for (int i = 0; i < metadataFilters.Length; i++)
+			lock (_lock)
 			{
-				var matchingEndpoints = GetEndpointsWithTransportMetadata(metadataFilters[i].fieldName, metadataFilters[i].value);
+				var result = new HashSet<Endpoint>();
 
-				if (i == 0)
+				for (int i = 0; i < metadataFilters.Length; i++)
 				{
-					result.UnionWith(matchingEndpoints);
-				}
-				else
-				{
-					result.IntersectWith(matchingEndpoints);
+					var matchingEndpoints = GetEndpointsWithTransportMetadata(metadataFilters[i].fieldName, metadataFilters[i].value);
+
+					if (i == 0)
+					{
+						result.UnionWith(matchingEndpoints);
+					}
+					else
+					{
+						result.IntersectWith(matchingEndpoints);
+					}
+
+					if (result.Count == 0)
+					{
+						break;
+					}
 				}
 
-				if (result.Count == 0)
-				{
-					break;
-				}
+				return result;
 			}
-
-			return result;
 		}
 
 		public IReadOnlyCollection<Endpoint> GetEndpointsWithTransportType(ApiObjectReference<TransportType> transportType)
 		{
-			if (_endpointsByTransportType.TryGetChildren(transportType, out var endpoints))
+			lock (_lock)
 			{
-				return endpoints.ToList();
-			}
+				if (_endpointsByTransportType.TryGetChildren(transportType, out var endpoints))
+				{
+					return endpoints.ToList();
+				}
 
-			return [];
+				return [];
+			}
 		}
 
 		public IReadOnlyCollection<Endpoint> GetEndpointsWithElement(DmsElementId elementId)
 		{
-			if (_endpointsByElement.TryGetChildren(elementId, out var endpoints))
+			lock (_lock)
 			{
-				return endpoints.ToList();
-			}
+				if (_endpointsByElement.TryGetChildren(elementId, out var endpoints))
+				{
+					return endpoints.ToList();
+				}
 
-			return [];
+				return [];
+			}
 		}
 
 		public IReadOnlyCollection<Endpoint> GetEndpointsWithIdentifier(string identifier)
 		{
-			if (_endpointsByIdentifier.TryGetChildren(identifier, out var endpoints))
+			lock (_lock)
 			{
-				return endpoints.ToList();
-			}
+				if (_endpointsByIdentifier.TryGetChildren(identifier, out var endpoints))
+				{
+					return endpoints.ToList();
+				}
 
-			return [];
+				return [];
+			}
 		}
 
 		public IReadOnlyCollection<Endpoint> GetEndpointsWithElementAndIdentifier(DmsElementId elementId, string identifier)
 		{
-			return GetEndpointsWithElement(elementId)
-				.Intersect(GetEndpointsWithIdentifier(identifier))
-				.ToList();
+			lock (_lock)
+			{
+				return GetEndpointsWithElement(elementId)
+					.Intersect(GetEndpointsWithIdentifier(identifier))
+					.ToList();
+			}
 		}
 
 		public void LoadInitialData(MediaOpsLiveApi api)
