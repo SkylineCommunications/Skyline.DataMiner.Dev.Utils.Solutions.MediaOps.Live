@@ -500,8 +500,8 @@
 			Debug.Assert(!Monitor.IsEntered(_lock), "Lock must not be held when raising events to prevent deadlocks from event handlers calling back into this class");
 
 			var eventArgs = new ConnectionsUpdatedEvent(
-				context.ChangedEndpoints.Select(x => x.New),
-				context.ChangedVirtualSignalGroups.Select(x => x.New));
+				context.ChangedEndpoints.Values.Select(x => x.New),
+				context.ChangedVirtualSignalGroups.Values.Select(x => x.New));
 
 			ConnectionsUpdated?.Invoke(this, eventArgs);
 		}
@@ -524,7 +524,7 @@
 
 			// Update cache and add to list
 			_endpointConnectivityCache[endpoint] = newConnectivity;
-			context.ChangedEndpoints.Add((oldConnectivity, newConnectivity));
+			context.ChangedEndpoints[endpoint] = (oldConnectivity, newConnectivity);
 
 			// Also invalidate all endpoints that are linked to this endpoint
 			var linkedEndpoints = GetLinkedEndpoints(oldConnectivity)
@@ -564,7 +564,7 @@
 
 			// Update cache and add to list
 			_vsgConnectivityCache[virtualSignalGroup] = newConnectivity;
-			context.ChangedVirtualSignalGroups.Add((oldConnectivity, newConnectivity));
+			context.ChangedVirtualSignalGroups[virtualSignalGroup] = (oldConnectivity, newConnectivity);
 
 			// Also invalidate all endpoints in this virtual signal group
 			var linkedEndpoints = GetLinkedEndpoints(oldConnectivity)
@@ -871,9 +871,9 @@
 
 			public HashSet<VirtualSignalGroup> VisitedVirtualSignalGroups { get; } = new();
 
-			public HashSet<(EndpointConnectivity Old, EndpointConnectivity New)> ChangedEndpoints { get; } = new();
+			public Dictionary<Endpoint, (EndpointConnectivity Old, EndpointConnectivity New)> ChangedEndpoints { get; } = new();
 
-			public HashSet<(VirtualSignalGroupConnectivity Old, VirtualSignalGroupConnectivity New)> ChangedVirtualSignalGroups { get; } = new();
+			public Dictionary<VirtualSignalGroup, (VirtualSignalGroupConnectivity Old, VirtualSignalGroupConnectivity New)> ChangedVirtualSignalGroups { get; } = new();
 
 			public bool HasChanges =>
 				ChangedEndpoints.Count > 0 ||
