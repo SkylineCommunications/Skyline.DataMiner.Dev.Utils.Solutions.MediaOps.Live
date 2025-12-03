@@ -165,7 +165,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
     }
     public sealed class ConnectionsUpdatedEvent
     {
-        public ConnectionsUpdatedEvent(System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Connectivity.EndpointConnectivity> endpoints, System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Connectivity.VirtualSignalGroupConnectivity> virtualSignalGroups) { }
+        public ConnectionsUpdatedEvent(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Connectivity.EndpointConnectivity> endpoints, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Connectivity.VirtualSignalGroupConnectivity> virtualSignalGroups) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Connectivity.EndpointConnectivity> Endpoints { get; }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.MediaOps.Live.API.Connectivity.VirtualSignalGroupConnectivity> VirtualSignalGroups { get; }
         public override string ToString() { }
