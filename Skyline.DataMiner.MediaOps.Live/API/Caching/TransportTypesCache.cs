@@ -2,6 +2,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -28,6 +29,14 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 		public IReadOnlyDictionary<ApiObjectReference<TransportType>, TransportType> TransportTypes => _transportTypes;
 
 		public IReadOnlyDictionary<string, TransportType> TransportTypesByName => _transportTypesByName;
+
+		public IReadOnlyCollection<TransportType> GetAllTransportTypes()
+		{
+			lock (_lock)
+			{
+				return _transportTypes.Values.ToList();
+			}
+		}
 
 		public TransportType GetTransportType(ApiObjectReference<TransportType> id)
 		{
