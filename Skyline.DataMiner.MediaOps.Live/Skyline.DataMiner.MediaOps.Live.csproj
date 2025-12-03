@@ -45,8 +45,6 @@
 		<PackageReference Include="Skyline.DataMiner.Dev.Common" Version="10.5.9.2" />
 		<PackageReference Include="Skyline.DataMiner.Utils.Categories" Version="1.0.5" />
 		<PackageReference Include="Skyline.DataMiner.Utils.DOM" Version="10.5.2.5" />
-		<PackageReference Include="Skyline.DataMiner.Utils.MediaOps.Temp.Common" Version="1.5.0-alpha9" />
-		<PackageReference Include="Skyline.DataMiner.Utils.MediaOps.Temp.Helpers" Version="1.5.0-alpha9" />
 		<PackageReference Include="Skyline.DataMiner.Utils.PerformanceAnalyzer" Version="3.0.2" />
 		<PackageReference Include="GitInfo" Version="3.6.0" PrivateAssets="All" />
 	</ItemGroup>
