@@ -158,7 +158,7 @@
 			{
 				var tasks = new List<Task>();
 
-				var connectionTasksPerEvent = ProcessConnections(eventConfigurations, performanceTracker);
+				var connectionTasksPerEvent = ProcessAndReturnConnectionResults(eventConfigurations, performanceTracker);
 
 				foreach (KeyValuePair<OrchestrationEventConfiguration, ICollection<Task>> keyValuePair in connectionTasksPerEvent)
 				{
@@ -221,7 +221,7 @@
 			}
 		}
 
-		internal Dictionary<OrchestrationEventConfiguration, ICollection<Task>> ProcessConnections(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
+		internal Dictionary<OrchestrationEventConfiguration, ICollection<Task>> ProcessAndReturnConnectionResults(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -244,72 +244,81 @@
 				}
 
 				var resultTasksByEvent = new Dictionary<OrchestrationEventConfiguration, ICollection<Task>>();
-				try
-				{
-					var connectionResults = ExecuteConnections(connectionsToConfigureByEvent, performanceTracker);
-					foreach (VsgConnectionResult vsgConnectionResult in connectionResults)
-					{
-						var metaDataConnectionResult = (VsgConnectionRequestWithMetaData)vsgConnectionResult.VsgConnectionRequest;
-						OrchestrationEventConfiguration matchingEvent = eventConfigurations.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
-
-						if (matchingEvent == null)
-						{
-							continue;
-						}
-
-						if (!resultTasksByEvent.ContainsKey(matchingEvent))
-						{
-							resultTasksByEvent[matchingEvent] = [];
-						}
-
-						resultTasksByEvent[matchingEvent].Add(vsgConnectionResult.CompletionTask);
-					}
-				}
-				catch (Exception e)
-				{
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
-					{
-						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
-					}
-				}
-
-				try
-				{
-					var disconnectResults = ExecuteDisconnects(disconnectsToConfigureByEvent, performanceTracker);
-
-					foreach (VsgDisconnectResult vsgDisconnectResult in disconnectResults)
-					{
-						var metaDataConnectionResult = (VsgDisconnectRequestWithMetadata)vsgDisconnectResult.VsgDisconnectRequest;
-						OrchestrationEventConfiguration matchingEvent = eventConfigurations.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
-
-						if (matchingEvent == null)
-						{
-							continue;
-						}
-
-						if (!resultTasksByEvent.ContainsKey(matchingEvent))
-						{
-							resultTasksByEvent[matchingEvent] = [];
-						}
-
-						resultTasksByEvent[matchingEvent].Add(vsgDisconnectResult.CompletionTask);
-					}
-				}
-				catch (Exception e)
-				{
-					foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
-					{
-						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
-						orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
-					}
-				}
+				ProcessAndAddConnectResults(connectionsToConfigureByEvent, resultTasksByEvent, performanceTracker);
+				ProcessAndAddDisconnectResults(disconnectsToConfigureByEvent, resultTasksByEvent, performanceTracker);
 
 				return resultTasksByEvent;
 			}
 		}
 
-		private ICollection<VsgDisconnectResult> ExecuteDisconnects(Dictionary<OrchestrationEventConfiguration, List<Connection>> disconnectsPerEvent, PerformanceTracker performanceTracker)
+		private void ProcessAndAddDisconnectResults(Dictionary<OrchestrationEventConfiguration, List<Connection>> disconnectsToConfigureByEvent, Dictionary<OrchestrationEventConfiguration, ICollection<Task>> resultTasksByEvent, PerformanceTracker performanceTracker)
+		{
+			try
+			{
+				var disconnectResults = ExecuteAndReturnDisconnectResults(disconnectsToConfigureByEvent, performanceTracker);
+
+				foreach (VsgDisconnectResult vsgDisconnectResult in disconnectResults)
+				{
+					var metaDataConnectionResult = (VsgDisconnectRequestWithMetadata)vsgDisconnectResult.VsgDisconnectRequest;
+					OrchestrationEventConfiguration matchingEvent = disconnectsToConfigureByEvent.Keys.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
+
+					if (matchingEvent == null)
+					{
+						continue;
+					}
+
+					if (!resultTasksByEvent.ContainsKey(matchingEvent))
+					{
+						resultTasksByEvent[matchingEvent] = [];
+					}
+
+					resultTasksByEvent[matchingEvent].Add(vsgDisconnectResult.CompletionTask);
+				}
+			}
+			catch (Exception e)
+			{
+				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in disconnectsToConfigureByEvent.Keys)
+				{
+					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
+					orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+				}
+			}
+		}
+
+		private void ProcessAndAddConnectResults(Dictionary<OrchestrationEventConfiguration, List<Connection>> connectionsToConfigureByEvent, Dictionary<OrchestrationEventConfiguration, ICollection<Task>> resultTasksByEvent, PerformanceTracker performanceTracker)
+		{
+			try
+			{
+				var connectionResults = ExecuteAndReturnConnectResults(connectionsToConfigureByEvent, performanceTracker);
+				foreach (VsgConnectionResult vsgConnectionResult in connectionResults)
+				{
+					var metaDataConnectionResult = (VsgConnectionRequestWithMetaData)vsgConnectionResult.VsgConnectionRequest;
+					OrchestrationEventConfiguration matchingEvent = connectionsToConfigureByEvent.Keys.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
+
+					if (matchingEvent == null)
+					{
+						continue;
+					}
+
+					if (!resultTasksByEvent.ContainsKey(matchingEvent))
+					{
+						resultTasksByEvent[matchingEvent] = [];
+					}
+
+					resultTasksByEvent[matchingEvent].Add(vsgConnectionResult.CompletionTask);
+				}
+			}
+			catch (Exception e)
+			{
+				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in connectionsToConfigureByEvent.Keys)
+				{
+					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
+					orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+				}
+			}
+		}
+
+		private ICollection<VsgDisconnectResult> ExecuteAndReturnDisconnectResults(Dictionary<OrchestrationEventConfiguration, List<Connection>> disconnectsPerEvent, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -386,17 +395,19 @@
 				// Perform disconnects
 				var takeHelper = _api.GetConnectionHandler();
 
-				return takeHelper.Disconnect(
+				var results = takeHelper.Disconnect(
 					requests,
 					performanceTracker,
 					new() { WaitForCompletion = true, Timeout = _settings.Timeout, BypassLockValidation = true });
 
 				// Unlock all involved VSGs after disconnect
 				_api.VirtualSignalGroups.UnlockVirtualSignalGroups(virtualSignalGroupsToUnlock);
+
+				return results;
 			}
 		}
 
-		private ICollection<VsgConnectionResult> ExecuteConnections(Dictionary<OrchestrationEventConfiguration, List<Connection>> connectionsPerEvent, PerformanceTracker performanceTracker)
+		private ICollection<VsgConnectionResult> ExecuteAndReturnConnectResults(Dictionary<OrchestrationEventConfiguration, List<Connection>> connectionsPerEvent, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{

@@ -191,7 +191,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 					return;
 				}
 
-				var connectionResults = orchestrationEventExecutionHelper.ProcessConnections(new List<OrchestrationEventConfiguration> { EventConfiguration }, performanceTracker);
+				var connectionResults = orchestrationEventExecutionHelper.ProcessAndReturnConnectionResults(new List<OrchestrationEventConfiguration> { EventConfiguration }, performanceTracker);
 
 				Task.WaitAll(connectionResults.SelectMany(kv => kv.Value).ToArray());
 			}
