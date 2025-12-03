@@ -3,6 +3,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Threading.Tasks;
 
 	using Newtonsoft.Json;
 
@@ -185,7 +186,14 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				orchestrationEventExecutionHelper.ProcessConnections(new List<OrchestrationEventConfiguration> { EventConfiguration }, performanceTracker);
+				if (!EventConfiguration.HasConnections())
+				{
+					return;
+				}
+
+				var connectionResults = orchestrationEventExecutionHelper.ProcessConnections(new List<OrchestrationEventConfiguration> { EventConfiguration }, performanceTracker);
+
+				Task.WaitAll(connectionResults.SelectMany(kv => kv.Value).ToArray());
 			}
 		}
 

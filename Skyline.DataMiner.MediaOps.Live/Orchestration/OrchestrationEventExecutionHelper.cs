@@ -81,7 +81,9 @@
 
 				List<Task> tasks = GetGlobalOrchestrationTasks(eventConfigurations.Where(config => !String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker);
 				tasks.AddRange(GetNodeByNodeOrchestrationTasks(eventConfigurations.Where(config => config.HasScripts() && String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker));
-				tasks.AddRange(GetProcessConnectionTasks(eventConfigurations.Where(config => !config.HasScripts()), taskScheduler, true, performanceTracker));
+				tasks.AddRange(GetProcessConnectionTasks(eventConfigurations.Where(config => !config.HasScripts() && config.HasConnections() ), taskScheduler, true, performanceTracker));
+
+				SaveOrchestrationResults(eventConfigurations.Where(config => !config.HasScripts() && !config.HasConnections()), performanceTracker);
 
 				Task.WaitAll(tasks.ToArray());
 			}
@@ -155,9 +157,8 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				var tasks = new List<Task>();
-				IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations = eventConfigurations.ToList();
 
-				var connectionTasksPerEvent = ProcessConnections(orchestrationEventConfigurations.Where(e => String.IsNullOrEmpty(e.GlobalOrchestrationScript)), performanceTracker);
+				var connectionTasksPerEvent = ProcessConnections(eventConfigurations, performanceTracker);
 
 				foreach (KeyValuePair<OrchestrationEventConfiguration, ICollection<Task>> keyValuePair in connectionTasksPerEvent)
 				{
@@ -225,8 +226,7 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
-				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = eventConfigurations
-					.Where(orchestrationEventConfiguration => orchestrationEventConfiguration?.Configuration?.Connections != null && orchestrationEventConfiguration.Configuration.Connections.Any()).ToList();
+				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = eventConfigurations.Where(ev => ev.HasConnections()).ToList();
 
 				Dictionary<OrchestrationEventConfiguration, List<Connection>> connectionsToConfigureByEvent = [];
 				Dictionary<OrchestrationEventConfiguration, List<Connection>> disconnectsToConfigureByEvent = [];

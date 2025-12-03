@@ -153,5 +153,10 @@
 
 			return global || node;
 		}
+
+		internal bool HasConnections()
+		{
+			return Configuration?.Connections != null && Configuration.Connections.Any();
+		}
 	}
 }
