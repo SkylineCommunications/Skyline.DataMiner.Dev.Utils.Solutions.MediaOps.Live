@@ -10,7 +10,7 @@
 	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler;
 	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums;
 
-	using OrchestrationEvent = Live.API.Objects.Orchestration.OrchestrationEvent;
+	using OrchestrationEvent = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent;
 
 	internal class EngineMediaOpsPlanHelper : MediaOpsPlanHelper
 	{
