@@ -61,7 +61,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.JobInfo.JobURL,
 					Name = "Job URL",
-					IsOptional = false,
+					IsOptional = true,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
@@ -70,7 +70,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.JobInfo.JobName,
 					Name = "Job Name",
-					IsOptional = false,
+					IsOptional = true,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
