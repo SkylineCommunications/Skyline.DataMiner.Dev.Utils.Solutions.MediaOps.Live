@@ -78,6 +78,28 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandler
     {
         Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi Api { get; }
         Skyline.DataMiner.MediaOps.Live.Logging.ILogger Logger { get; }
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetAllEndpoints();
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetAllEndpoints(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role);
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> GetAllLevels();
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> GetAllTransportTypes();
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetAllVirtualSignalGroups();
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetAllVirtualSignalGroups(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role);
+        Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetEndpointById(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> id);
+        Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint GetEndpointByName(string name);
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithElement(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role, Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId);
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithElement(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role, Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId elementId, string identifier);
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithIdentifier(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role, string identifier);
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithTransportMetadata(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role, [System.Runtime.CompilerServices.TupleElementNames(new string[] {
+                "fieldName",
+                "value"})] params System.ValueTuple<string, string>[] metadataFilters);
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithTransportMetadata(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role, string fieldName, string value);
+        System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetEndpointsWithTransportType(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role, Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> transportType);
+        Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level GetLevelById(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> id);
+        Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level GetLevelByName(string name);
+        Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType GetTransportTypeById(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> id);
+        Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType GetTransportTypeByName(string name);
+        Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroupById(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> id);
+        Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup GetVirtualSignalGroupByName(string name);
         void Log(string message, Skyline.DataMiner.MediaOps.Live.Logging.LogType logLevel = 1);
         void RegisterConnection(Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers.ConnectionUpdate connection);
         void RegisterConnections(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers.ConnectionUpdate> connections);

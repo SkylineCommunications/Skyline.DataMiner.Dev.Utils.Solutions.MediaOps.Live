@@ -119,6 +119,26 @@
 			}
 		}
 
+		public Endpoint GetEndpointById(ApiObjectReference<Endpoint> id)
+		{
+			return _cache.VirtualSignalGroupEndpointsCache.Endpoints.GetEndpoint(id);
+		}
+
+		public Endpoint GetEndpointByName(string name)
+		{
+			return _cache.VirtualSignalGroupEndpointsCache.Endpoints.GetEndpoint(name);
+		}
+
+		public VirtualSignalGroup GetVirtualSignalGroupById(ApiObjectReference<VirtualSignalGroup> id)
+		{
+			return _cache.VirtualSignalGroupEndpointsCache.VirtualSignalGroups.GetVirtualSignalGroup(id);
+		}
+
+		public VirtualSignalGroup GetVirtualSignalGroupByName(string name)
+		{
+			return _cache.VirtualSignalGroupEndpointsCache.VirtualSignalGroups.GetVirtualSignalGroup(name);
+		}
+
 		public IEnumerable<Endpoint> GetAllEndpoints()
 		{
 			return _cache.VirtualSignalGroupEndpointsCache.Endpoints.GetAllEndpoints();
@@ -170,6 +190,36 @@
 		{
 			return _cache.VirtualSignalGroupEndpointsCache.GetEndpointsWithTransportMetadata(metadataFilters)
 				.Where(e => e.Role == role);
+		}
+
+		public TransportType GetTransportTypeById(ApiObjectReference<TransportType> id)
+		{
+			return _cache.TransportTypesCache.GetTransportType(id);
+		}
+
+		public TransportType GetTransportTypeByName(string name)
+		{
+			return _cache.TransportTypesCache.GetTransportType(name);
+		}
+
+		public IEnumerable<TransportType> GetAllTransportTypes()
+		{
+			return _cache.TransportTypesCache.GetAllTransportTypes();
+		}
+
+		public Level GetLevelById(ApiObjectReference<Level> id)
+		{
+			return _cache.LevelsCache.GetLevel(id);
+		}
+
+		public Level GetLevelByName(string name)
+		{
+			return _cache.LevelsCache.GetLevel(name);
+		}
+
+		public IEnumerable<Level> GetAllLevels()
+		{
+			return _cache.LevelsCache.GetAllLevels();
 		}
 	}
 }
