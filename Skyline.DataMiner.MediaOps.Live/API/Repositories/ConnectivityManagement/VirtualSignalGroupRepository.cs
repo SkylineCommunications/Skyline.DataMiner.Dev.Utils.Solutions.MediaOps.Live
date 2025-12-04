@@ -64,6 +64,86 @@
 			return Read(filter);
 		}
 
+		public void LockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, DateTimeOffset? time = null)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			Api.VirtualSignalGroupStates.LockVirtualSignalGroup(virtualSignalGroup, user, reason, jobReference, time);
+		}
+
+		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference, DateTimeOffset? time = null)
+		{
+			if (virtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroups));
+			}
+
+			Api.VirtualSignalGroupStates.LockVirtualSignalGroups(virtualSignalGroups, user, reason, jobReference, time);
+		}
+
+		public void LockVirtualSignalGroups(ICollection<VirtualSignalGroupLockRequest> lockRequests)
+		{
+			if (lockRequests is null)
+			{
+				throw new ArgumentNullException(nameof(lockRequests));
+			}
+
+			Api.VirtualSignalGroupStates.LockVirtualSignalGroups(lockRequests);
+		}
+
+		public void ProtectVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, DateTimeOffset? time = null)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			Api.VirtualSignalGroupStates.ProtectVirtualSignalGroup(virtualSignalGroup, user, reason, jobReference, time);
+		}
+
+		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference, DateTimeOffset? time = null)
+		{
+			if (virtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroups));
+			}
+
+			Api.VirtualSignalGroupStates.ProtectVirtualSignalGroups(virtualSignalGroups, user, reason, jobReference, time);
+		}
+
+		public void ProtectVirtualSignalGroups(ICollection<VirtualSignalGroupLockRequest> protectRequests)
+		{
+			if (protectRequests is null)
+			{
+				throw new ArgumentNullException(nameof(protectRequests));
+			}
+
+			Api.VirtualSignalGroupStates.ProtectVirtualSignalGroups(protectRequests);
+		}
+
+		public void UnlockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			Api.VirtualSignalGroupStates.UnlockVirtualSignalGroup(virtualSignalGroup);
+		}
+
+		public void UnlockVirtualSignalGroups(ICollection<VirtualSignalGroup> virtualSignalGroups)
+		{
+			if (virtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroups));
+			}
+
+			Api.VirtualSignalGroupStates.UnlockVirtualSignalGroups(virtualSignalGroups);
+		}
+
 		public override VirtualSignalGroup Create(VirtualSignalGroup instance)
 		{
 			if (instance is null)
@@ -104,6 +184,11 @@
 			}
 
 			var instancesCollection = instances.AsCollection();
+			if (instancesCollection.Count == 0)
+			{
+				// Nothing to create or update
+				return instancesCollection;
+			}
 
 			// First create or update the instances
 			var result = base.CreateOrUpdate(instancesCollection);
@@ -122,9 +207,17 @@
 			}
 
 			var instancesCollection = instances.AsCollection();
+			if (instancesCollection.Count == 0)
+			{
+				// Nothing to delete
+				return;
+			}
 
 			// First remove linked category items
 			_categoriesHelper.RemoveLinkedCategoryItems(instancesCollection);
+
+			// Also remove virtual signal group state instances
+			Api.VirtualSignalGroupStates.DeleteByVirtualSignalGroups(instancesCollection);
 
 			// Proceed with deletion
 			base.Delete(instancesCollection);

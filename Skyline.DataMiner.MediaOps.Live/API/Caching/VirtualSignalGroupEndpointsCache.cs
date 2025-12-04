@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
@@ -10,6 +11,10 @@
 
 	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
 
+	/// <summary>
+	/// Coordinates caching and updates for both endpoints and virtual signal groups.
+	/// Access the underlying caches via the <see cref="Endpoints"/> and <see cref="VirtualSignalGroups"/> properties.
+	/// </summary>
 	public class VirtualSignalGroupEndpointsCache
 	{
 		private readonly object _lock = new();
@@ -34,13 +39,15 @@
 			}
 		}
 
-		public IReadOnlyDictionary<ApiObjectReference<Endpoint>, Endpoint> Endpoints => _endpoints.Endpoints;
+		/// <summary>
+		/// Gets the endpoints cache. Use this to access all endpoint-related query methods.
+		/// </summary>
+		public EndpointsCache Endpoints => _endpoints;
 
-		public IReadOnlyDictionary<string, Endpoint> EndpointsByName => _endpoints.EndpointsByName;
-
-		public IReadOnlyDictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> VirtualSignalGroups => _virtualSignalGroups.VirtualSignalGroups;
-
-		public IReadOnlyDictionary<string, VirtualSignalGroup> VirtualSignalGroupsByName => _virtualSignalGroups.VirtualSignalGroupsByName;
+		/// <summary>
+		/// Gets the virtual signal groups cache. Use this to access all virtual signal group-related query methods.
+		/// </summary>
+		public VirtualSignalGroupsCache VirtualSignalGroups => _virtualSignalGroups;
 
 		public Endpoint GetEndpoint(ApiObjectReference<Endpoint> id)
 		{
@@ -162,7 +169,6 @@
 			}
 		}
 
-
 		/// <summary>
 		/// Gets all endpoints that are part of the specified virtual signal group.
 		/// </summary>
@@ -176,22 +182,12 @@
 		{
 			lock (_lock)
 			{
-				if (!TryGetVirtualSignalGroup(virtualSignalGroupRef, out var virtualSignalGroup))
-				{
-					throw new InvalidOperationException($"Couldn't find virtual signal group with ID {virtualSignalGroupRef.ID}");
-				}
+				var virtualSignalGroup = GetVirtualSignalGroup(virtualSignalGroupRef);
 
-				var endpoints = new List<Endpoint>();
-
-				foreach (var (_, endpointRef) in virtualSignalGroup.GetLevelEndpoints())
-				{
-					if (!_endpoints.TryGetEndpoint(endpointRef, out var endpoint))
-					{
-						throw new InvalidOperationException($"Couldn't find endpoint with ID {endpointRef.ID}");
-					}
-
-					endpoints.Add(endpoint);
-				}
+				var endpoints = virtualSignalGroup.GetLevelEndpoints()
+					.Select(x => GetEndpoint(x.Endpoint))
+					.Distinct()
+					.ToList();
 
 				return endpoints;
 			}
@@ -202,6 +198,22 @@
 			lock (_lock)
 			{
 				return _virtualSignalGroups.GetVirtualSignalGroupsInCategory(category);
+			}
+		}
+
+		public VirtualSignalGroupState GetVirtualSignalGroupState(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup)
+		{
+			lock (_lock)
+			{
+				return _virtualSignalGroups.GetVirtualSignalGroupState(virtualSignalGroup);
+			}
+		}
+
+		public bool TryGetVirtualSignalGroupState(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup, out VirtualSignalGroupState state)
+		{
+			lock (_lock)
+			{
+				return _virtualSignalGroups.TryGetVirtualSignalGroupState(virtualSignalGroup, out state);
 			}
 		}
 

@@ -6,7 +6,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	public class VsgDisconnectRequest
+	public class VsgDisconnectRequest : DisconnectRequest
 	{
 		public VsgDisconnectRequest(VirtualSignalGroup destination, ICollection<ApiObjectReference<Level>> levels = null)
 		{
@@ -29,7 +29,5 @@
 		public ICollection<ApiObjectReference<Level>> Levels { get; }
 
 		public bool IsDisconnectAllLevels => Levels == null || Levels.Count == 0;
-
-		public object MetaData { get; set; }
 	}
 }

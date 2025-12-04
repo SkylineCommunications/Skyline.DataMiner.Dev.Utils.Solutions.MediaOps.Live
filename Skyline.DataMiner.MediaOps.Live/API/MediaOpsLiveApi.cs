@@ -4,9 +4,9 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
 	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
@@ -16,8 +16,8 @@
 	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.MediaOps.Live.Plan;
 	using Skyline.DataMiner.MediaOps.Live.Take;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.ManagerStore;
@@ -36,6 +36,7 @@
 
 			Endpoints = new EndpointRepository(this);
 			VirtualSignalGroups = new VirtualSignalGroupRepository(this);
+			VirtualSignalGroupStates = new VirtualSignalGroupStateRepository(this);
 			Levels = new LevelRepository(this);
 			TransportTypes = new TransportTypeRepository(this);
 
@@ -56,6 +57,8 @@
 
 		public VirtualSignalGroupRepository VirtualSignalGroups { get; }
 
+		public VirtualSignalGroupStateRepository VirtualSignalGroupStates { get; }
+
 		public LevelRepository Levels { get; }
 
 		public TransportTypeRepository TransportTypes { get; }
@@ -70,6 +73,11 @@
 		public IDms GetDms()
 		{
 			return Connection.GetDms();
+		}
+
+		public virtual StaticMediaOpsLiveCache GetStaticCache()
+		{
+			return StaticMediaOpsLiveCache.GetOrCreate(Connection);
 		}
 
 		public virtual TakeHelper GetConnectionHandler()

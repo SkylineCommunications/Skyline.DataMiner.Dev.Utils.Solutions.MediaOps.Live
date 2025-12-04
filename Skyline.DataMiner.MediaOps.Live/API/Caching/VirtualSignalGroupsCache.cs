@@ -2,9 +2,13 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
+	using System.Threading.Tasks;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.MediaOps.Live.Tools;
 
 	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
 
@@ -14,6 +18,8 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 
 		private readonly Dictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> _virtualSignalGroups = new();
 		private readonly Dictionary<string, VirtualSignalGroup> _virtualSignalGroupsByName = new();
+
+		private readonly OneToOneMapping<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroupState> _virtualSignalGroupStates = new();
 
 		private readonly VirtualSignalGroupEndpointsMapping _virtualSignalGroupEndpointsMapping = new();
 		private readonly VirtualSignalGroupCategoriesMapping _virtualSignalGroupCategoriesMapping = new();
@@ -30,38 +36,158 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 			}
 		}
 
-		public IReadOnlyDictionary<ApiObjectReference<VirtualSignalGroup>, VirtualSignalGroup> VirtualSignalGroups => _virtualSignalGroups;
+		public VirtualSignalGroupsCache(IEnumerable<VirtualSignalGroup> virtualSignalGroups, IEnumerable<VirtualSignalGroupState> virtualSignalGroupStates)
+		{
+			if (virtualSignalGroups != null)
+			{
+				UpdateVirtualSignalGroups(virtualSignalGroups, []);
+			}
 
-		public IReadOnlyDictionary<string, VirtualSignalGroup> VirtualSignalGroupsByName => _virtualSignalGroupsByName;
+			if (virtualSignalGroupStates != null)
+			{
+				UpdateVirtualSignalGroupStates(virtualSignalGroupStates, []);
+			}
+		}
+
+		public IReadOnlyCollection<VirtualSignalGroup> GetAllVirtualSignalGroups()
+		{
+			lock (_lock)
+			{
+				return _virtualSignalGroups.Values.ToList();
+			}
+		}
 
 		public VirtualSignalGroup GetVirtualSignalGroup(ApiObjectReference<VirtualSignalGroup> id)
 		{
-			if (!TryGetVirtualSignalGroup(id, out var virtualSignalGroup))
+			lock (_lock)
 			{
-				throw new ArgumentException($"Couldn't find virtual signal group with ID {id.ID}", nameof(id));
-			}
+				if (!TryGetVirtualSignalGroup(id, out var virtualSignalGroup))
+				{
+					throw new ArgumentException($"Couldn't find virtual signal group with ID {id.ID}", nameof(id));
+				}
 
-			return virtualSignalGroup;
+				return virtualSignalGroup;
+			}
 		}
 
 		public VirtualSignalGroup GetVirtualSignalGroup(string name)
 		{
-			if (!TryGetVirtualSignalGroup(name, out var virtualSignalGroup))
+			lock (_lock)
 			{
-				throw new ArgumentException($"Couldn't find virtual signal group with name '{name}'", nameof(name));
-			}
+				if (!TryGetVirtualSignalGroup(name, out var virtualSignalGroup))
+				{
+					throw new ArgumentException($"Couldn't find virtual signal group with name '{name}'", nameof(name));
+				}
 
-			return virtualSignalGroup;
+				return virtualSignalGroup;
+			}
 		}
 
 		public bool TryGetVirtualSignalGroup(ApiObjectReference<VirtualSignalGroup> id, out VirtualSignalGroup virtualSignalGroup)
 		{
-			return _virtualSignalGroups.TryGetValue(id, out virtualSignalGroup);
+			lock (_lock)
+			{
+				return _virtualSignalGroups.TryGetValue(id, out virtualSignalGroup);
+			}
 		}
 
 		public bool TryGetVirtualSignalGroup(string name, out VirtualSignalGroup virtualSignalGroup)
 		{
-			return _virtualSignalGroupsByName.TryGetValue(name, out virtualSignalGroup);
+			lock (_lock)
+			{
+				return _virtualSignalGroupsByName.TryGetValue(name, out virtualSignalGroup);
+			}
+		}
+
+		public IReadOnlyCollection<VirtualSignalGroup> GetVirtualSignalGroupsWithRole(EndpointRole role)
+		{
+			lock (_lock)
+			{
+				return GetAllVirtualSignalGroups().Where(e => e.Role == role).ToList();
+			}
+		}
+
+		public VirtualSignalGroupState GetVirtualSignalGroupState(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup)
+		{
+			lock (_lock)
+			{
+				if (!TryGetVirtualSignalGroupState(virtualSignalGroup, out var state))
+				{
+					throw new ArgumentException($"Couldn't find virtual signal group state for virtual signal group with ID {virtualSignalGroup.ID}", nameof(virtualSignalGroup));
+				}
+
+				return state;
+			}
+		}
+
+		public bool TryGetVirtualSignalGroupState(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup, out VirtualSignalGroupState state)
+		{
+			lock (_lock)
+			{
+				return _virtualSignalGroupStates.TryGetForward(virtualSignalGroup, out state);
+			}
+		}
+
+		public bool IsLocked(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup)
+		{
+			lock (_lock)
+			{
+				return IsLocked(virtualSignalGroup, out _, out _, out _);
+			}
+		}
+
+		public bool IsLocked(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup, out string lockedBy, out DateTimeOffset lockedTime, out string reason)
+		{
+			lock (_lock)
+			{
+				if (!TryGetVirtualSignalGroupState(virtualSignalGroup, out var state) || !state.IsLocked)
+				{
+					lockedBy = null;
+					lockedTime = default;
+					reason = null;
+					return false;
+				}
+
+				lockedBy = state.LockedBy;
+				lockedTime = state.LockTime;
+				reason = state.LockReason;
+				return true;
+			}
+		}
+
+		public bool IsProtected(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup)
+		{
+			lock (_lock)
+			{
+				return IsProtected(virtualSignalGroup, out _, out _, out _);
+			}
+		}
+
+		public bool IsProtected(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup, out string lockedBy, out DateTimeOffset lockedTime, out string reason)
+		{
+			lock (_lock)
+			{
+				if (!TryGetVirtualSignalGroupState(virtualSignalGroup, out var state) || !state.IsProtected)
+				{
+					lockedBy = null;
+					lockedTime = default;
+					reason = null;
+					return false;
+				}
+
+				lockedBy = state.LockedBy;
+				lockedTime = state.LockTime;
+				reason = state.LockReason;
+				return true;
+			}
+		}
+
+		public bool IsUnlocked(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup)
+		{
+			lock (_lock)
+			{
+				return !TryGetVirtualSignalGroupState(virtualSignalGroup, out var state) || state.IsUnlocked;
+			}
 		}
 
 		public IReadOnlyCollection<VirtualSignalGroup> GetVirtualSignalGroupsThatContainEndpoint(ApiObjectReference<Endpoint> endpoint)
@@ -87,11 +213,15 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 				throw new ArgumentNullException(nameof(api));
 			}
 
-			var virtualSignalGroups = api.VirtualSignalGroups.ReadAll();
+			var virtualSignalGroupsTask = Task.Run(() => api.VirtualSignalGroups.ReadAll());
+			var virtualSignalGroupStatesTask = Task.Run(() => api.VirtualSignalGroupStates.ReadAll());
+
+			Task.WaitAll(virtualSignalGroupsTask, virtualSignalGroupStatesTask);
 
 			lock (_lock)
 			{
-				UpdateVirtualSignalGroups(virtualSignalGroups, []);
+				UpdateVirtualSignalGroups(virtualSignalGroupsTask.Result, []);
+				UpdateVirtualSignalGroupStates(virtualSignalGroupStatesTask.Result, []);
 			}
 		}
 
@@ -131,6 +261,32 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 					_virtualSignalGroupsByName.Remove(item.Name);
 					_virtualSignalGroupEndpointsMapping.Remove(item);
 					_virtualSignalGroupCategoriesMapping.Remove(item);
+				}
+			}
+		}
+
+		public void UpdateVirtualSignalGroupStates(IEnumerable<VirtualSignalGroupState> updated, IEnumerable<VirtualSignalGroupState> deleted)
+		{
+			if (updated is null)
+			{
+				throw new ArgumentNullException(nameof(updated));
+			}
+
+			if (deleted is null)
+			{
+				throw new ArgumentNullException(nameof(deleted));
+			}
+
+			lock (_lock)
+			{
+				foreach (var item in updated)
+				{
+					_virtualSignalGroupStates.AddOrUpdate(item.VirtualSignalGroupReference, item);
+				}
+
+				foreach (var item in deleted)
+				{
+					_virtualSignalGroupStates.TryRemoveReverse(item);
 				}
 			}
 		}

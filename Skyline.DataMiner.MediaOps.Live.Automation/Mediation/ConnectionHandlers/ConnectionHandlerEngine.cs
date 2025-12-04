@@ -69,7 +69,7 @@
 
 		private void NotifyConnectionChanges(ICollection<ConnectionUpdate> connections)
 		{
-			var now = DateTimeOffset.Now;
+			var now = DateTimeOffset.UtcNow;
 
 			var mediationElementMap = Api.MediationElements.GetElementsForEndpoints(
 				connections.Select(x => x.DestinationEndpoint));
@@ -121,22 +121,22 @@
 
 		public IEnumerable<Endpoint> GetAllEndpoints()
 		{
-			return _cache.VirtualSignalGroupEndpointsCache.Endpoints.Values;
+			return _cache.VirtualSignalGroupEndpointsCache.Endpoints.GetAllEndpoints();
 		}
 
 		public IEnumerable<Endpoint> GetAllEndpoints(EndpointRole role)
 		{
-			return GetAllEndpoints().Where(e => e.Role == role);
+			return _cache.VirtualSignalGroupEndpointsCache.Endpoints.GetEndpointsWithRole(role);
 		}
 
 		public IEnumerable<VirtualSignalGroup> GetAllVirtualSignalGroups()
 		{
-			return _cache.VirtualSignalGroupEndpointsCache.VirtualSignalGroups.Values;
+			return _cache.VirtualSignalGroupEndpointsCache.VirtualSignalGroups.GetAllVirtualSignalGroups();
 		}
 
 		public IEnumerable<VirtualSignalGroup> GetAllVirtualSignalGroups(EndpointRole role)
 		{
-			return GetAllVirtualSignalGroups().Where(e => e.Role == role);
+			return _cache.VirtualSignalGroupEndpointsCache.VirtualSignalGroups.GetVirtualSignalGroupsWithRole(role);
 		}
 
 		public IEnumerable<Endpoint> GetEndpointsWithElement(EndpointRole role, DmsElementId elementId)

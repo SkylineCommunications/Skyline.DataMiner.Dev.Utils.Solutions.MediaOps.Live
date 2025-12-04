@@ -17,9 +17,6 @@
 				throw new ArgumentNullException(nameof(protocol));
 			}
 
-			// Ensure the cache is initialized with protocol.SLNet.RawConnection
-			_ = StaticMediaOpsLiveCache.GetOrCreate(protocol.SLNet.RawConnection);
-
 			var api = new ProtocolMediaOpsLiveApi(protocol);
 			api.SetLogger(new ProtocolLogger(protocol));
 

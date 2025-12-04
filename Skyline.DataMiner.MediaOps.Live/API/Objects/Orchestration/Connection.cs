@@ -110,5 +110,20 @@
 				DomSection.LevelMappingList.AddRange(value);
 			}
 		}
+
+		public bool HasSourceAndDestination()
+		{
+			return !String.IsNullOrEmpty(DestinationNodeId) && !String.IsNullOrEmpty(SourceNodeId) && DestinationVsg != null && SourceVsg != null;
+		}
+
+		public bool HasSource()
+		{
+			return !String.IsNullOrEmpty(SourceNodeId) && SourceVsg != null;
+		}
+
+		public bool HasDestination()
+		{
+			return !String.IsNullOrEmpty(DestinationNodeId) && DestinationVsg != null;
+		}
 	}
 }
