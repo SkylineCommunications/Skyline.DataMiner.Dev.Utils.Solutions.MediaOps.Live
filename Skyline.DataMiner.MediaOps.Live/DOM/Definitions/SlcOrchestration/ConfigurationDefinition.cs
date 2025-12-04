@@ -117,7 +117,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.Connection.DestinationNodeID,
 					Name = "Destination Node ID",
-					IsOptional = false,
+					IsOptional = true,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
@@ -126,7 +126,7 @@
 					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.Connection.SourceNodeID,
 					Name = "Source Node ID",
-					IsOptional = false,
+					IsOptional = true,
 				});
 
 			sectionDefinition.AddOrReplaceFieldDescriptor(
@@ -144,7 +144,7 @@
 					FieldType = typeof(Guid),
 					ID = SlcOrchestrationIds.Sections.Connection.DestinationVSG,
 					Name = "Destination VSG",
-					IsOptional = false,
+					IsOptional = true,
 					DomDefinitionIds = { SlcConnectivityManagementIds.Definitions.VirtualSignalGroup },
 				});
 
@@ -154,7 +154,7 @@
 					FieldType = typeof(Guid),
 					ID = SlcOrchestrationIds.Sections.Connection.SourceVSG,
 					Name = "Source VSG",
-					IsOptional = false,
+					IsOptional = true,
 					DomDefinitionIds = { SlcConnectivityManagementIds.Definitions.VirtualSignalGroup },
 				});
 

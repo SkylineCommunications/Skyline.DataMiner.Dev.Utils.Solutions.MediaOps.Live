@@ -59,6 +59,24 @@
 				new FieldDescriptor
 				{
 					FieldType = typeof(string),
+					ID = SlcOrchestrationIds.Sections.JobInfo.JobURL,
+					Name = "Job URL",
+					IsOptional = false,
+				});
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
+					ID = SlcOrchestrationIds.Sections.JobInfo.JobName,
+					Name = "Job Name",
+					IsOptional = false,
+				});
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.JobInfo.MonitoringService,
 					Name = "Monitoring Service",
 					IsOptional = true,

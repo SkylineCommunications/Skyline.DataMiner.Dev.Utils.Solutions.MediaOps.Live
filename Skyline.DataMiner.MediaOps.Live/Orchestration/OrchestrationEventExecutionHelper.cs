@@ -79,10 +79,16 @@
 
 				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
 
+				// Events with global orchestration script
 				List<Task> tasks = GetGlobalOrchestrationTasks(eventConfigurations.Where(config => !String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker);
+
+				// Events with node-by-node orchestration scripts
 				tasks.AddRange(GetNodeByNodeOrchestrationTasks(eventConfigurations.Where(config => config.HasScripts() && String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker));
+
+				// Events without scripts but with connections
 				tasks.AddRange(GetProcessConnectionTasks(eventConfigurations.Where(config => !config.HasScripts() && config.HasConnections() ), taskScheduler, true, performanceTracker));
 
+				// Events without scripts or connections (nothing to do) can be marked as completed right away.
 				SaveOrchestrationResults(eventConfigurations.Where(config => !config.HasScripts() && !config.HasConnections()), performanceTracker);
 
 				Task.WaitAll(tasks.ToArray());
@@ -99,8 +105,10 @@
 					Task scriptsExecutionTask = Task.Factory.StartNew(
 						() =>
 						{
+							// Execute global script
 							ExecuteGlobalConfiguration(orchestrationEventConfiguration, performanceTracker);
 
+							// Update event state once finished
 							SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
 						},
 						CancellationToken.None,
@@ -121,8 +129,10 @@
 				List<Task> tasks = [];
 				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(e => e.HasScripts()))
 				{
+					// Connections tasks
 					List<Task> connectionsTasks = GetProcessConnectionTasks(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, taskScheduler, false, performanceTracker);
 
+					// Node scripts task
 					Task nodeScriptsTask = Task.Factory.StartNew(
 						() =>
 						{
@@ -137,8 +147,10 @@
 					Task combinedTask = Task.Factory.StartNew(
 						() =>
 						{
+							// Wait for both connections and node scripts to finish
 							Task.WaitAll(connectionsTasks.ToArray());
 
+							// Update event state once finished
 							SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
 						},
 						CancellationToken.None,
