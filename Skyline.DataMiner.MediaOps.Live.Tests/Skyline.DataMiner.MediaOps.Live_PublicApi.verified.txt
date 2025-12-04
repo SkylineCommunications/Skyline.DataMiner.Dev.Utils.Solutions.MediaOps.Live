@@ -1252,11 +1252,16 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data
     public class SubscriptionInfo
     {
         public SubscriptionInfo(Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.SubscriptionInfo.ParameterType type, int parameterId) { }
-        public SubscriptionInfo(int parameterId, string rowKey) { }
+        public System.Collections.Generic.ICollection<int> Columns { get; }
         public int ParameterId { get; }
         public string RowKey { get; }
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         public Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.SubscriptionInfo.ParameterType Type { get; }
+        public override string ToString() { }
+        public Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.SubscriptionInfo WithColumns(System.Collections.Generic.ICollection<int> columns) { }
+        public Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.SubscriptionInfo WithRowKey(string rowKey) { }
+        public static Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.SubscriptionInfo StandaloneParameter(int parameterId) { }
+        public static Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.SubscriptionInfo Table(int tableParameterId) { }
         public enum ParameterType
         {
             Standalone = 0,
