@@ -76,7 +76,7 @@
 		/// <param name="rowKey">The row key to subscribe to.</param>
 		/// <returns>The updated subscription info.</returns>
 		/// <exception cref="ArgumentException">Thrown when <paramref name="rowKey"/> is null or empty.</exception>
-		public SubscriptionInfo OnlyRowKey(string rowKey)
+		public SubscriptionInfo FilterRowKey(string rowKey)
 		{
 			if (String.IsNullOrEmpty(rowKey))
 			{
@@ -93,7 +93,7 @@
 		/// <param name="columns">The column parameter IDs to subscribe to.</param>
 		/// <returns>The updated subscription info.</returns>
 		/// <exception cref="ArgumentNullException">Thrown when <paramref name="columns"/> is null.</exception>
-		public SubscriptionInfo OnlyColumns(params ICollection<int> columns)
+		public SubscriptionInfo FilterColumns(params ICollection<int> columns)
 		{
 			Columns = columns ?? throw new ArgumentNullException(nameof(columns));
 			return this;
@@ -104,7 +104,7 @@
 		/// </summary>
 		/// <param name="column">The column parameter ID to subscribe to.</param>
 		/// <returns>The updated subscription info.</returns>
-		public SubscriptionInfo OnlyColumn(int column)
+		public SubscriptionInfo FilterColumn(int column)
 		{
 			Columns = [column];
 			return this;
