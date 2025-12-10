@@ -146,6 +146,42 @@
 			}
 		}
 
+		public IEnumerable<ApiObjectReference<Level>> GetAssignedLevels()
+		{
+			if (Levels == null)
+			{
+				yield break;
+			}
+
+			foreach (var item in Levels)
+			{
+				if (item.Level == ApiObjectReference<Level>.Empty)
+				{
+					continue;
+				}
+
+				yield return item.Level;
+			}
+		}
+
+		public IEnumerable<ApiObjectReference<Endpoint>> GetAssignedEndpoints()
+		{
+			if (Levels == null)
+			{
+				yield break;
+			}
+
+			foreach (var item in Levels)
+			{
+				if (item.Endpoint == ApiObjectReference<Endpoint>.Empty)
+				{
+					continue;
+				}
+
+				yield return item.Endpoint;
+			}
+		}
+
 		public bool ContainsEndpoint(ApiObjectReference<Endpoint> endpoint)
 		{
 			if (Levels == null)

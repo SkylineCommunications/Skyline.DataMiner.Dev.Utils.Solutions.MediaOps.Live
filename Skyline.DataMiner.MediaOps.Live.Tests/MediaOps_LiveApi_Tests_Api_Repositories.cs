@@ -74,7 +74,7 @@
 			var vsgFilter = VirtualSignalGroupExposers.Endpoint.Contains(endpoints[0]);
 			var vsgs = api.VirtualSignalGroups.Read(vsgFilter).ToList();
 			Assert.HasCount(1, vsgs);
-			Assert.IsTrue(vsgs.All(vsg => vsg.Levels.Any(le => le.Endpoint == endpoints[0])));
+			Assert.IsTrue(vsgs.All(vsg => vsg.ContainsEndpoint(endpoints[0])));
 		}
 
 		[TestMethod]

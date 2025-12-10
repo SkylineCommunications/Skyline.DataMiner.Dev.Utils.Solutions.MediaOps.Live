@@ -613,6 +613,8 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
         public void AssignToCategory(Skyline.DataMiner.Utils.Categories.API.Objects.ApiObjectReference<Skyline.DataMiner.Utils.Categories.API.Objects.Category> category) { }
         public bool ContainsEndpoint(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
         public bool ContainsLevel(Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> level) { }
+        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>> GetAssignedEndpoints() { }
+        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level>> GetAssignedLevels() { }
         [return: System.Runtime.CompilerServices.TupleElementNames(new string[] {
                 "Level",
                 "Endpoint"})]
@@ -791,7 +793,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
     {
         public OrchestrationJobInfo() { }
         public string JobName { get; set; }
-        public string JobReference { get; set; }
+        public string JobReference { get; }
         public string JobUrl { get; set; }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId MonitoringService { get; }
     }
