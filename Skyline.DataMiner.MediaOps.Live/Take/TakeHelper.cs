@@ -11,7 +11,6 @@
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -557,7 +556,22 @@
 					{ "Input Data", inputDataSerialized },
 				};
 
-				AutomationHelper.ExecuteAutomationScript(_api.Connection, script, parameters);
+				try
+				{
+					AutomationHelper.ExecuteAutomationScript(_api.Connection, script, parameters);
+				}
+				catch (ScriptExecutionFailedException ex) when (
+					ex.ScriptOutput.TryGetValue("Exception.Message", out var exceptionMessage) &&
+					!String.IsNullOrWhiteSpace(exceptionMessage))
+				{
+					// Rethrow with extracted script message
+					throw new ConnectionHandlerScriptExecutionFailedException(exceptionMessage, ex);
+				}
+				catch (Exception ex)
+				{
+					// Fallback for all other exceptions
+					throw new ConnectionHandlerScriptExecutionFailedException($"Connection handler script execution failed: {ex.Message}", ex);
+				}
 			}
 		}
 

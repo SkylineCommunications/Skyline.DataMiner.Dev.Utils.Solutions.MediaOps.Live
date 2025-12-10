@@ -321,6 +321,12 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Exceptions
         public ConnectFailedException(string message, System.Exception innerException) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest> FailedRequests { get; }
     }
+    public class ConnectionHandlerScriptExecutionFailedException : System.Exception
+    {
+        public ConnectionHandlerScriptExecutionFailedException() { }
+        public ConnectionHandlerScriptExecutionFailedException(string message) { }
+        public ConnectionHandlerScriptExecutionFailedException(string message, System.Exception innerException) { }
+    }
     public class DestinationLockedException : System.Exception
     {
         public DestinationLockedException() { }
@@ -352,6 +358,19 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Exceptions
         public DisconnectFailedException(string message, System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest> failedRequests) { }
         public DisconnectFailedException(string message, System.Exception innerException) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.DisconnectRequest> FailedRequests { get; }
+    }
+    public class ScriptExecutionFailedException : System.Exception
+    {
+        public ScriptExecutionFailedException() { }
+        public ScriptExecutionFailedException(string message) { }
+        public ScriptExecutionFailedException(string message, System.Exception innerException) { }
+        public ScriptExecutionFailedException(string scriptName, Skyline.DataMiner.Net.Messages.ExecuteScriptResponseMessage response) { }
+        public int ErrorCode { get; }
+        public string[] ErrorMessages { get; }
+        public Skyline.DataMiner.Net.Messages.ExecuteScriptResponseMessage Response { get; }
+        public string ScriptName { get; }
+        public System.Collections.Generic.IDictionary<string, string> ScriptOutput { get; }
+        public override string ToString() { }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Extensions

@@ -5,6 +5,7 @@
 	using System.Linq;
 	using System.Runtime.ExceptionServices;
 
+	using Skyline.DataMiner.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
@@ -38,7 +39,7 @@
 
 			if (response.HadError)
 			{
-				throw new DataMinerException("Script execution failed: " + String.Join(", ", response.ErrorMessages));
+				throw new ScriptExecutionFailedException(message.ScriptName, response);
 			}
 
 			return response;
