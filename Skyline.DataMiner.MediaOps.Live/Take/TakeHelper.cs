@@ -354,8 +354,8 @@
 						transportTypesCache.TryGetTransportType(context.Destination.TransportType, out var destinationTransportType);
 
 						throw new InvalidOperationException($"Cannot connect endpoints with different transport types: " +
-							$"Source '{context.Source.Name}' has transport type '{sourceTransportType?.Name}', " +
-							$"Destination '{context.Destination.Name}' has transport type '{destinationTransportType?.Name}'.");
+							$"source '{context.Source.Name}' has transport type '{sourceTransportType?.Name}', " +
+							$"destination '{context.Destination.Name}' has transport type '{destinationTransportType?.Name}'.");
 					}
 
 					// Additional validations can be added here
