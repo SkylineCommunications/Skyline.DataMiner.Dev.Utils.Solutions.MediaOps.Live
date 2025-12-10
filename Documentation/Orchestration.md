@@ -241,7 +241,7 @@ OrchestrationEventConfiguration orchestrationEventConfiguration = new Orchestrat
 ```
 
 ### Provide input to an orchestration script
-When the orchestration script requires input parameters these can be provided via the OrchestrationScriptParameters property.
+When the orchestration script requires input parameters these can be provided via the OrchestrationScriptArguments property.
 ```csharp
 	GlobalOrchestrationScriptArguments =
 	{
@@ -250,8 +250,8 @@ When the orchestration script requires input parameters these can be provided vi
 	},
 ```
 
-To add script dummies, the OrchestrationScriptArgumentType.Dummy type can be used.
-As value, either the name or the ID of the dummy can be used (AgentId/ElementId).
+To add script dummies, the OrchestrationScriptArgumentType.Element type can be used.
+As value, either the name or the ID of the dummy element can be used (AgentId/ElementId).
 ```csharp
 	GlobalOrchestrationScriptArguments =
 	{
@@ -260,7 +260,7 @@ As value, either the name or the ID of the dummy can be used (AgentId/ElementId)
 ```
 
 Lastly, custom metadata information can be forwarded to the script.
-This information is not critical for the script to run, but can provide additional information to be used inside of the script.
+This information is not critical for the script to start, but can provide additional information to be used inside of the script.
 ```csharp
 	GlobalOrchestrationScriptArguments =
 	{

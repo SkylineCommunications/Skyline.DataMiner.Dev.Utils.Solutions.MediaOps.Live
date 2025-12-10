@@ -43,7 +43,7 @@
 				return _domInstance.JobInfo.JobReference;
 			}
 
-			set
+			internal set
 			{
 				_domInstance.JobInfo.JobReference = value;
 			}
