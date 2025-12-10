@@ -26,9 +26,9 @@
 		public EndpointDisconnectRequest EndpointDisconnectRequest { get; }
 	}
 
-	internal class VsgDisconnectOperationContext : DisconnectOperationContext
+	internal class VsgEndpointDisconnectOperationContext : DisconnectOperationContext
 	{
-		public VsgDisconnectOperationContext(VsgDisconnectRequest disconnectRequest, Endpoint destination)
+		public VsgEndpointDisconnectOperationContext(VsgDisconnectRequest disconnectRequest, Endpoint destination)
 			: base(disconnectRequest, destination)
 		{
 			VsgDisconnectRequest = disconnectRequest ?? throw new ArgumentNullException(nameof(disconnectRequest));

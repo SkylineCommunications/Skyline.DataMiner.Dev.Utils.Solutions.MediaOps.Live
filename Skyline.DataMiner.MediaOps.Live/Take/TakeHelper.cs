@@ -10,6 +10,7 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
+	using Skyline.DataMiner.Core.InterAppCalls.Common.Shared;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Exceptions;
@@ -52,6 +53,7 @@
 				{
 					var takeContexts = connectionRequests.Select(x => new EndpointConnectOperationContext(x)).ToList();
 
+					Validate(takeContexts, performanceTracker);
 					PrepareData(takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
@@ -97,6 +99,7 @@
 
 					var takeContexts = ConvertConnectionRequests(connectionRequests, performanceTracker);
 
+					Validate(takeContexts, performanceTracker);
 					PrepareData(takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
@@ -200,12 +203,12 @@
 			}
 		}
 
-		private ICollection<VsgConnectOperationContext> ConvertConnectionRequests(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
+		private ICollection<VsgEndpointConnectOperationContext> ConvertConnectionRequests(ICollection<VsgConnectionRequest> vsgConnectionRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				// create connection requests between endpoints
-				var connectionRequests = new List<VsgConnectOperationContext>();
+				var connectionRequests = new List<VsgEndpointConnectOperationContext>();
 
 				// load all endpoints
 				var endpointIds = vsgConnectionRequests
@@ -253,7 +256,7 @@
 							throw new InvalidOperationException($"Couldn't find destination endpoint for level with ID '{destinationLevel.ID}' in virtual signal group '{destination.Name}'");
 						}
 
-						var request = new VsgConnectOperationContext(vsgConnectionRequest, sourceEndpoint, destinationEndpoint);
+						var request = new VsgEndpointConnectOperationContext(vsgConnectionRequest, sourceEndpoint, destinationEndpoint);
 
 						connectionRequests.Add(request);
 					}
@@ -263,12 +266,12 @@
 			}
 		}
 
-		private ICollection<VsgDisconnectOperationContext> ConvertDisconnectRequests(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
+		private ICollection<VsgEndpointDisconnectOperationContext> ConvertDisconnectRequests(ICollection<VsgDisconnectRequest> vsgDisconnectRequests, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				// create disconnect requests
-				var disconnectRequests = new List<VsgDisconnectOperationContext>();
+				var disconnectRequests = new List<VsgEndpointDisconnectOperationContext>();
 
 				// load all endpoints
 				var endpointIds = vsgDisconnectRequests
@@ -296,7 +299,7 @@
 							throw new InvalidOperationException($"Couldn't find endpoint with ID '{levelEndpoint.Endpoint.ID}'");
 						}
 
-						var request = new VsgDisconnectOperationContext(vsgDisconnectRequest, destinationEndpoint);
+						var request = new VsgEndpointDisconnectOperationContext(vsgDisconnectRequest, destinationEndpoint);
 
 						disconnectRequests.Add(request);
 					}
@@ -333,6 +336,29 @@
 					{
 						throw new DestinationProtectedException(vsg, state.LockTime, state.LockedBy, state.LockReason);
 					}
+				}
+			}
+		}
+
+		private void Validate(IEnumerable<ConnectOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				var transportTypesCache = _api.GetStaticCache().TransportTypesCache;
+
+				foreach (var context in takeContexts)
+				{
+					if (context.Source.TransportType != context.Destination.TransportType)
+					{
+						transportTypesCache.TryGetTransportType(context.Source.TransportType, out var sourceTransportType);
+						transportTypesCache.TryGetTransportType(context.Destination.TransportType, out var destinationTransportType);
+
+						throw new InvalidOperationException($"Cannot connect endpoints with different transport types: " +
+							$"Source '{context.Source.Name}' has transport type '{sourceTransportType?.Name}', " +
+							$"Destination '{context.Destination.Name}' has transport type '{destinationTransportType?.Name}'.");
+					}
+
+					// Additional validations can be added here
 				}
 			}
 		}
@@ -693,7 +719,7 @@
 			return results;
 		}
 
-		private ICollection<VsgConnectionResult> GenerateResults(ICollection<VsgConnectOperationContext> takeContexts)
+		private ICollection<VsgConnectionResult> GenerateResults(ICollection<VsgEndpointConnectOperationContext> takeContexts)
 		{
 			var results = new List<VsgConnectionResult>();
 
@@ -729,7 +755,7 @@
 			return results;
 		}
 
-		private ICollection<VsgDisconnectResult> GenerateResults(ICollection<VsgDisconnectOperationContext> takeContexts)
+		private ICollection<VsgDisconnectResult> GenerateResults(ICollection<VsgEndpointDisconnectOperationContext> takeContexts)
 		{
 			var results = new List<VsgDisconnectResult>();
 

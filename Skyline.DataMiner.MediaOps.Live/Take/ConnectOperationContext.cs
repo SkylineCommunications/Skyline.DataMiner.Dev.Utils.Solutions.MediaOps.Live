@@ -29,9 +29,9 @@
 		public EndpointConnectionRequest EndpointConnectionRequest { get; }
 	}
 
-	internal class VsgConnectOperationContext : ConnectOperationContext
+	internal class VsgEndpointConnectOperationContext : ConnectOperationContext
 	{
-		public VsgConnectOperationContext(VsgConnectionRequest connectRequest, Endpoint source, Endpoint destination)
+		public VsgEndpointConnectOperationContext(VsgConnectionRequest connectRequest, Endpoint source, Endpoint destination)
 			: base(connectRequest, source, destination)
 		{
 			VsgConnectionRequest = connectRequest ?? throw new ArgumentNullException(nameof(connectRequest));
