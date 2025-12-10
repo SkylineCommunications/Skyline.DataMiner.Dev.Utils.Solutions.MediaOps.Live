@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Runtime.ExceptionServices;
 
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Exceptions;
@@ -30,7 +31,7 @@
 
 			if (result.Failure != null)
 			{
-				throw result.Failure;
+				ExceptionDispatchInfo.Capture(result.Failure).Throw();
 			}
 
 			var response = (ExecuteScriptResponseMessage)result.Messages.Single();

@@ -30,29 +30,39 @@
 				throw new ArgumentNullException(nameof(engine));
 			}
 
-			var logger = new EngineLogger(engine);
-
-			var inputData = ConnectionHandlerInputData.Load(engine);
-
-			switch (inputData.Action)
+			try
 			{
-				case ConnectionHandlerScriptAction.GetSupportedElements:
-					HandleGetSupportedElements(engine, inputData, logger);
-					break;
-				case ConnectionHandlerScriptAction.GetSubscriptionInfo:
-					HandleGetSubscriptionInfo(engine, inputData, logger);
-					break;
-				case ConnectionHandlerScriptAction.HandleParameterUpdate:
-					HandleParameterUpdate(engine, inputData, logger);
-					break;
-				case ConnectionHandlerScriptAction.Connect:
-					HandleConnect(engine, inputData, logger);
-					break;
-				case ConnectionHandlerScriptAction.Disconnect:
-					HandleDisconnect(engine, inputData, logger);
-					break;
-				default:
-					throw new InvalidOperationException($"Unknown action: '{inputData.Action}'");
+				var logger = new EngineLogger(engine);
+				var inputData = ConnectionHandlerInputData.Load(engine);
+
+				switch (inputData.Action)
+				{
+					case ConnectionHandlerScriptAction.GetSupportedElements:
+						HandleGetSupportedElements(engine, inputData, logger);
+						break;
+					case ConnectionHandlerScriptAction.GetSubscriptionInfo:
+						HandleGetSubscriptionInfo(engine, inputData, logger);
+						break;
+					case ConnectionHandlerScriptAction.HandleParameterUpdate:
+						HandleParameterUpdate(engine, inputData, logger);
+						break;
+					case ConnectionHandlerScriptAction.Connect:
+						HandleConnect(engine, inputData, logger);
+						break;
+					case ConnectionHandlerScriptAction.Disconnect:
+						HandleDisconnect(engine, inputData, logger);
+						break;
+					default:
+						throw new InvalidOperationException($"Unknown action: '{inputData.Action}'");
+				}
+			}
+			catch (Exception ex)
+			{
+				engine.AddOrUpdateScriptOutput("Exception.HasError", "true");
+				engine.AddOrUpdateScriptOutput("Exception.Message", ex.Message);
+				engine.AddOrUpdateScriptOutput("Exception.StackTrace", ex.StackTrace);
+				engine.AddOrUpdateScriptOutput("Exception.Full", ex.ToString());
+				throw;
 			}
 		}
 
