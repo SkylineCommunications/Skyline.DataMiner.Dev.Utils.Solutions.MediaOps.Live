@@ -100,7 +100,9 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				List<Task> tasks = [];
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(e => e.HasScripts()))
+				var eventConfigurationWithGlobalScripts = eventConfigurations.Where(e => !String.IsNullOrEmpty(e.GlobalOrchestrationScript)).ToList();
+
+				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurationWithGlobalScripts)
 				{
 					Task scriptsExecutionTask = Task.Factory.StartNew(
 						() =>
@@ -127,7 +129,9 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				List<Task> tasks = [];
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations.Where(e => e.HasScripts()))
+				var eventConfigurationWithNodeScripts = eventConfigurations.Where(e => e.HasScripts()).ToList();
+
+				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurationWithNodeScripts.Where(e => e.HasScripts()))
 				{
 					// Connections tasks
 					List<Task> connectionsTasks = GetProcessConnectionTasks(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, taskScheduler, false, performanceTracker);
