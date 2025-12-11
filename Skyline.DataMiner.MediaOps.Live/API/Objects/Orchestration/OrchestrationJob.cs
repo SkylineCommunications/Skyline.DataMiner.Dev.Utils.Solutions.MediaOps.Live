@@ -96,6 +96,14 @@
 		/// </summary>
 		public List<OrchestrationEvent> OrchestrationEvents { get; }
 
+		private static void ValidateEventTimesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
+		{
+			if (orchestrationEvents.Any(e => e.EventTime < DateTimeOffset.UtcNow && e.EventState == EventState.Confirmed))
+			{
+				throw new InvalidOperationException("Job cannot contain event with 'Confirmed' state in the past.");
+			}
+		}
+
 		private static void ValidateEventTypesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
 			if (orchestrationEvents.All(e => e.EventType == EventType.Other))
@@ -211,6 +219,7 @@
 
 		internal static void ValidateEventInfo(IList<OrchestrationEvent> orchestrationEvents)
 		{
+			ValidateEventTimesBeforeSaving(orchestrationEvents);
 			ValidateEventTypesBeforeSaving(orchestrationEvents);
 			ValidateEventOrderBeforeSaving(orchestrationEvents);
 		}
