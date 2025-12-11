@@ -21,7 +21,7 @@
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
-		private readonly StaticMediaOpsLiveCache _cache;
+		private readonly MediaOpsLiveCache _cache;
 
 		internal ConnectionHandlerEngine(Automation.IEngine engine, ILogger logger)
 		{
@@ -31,7 +31,7 @@
 			Api = engine.GetMediaOpsLiveApi();
 			Api.SetLogger(logger);
 
-			_cache = engine.GetStaticMediaOpsLiveApiCache();
+			_cache = engine.GetMediaOpsLiveCache();
 		}
 
 		public Automation.IEngine Engine { get; }

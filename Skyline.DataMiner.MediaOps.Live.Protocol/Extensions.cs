@@ -23,14 +23,14 @@
 			return api;
 		}
 
-		public static StaticMediaOpsLiveCache GetStaticMediaOpsLiveCache(this SLProtocol protocol)
+		public static MediaOpsLiveCache GetMediaOpsLiveCache(this SLProtocol protocol)
 		{
 			if (protocol is null)
 			{
 				throw new ArgumentNullException(nameof(protocol));
 			}
 
-			return StaticMediaOpsLiveCache.GetOrCreate(protocol.SLNet.RawConnection);
+			return MediaOpsLiveCache.GetOrCreate(protocol.SLNet.RawConnection);
 		}
 	}
 }

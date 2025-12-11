@@ -10,7 +10,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Protocol.API
         public ProtocolMediaOpsLiveApi(Skyline.DataMiner.Scripting.SLProtocol protocol) { }
         public ProtocolMediaOpsLiveApi(Skyline.DataMiner.Scripting.SLProtocol protocol, Skyline.DataMiner.Net.IConnection connection) { }
         public Skyline.DataMiner.Scripting.SLProtocol Protocol { get; }
-        public override Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetStaticCache() { }
+        public override Skyline.DataMiner.MediaOps.Live.API.Caching.MediaOpsLiveCache GetCache() { }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.Protocol
@@ -18,7 +18,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Protocol
     public static class Extensions
     {
         public static Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi GetMediaOpsLiveApi(this Skyline.DataMiner.Scripting.SLProtocol protocol) { }
-        public static Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetStaticMediaOpsLiveCache(this Skyline.DataMiner.Scripting.SLProtocol protocol) { }
+        public static Skyline.DataMiner.MediaOps.Live.API.Caching.MediaOpsLiveCache GetMediaOpsLiveCache(this Skyline.DataMiner.Scripting.SLProtocol protocol) { }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.Protocol.Logging

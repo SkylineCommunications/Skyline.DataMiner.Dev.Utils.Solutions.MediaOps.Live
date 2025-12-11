@@ -205,7 +205,7 @@
 
 		private static CreateConnectionsRequest TranslateInputDataToRequest(IEngine engine, CreateConnectionsInputData inputData)
 		{
-			var cache = engine.GetStaticMediaOpsLiveApiCache().VirtualSignalGroupEndpointsCache;
+			var cache = engine.GetMediaOpsLiveCache().VirtualSignalGroupEndpointsCache;
 
 			var connections = inputData.Connections
 				.Select(x => new CreateConnectionsRequest.ConnectionInfo(
@@ -218,7 +218,7 @@
 
 		private static DisconnectDestinationsRequest TranslateInputDataToRequest(IEngine engine, DisconnectDestinationsInputData inputData)
 		{
-			var cache = engine.GetStaticMediaOpsLiveApiCache().VirtualSignalGroupEndpointsCache;
+			var cache = engine.GetMediaOpsLiveCache().VirtualSignalGroupEndpointsCache;
 
 			var destinations = inputData.Destinations
 				.Select(x => cache.GetEndpoint(x.ID))

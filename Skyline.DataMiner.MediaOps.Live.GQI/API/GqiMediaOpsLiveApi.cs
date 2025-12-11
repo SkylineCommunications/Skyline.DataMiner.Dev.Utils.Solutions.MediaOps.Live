@@ -20,9 +20,9 @@
 
 		public GQIDMS GqiDms { get; }
 
-		public override StaticMediaOpsLiveCache GetStaticCache()
+		public override MediaOpsLiveCache GetCache()
 		{
-			return GqiDms.GetStaticMediaOpsLiveCache();
+			return GqiDms.GetMediaOpsLiveCache();
 		}
 	}
 }

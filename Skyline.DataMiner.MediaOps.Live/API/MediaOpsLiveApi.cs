@@ -75,9 +75,9 @@
 			return Connection.GetDms();
 		}
 
-		public virtual StaticMediaOpsLiveCache GetStaticCache()
+		public virtual MediaOpsLiveCache GetCache()
 		{
-			return StaticMediaOpsLiveCache.GetOrCreate(Connection);
+			return MediaOpsLiveCache.GetOrCreate(Connection);
 		}
 
 		public virtual TakeHelper GetConnectionHandler()

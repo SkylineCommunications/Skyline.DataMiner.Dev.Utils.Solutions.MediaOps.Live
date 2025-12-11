@@ -10,10 +10,10 @@
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 
-	public sealed class StaticMediaOpsLiveCache : IDisposable
+	public sealed class MediaOpsLiveCache : IDisposable
 	{
 		private static readonly object _lock = new();
-		private static volatile StaticMediaOpsLiveCache _instance;
+		private static volatile MediaOpsLiveCache _instance;
 
 		private readonly Lazy<VirtualSignalGroupEndpointsObserver> _lazyVirtualSignalGroupsObserver;
 		private readonly Lazy<LevelsObserver> _lazyLevelsObserver;
@@ -25,7 +25,7 @@
 
 		private bool _disposed;
 
-		private StaticMediaOpsLiveCache(IConnection connection)
+		private MediaOpsLiveCache(IConnection connection)
 		{
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
@@ -62,7 +62,7 @@
 
 		public ConnectionMonitor ConnectionMonitor => _lazyConnectionMonitor.Value;
 
-		public static StaticMediaOpsLiveCache GetOrCreate(Func<IConnection> connectionFactory)
+		public static MediaOpsLiveCache GetOrCreate(Func<IConnection> connectionFactory)
 		{
 			if (connectionFactory == null)
 			{
@@ -84,7 +84,7 @@
 			return _instance;
 		}
 
-		public static StaticMediaOpsLiveCache GetOrCreate(IConnection baseConnection)
+		public static MediaOpsLiveCache GetOrCreate(IConnection baseConnection)
 		{
 			if (baseConnection is null)
 			{
@@ -97,11 +97,11 @@
 				{
 					if (_instance == null)
 					{
-						// Always clone the connection to ensure that the StaticMediaOpsLiveCache has its own dedicated connection.
+						// Always clone the connection to ensure that the MediaOpsLiveCache has its own dedicated connection.
 						// This prevents potential conflicts when the base connection would be closed or unsubscribed elsewhere.
 						var connection = CloneConnection(baseConnection);
 
-						_instance = new StaticMediaOpsLiveCache(connection);
+						_instance = new MediaOpsLiveCache(connection);
 					}
 				}
 			}
@@ -109,13 +109,13 @@
 			return _instance;
 		}
 
-		public static StaticMediaOpsLiveCache Get()
+		public static MediaOpsLiveCache Get()
 		{
 			lock (_lock)
 			{
 				if (_instance == null)
 				{
-					throw new InvalidOperationException($"The {nameof(StaticMediaOpsLiveCache)} instance has not been created yet. Please call {nameof(GetOrCreate)} first.");
+					throw new InvalidOperationException($"The {nameof(MediaOpsLiveCache)} instance has not been created yet. Please call {nameof(GetOrCreate)} first.");
 				}
 
 				return _instance;

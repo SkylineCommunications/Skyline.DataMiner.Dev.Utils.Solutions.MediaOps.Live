@@ -27,14 +27,14 @@
 			return api;
 		}
 
-		public static StaticMediaOpsLiveCache GetStaticMediaOpsLiveApiCache(this IEngine engine)
+		public static MediaOpsLiveCache GetMediaOpsLiveCache(this IEngine engine)
 		{
 			if (engine is null)
 			{
 				throw new ArgumentNullException(nameof(engine));
 			}
 
-			return StaticMediaOpsLiveCache.GetOrCreate(StaticEngineConnectionProvider.GetConnection);
+			return MediaOpsLiveCache.GetOrCreate(StaticEngineConnectionProvider.GetConnection);
 		}
 
 		public static IList<T> ReadScriptParamListFromApp<T>(this IEngine engine, string name)

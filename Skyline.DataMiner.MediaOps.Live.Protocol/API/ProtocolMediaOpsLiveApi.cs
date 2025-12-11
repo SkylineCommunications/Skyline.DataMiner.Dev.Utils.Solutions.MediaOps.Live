@@ -20,9 +20,9 @@
 
 		public SLProtocol Protocol { get; }
 
-		public override StaticMediaOpsLiveCache GetStaticCache()
+		public override MediaOpsLiveCache GetCache()
 		{
-			return Protocol.GetStaticMediaOpsLiveCache();
+			return Protocol.GetMediaOpsLiveCache();
 		}
 	}
 }

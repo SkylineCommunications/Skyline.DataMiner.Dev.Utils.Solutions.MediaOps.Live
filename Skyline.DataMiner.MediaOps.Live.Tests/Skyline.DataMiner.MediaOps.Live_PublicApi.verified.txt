@@ -43,7 +43,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
         public bool TryGetLevel(string name, out Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level level) { }
         public void UpdateLevels(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> updated, System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> deleted) { }
     }
-    public sealed class StaticMediaOpsLiveCache : System.IDisposable
+    public sealed class MediaOpsLiveCache : System.IDisposable
     {
         public Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectionMonitor ConnectionMonitor { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectivityInfoProvider ConnectivityInfoProvider { get; }
@@ -55,9 +55,9 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
         public Skyline.DataMiner.MediaOps.Live.API.Caching.VirtualSignalGroupEndpointsCache VirtualSignalGroupEndpointsCache { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Subscriptions.VirtualSignalGroupEndpointsObserver VirtualSignalGroupEndpointsObserver { get; }
         public void Dispose() { }
-        public static Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache Get() { }
-        public static Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetOrCreate(Skyline.DataMiner.Net.IConnection baseConnection) { }
-        public static Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetOrCreate(System.Func<Skyline.DataMiner.Net.IConnection> connectionFactory) { }
+        public static Skyline.DataMiner.MediaOps.Live.API.Caching.MediaOpsLiveCache Get() { }
+        public static Skyline.DataMiner.MediaOps.Live.API.Caching.MediaOpsLiveCache GetOrCreate(Skyline.DataMiner.Net.IConnection baseConnection) { }
+        public static Skyline.DataMiner.MediaOps.Live.API.Caching.MediaOpsLiveCache GetOrCreate(System.Func<Skyline.DataMiner.Net.IConnection> connectionFactory) { }
         public static void Reset() { }
     }
     public class TransportTypesCache
@@ -441,11 +441,11 @@ namespace Skyline.DataMiner.MediaOps.Live.API
         public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.TransportTypeRepository TransportTypes { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.VirtualSignalGroupStateRepository VirtualSignalGroupStates { get; }
         public Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement.VirtualSignalGroupRepository VirtualSignalGroups { get; }
+        public virtual Skyline.DataMiner.MediaOps.Live.API.Caching.MediaOpsLiveCache GetCache() { }
         public virtual Skyline.DataMiner.MediaOps.Live.Take.TakeHelper GetConnectionHandler() { }
         public virtual Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectivityInfoProvider GetConnectivityInfoProvider() { }
         public Skyline.DataMiner.Core.DataMinerSystem.Common.IDms GetDms() { }
         public virtual Skyline.DataMiner.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider GetLiteConnectivityInfoProvider() { }
-        public virtual Skyline.DataMiner.MediaOps.Live.API.Caching.StaticMediaOpsLiveCache GetStaticCache() { }
         public string GetVersion() { }
         public void InstallDomModules(System.Action<string> logAction = null) { }
         public bool IsInstalled() { }

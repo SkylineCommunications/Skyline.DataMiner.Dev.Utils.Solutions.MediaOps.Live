@@ -21,14 +21,14 @@
 			return api;
 		}
 
-		public static StaticMediaOpsLiveCache GetStaticMediaOpsLiveCache(this GQIDMS gqiDms)
+		public static MediaOpsLiveCache GetMediaOpsLiveCache(this GQIDMS gqiDms)
 		{
 			if (gqiDms is null)
 			{
 				throw new ArgumentNullException(nameof(gqiDms));
 			}
 
-			return StaticMediaOpsLiveCache.GetOrCreate(gqiDms.GetConnection);
+			return MediaOpsLiveCache.GetOrCreate(gqiDms.GetConnection);
 		}
 	}
 }

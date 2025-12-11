@@ -344,7 +344,7 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var transportTypesCache = _api.GetStaticCache().TransportTypesCache;
+				var transportTypesCache = _api.GetCache().TransportTypesCache;
 
 				foreach (var context in takeContexts)
 				{
@@ -609,7 +609,7 @@
 			using (new PerformanceTracker(performanceTracker))
 			using (var cts = new CancellationTokenSource(timeout))
 			{
-				var connectionMonitor = options?.ConnectionMonitor ?? _api.GetStaticCache().ConnectionMonitor;
+				var connectionMonitor = options?.ConnectionMonitor ?? _api.GetCache().ConnectionMonitor;
 
 				var tasks = takeContexts
 					.Select(takeContext => WaitUntilConnectedAsync(takeContext, connectionMonitor, cts.Token))
@@ -659,7 +659,7 @@
 			using (new PerformanceTracker(performanceTracker))
 			using (var cts = new CancellationTokenSource(timeout))
 			{
-				var connectionMonitor = options?.ConnectionMonitor ?? _api.GetStaticCache().ConnectionMonitor;
+				var connectionMonitor = options?.ConnectionMonitor ?? _api.GetCache().ConnectionMonitor;
 
 				var tasks = takeContexts
 					.Select(takeContext => WaitUntilDisconnectedAsync(takeContext, connectionMonitor, cts.Token))

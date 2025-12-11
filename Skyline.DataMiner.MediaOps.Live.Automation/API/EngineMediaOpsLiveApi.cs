@@ -24,9 +24,9 @@
 
 		public IEngine Engine { get; }
 
-		public override StaticMediaOpsLiveCache GetStaticCache()
+		public override MediaOpsLiveCache GetCache()
 		{
-			return Engine.GetStaticMediaOpsLiveApiCache();
+			return Engine.GetMediaOpsLiveCache();
 		}
 
 		public override TakeHelper GetConnectionHandler()
