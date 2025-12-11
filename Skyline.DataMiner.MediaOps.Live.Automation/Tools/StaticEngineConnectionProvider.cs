@@ -13,7 +13,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Tools
 	/// </remarks>
 	public static class StaticEngineConnectionProvider
 	{
-		private static IConnection _connection = Engine.SLNetRaw;
+		private static volatile IConnection _connection;
 
 		/// <summary>
 		/// Gets the current connection.
@@ -21,7 +21,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Tools
 		/// <returns>The configured connection, or <see cref="Engine.SLNetRaw"/> by default.</returns>
 		public static IConnection GetConnection()
 		{
-			return _connection;
+			return _connection ?? Engine.SLNetRaw;
 		}
 
 		/// <summary>
