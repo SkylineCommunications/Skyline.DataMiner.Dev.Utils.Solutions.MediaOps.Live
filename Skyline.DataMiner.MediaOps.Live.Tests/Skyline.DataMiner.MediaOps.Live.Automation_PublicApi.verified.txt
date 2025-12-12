@@ -244,7 +244,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Tools
 {
     public static class StaticEngineConnectionProvider
     {
-        public static Skyline.DataMiner.Net.IConnection GetConnection() { }
+        public static Skyline.DataMiner.Net.IConnection Connection { get; }
         public static void Reset() { }
         public static void SetConnection(Skyline.DataMiner.Net.IConnection connection) { }
     }

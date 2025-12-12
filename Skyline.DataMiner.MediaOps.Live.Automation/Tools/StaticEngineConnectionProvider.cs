@@ -19,10 +19,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Tools
 		/// Gets the current connection.
 		/// </summary>
 		/// <returns>The configured connection, or <see cref="Engine.SLNetRaw"/> by default.</returns>
-		public static IConnection GetConnection()
-		{
-			return _connection ?? Engine.SLNetRaw;
-		}
+		public static IConnection Connection => _connection ?? Engine.SLNetRaw;
 
 		/// <summary>
 		/// Sets a custom connection for testing.

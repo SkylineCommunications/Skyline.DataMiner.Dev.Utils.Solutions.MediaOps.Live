@@ -34,7 +34,7 @@
 				throw new ArgumentNullException(nameof(engine));
 			}
 
-			return MediaOpsLiveCache.GetOrCreate(StaticEngineConnectionProvider.GetConnection);
+			return MediaOpsLiveCache.GetOrCreate(StaticEngineConnectionProvider.Connection);
 		}
 
 		public static IList<T> ReadScriptParamListFromApp<T>(this IEngine engine, string name)
