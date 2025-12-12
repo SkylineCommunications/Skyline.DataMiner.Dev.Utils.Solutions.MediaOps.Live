@@ -310,7 +310,7 @@
 		/// </summary>
 		/// <param name="level">The level to unassign the endpoint from.</param>
 		/// <exception cref="ArgumentNullException">Thrown when level is null.</exception>
-		public void RemoveEndpointFromLevel(ApiObjectReference<Level> level)
+		public void UnassignEndpointFromLevel(ApiObjectReference<Level> level)
 		{
 			if (level == null)
 			{
@@ -321,6 +321,25 @@
 			if (existing != null)
 			{
 				Levels.Remove(existing);
+			}
+		}
+
+		/// <summary>
+		/// Unassigns the specified endpoint from all levels in the virtual signal group.
+		/// </summary>
+		/// <param name="endpoint">The endpoint to unassign.</param>
+		public void UnassignEndpoint(ApiObjectReference<Endpoint> endpoint)
+		{
+			if (endpoint == null)
+			{
+				throw new ArgumentNullException(nameof(endpoint));
+			}
+
+			var toRemove = Levels.Where(x => x.Endpoint == endpoint).ToList();
+
+			foreach (var levelEndpoint in toRemove)
+			{
+				Levels.Remove(levelEndpoint);
 			}
 		}
 
