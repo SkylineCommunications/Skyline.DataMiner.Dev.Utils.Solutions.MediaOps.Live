@@ -39,7 +39,7 @@
 			foreach (IGrouping<ParameterGroup, ParameterInfo> grouping in parameterInfos.Where(paramInfo => paramInfo.Group != null).GroupBy(paramInfo => paramInfo.Group))
 			{
 				var section = grouping.Key.DisplayInfo.CreateParameterGroupSection();
-				parameterSections.AddRange(section.InitializeSection(parameterInfos));
+				parameterSections.AddRange(section.InitializeSection(grouping));
 				sectionsToDisplay.Add(section);
 			}
 
