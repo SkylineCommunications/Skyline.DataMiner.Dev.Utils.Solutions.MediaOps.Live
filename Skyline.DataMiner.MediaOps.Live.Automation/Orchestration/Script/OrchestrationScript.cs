@@ -39,8 +39,15 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 	public abstract class OrchestrationScript
 	{
+		private enum OrchestrationScriptContext
+		{
+			Standalone,
+			Event,
+		}
+
 		private List<ParameterInfo> _parameterInfos;
 		private Dictionary<string, string> _metadata = new Dictionary<string, string>();
+		private OrchestrationScriptContext _context = OrchestrationScriptContext.Standalone;
 
 		private Lazy<OrchestrationEventConfiguration> _eventConfiguration;
 
@@ -80,6 +87,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 			_eventConfiguration = new Lazy<OrchestrationEventConfiguration>(() => LoadEventFromMetaData(engine));
+			_context = OrchestrationScriptContext.Event;
 
 			return new RequestScriptInfoOutput
 			{
@@ -143,6 +151,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		public bool TryGetNodeConfiguration(string nodeLabel, out NodeConfiguration nodeConfiguration)
 		{
+			if (_context != OrchestrationScriptContext.Event)
+			{
+				nodeConfiguration = null;
+				return false;
+			}
+
 			if (EventConfiguration?.Configuration == null)
 			{
 				throw new InvalidOperationException("No event configuration was found");
@@ -155,6 +169,11 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		public void OrchestrateNode(NodeConfiguration nodeConfig)
 		{
+			if (_context != OrchestrationScriptContext.Event)
+			{
+				return;
+			}
+
 			if (nodeConfig == null)
 			{
 				throw new ArgumentNullException(nameof(nodeConfig));
@@ -176,6 +195,11 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		/// <param name="timeoutSeconds">Optional argument to override timeout (default 60 seconds).</param>
 		public void OrchestrateAllConnections(int timeoutSeconds = 60)
 		{
+			if (_context != OrchestrationScriptContext.Event)
+			{
+				return;
+			}
+
 			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
 
 			OrchestrationEventExecutionHelper orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
