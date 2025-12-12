@@ -20,23 +20,29 @@
 			}
 
 			// Init widgets
-			Value = new Numeric
+			Value = new Numeric();
+
+			if (!Double.IsNaN(info.Step) && info.Step > 0)
 			{
-				StepSize = info.Step,
-				Decimals = info.Decimals,
+				Value.StepSize = info.Step;
 			};
 
-			if (info.Min != double.MinValue)
+			if (!Double.IsNaN(info.Decimals) && info.Decimals >= 0)
+			{
+				Value.Decimals = info.Decimals;
+			}
+
+			if (!Double.IsNaN(info.Step) && info.Min != double.MinValue)
 			{
 				Value.Minimum = info.Min;
 			}
 
-			if (info.Max != double.MaxValue)
+			if (!Double.IsNaN(info.Step) && info.Max != double.MaxValue)
 			{
 				Value.Maximum = info.Max;
 			}
 
-			Unit = string.IsNullOrWhiteSpace(info.Unit) ? null : new Label(info.Unit);
+			Unit = String.IsNullOrWhiteSpace(info.Unit) ? null : new Label(info.Unit);
 		}
 
 		protected override void DefineLayout()

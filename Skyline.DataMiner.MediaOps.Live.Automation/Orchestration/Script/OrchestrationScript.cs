@@ -280,6 +280,11 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				}
 			}
 
+			if (info.ProfileDefinitions.Count > 1)
+			{
+				throw new NotSupportedException("Currently only a single profile definition can be supported by an orchestration script");
+			}
+
 			return info;
 		}
 
