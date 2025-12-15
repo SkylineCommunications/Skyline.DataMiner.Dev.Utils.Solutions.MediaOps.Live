@@ -1427,6 +1427,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages
         public Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages.EndpointInfo Destination { get; set; }
         public Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages.EndpointInfo PendingSource { get; set; }
         public System.DateTimeOffset Time { get; set; }
+        public System.TimeSpan Timeout { get; set; }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.Orchestration
@@ -1521,7 +1522,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
 }
 namespace Skyline.DataMiner.MediaOps.Live.Take
 {
-    public abstract class ConnectionRequest
+    public abstract class ConnectionRequest : Skyline.DataMiner.MediaOps.Live.Take.Request
     {
         protected ConnectionRequest() { }
     }
@@ -1532,7 +1533,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
         public Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest ConnectionRequest { get; }
         public bool IsSuccessful { get; }
     }
-    public abstract class DisconnectRequest
+    public abstract class DisconnectRequest : Skyline.DataMiner.MediaOps.Live.Take.Request
     {
         protected DisconnectRequest() { }
     }
@@ -1572,6 +1573,11 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
         public Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> SourceLevel { get; }
         public void Deconstruct(out Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> sourceLevel, out Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level> destinationLevel) { }
     }
+    public abstract class Request
+    {
+        protected Request() { }
+        public System.TimeSpan Timeout { get; set; }
+    }
     public class TakeHelper
     {
         protected TakeHelper(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
@@ -1586,7 +1592,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
         public TakeOptions() { }
         public bool BypassLockValidation { get; set; }
         public Skyline.DataMiner.MediaOps.Live.API.Connectivity.ConnectionMonitor ConnectionMonitor { get; set; }
-        public System.TimeSpan Timeout { get; set; }
         public bool WaitForCompletion { get; set; }
     }
     public class VsgConnectionRequest : Skyline.DataMiner.MediaOps.Live.Take.ConnectionRequest

@@ -11,10 +11,13 @@
 	{
 		private readonly TaskCompletionSource<bool> _taskCompletionSource = new TaskCompletionSource<bool>();
 
-		protected TakeOperationContext(Endpoint destination)
+		protected TakeOperationContext(Request request, Endpoint destination)
 		{
+			Request = request ?? throw new ArgumentNullException(nameof(request));
 			Destination = destination ?? throw new ArgumentNullException(nameof(destination));
 		}
+
+		public Request Request { get; }
 
 		public Endpoint Destination { get; }
 
@@ -23,6 +26,8 @@
 		public MediationElement MediationElement { get; set; }
 
 		public string ConnectionHandlerScript { get; set; }
+
+		public TimeSpan Timeout => Request.Timeout;
 
 		public bool IsSuccessful { get; set; }
 

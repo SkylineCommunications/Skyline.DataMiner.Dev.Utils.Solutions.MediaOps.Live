@@ -471,49 +471,29 @@
 
 					var requests = new List<PendingConnectionAction>();
 
-					if (action == ConnectionHandlerScriptAction.Connect)
+					foreach (var connection in group.OfType<ConnectOperationContext>())
 					{
-						foreach (var connection in group.OfType<ConnectOperationContext>())
+						var request = new PendingConnectionAction
 						{
-							var request = new PendingConnectionAction
-							{
-								Time = now,
-								Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
-							};
+							Time = now,
+							Timeout = connection.Timeout,
+							Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
+						};
 
-							switch (action)
-							{
-								case ConnectionHandlerScriptAction.Connect:
-									request.Action = ConnectionAction.Connect;
-									request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(connection.Source);
-									break;
-								case ConnectionHandlerScriptAction.Disconnect:
-									request.Action = ConnectionAction.Disconnect;
-									break;
-								default:
-									throw new InvalidOperationException($"Invalid action: {action}");
-							}
-
-							requests.Add(request);
-						}
-					}
-					else if (action == ConnectionHandlerScriptAction.Disconnect)
-					{
-						foreach (var connection in group.OfType<DisconnectOperationContext>())
+						switch (action)
 						{
-							var request = new PendingConnectionAction
-							{
-								Action = ConnectionAction.Disconnect,
-								Time = now,
-								Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
-							};
-
-							requests.Add(request);
+							case ConnectionHandlerScriptAction.Connect:
+								request.Action = ConnectionAction.Connect;
+								request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(connection.Source);
+								break;
+							case ConnectionHandlerScriptAction.Disconnect:
+								request.Action = ConnectionAction.Disconnect;
+								break;
+							default:
+								throw new InvalidOperationException($"Invalid action: {action}");
 						}
-					}
-					else
-					{
-						throw new InvalidOperationException($"Invalid action: {action}");
+
+						requests.Add(request);
 					}
 
 					_api.Logger?.Information($"Notifying {requests.Count} pending connection actions to mediation element '{mediationElement.DmsElementId}'");
@@ -603,16 +583,14 @@
 
 		private void WaitUntilAllConnected(IEnumerable<ConnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
 		{
-			var timeout = options?.Timeout ?? TimeSpan.FromSeconds(30);
-			_api.Logger?.Information($"Waiting for all connections to be established... ({timeout.TotalSeconds} seconds)");
+			_api.Logger?.Information($"Waiting for all connections to be established...");
 
 			using (new PerformanceTracker(performanceTracker))
-			using (var cts = new CancellationTokenSource(timeout))
 			{
 				var connectionMonitor = options?.ConnectionMonitor ?? _api.GetCache().ConnectionMonitor;
 
 				var tasks = takeContexts
-					.Select(takeContext => WaitUntilConnectedAsync(takeContext, connectionMonitor, cts.Token))
+					.Select(takeContext => WaitUntilConnectedAsync(takeContext, connectionMonitor))
 					.ToArray();
 
 				if (options?.WaitForCompletion == true)
@@ -624,20 +602,22 @@
 					if (failedRequests.Count > 0)
 					{
 						throw new ConnectFailedException(
-							$"Failed to connect {failedRequests.Count} connections within the specified timeout of {timeout.TotalSeconds} seconds.",
+							$"Failed to connect {failedRequests.Count} connections before the timeout.",
 							failedRequests);
 					}
 				}
 			}
 		}
 
-		private async Task<bool> WaitUntilConnectedAsync(ConnectOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
+		private async Task<bool> WaitUntilConnectedAsync(ConnectOperationContext takeContext, ConnectionMonitor connectionMonitor)
 		{
 			bool result;
 
 			try
 			{
-				result = await connectionMonitor.WaitUntilConnectedAsync(takeContext.Source, takeContext.Destination, cancellationToken)
+				using var cts = new CancellationTokenSource(takeContext.Timeout);
+
+				result = await connectionMonitor.WaitUntilConnectedAsync(takeContext.Source, takeContext.Destination, cts.Token)
 					.ConfigureAwait(false);
 			}
 			catch (Exception)
@@ -653,16 +633,14 @@
 
 		private void WaitUntilAllDisconnected(IEnumerable<DisconnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
 		{
-			var timeout = options?.Timeout ?? TimeSpan.FromSeconds(30);
-			_api.Logger?.Information($"Waiting for all disconnections to complete... ({timeout.TotalSeconds} seconds)");
+			_api.Logger?.Information($"Waiting for all disconnections to complete...");
 
 			using (new PerformanceTracker(performanceTracker))
-			using (var cts = new CancellationTokenSource(timeout))
 			{
 				var connectionMonitor = options?.ConnectionMonitor ?? _api.GetCache().ConnectionMonitor;
 
 				var tasks = takeContexts
-					.Select(takeContext => WaitUntilDisconnectedAsync(takeContext, connectionMonitor, cts.Token))
+					.Select(takeContext => WaitUntilDisconnectedAsync(takeContext, connectionMonitor))
 					.ToArray();
 
 				if (options?.WaitForCompletion == true)
@@ -674,20 +652,22 @@
 					if (failedRequests.Count > 0)
 					{
 						throw new DisconnectFailedException(
-							$"Failed to disconnect {failedRequests.Count} connections within the specified timeout of {timeout.TotalSeconds} seconds.",
+							$"Failed to disconnect {failedRequests.Count} connections before the timeout.",
 							failedRequests);
 					}
 				}
 			}
 		}
 
-		private async Task<bool> WaitUntilDisconnectedAsync(DisconnectOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
+		private async Task<bool> WaitUntilDisconnectedAsync(DisconnectOperationContext takeContext, ConnectionMonitor connectionMonitor)
 		{
 			bool result;
 
 			try
 			{
-				result = await connectionMonitor.WaitUntilDisconnectedAsync(takeContext.Destination, cancellationToken)
+				using var cts = new CancellationTokenSource(takeContext.Timeout);
+
+				result = await connectionMonitor.WaitUntilDisconnectedAsync(takeContext.Destination, cts.Token)
 					.ConfigureAwait(false);
 			}
 			catch (Exception)

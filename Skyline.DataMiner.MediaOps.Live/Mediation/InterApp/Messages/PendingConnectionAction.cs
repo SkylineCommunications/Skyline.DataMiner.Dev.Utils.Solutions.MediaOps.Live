@@ -11,5 +11,7 @@
 		public EndpointInfo Destination { get; set; }
 
 		public EndpointInfo PendingSource { get; set; }
+
+		public TimeSpan Timeout { get; set; }
 	}
 }

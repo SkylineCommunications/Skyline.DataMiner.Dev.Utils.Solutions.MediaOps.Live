@@ -403,6 +403,7 @@
 						requests.Add(new VsgDisconnectRequestWithMetadata(dstVirtualSignalGroup, levels)
 						{
 							MetaData = eventId.ToString(),
+							Timeout = _settings.Timeout,
 						});
 					}
 				}
@@ -413,7 +414,7 @@
 				var results = takeHelper.Disconnect(
 					requests,
 					performanceTracker,
-					new() { WaitForCompletion = true, Timeout = _settings.Timeout, BypassLockValidation = true });
+					new() { WaitForCompletion = true, BypassLockValidation = true });
 
 				// Unlock all involved VSGs after disconnect
 				_api.VirtualSignalGroups.UnlockVirtualSignalGroups(virtualSignalGroupsToUnlock);
@@ -515,6 +516,7 @@
 						requests.Add(new VsgConnectionRequestWithMetaData(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings)
 						{
 							MetaData = eventId.ToString(),
+							Timeout = _settings.Timeout,
 						});
 					}
 				}
@@ -528,7 +530,7 @@
 				return takeHelper.Take(
 					requests,
 					performanceTracker,
-					new() { WaitForCompletion = true, Timeout = _settings.Timeout, BypassLockValidation = true });
+					new() { WaitForCompletion = true, BypassLockValidation = true });
 			}
 		}
 
