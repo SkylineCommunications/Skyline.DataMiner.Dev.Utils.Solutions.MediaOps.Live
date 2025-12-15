@@ -477,6 +477,7 @@
 						{
 							Time = now,
 							Timeout = connection.Timeout,
+							ConnectionHandlerScript = connection.ConnectionHandlerScript,
 							Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
 						};
 
@@ -500,7 +501,10 @@
 
 					var commands = InterAppCallFactory.CreateNew();
 
-					var message = new NotifyPendingConnectionActionMessage { Actions = requests };
+					var message = new NotifyPendingConnectionActionMessage
+					{
+						Actions = requests,
+					};
 					commands.Messages.Add(message);
 
 					commands.Send(

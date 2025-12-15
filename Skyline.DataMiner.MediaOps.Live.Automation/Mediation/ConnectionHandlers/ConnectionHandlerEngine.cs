@@ -107,7 +107,11 @@
 				// Send message
 				var commands = InterAppCallFactory.CreateNew();
 
-				var message = new NotifyConnectionChangesMessage { Changes = connectionChanges };
+				var message = new NotifyConnectionChangesMessage
+				{
+					ConnectionHandlerScript = Engine.GetScriptName(),
+					Changes = connectionChanges,
+				};
 				commands.Messages.Add(message);
 
 				commands.Send(

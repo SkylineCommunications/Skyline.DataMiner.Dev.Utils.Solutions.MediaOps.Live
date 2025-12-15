@@ -1414,6 +1414,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages
     {
         public NotifyConnectionChangesMessage() { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages.ConnectionChange> Changes { get; set; }
+        public string ConnectionHandlerScript { get; set; }
     }
     public class NotifyPendingConnectionActionMessage : Skyline.DataMiner.Core.InterAppCalls.Common.CallSingle.Message
     {
@@ -1424,6 +1425,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages
     {
         public PendingConnectionAction() { }
         public Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages.ConnectionAction Action { get; set; }
+        public string ConnectionHandlerScript { get; set; }
         public Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages.EndpointInfo Destination { get; set; }
         public Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages.EndpointInfo PendingSource { get; set; }
         public System.DateTimeOffset Time { get; set; }

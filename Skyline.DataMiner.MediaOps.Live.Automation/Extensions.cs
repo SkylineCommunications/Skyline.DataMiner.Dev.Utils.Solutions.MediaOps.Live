@@ -91,6 +91,21 @@
 			return values[0];
 		}
 
+		internal static string GetScriptName(this IEngine engine)
+		{
+			if (engine is null)
+			{
+				throw new ArgumentNullException(nameof(engine));
+			}
+
+			var scriptNameField = typeof(Engine).GetField("_scriptName", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+				?? throw new InvalidOperationException("Could not find '_scriptName' field on IEngine instance.");
+
+			var scriptName = scriptNameField.GetValue(engine) as string;
+
+			return scriptName;
+		}
+
 		private static T TryConvertSingleValue<T>(string value)
 		{
 			if (typeof(T) == typeof(Guid) && Guid.TryParse(value, out var guid))
