@@ -2,6 +2,7 @@
 {
 	public enum ConnectionHandlerScriptAction
 	{
+		GetConfiguration,
 		GetSupportedElements,
 		GetSubscriptionInfo,
 		HandleParameterUpdate,

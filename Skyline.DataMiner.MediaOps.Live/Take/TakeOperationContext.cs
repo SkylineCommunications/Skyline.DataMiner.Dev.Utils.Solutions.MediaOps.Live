@@ -15,6 +15,11 @@
 		{
 			Request = request ?? throw new ArgumentNullException(nameof(request));
 			Destination = destination ?? throw new ArgumentNullException(nameof(destination));
+
+			if (request.Timeout.HasValue)
+			{
+				Timeout = request.Timeout.Value;
+			}
 		}
 
 		public Request Request { get; }
@@ -27,7 +32,7 @@
 
 		public string ConnectionHandlerScript { get; set; }
 
-		public TimeSpan Timeout => Request.Timeout;
+		public TimeSpan? Timeout { get; set; }
 
 		public bool IsSuccessful { get; set; }
 

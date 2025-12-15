@@ -4,6 +4,6 @@
 
 	public abstract class Request
 	{
-		public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(10);
+		public TimeSpan? Timeout { get; set; }
 	}
 }

@@ -1207,11 +1207,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers
 {
     public enum ConnectionHandlerScriptAction
     {
-        GetSupportedElements = 0,
-        GetSubscriptionInfo = 1,
-        HandleParameterUpdate = 2,
-        Connect = 3,
-        Disconnect = 4,
+        GetConfiguration = 0,
+        GetSupportedElements = 1,
+        GetSubscriptionInfo = 2,
+        HandleParameterUpdate = 3,
+        Connect = 4,
+        Disconnect = 5,
     }
     public class CreateConnectionsInputData : Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerInputData
     {
@@ -1227,6 +1228,14 @@ namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers
 }
 namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data
 {
+    public class ConnectionHandlerConfiguration
+    {
+        public static readonly System.TimeSpan DefaultTimeout;
+        public ConnectionHandlerConfiguration() { }
+        public System.TimeSpan? ConnectTimeout { get; set; }
+        public System.TimeSpan? DisconnectTimeout { get; set; }
+        public static Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data.ConnectionHandlerConfiguration Default { get; }
+    }
     public class ConnectionInfo
     {
         public ConnectionInfo() { }
@@ -1578,7 +1587,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
     public abstract class Request
     {
         protected Request() { }
-        public System.TimeSpan Timeout { get; set; }
+        public System.TimeSpan? Timeout { get; set; }
     }
     public class TakeHelper
     {
@@ -1586,6 +1595,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
         public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.EndpointDisconnectResult> Disconnect(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.EndpointDisconnectRequest> disconnectRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker, Skyline.DataMiner.MediaOps.Live.Take.TakeOptions options = null) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgDisconnectResult> Disconnect(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgDisconnectRequest> disconnectRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker, Skyline.DataMiner.MediaOps.Live.Take.TakeOptions options = null) { }
         protected virtual void ExecuteConnectionHandlerScript(string script, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.ConnectionHandlerScriptAction action, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerInputData inputData, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
+        protected virtual T ExecuteConnectionHandlerScript<T>(string script, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.ConnectionHandlerScriptAction action, Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.IConnectionHandlerInputData inputData, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.EndpointConnectionResult> Take(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.EndpointConnectionRequest> connectionRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker, Skyline.DataMiner.MediaOps.Live.Take.TakeOptions options = null) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgConnectionResult> Take(System.Collections.Generic.ICollection<Skyline.DataMiner.MediaOps.Live.Take.VsgConnectionRequest> connectionRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker, Skyline.DataMiner.MediaOps.Live.Take.TakeOptions options = null) { }
     }
