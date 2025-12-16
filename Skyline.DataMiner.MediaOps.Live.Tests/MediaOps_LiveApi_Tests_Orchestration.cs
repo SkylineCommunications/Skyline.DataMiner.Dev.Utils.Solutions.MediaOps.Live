@@ -38,11 +38,11 @@
 			api.Orchestration.SaveOrchestrationJob(job);
 
 			var allJobs = api.Orchestration.GetAllJobs();
-			Assert.AreEqual(2, allJobs.Count());
+			Assert.HasCount(2, allJobs);
 
-			Assert.AreEqual(2, allJobs.FirstOrDefault(job => job.JobId == newJobGuid.ToString()).OrchestrationEvents.Count);
+			Assert.HasCount(2, allJobs.FirstOrDefault(job => job.JobId == newJobGuid.ToString()).OrchestrationEvents);
 
-			Assert.AreEqual(10, allJobs.FirstOrDefault(job => job.JobId != newJobGuid.ToString()).OrchestrationEvents.Count);
+			Assert.HasCount(10, allJobs.FirstOrDefault(job => job.JobId != newJobGuid.ToString()).OrchestrationEvents);
 		}
 
 		[TestMethod]
@@ -90,11 +90,11 @@
 			api.Orchestration.SaveOrchestrationJob(job2);
 
 			var allJobs = api.Orchestration.GetOrCreateNewOrchestrationJobs(new List<string> { newJobGuid1.ToString(), newJobGuid2.ToString() });
-			Assert.AreEqual(2, allJobs.Count());
+			Assert.HasCount(2, allJobs);
 
-			Assert.AreEqual(2, allJobs.FirstOrDefault(job => job.JobId == newJobGuid1.ToString()).OrchestrationEvents.Count);
+			Assert.HasCount(2, allJobs.FirstOrDefault(job => job.JobId == newJobGuid1.ToString()).OrchestrationEvents);
 
-			Assert.AreEqual(1, allJobs.FirstOrDefault(job => job.JobId == newJobGuid2.ToString()).OrchestrationEvents.Count);
+			Assert.HasCount(1, allJobs.FirstOrDefault(job => job.JobId == newJobGuid2.ToString()).OrchestrationEvents);
 		}
 
 		[TestMethod]
@@ -146,10 +146,10 @@
 			api.Orchestration.SaveOrchestrationJobConfiguration(job2);
 
 			var retrievedJobs = api.Orchestration.GetOrCreateNewOrchestrationJobConfigurations(new List<string> { newJobGuid1.ToString(), newJobGuid2.ToString() });
-			Assert.AreEqual(2, retrievedJobs.Count());
+			Assert.HasCount(2, retrievedJobs);
 
-			Assert.AreEqual(2, retrievedJobs.FirstOrDefault(job => job.JobId == newJobGuid1.ToString()).OrchestrationEvents.Count);
-			Assert.AreEqual(1, retrievedJobs.FirstOrDefault(job => job.JobId == newJobGuid2.ToString()).OrchestrationEvents.Count);
+			Assert.HasCount(2, retrievedJobs.FirstOrDefault(job => job.JobId == newJobGuid1.ToString()).OrchestrationEvents);
+			Assert.HasCount(1, retrievedJobs.FirstOrDefault(job => job.JobId == newJobGuid2.ToString()).OrchestrationEvents);
 
 			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(12, configurationHelper.CountAll());

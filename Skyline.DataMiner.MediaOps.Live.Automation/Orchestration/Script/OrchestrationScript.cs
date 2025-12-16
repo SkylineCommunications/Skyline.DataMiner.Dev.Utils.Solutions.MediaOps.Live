@@ -233,15 +233,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private void RunSafe(IEngine engine)
 		{
-			try
-			{
-
-			}
-			catch (Exception e)
-			{
-				engine.GenerateInformation(e.ToString());
-			}
-
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
 			ScriptInfo scriptInfo = GetScriptInfo();
