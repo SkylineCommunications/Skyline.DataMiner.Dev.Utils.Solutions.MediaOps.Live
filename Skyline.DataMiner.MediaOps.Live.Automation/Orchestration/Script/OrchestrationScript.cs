@@ -85,14 +85,24 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		[AutomationEntryPoint(AutomationEntryPointType.Types.OnRequestScriptInfo)]
 		public RequestScriptInfoOutput OnRequestScriptInfoRequest(IEngine engine, RequestScriptInfoInput inputData)
 		{
-			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
-			_eventConfiguration = new Lazy<OrchestrationEventConfiguration>(() => LoadEventFromMetaData(engine));
-			_context = OrchestrationScriptContext.Event;
-
-			return new RequestScriptInfoOutput
+			try
 			{
-				Data = HandleRequestInfoEntryPoint(inputData.Data),
-			};
+				_engine = engine ?? throw new ArgumentNullException(nameof(engine));
+				_eventConfiguration = new Lazy<OrchestrationEventConfiguration>(() => LoadEventFromMetaData(engine));
+				_context = OrchestrationScriptContext.Event;
+
+				return new RequestScriptInfoOutput
+				{
+					Data = HandleRequestInfoEntryPoint(inputData.Data),
+				};
+			}
+			catch (Exception e)
+			{
+				return new RequestScriptInfoOutput
+				{
+					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputError, e.ToString() } },
+				};
+			}
 		}
 
 		/// <summary>
@@ -223,6 +233,15 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private void RunSafe(IEngine engine)
 		{
+			try
+			{
+
+			}
+			catch (Exception e)
+			{
+				engine.GenerateInformation(e.ToString());
+			}
+
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
 			ScriptInfo scriptInfo = GetScriptInfo();

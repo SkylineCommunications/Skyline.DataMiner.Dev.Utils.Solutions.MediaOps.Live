@@ -649,11 +649,23 @@
 				result = OrchestrationAutomationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out errorMessages);
 			}
 
-			OrchestrationScriptResult scriptResult = new OrchestrationScriptResult
+			OrchestrationScriptResult scriptResult;
+			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out string errors))
 			{
-				ErrorMessages = errorMessages,
-				HadError = result.HadError || errorMessages.Any(),
-			};
+				scriptResult = new OrchestrationScriptResult
+				{
+					ErrorMessages = [errors],
+					HadError = true,
+				};
+			}
+			else
+			{
+				scriptResult = new OrchestrationScriptResult
+				{
+					ErrorMessages = errorMessages,
+					HadError = result.HadError || errorMessages.Any(),
+				};
+			}
 
 			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, out string orchestrationOutputString))
 			{

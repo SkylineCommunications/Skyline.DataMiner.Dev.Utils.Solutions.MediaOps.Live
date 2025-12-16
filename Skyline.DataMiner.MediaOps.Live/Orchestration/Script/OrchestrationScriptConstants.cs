@@ -8,5 +8,6 @@
 		internal static readonly string OrchestrationScriptInfoRequestScriptInfoKey = "OrchestrationScriptInfo";
 		internal static readonly string ScriptInputRequestScriptInfoKey = "OrchestrationScriptInput";
 		internal static readonly string ScriptOutputRequestScriptInfoKey = "OrchestrationScriptOutput";
+		internal static readonly string ScriptOutputError = "OrchestrationScriptError";
 	}
 }
