@@ -490,6 +490,7 @@
 				return;
 			}
 
+			// Rebuild connectivity
 			var newConnectivity = BuildEndpointConnectivity(endpoint);
 
 			if (_endpointConnectivityCache.TryGetValue(endpoint, out var oldConnectivity) &&
@@ -531,9 +532,9 @@
 			}
 
 			// First make sure all endpoints in this virtual signal group are up to date
-			foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
+			foreach (var endpointRef in virtualSignalGroup.GetAssignedEndpoints())
 			{
-				if (_vsgCache.TryGetEndpoint(levelEndpoint.Endpoint, out var endpoint))
+				if (_vsgCache.TryGetEndpoint(endpointRef, out var endpoint))
 				{
 					InvalidateConnectivity(endpoint, context);
 				}
@@ -552,6 +553,15 @@
 			// Update cache and add to list
 			_vsgConnectivityCache[virtualSignalGroup] = newConnectivity;
 			context.ChangedVirtualSignalGroups[virtualSignalGroup] = (oldConnectivity, newConnectivity);
+
+			// Also invalidate all endpoints in this virtual signal group
+			var linkedEndpoints = GetLinkedEndpoints(oldConnectivity)
+				.Union(GetLinkedEndpoints(newConnectivity));
+
+			foreach (var linkedEndpoint in linkedEndpoints)
+			{
+				InvalidateConnectivity(linkedEndpoint, context);
+			}
 
 			// Also invalidate all virtual signal groups that are linked to this virtual signal group
 			var linkedVirtualSignalGroups = GetLinkedVirtualSignalGroups(oldConnectivity)
