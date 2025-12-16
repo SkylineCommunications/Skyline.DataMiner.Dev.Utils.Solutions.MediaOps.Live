@@ -37,6 +37,9 @@
 
 				switch (inputData.Action)
 				{
+					case ConnectionHandlerScriptAction.GetConfiguration:
+						HandleGetConfiguration(engine, logger);
+						break;
 					case ConnectionHandlerScriptAction.GetSupportedElements:
 						HandleGetSupportedElements(engine, inputData, logger);
 						break;
@@ -66,6 +69,16 @@
 			}
 		}
 
+		/// <summary>
+		/// Gets the configuration for this connection handler.
+		/// Override to customize timeout and other settings.
+		/// </summary>
+		/// <returns>The connection handler configuration.</returns>
+		public virtual ConnectionHandlerConfiguration GetConfiguration()
+		{
+			return ConnectionHandlerConfiguration.Default;
+		}
+
 		public abstract IEnumerable<ElementInfo> GetSupportedElements(IEngine engine, IEnumerable<ElementInfo> elements);
 
 		public abstract IEnumerable<SubscriptionInfo> GetSubscriptionInfo(IEngine engine);
@@ -75,6 +88,29 @@
 		public abstract void Connect(IEngine engine, IConnectionHandlerEngine connectionEngine, CreateConnectionsRequest createConnectionsRequest);
 
 		public abstract void Disconnect(IEngine engine, IConnectionHandlerEngine connectionEngine, DisconnectDestinationsRequest disconnectDestinationsRequest);
+
+		private void HandleGetConfiguration(IEngine engine, ILogger logger)
+		{
+			try
+			{
+				logger.Debug($"Start processing get configuration request.");
+
+				var configuration = GetConfiguration();
+				var serialized = JsonConvert.SerializeObject(configuration, _jsonSerializerSettings);
+
+				engine.AddScriptOutput("output", serialized);
+
+				logger.Debug($"Done processing get configuration request.\nOutput: {serialized}");
+			}
+			catch (Exception ex)
+			{
+				logger.Error(
+					$"Exception in {GetConnectionHandlerName()}.{nameof(HandleGetConfiguration)}",
+					ex);
+
+				throw;
+			}
+		}
 
 		private void HandleGetSupportedElements(IEngine engine, ConnectionHandlerInputData inputData, ILogger logger)
 		{

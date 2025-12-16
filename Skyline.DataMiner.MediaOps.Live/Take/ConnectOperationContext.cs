@@ -7,7 +7,7 @@
 	internal abstract class ConnectOperationContext : TakeOperationContext
 	{
 		protected ConnectOperationContext(ConnectionRequest connectRequest, Endpoint source, Endpoint destination)
-			: base(destination)
+			: base(connectRequest, destination)
 		{
 			ConnectionRequest = connectRequest ?? throw new ArgumentNullException(nameof(connectRequest));
 			Source = source ?? throw new ArgumentNullException(nameof(source));

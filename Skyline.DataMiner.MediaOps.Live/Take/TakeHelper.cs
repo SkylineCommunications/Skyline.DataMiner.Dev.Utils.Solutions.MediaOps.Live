@@ -10,13 +10,13 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
-	using Skyline.DataMiner.Core.InterAppCalls.Common.Shared;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
+	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
@@ -54,7 +54,7 @@
 					var takeContexts = connectionRequests.Select(x => new EndpointConnectOperationContext(x)).ToList();
 
 					Validate(takeContexts, performanceTracker);
-					PrepareData(takeContexts, performanceTracker);
+					PrepareData(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					WaitUntilAllConnected(takeContexts, performanceTracker, options);
@@ -100,7 +100,7 @@
 					var takeContexts = ConvertConnectionRequests(connectionRequests, performanceTracker);
 
 					Validate(takeContexts, performanceTracker);
-					PrepareData(takeContexts, performanceTracker);
+					PrepareData(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					WaitUntilAllConnected(takeContexts, performanceTracker, options);
@@ -142,7 +142,7 @@
 				{
 					var takeContexts = disconnectRequests.Select(x => new EndpointDisconnectOperationContext(x)).ToList();
 
-					PrepareData(takeContexts, performanceTracker);
+					PrepareData(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					WaitUntilAllDisconnected(takeContexts, performanceTracker, options);
@@ -185,7 +185,7 @@
 					CheckDestinationLocks(destinationVsgs, options, performanceTracker);
 
 					var takeContexts = ConvertDisconnectRequests(disconnectRequests, performanceTracker);
-					PrepareData(takeContexts, performanceTracker);
+					PrepareData(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					WaitUntilAllDisconnected(takeContexts, performanceTracker, options);
@@ -363,7 +363,7 @@
 			}
 		}
 
-		private void PrepareData(IEnumerable<TakeOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		private void PrepareData(ConnectionHandlerScriptAction action, IEnumerable<TakeOperationContext> takeContexts, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -372,6 +372,7 @@
 				GetDestinationElements(dms, takeContexts, performanceTracker);
 				GetMediationElements(takeContexts, performanceTracker);
 				FindConnectionHandlerScripts(takeContexts, performanceTracker);
+				ApplyConnectionHandlerScriptConfigurations(action, takeContexts, performanceTracker);
 			}
 		}
 
@@ -406,9 +407,9 @@
 					var element = dms.GetElement(elementId.Value);
 
 					// Assign the fetched element to each connection in the group
-					foreach (var connection in group)
+					foreach (var context in group)
 					{
-						connection.DestinationElement = element;
+						context.DestinationElement = element;
 					}
 				}
 			}
@@ -432,9 +433,9 @@
 						throw new InvalidOperationException($"Couldn't find MediaOps mediation element on hosting agent {hostingAgentId}");
 					}
 
-					foreach (var connection in group)
+					foreach (var context in group)
 					{
-						connection.MediationElement = mediationElement;
+						context.MediationElement = mediationElement;
 					}
 				}
 			}
@@ -451,11 +452,59 @@
 
 					var script = mediationElement.GetConnectionHandlerScriptName(destinationElement);
 
-					foreach (var connection in group)
+					foreach (var context in group)
 					{
-						connection.ConnectionHandlerScript = script;
+						context.ConnectionHandlerScript = script;
 					}
 				}
+			}
+		}
+
+		private void ApplyConnectionHandlerScriptConfigurations(ConnectionHandlerScriptAction action, IEnumerable<TakeOperationContext> takeContexts, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				foreach (var group in takeContexts.GroupBy(x => x.ConnectionHandlerScript))
+				{
+					ConnectionHandlerConfiguration config;
+
+					try
+					{
+						config = LoadConnectionHandlerConfiguration(group.Key, performanceTracker);
+					}
+					catch (Exception)
+					{
+						// Couldn't get configuration, apply defaults
+						config = ConnectionHandlerConfiguration.Default;
+					}
+
+					foreach (var context in group)
+					{
+						if (!context.Timeout.HasValue)
+						{
+							context.Timeout = action switch
+							{
+								ConnectionHandlerScriptAction.Connect => config.ConnectTimeout,
+								ConnectionHandlerScriptAction.Disconnect => config.DisconnectTimeout,
+								_ => throw new InvalidOperationException($"Invalid action: {action}"),
+							};
+						}
+					}
+				}
+			}
+		}
+
+		private ConnectionHandlerConfiguration LoadConnectionHandlerConfiguration(string scriptName, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				var config = ExecuteConnectionHandlerScript<ConnectionHandlerConfiguration>(
+					scriptName,
+					ConnectionHandlerScriptAction.GetConfiguration,
+					null,
+					performanceTracker);
+
+				return config ?? ConnectionHandlerConfiguration.Default;
 			}
 		}
 
@@ -471,56 +520,46 @@
 
 					var requests = new List<PendingConnectionAction>();
 
-					if (action == ConnectionHandlerScriptAction.Connect)
+					foreach (var context in group)
 					{
-						foreach (var connection in group.OfType<ConnectOperationContext>())
+						var request = new PendingConnectionAction
 						{
-							var request = new PendingConnectionAction
-							{
-								Time = now,
-								Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
-							};
+							Time = now,
+							Timeout = context.Timeout ?? ConnectionHandlerConfiguration.DefaultTimeout,
+							ConnectionHandlerScript = context.ConnectionHandlerScript,
+							Destination = new Mediation.InterApp.Messages.EndpointInfo(context.Destination),
+						};
 
-							switch (action)
-							{
-								case ConnectionHandlerScriptAction.Connect:
-									request.Action = ConnectionAction.Connect;
-									request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(connection.Source);
-									break;
-								case ConnectionHandlerScriptAction.Disconnect:
-									request.Action = ConnectionAction.Disconnect;
-									break;
-								default:
-									throw new InvalidOperationException($"Invalid action: {action}");
-							}
-
-							requests.Add(request);
-						}
-					}
-					else if (action == ConnectionHandlerScriptAction.Disconnect)
-					{
-						foreach (var connection in group.OfType<DisconnectOperationContext>())
+						switch (action)
 						{
-							var request = new PendingConnectionAction
-							{
-								Action = ConnectionAction.Disconnect,
-								Time = now,
-								Destination = new Mediation.InterApp.Messages.EndpointInfo(connection.Destination),
-							};
+							case ConnectionHandlerScriptAction.Connect:
+								request.Action = ConnectionAction.Connect;
+								if (context is ConnectOperationContext connectContext)
+								{
+									request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(connectContext.Source);
+								}
 
-							requests.Add(request);
+								break;
+
+							case ConnectionHandlerScriptAction.Disconnect:
+								request.Action = ConnectionAction.Disconnect;
+								break;
+
+							default:
+								throw new InvalidOperationException($"Invalid action: {action}");
 						}
-					}
-					else
-					{
-						throw new InvalidOperationException($"Invalid action: {action}");
+
+						requests.Add(request);
 					}
 
 					_api.Logger?.Information($"Notifying {requests.Count} pending connection actions to mediation element '{mediationElement.DmsElementId}'");
 
 					var commands = InterAppCallFactory.CreateNew();
 
-					var message = new NotifyPendingConnectionActionMessage { Actions = requests };
+					var message = new NotifyPendingConnectionActionMessage
+					{
+						Actions = requests,
+					};
 					commands.Messages.Add(message);
 
 					commands.Send(
@@ -569,9 +608,26 @@
 
 		protected virtual void ExecuteConnectionHandlerScript(string script, ConnectionHandlerScriptAction action, IConnectionHandlerInputData inputData, PerformanceTracker performanceTracker)
 		{
+			ExecuteConnectionHandlerScriptCore(script, action, inputData, performanceTracker);
+		}
+
+		protected virtual T ExecuteConnectionHandlerScript<T>(string script, ConnectionHandlerScriptAction action, IConnectionHandlerInputData inputData, PerformanceTracker performanceTracker)
+		{
+			var result = ExecuteConnectionHandlerScriptCore(script, action, inputData, performanceTracker);
+
+			if (!result.ScriptOutput.TryGetValue("output", out var outputValue))
+			{
+				throw new InvalidOperationException("Couldn't find script output 'output'");
+			}
+
+			return JsonConvert.DeserializeObject<T>(outputValue);
+		}
+
+		private Net.Messages.ExecuteScriptResponseMessage ExecuteConnectionHandlerScriptCore(string script, ConnectionHandlerScriptAction action, IConnectionHandlerInputData inputData, PerformanceTracker performanceTracker)
+		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var inputDataSerialized = JsonConvert.SerializeObject(inputData);
+				var inputDataSerialized = inputData != null ? JsonConvert.SerializeObject(inputData) : "{}";
 
 				performanceTracker.AddMetadata("Script", script);
 				performanceTracker.AddMetadata("Input Data", inputDataSerialized);
@@ -584,18 +640,16 @@
 
 				try
 				{
-					AutomationHelper.ExecuteAutomationScript(_api.Connection, script, parameters);
+					return AutomationHelper.ExecuteAutomationScript(_api.Connection, script, parameters);
 				}
 				catch (ScriptExecutionFailedException ex) when (
 					ex.ScriptOutput.TryGetValue("Exception.Message", out var exceptionMessage) &&
 					!String.IsNullOrWhiteSpace(exceptionMessage))
 				{
-					// Rethrow with extracted script message
 					throw new ConnectionHandlerScriptExecutionFailedException(exceptionMessage, ex);
 				}
 				catch (Exception ex)
 				{
-					// Fallback for all other exceptions
 					throw new ConnectionHandlerScriptExecutionFailedException($"Connection handler script execution failed: {ex.Message}", ex);
 				}
 			}
@@ -603,16 +657,14 @@
 
 		private void WaitUntilAllConnected(IEnumerable<ConnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
 		{
-			var timeout = options?.Timeout ?? TimeSpan.FromSeconds(30);
-			_api.Logger?.Information($"Waiting for all connections to be established... ({timeout.TotalSeconds} seconds)");
+			_api.Logger?.Information($"Waiting for all connections to be established...");
 
 			using (new PerformanceTracker(performanceTracker))
-			using (var cts = new CancellationTokenSource(timeout))
 			{
 				var connectionMonitor = options?.ConnectionMonitor ?? _api.GetCache().ConnectionMonitor;
 
 				var tasks = takeContexts
-					.Select(takeContext => WaitUntilConnectedAsync(takeContext, connectionMonitor, cts.Token))
+					.Select(takeContext => WaitUntilConnectedAsync(takeContext, connectionMonitor))
 					.ToArray();
 
 				if (options?.WaitForCompletion == true)
@@ -624,20 +676,22 @@
 					if (failedRequests.Count > 0)
 					{
 						throw new ConnectFailedException(
-							$"Failed to connect {failedRequests.Count} connections within the specified timeout of {timeout.TotalSeconds} seconds.",
+							$"Failed to connect {failedRequests.Count} connections before the timeout.",
 							failedRequests);
 					}
 				}
 			}
 		}
 
-		private async Task<bool> WaitUntilConnectedAsync(ConnectOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
+		private async Task<bool> WaitUntilConnectedAsync(ConnectOperationContext takeContext, ConnectionMonitor connectionMonitor)
 		{
 			bool result;
 
 			try
 			{
-				result = await connectionMonitor.WaitUntilConnectedAsync(takeContext.Source, takeContext.Destination, cancellationToken)
+				using var cts = new CancellationTokenSource(takeContext.Timeout ?? ConnectionHandlerConfiguration.DefaultTimeout);
+
+				result = await connectionMonitor.WaitUntilConnectedAsync(takeContext.Source, takeContext.Destination, cts.Token)
 					.ConfigureAwait(false);
 			}
 			catch (Exception)
@@ -653,16 +707,14 @@
 
 		private void WaitUntilAllDisconnected(IEnumerable<DisconnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
 		{
-			var timeout = options?.Timeout ?? TimeSpan.FromSeconds(30);
-			_api.Logger?.Information($"Waiting for all disconnections to complete... ({timeout.TotalSeconds} seconds)");
+			_api.Logger?.Information($"Waiting for all disconnections to complete...");
 
 			using (new PerformanceTracker(performanceTracker))
-			using (var cts = new CancellationTokenSource(timeout))
 			{
 				var connectionMonitor = options?.ConnectionMonitor ?? _api.GetCache().ConnectionMonitor;
 
 				var tasks = takeContexts
-					.Select(takeContext => WaitUntilDisconnectedAsync(takeContext, connectionMonitor, cts.Token))
+					.Select(takeContext => WaitUntilDisconnectedAsync(takeContext, connectionMonitor))
 					.ToArray();
 
 				if (options?.WaitForCompletion == true)
@@ -674,20 +726,22 @@
 					if (failedRequests.Count > 0)
 					{
 						throw new DisconnectFailedException(
-							$"Failed to disconnect {failedRequests.Count} connections within the specified timeout of {timeout.TotalSeconds} seconds.",
+							$"Failed to disconnect {failedRequests.Count} connections before the timeout.",
 							failedRequests);
 					}
 				}
 			}
 		}
 
-		private async Task<bool> WaitUntilDisconnectedAsync(DisconnectOperationContext takeContext, ConnectionMonitor connectionMonitor, CancellationToken cancellationToken)
+		private async Task<bool> WaitUntilDisconnectedAsync(DisconnectOperationContext takeContext, ConnectionMonitor connectionMonitor)
 		{
 			bool result;
 
 			try
 			{
-				result = await connectionMonitor.WaitUntilDisconnectedAsync(takeContext.Destination, cancellationToken)
+				using var cts = new CancellationTokenSource(takeContext.Timeout ?? ConnectionHandlerConfiguration.DefaultTimeout);
+
+				result = await connectionMonitor.WaitUntilDisconnectedAsync(takeContext.Destination, cts.Token)
 					.ConfigureAwait(false);
 			}
 			catch (Exception)

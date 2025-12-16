@@ -6,6 +6,9 @@
 
 	public class NotifyPendingConnectionActionMessage : Message
 	{
+		/// <summary>
+		/// Gets or sets the collection of pending connection actions.
+		/// </summary>
 		public ICollection<PendingConnectionAction> Actions { get; set; }
 	}
 }

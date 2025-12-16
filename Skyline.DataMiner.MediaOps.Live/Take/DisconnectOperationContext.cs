@@ -7,7 +7,7 @@
 	internal abstract class DisconnectOperationContext : TakeOperationContext
 	{
 		protected DisconnectOperationContext(DisconnectRequest disconnectRequest, Endpoint destination)
-			: base(destination)
+			: base(disconnectRequest, destination)
 		{
 			DisconnectRequest = disconnectRequest ?? throw new ArgumentNullException(nameof(disconnectRequest));
 		}

@@ -11,5 +11,12 @@
 		public EndpointInfo Destination { get; set; }
 
 		public EndpointInfo PendingSource { get; set; }
+
+		public TimeSpan Timeout { get; set; }
+
+		/// <summary>
+		/// Gets or sets the connection handler script that will handle this action.
+		/// </summary>
+		public string ConnectionHandlerScript { get; set; }
 	}
 }

@@ -57,6 +57,10 @@
 
 			using var connectivity = new ConnectivityInfoProvider(api, subscribe: true);
 
+			// Warm up to fill internal caches
+			connectivity.GetConnectivity([source1, source2, destination1]);
+
+			// Subscribe to events
 			var receivedEvents = new List<ConnectionsUpdatedEvent>();
 			connectivity.ConnectionsUpdated += (sender, e) => receivedEvents.Add(e);
 
