@@ -520,7 +520,7 @@
 
 					var requests = new List<PendingConnectionAction>();
 
-					foreach (var context in group.OfType<ConnectOperationContext>())
+					foreach (var context in group)
 					{
 						var request = new PendingConnectionAction
 						{
@@ -534,11 +534,17 @@
 						{
 							case ConnectionHandlerScriptAction.Connect:
 								request.Action = ConnectionAction.Connect;
-								request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(context.Source);
+								if (context is ConnectOperationContext connectContext)
+								{
+									request.PendingSource = new Mediation.InterApp.Messages.EndpointInfo(connectContext.Source);
+								}
+
 								break;
+
 							case ConnectionHandlerScriptAction.Disconnect:
 								request.Action = ConnectionAction.Disconnect;
 								break;
+
 							default:
 								throw new InvalidOperationException($"Invalid action: {action}");
 						}
