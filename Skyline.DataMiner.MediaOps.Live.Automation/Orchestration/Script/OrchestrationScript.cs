@@ -98,6 +98,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			}
 			catch (Exception e)
 			{
+				engine.GenerateInformation("Error: " + e.ToString());
 				return new RequestScriptInfoOutput
 				{
 					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputError, e.ToString() } },
