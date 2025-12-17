@@ -24,10 +24,13 @@
 			Metadata = new Dictionary<string, string>();
 		}
 
-		internal Dictionary<string, object> ProfileParameterValues { get; }
+		[JsonProperty]
+		public Dictionary<string, object> ProfileParameterValues { get; set; }
 
-		internal string ProfileInstance { get; }
+		[JsonProperty]
+		public string ProfileInstance { get; set; }
 
-		internal Dictionary<string, string> Metadata { get; }
+		[JsonProperty]
+		public Dictionary<string, string> Metadata { get; set; }
 	}
 }

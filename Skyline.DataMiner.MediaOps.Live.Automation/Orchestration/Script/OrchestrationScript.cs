@@ -48,6 +48,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		private List<ParameterInfo> _parameterInfos;
 		private Dictionary<string, string> _metadata = new Dictionary<string, string>();
 		private OrchestrationScriptContext _context = OrchestrationScriptContext.Standalone;
+		private OrchestrationLevel _orchestrationLevel = OrchestrationLevel.Unknown;
 
 		private Lazy<OrchestrationEventConfiguration> _eventConfiguration;
 
@@ -98,7 +99,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			}
 			catch (Exception e)
 			{
-				engine.GenerateInformation("Error: " + e.ToString());
 				return new RequestScriptInfoOutput
 				{
 					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputError, e.ToString() } },
@@ -180,7 +180,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		public void OrchestrateNode(NodeConfiguration nodeConfig)
 		{
-			if (_context != OrchestrationScriptContext.Event)
+			if (_context != OrchestrationScriptContext.Event || _orchestrationLevel != OrchestrationLevel.Global)
 			{
 				return;
 			}
@@ -206,7 +206,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		/// <param name="timeoutSeconds">Optional argument to override timeout (default 60 seconds).</param>
 		public void OrchestrateAllConnections(int timeoutSeconds = 60)
 		{
-			if (_context != OrchestrationScriptContext.Event)
+			if (_context != OrchestrationScriptContext.Event || _orchestrationLevel != OrchestrationLevel.Global)
 			{
 				return;
 			}
@@ -408,7 +408,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			}
 		}
 
-		private static void GetSeparateParams(OrchestrationScriptInput input, List<ParameterInfo> parameterInfos)
+		private void GetSeparateParams(OrchestrationScriptInput input, List<ParameterInfo> parameterInfos)
 		{
 			foreach (KeyValuePair<string, object> parameterValue in input.ProfileParameterValues)
 			{
@@ -612,7 +612,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			Orchestrate(_engine);
 
 			TryGetMetadataValue("{Orchestration Level}", out string orchestrationLevel);
-			if (orchestrationLevel != "Global")
+			_orchestrationLevel = Enum.TryParse(orchestrationLevel, out OrchestrationLevel parsedLevel) ? parsedLevel : OrchestrationLevel.Unknown;
+
+			if (_orchestrationLevel != OrchestrationLevel.Global)
 			{
 				return orchestrationScriptOutput;
 			}
