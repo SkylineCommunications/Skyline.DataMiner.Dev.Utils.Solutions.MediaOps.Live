@@ -1,9 +1,13 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects
 {
+	using Newtonsoft.Json;
+
 	internal class OrchestrationScriptOutput
 	{
-		internal int OrchestrationServiceAgentId { get; set; }
+		[JsonProperty]
+		public int OrchestrationServiceAgentId { get; set; }
 
-		internal int OrchestrationServiceId { get; set; }
+		[JsonProperty]
+		public int OrchestrationServiceId { get; set; }
 	}
 }
