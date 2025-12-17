@@ -647,7 +647,7 @@
 
 				return new OrchestrationScriptResult
 				{
-					ErrorMessages = new[] { JsonConvert.SerializeObject(profile), JsonConvert.SerializeObject(input) },
+					ErrorMessages = new[] { JsonConvert.SerializeObject(profile), JsonConvert.SerializeObject(input, new JsonSerializerSettings {DefaultValueHandling = DefaultValueHandling.Include,}) },
 					HadError = true, // TODO Remove after testing
 				};
 
