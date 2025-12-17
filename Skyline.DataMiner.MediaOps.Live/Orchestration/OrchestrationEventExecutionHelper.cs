@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Text;
 	using System.Threading;
 	using System.Threading.Tasks;
 
@@ -643,6 +644,12 @@
 				{
 					input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
 				}
+
+				return new OrchestrationScriptResult
+				{
+					ErrorMessages = new[] { JsonConvert.SerializeObject(profile), JsonConvert.SerializeObject(input) },
+					HadError = true, // TODO Remove after testing
+				};
 
 				result = OrchestrationAutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
 			}
