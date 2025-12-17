@@ -145,18 +145,20 @@
 			}
 		}
 
-		internal bool HasScripts()
+		internal bool HasGlobalOrchestrationScript => !String.IsNullOrEmpty(GlobalOrchestrationScript);
+
+		internal bool HasScripts
 		{
-			bool global = !String.IsNullOrEmpty(GlobalOrchestrationScript);
+			get
+			{
+				bool global = HasGlobalOrchestrationScript;
 
-			bool node = Configuration.NodeConfigurations.Any(nodeConfig => !String.IsNullOrEmpty(nodeConfig.OrchestrationScriptName));
+				bool node = Configuration.NodeConfigurations.Any(nodeConfig => !String.IsNullOrEmpty(nodeConfig.OrchestrationScriptName));
 
-			return global || node;
+				return global || node;
+			}
 		}
 
-		internal bool HasConnections()
-		{
-			return Configuration?.Connections != null && Configuration.Connections.Any();
-		}
+		internal bool HasConnections => Configuration?.Connections != null && Configuration.Connections.Any();
 	}
 }
