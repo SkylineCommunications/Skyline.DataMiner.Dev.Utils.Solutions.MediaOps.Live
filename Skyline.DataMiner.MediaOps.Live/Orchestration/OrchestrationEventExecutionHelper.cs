@@ -652,6 +652,12 @@
 				result = OrchestrationAutomationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out errorMessages);
 			}
 
+			return new OrchestrationScriptResult
+			{
+				ErrorMessages = [ JsonConvert.SerializeObject(result.ScriptOutput)],
+				HadError = false,
+			};
+
 			OrchestrationScriptResult scriptResult;
 			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out string errors))
 			{
