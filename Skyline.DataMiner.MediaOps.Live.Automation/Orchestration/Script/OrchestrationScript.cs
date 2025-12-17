@@ -408,8 +408,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			}
 		}
 
-		private static void GetSeparateParams(OrchestrationScriptInput input, List<ParameterInfo> parameterInfos)
+		private void GetSeparateParams(OrchestrationScriptInput input, List<ParameterInfo> parameterInfos)
 		{
+			_engine.GenerateInformation("Input: " + JsonConvert.SerializeObject(input));
+			_engine.GenerateInformation("Infos: " + JsonConvert.SerializeObject(parameterInfos));
 			foreach (KeyValuePair<string, object> parameterValue in input.ProfileParameterValues)
 			{
 				ParameterInfo matchInfo = parameterInfos
