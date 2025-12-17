@@ -91,6 +91,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				_eventConfiguration = new Lazy<OrchestrationEventConfiguration>(() => LoadEventFromMetaData(engine));
 				_context = OrchestrationScriptContext.Event;
 
+				_engine.GenerateInformation(JsonConvert.SerializeObject(inputData));
 				return new RequestScriptInfoOutput
 				{
 					Data = HandleRequestInfoEntryPoint(inputData.Data),
