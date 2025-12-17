@@ -91,7 +91,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				_eventConfiguration = new Lazy<OrchestrationEventConfiguration>(() => LoadEventFromMetaData(engine));
 				_context = OrchestrationScriptContext.Event;
 
-				_engine.GenerateInformation(JsonConvert.SerializeObject(inputData));
 				return new RequestScriptInfoOutput
 				{
 					Data = HandleRequestInfoEntryPoint(inputData.Data),
@@ -99,7 +98,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			}
 			catch (Exception e)
 			{
-				engine.GenerateInformation("Error: " + e.ToString());
 				return new RequestScriptInfoOutput
 				{
 					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputError, e.ToString() } },
@@ -411,8 +409,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private void GetSeparateParams(OrchestrationScriptInput input, List<ParameterInfo> parameterInfos)
 		{
-			_engine.GenerateInformation("Input: " + JsonConvert.SerializeObject(input));
-			_engine.GenerateInformation("Infos: " + JsonConvert.SerializeObject(parameterInfos));
 			foreach (KeyValuePair<string, object> parameterValue in input.ProfileParameterValues)
 			{
 				ParameterInfo matchInfo = parameterInfos

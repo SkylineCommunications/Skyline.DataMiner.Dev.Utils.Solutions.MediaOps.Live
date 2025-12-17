@@ -645,12 +645,6 @@
 					input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
 				}
 
-				return new OrchestrationScriptResult
-				{
-					ErrorMessages = new[] { JsonConvert.SerializeObject(profile), JsonConvert.SerializeObject(input, new JsonSerializerSettings {DefaultValueHandling = DefaultValueHandling.Include,}) },
-					HadError = true, // TODO Remove after testing
-				};
-
 				result = OrchestrationAutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
 			}
 			else

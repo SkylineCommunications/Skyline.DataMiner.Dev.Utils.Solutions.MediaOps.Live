@@ -25,12 +25,12 @@
 		}
 
 		[JsonProperty]
-		internal Dictionary<string, object> ProfileParameterValues { get; }
+		public Dictionary<string, object> ProfileParameterValues { get; set; }
 
 		[JsonProperty]
-		internal string ProfileInstance { get; }
+		public string ProfileInstance { get; set; }
 
 		[JsonProperty]
-		internal Dictionary<string, string> Metadata { get; }
+		public Dictionary<string, string> Metadata { get; set; }
 	}
 }
