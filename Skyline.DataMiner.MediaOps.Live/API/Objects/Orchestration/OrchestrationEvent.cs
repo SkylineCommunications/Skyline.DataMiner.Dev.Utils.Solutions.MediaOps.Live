@@ -325,6 +325,7 @@
 		public static readonly Exposer<OrchestrationEvent, Guid> ID = new Exposer<OrchestrationEvent, Guid>(x => x.ID, nameof(OrchestrationEvent.ID));
 		public static readonly Exposer<OrchestrationEvent, string> Name = new Exposer<OrchestrationEvent, string>(x => x.Name, nameof(OrchestrationEvent.Name));
 		public static readonly Exposer<OrchestrationEvent, DateTimeOffset> EventTime = new Exposer<OrchestrationEvent, DateTimeOffset>(x => x.EventTime.Value, nameof(OrchestrationEvent.EventTime));
+		public static readonly Exposer<OrchestrationEvent, DateTimeOffset> ActualStartTime = new Exposer<OrchestrationEvent, DateTimeOffset>(x => x.ActualStartTime.Value, nameof(OrchestrationEvent.ActualStartTime));
 		public static readonly Exposer<OrchestrationEvent, Guid> JobInfoReference = new Exposer<OrchestrationEvent, Guid>(x => x.JobInfoReference.Value.ID, nameof(OrchestrationEvent.JobInfoReference));
 	}
 }
