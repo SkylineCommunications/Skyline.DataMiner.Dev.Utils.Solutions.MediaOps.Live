@@ -646,12 +646,6 @@
 				}
 
 				result = OrchestrationAutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
-
-				return new OrchestrationScriptResult
-				{
-					ErrorMessages = new[] { "ORCHESTRATION ERROR" , JsonConvert.SerializeObject(result.ScriptOutput)},
-					HadError = true,
-				};
 			}
 			else
 			{
