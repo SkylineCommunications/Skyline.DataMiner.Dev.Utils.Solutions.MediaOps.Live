@@ -596,7 +596,7 @@
 					orchestrationEventConfiguration.Profile,
 					performanceTracker);
 
-				if (globalScriptResult.HadError)
+				if (globalScriptResult.HadError || globalScriptResult.ErrorMessages.Any())
 				{
 					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", globalScriptResult.ErrorMessages)}";
 					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
