@@ -58,7 +58,7 @@
 				.Agents[mediationElement.DmaId]
 				.Elements[mediationElement.ElementId];
 
-			var connectionsTable = simulatedElement.Tables[MediationElement.ConnectionsTableId];
+			var connectionsTable = simulatedElement.GetTableParameter(MediationElement.ConnectionsTableId);
 
 			var rowKey = Convert.ToString(destination.ID);
 			var row = new object[]
@@ -89,7 +89,7 @@
 				.Agents[mediationElement.DmaId]
 				.Elements[mediationElement.ElementId];
 
-			var connectionsTable = simulatedElement.Tables[MediationElement.ConnectionsTableId];
+			var connectionsTable = simulatedElement.GetTableParameter(MediationElement.ConnectionsTableId);
 
 			var rowKey = Convert.ToString(destination.ID);
 			var row = new object[]
@@ -123,7 +123,7 @@
 				.Agents[mediationElement.DmaId]
 				.Elements[mediationElement.ElementId];
 
-			var pendingActionsTable = simulatedElement.Tables[MediationElement.PendingConnectionActionsTableId];
+			var pendingActionsTable = simulatedElement.GetTableParameter(MediationElement.PendingConnectionActionsTableId);
 
 			var rowKey = Convert.ToString(destination.ID);
 			var row = new object[]
@@ -152,7 +152,7 @@
 				.Agents[mediationElement.DmaId]
 				.Elements[mediationElement.ElementId];
 
-			var pendingActionsTable = simulatedElement.Tables[MediationElement.PendingConnectionActionsTableId];
+			var pendingActionsTable = simulatedElement.GetTableParameter(MediationElement.PendingConnectionActionsTableId);
 
 			var rowKey = Convert.ToString(destination.ID);
 			pendingActionsTable.DeleteRow(rowKey);
@@ -299,7 +299,7 @@
 			element.CreateTable(MediationElement.ConnectionsTableId);
 			element.CreateTable(MediationElement.PendingConnectionActionsTableId);
 
-			var connectionHandlerScriptsTable = element.Tables[MediationElement.ConnectionHandlerScriptsTableId];
+			var connectionHandlerScriptsTable = element.GetTableParameter(MediationElement.ConnectionHandlerScriptsTableId);
 			connectionHandlerScriptsTable.SetRow(SimulatorConnectionHandlerScriptName, [SimulatorConnectionHandlerScriptName]);
 
 			return element;
@@ -310,7 +310,7 @@
 			var element = Dms.GetOrCreateAgent(dmaId)
 				.CreateElement(elementId, $"MediaOps Simulator {elementId}", "Skyline MediaOps Simulator");
 
-			var mediatedElementsTable = mediationElement.Tables[MediationElement.ElementsTableId];
+			var mediatedElementsTable = mediationElement.GetTableParameter(MediationElement.ElementsTableId);
 
 			var mediatedElementKey = $"{dmaId}/{elementId}";
 

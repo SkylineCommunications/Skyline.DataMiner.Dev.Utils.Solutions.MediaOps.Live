@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Skyline.DataMiner.Net.Messages;
 
@@ -10,8 +11,7 @@
 
 	public sealed class SimulatedElement
 	{
-		private readonly ConcurrentDictionary<int, StandaloneParameter> _parameters = new();
-		private readonly ConcurrentDictionary<int, TableParameter> _tables = new();
+		private readonly ConcurrentDictionary<int, ParameterBase> _parameters = new();
 
 		public SimulatedElement(SimulatedDma dma, int elementId, string name, string protocolName, string protocolVersion)
 		{
@@ -39,10 +39,6 @@
 		public string ProtocolVersion { get; }
 
 		public ElementState State { get; private set; } = ElementState.Active;
-
-		public IReadOnlyDictionary<int, StandaloneParameter> Parameters => _parameters;
-
-		public IReadOnlyDictionary<int, TableParameter> Tables => _tables;
 
 		public void Start()
 		{
@@ -74,6 +70,33 @@
 			}
 		}
 
+		public StandaloneParameter GetStandaloneParameter(int id)
+		{
+			if (!_parameters.TryGetValue(id, out var param))
+			{
+				throw new KeyNotFoundException($"Parameter with ID {id} does not exist in element {Name}.");
+			}
+
+			if (param is not StandaloneParameter standaloneParameter)
+			{
+				throw new InvalidOperationException($"Parameter with ID {id} is not a standalone parameter.");
+			}
+
+			return standaloneParameter;
+		}
+
+		public bool TryGetStandaloneParameter(int id, out StandaloneParameter parameter)
+		{
+			if (_parameters.TryGetValue(id, out var param) && param is StandaloneParameter standaloneParam)
+			{
+				parameter = standaloneParam;
+				return true;
+			}
+
+			parameter = null;
+			return false;
+		}
+
 		public StandaloneParameter CreateStandaloneParameter(int id)
 		{
 			var param = new StandaloneParameter(this, id);
@@ -86,13 +109,40 @@
 			return param;
 		}
 
+		public TableParameter GetTableParameter(int id)
+		{
+			if (!_parameters.TryGetValue(id, out var param))
+			{
+				throw new KeyNotFoundException($"Parameter with ID {id} does not exist in element {Name}.");
+			}
+
+			if (param is not TableParameter tableParameter)
+			{
+				throw new InvalidOperationException($"Parameter with ID {id} is not a table parameter.");
+			}
+
+			return tableParameter;
+		}
+
+		public bool TryGetTableParameter(int id, out TableParameter parameter)
+		{
+			if (_parameters.TryGetValue(id, out var param) && param is TableParameter tableParam)
+			{
+				parameter = tableParam;
+				return true;
+			}
+
+			parameter = null;
+			return false;
+		}
+
 		public TableParameter CreateTable(int id)
 		{
 			var table = new TableParameter(this, id);
 
-			if (!_tables.TryAdd(id, table))
+			if (!_parameters.TryAdd(id, table))
 			{
-				throw new InvalidOperationException($"Table with ID {id} already exists in element {Name}.");
+				throw new InvalidOperationException($"Parameter with ID {id} already exists in element {Name}.");
 			}
 
 			return table;

@@ -307,7 +307,7 @@
 		{
 			if (Agents.TryGetValue(msg.DataMinerID, out SimulatedDma dma) &&
 				dma.Elements.TryGetValue(msg.ElementID, out SimulatedElement element) &&
-				element.Tables.TryGetValue(msg.ParameterID, out TableParameter table))
+				element.TryGetTableParameter(msg.ParameterID, out TableParameter table))
 			{
 				yield return new ParameterChangeEventMessage(msg.DataMinerID, msg.ElementID, msg.ParameterID)
 				{
@@ -361,7 +361,7 @@
 			{
 				paramValue = specialValue;
 			}
-			else if (element.Parameters.TryGetValue(msg.ParameterId, out StandaloneParameter param))
+			else if (element.TryGetStandaloneParameter(msg.ParameterId, out StandaloneParameter param))
 			{
 				paramValue = param.ToParameterValue();
 			}
@@ -390,7 +390,7 @@
 
 						if (Agents.TryGetValue(ids[0], out SimulatedDma dma) &&
 							dma.Elements.TryGetValue(ids[1], out SimulatedElement element) &&
-							element.Tables.TryGetValue(ids[2], out TableParameter table))
+							element.TryGetTableParameter(ids[2], out TableParameter table))
 						{
 							int index = table.Rows.Keys.ToList().IndexOf(key);
 
@@ -413,7 +413,7 @@
 
 						if (Agents.TryGetValue((int)var1[0], out SimulatedDma dma) &&
 							dma.Elements.TryGetValue((int)var1[1], out SimulatedElement element) &&
-							element.Tables.TryGetValue((int)var1[2], out TableParameter table))
+							element.TryGetTableParameter((int)var1[2], out TableParameter table))
 						{
 							table.Rows.TryGetValue((string)var1[3], out object[] row);
 
