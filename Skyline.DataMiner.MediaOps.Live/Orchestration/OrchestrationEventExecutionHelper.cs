@@ -596,7 +596,7 @@
 					orchestrationEventConfiguration.Profile,
 					performanceTracker);
 
-				if (globalScriptResult.HadError || globalScriptResult.ErrorMessages.Any())
+				if (globalScriptResult.HadError)
 				{
 					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", globalScriptResult.ErrorMessages)}";
 					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
@@ -646,17 +646,17 @@
 				}
 
 				result = OrchestrationAutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
+
+				return new OrchestrationScriptResult
+				{
+					ErrorMessages = [JsonConvert.SerializeObject(result.ScriptOutput)],
+					HadError = true,
+				};
 			}
 			else
 			{
 				result = OrchestrationAutomationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out errorMessages);
 			}
-
-			return new OrchestrationScriptResult
-			{
-				ErrorMessages = [ JsonConvert.SerializeObject(result.ScriptOutput)],
-				HadError = result.HadError,
-			};
 
 			OrchestrationScriptResult scriptResult;
 			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out string errors))
