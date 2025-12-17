@@ -649,7 +649,7 @@
 
 				return new OrchestrationScriptResult
 				{
-					ErrorMessages = new[] { "ORCHESTRATION ERROR" , JsonConvert.SerializeObject(result.ScriptOutput)},
+					ErrorMessages = new[] { "ORCHESTRATION ERROR" , JsonConvert.SerializeObject(result)},
 					HadError = true,
 				};
 			}
