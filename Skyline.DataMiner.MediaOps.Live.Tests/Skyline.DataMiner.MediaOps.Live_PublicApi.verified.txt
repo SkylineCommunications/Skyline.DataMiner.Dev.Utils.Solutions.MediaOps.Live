@@ -773,6 +773,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
     }
     public static class OrchestrationEventExposers
     {
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent, System.DateTimeOffset> ActualStartTime;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent, System.DateTimeOffset> EventTime;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent, System.Guid> ID;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent, System.Guid> JobInfoReference;

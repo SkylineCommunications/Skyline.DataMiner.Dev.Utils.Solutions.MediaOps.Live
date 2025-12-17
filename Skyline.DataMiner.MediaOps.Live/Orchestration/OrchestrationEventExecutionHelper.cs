@@ -655,7 +655,7 @@
 			return new OrchestrationScriptResult
 			{
 				ErrorMessages = [ JsonConvert.SerializeObject(result.ScriptOutput)],
-				HadError = false,
+				HadError = result.HadError,
 			};
 
 			OrchestrationScriptResult scriptResult;
