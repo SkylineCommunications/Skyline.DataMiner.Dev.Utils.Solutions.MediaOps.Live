@@ -14,7 +14,7 @@ dotnet add package Skyline.DataMiner.MediaOps.Live
 Depending on your project type, one of the following additional packages is also required:
 - Automation scripts: `Skyline.DataMiner.MediaOps.Live.Automation`
 - Protocols: `Skyline.DataMiner.MediaOps.Live.Protocol`
-- GQI Ad-hoc Data Sources and custom operators: `Skyline.DataMiner.MediaOps.Live.GQI`
+- GQI Ad-hoc data sources and custom operators: `Skyline.DataMiner.MediaOps.Live.GQI`
 
 > [!NOTE]
 > This library targets `.NET Framework 4.8`.
@@ -23,13 +23,12 @@ Depending on your project type, one of the following additional packages is also
 
 | Document | Description |
 |----------|-------------|
-| [Getting Started](Getting%20Started.md) | Installation, prerequisites, and basic usage |
-| [Quick Reference](Quick%20Reference.md) | Common code snippets for repositories, querying, and connectivity |
-| [Advanced Topics](Advanced%20Topics.md) | Caching, subscriptions, validation, logging, and error handling |
-| [Orchestration](Orchestration.md) | Automated scheduling and execution of orchestration events |
+| [Getting Started](Documentation/Getting%20Started.md) | Installation, prerequisites, and basic usage |
+| [Quick Reference](Documentation/Quick%20Reference.md) | Common code snippets for repositories, querying, and connectivity |
+| [Advanced Topics](Documentation/Advanced%20Topics.md) | Caching, subscriptions, validation, logging, and error handling |
+| [Orchestration](Documentation/Orchestration.md) | Automated scheduling and execution of orchestration events |
 
-
-- [Tutorials](https://github.com/SkylineCommunications/SLC-AS-MediaOps.LIVE/tree/main/Documentation/Tutorials) - Step-by-step guides to build common solutions
+External resources:
 - [DataMiner Docs](https://docs.dataminer.services/) - Official DataMiner documentation
 
 ## About DataMiner
