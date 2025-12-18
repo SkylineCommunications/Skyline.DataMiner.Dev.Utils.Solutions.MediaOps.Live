@@ -207,6 +207,9 @@ var videoEp = vsg.GetEndpointForLevel(videoLevel);
 
 ### Getting Connectivity Information
 
+The GetConnectivity() method can be used to retrieve connectivity information for endpoints and VSGs.
+Both source and destination objects are supported. Depending on the type of object, different information is returned.
+
 ```csharp
 var connectivityInfoProvider = api.GetConnectivityInfoProvider();
 
@@ -224,6 +227,9 @@ var connectedDestinations = vsgConnectivity.ConnectedDestinations;
 ```
 
 ### Making Connections
+
+The following methods can be used to make connections between endpoints and virtual signal groups (VSGs).
+Because the methods accept multiple requests at once, you can batch connections for improved performance.
 
 ```csharp
 var connectionHandler = api.GetConnectionHandler();
@@ -351,37 +357,3 @@ var subscription = api.Endpoints.Subscribe(filter);
 // Only source endpoint changes will be received
 subscription.Changed += HandleSourceChanges;
 ```
-
-## Caching
-
-```csharp
-// Get or create the singleton cache
-var cache = api.GetCache();
-
-// Access cached data
-var vsgCache = cache.VirtualSignalGroupEndpointsCache;
-var levelsCache = cache.LevelsCache;
-var transportTypesCache = cache.TransportTypesCache;
-
-// Use cached connectivity providers
-var connectivityProvider = cache.ConnectivityInfoProvider;
-var liteProvider = cache.LiteConnectivityInfoProvider;
-
-// Connection monitor for real-time updates
-var monitor = cache.ConnectionMonitor;
-```
-
-## API Utilities
-
-```csharp
-// Check if installed
-if (api.IsInstalled())
-{
-    
-}
-
-// Get API version
-var version = api.GetVersion();
-
-// Get DMS helper
-var dms = api.GetDms();

@@ -31,7 +31,7 @@ It exposes:
 
 ### Obtaining an API Instance
 
-To obtain an instance of the `MediaOpsLiveApi`, use the `GetMediaOpsLiveApi` extension method.
+To obtain an instance of the `MediaOpsLiveApi` class, use the `GetMediaOpsLiveApi` extension method.
 This extension method is available for automation scripts, connectors, GQI ad-hoc data sources, and custom operators.
 
 ```csharp
@@ -128,7 +128,7 @@ vsg = api.VirtualSignalGroups.Create(vsg);
 
 Once you have an instance of the `MediaOpsLiveApi` class, you can start using its features.
 
-### Creating a Complete Signal Chain
+### Creating objects
 
 ```csharp
 // Create the SDI transport type
