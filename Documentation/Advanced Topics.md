@@ -55,7 +55,7 @@ var monitor = cache.ConnectionMonitor;
 Subscriptions allow you to receive real-time notifications when objects are created, updated, or deleted.
 
 > [!IMPORTANT]
-> Always dispose subscriptions when they are no longer needed to prevent memory leaks and unnecessary network traffic.
+> Always dispose subscriptions when they are no longer needed to prevent memory leaks.
 
 ### Repository Subscriptions
 
