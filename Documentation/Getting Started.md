@@ -56,7 +56,7 @@ var api = new MediaOpsLiveApi(connection);
 
 ## Usage
 
-Once you have an instance of the `MediaOpsLiveApi`, you can start using its features.
+Once you have an instance of the `MediaOpsLiveApi` class, you can start using its features.
 
 For example, use the repositories to create and read MediaOps.LIVE objects:
 
@@ -103,7 +103,7 @@ var virtualSignalGroups = api.VirtualSignalGroups.ReadAll().ToList();
 
 ## Next steps
 
-- **[Examples](Examples.md)** - common usage patterns
+- **[Quick Reference](Quick%20Reference.md)** - common snippets for repositories, querying, and connectivity
 - **[Advanced Topics](Advanced%20Topics.md)** – caching, subscriptions, validation, and more
 - **[Tutorials](https://github.com/SkylineCommunications/SLC-AS-MediaOps.LIVE/blob/main/Documentation/Tutorials/Tutorials.md)** - Step-by-step guides to build common solutions
 - **[Orchestration](Orchestration.md)** – orchestration concepts and usage

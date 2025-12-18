@@ -1,10 +1,12 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
 {
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.Core.InterAppCalls.Common.Shared;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.Extensions;
+	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 	using Skyline.DataMiner.Net.Helper;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -45,13 +47,33 @@
 		{
 			var api = new MediaOpsLiveApiMock();
 
-			var endpoints = api.Endpoints.ReadAll().ToList();
-			Assert.HasCount(40, endpoints);
-			CollectionAssert.AllItemsAreUnique(endpoints);
+			var connectionHandler = api.GetConnectionHandler();
 
-			var vsgs = api.VirtualSignalGroups.ReadAll().ToList();
-			Assert.HasCount(20, vsgs);
-			CollectionAssert.AllItemsAreUnique(vsgs);
+			// Connect two virtual signal groups.
+			// Same method can be used to connect two individual endpoints by using EndpointConnectionRequest instead of VsgConnectionRequest.
+			connectionHandler.Take(
+				new[]
+				{
+					new VsgConnectionRequest(sourceVsg, destinationVsg),
+				},
+				performanceTracker,
+				new TakeOptions
+				{
+					WaitForCompletion = true, // Wait for the take to complete
+				});
+
+			// Disconnect one or more virtual signal groups.
+			// Same method can be used to disconnect individual endpoints by using EndpointDisconnectRequest instead of VsgDisconnectRequest.
+			connectionHandler.Disconnect(
+				new[]
+				{
+					new VsgDisconnectRequest(destinationVsg),
+				},
+				performanceTracker,
+				new TakeOptions
+				{
+					WaitForCompletion = true, // Wait for the take to complete
+				});
 		}
 
 		[TestMethod]

@@ -22,7 +22,7 @@ Depending on your project type, one of the following additional packages is also
 ## Documentation
 
 - **[Getting Started](Documentation/Getting%20Started.md)** - Installation and basic usage
-- **[Examples](Documentation/Examples.md)** - Common usage patterns
+- **[Quick Reference](Documentation/Quick%20Reference.md)** - common snippets for repositories, querying, and connectivity
 - **[Advanced Topics](Documentation/Advanced%20Topics.md)** - Caching, Subscriptions, validation, and more
 - **[Tutorials](https://github.com/SkylineCommunications/SLC-AS-MediaOps.LIVE/blob/main/Documentation/Tutorials/Tutorials.md)** - Step-by-step guides to build common solutions
 - **[Orchestration](Documentation/Orchestration.md)** - Orchestration concepts and usage
