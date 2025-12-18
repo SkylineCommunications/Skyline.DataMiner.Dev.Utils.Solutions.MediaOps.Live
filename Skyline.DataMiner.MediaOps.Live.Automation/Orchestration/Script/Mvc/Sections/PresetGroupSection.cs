@@ -22,10 +22,13 @@
 
 		public DropDown<PresetGroupDisplayInfo.PresetInfo> Value { get; }
 
-		protected override void DefineHeaderLayout(int row)
+		protected override Section DefineHeaderSection()
 		{
-			base.DefineHeaderLayout(row);
-			AddWidget(Value, row, 1);
+			var section = new Section();
+			var labelSpan = Label.Text.Length / 5;
+			section.AddWidget(Label, 0, 0, 1, labelSpan);
+			section.AddWidget(Value, 1, 0, 1, labelSpan);
+			return section;
 		}
 
 		private void OnPreselectChanged(object sender, DropDown<PresetGroupDisplayInfo.PresetInfo>.DropDownChangedEventArgs e)

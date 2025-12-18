@@ -9,8 +9,5 @@
 
 		[JsonProperty]
 		public bool HadError { get; set; }
-
-		[JsonProperty]
-		public string ServiceId { get; set; }
 	}
 }
