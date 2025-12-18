@@ -82,16 +82,16 @@
 				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
 
 				// Events with global orchestration script
-				List<Task> tasks = GetGlobalOrchestrationTasks(eventConfigurations.Where(config => !String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker);
+				List<Task> tasks = GetGlobalOrchestrationTasks(eventConfigurations.Where(config => config.HasGlobalOrchestrationScript), taskScheduler, performanceTracker);
 
 				// Events with node-by-node orchestration scripts
-				tasks.AddRange(GetNodeByNodeOrchestrationTasks(eventConfigurations.Where(config => config.HasScripts() && String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker));
+				tasks.AddRange(GetNodeByNodeOrchestrationTasks(eventConfigurations.Where(config => config.HasScripts && !config.HasGlobalOrchestrationScript), taskScheduler, performanceTracker));
 
 				// Events without scripts but with connections
-				tasks.AddRange(GetProcessConnectionTasks(eventConfigurations.Where(config => !config.HasScripts() && config.HasConnections() ), taskScheduler, true, performanceTracker));
+				tasks.AddRange(GetProcessConnectionTasks(eventConfigurations.Where(config => !config.HasScripts && config.HasConnections), taskScheduler, true, performanceTracker));
 
 				// Events without scripts or connections (nothing to do) can be marked as completed right away.
-				SaveOrchestrationResults(eventConfigurations.Where(config => !config.HasScripts() && !config.HasConnections()), performanceTracker);
+				SaveOrchestrationResults(eventConfigurations.Where(config => !config.HasScripts && !config.HasConnections), performanceTracker);
 
 				Task.WaitAll(tasks.ToArray());
 			}
@@ -102,7 +102,7 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				List<Task> tasks = [];
-				var eventConfigurationWithGlobalScripts = eventConfigurations.Where(e => !String.IsNullOrEmpty(e.GlobalOrchestrationScript)).ToList();
+				var eventConfigurationWithGlobalScripts = eventConfigurations.Where(e => e.HasGlobalOrchestrationScript).ToList();
 
 				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurationWithGlobalScripts)
 				{
@@ -131,9 +131,9 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				List<Task> tasks = [];
-				var eventConfigurationWithNodeScripts = eventConfigurations.Where(e => e.HasScripts()).ToList();
+				var eventConfigurationWithNodeScripts = eventConfigurations.Where(e => e.HasScripts).ToList();
 
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurationWithNodeScripts.Where(e => e.HasScripts()))
+				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurationWithNodeScripts)
 				{
 					// Connections tasks
 					List<Task> connectionsTasks = GetProcessConnectionTasks(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, taskScheduler, false, performanceTracker);
@@ -150,18 +150,16 @@
 
 					connectionsTasks.Add(nodeScriptsTask);
 
-					Task combinedTask = Task.Factory.StartNew(
-						() =>
-						{
-							// Wait for both connections and node scripts to finish
-							Task.WaitAll(connectionsTasks.ToArray());
-
-							// Update event state once finished
-							SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
-						},
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler);
+					Task combinedTask = Task.WhenAll(connectionsTasks)
+						.ContinueWith(
+							(result) =>
+							{
+								// Update event state once finished
+								SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
+							},
+							CancellationToken.None,
+							TaskContinuationOptions.None,
+							taskScheduler);
 
 					tasks.Add(combinedTask);
 				}
@@ -183,30 +181,29 @@
 					OrchestrationEventConfiguration eventConfig = keyValuePair.Key;
 					var tasksForEvent = keyValuePair.Value;
 
-					var eventConnectionTask = Task.Factory.StartNew(
-						() =>
-						{
-							Task.WaitAll(tasksForEvent.ToArray());
 
-							foreach (Task completedTask in tasksForEvent)
+					var eventConnectionTask = Task.WhenAll(tasksForEvent)
+						.ContinueWith(
+							(completedTask) =>
 							{
-								if (!completedTask.IsFaulted)
+								if (completedTask.IsFaulted && completedTask.Exception != null)
 								{
-									continue;
+									eventConfig.InternalSetState(EventState.Failed);
+
+									foreach (Exception innerException in completedTask.Exception.InnerExceptions)
+									{
+										eventConfig.FailureInfo += $"\n{innerException.GetBaseException().Message}";
+									}
 								}
 
-								eventConfig.InternalSetState(EventState.Failed);
-								eventConfig.FailureInfo += $"\n{completedTask.Exception?.GetBaseException().Message}";
-							}
-
-							if (pushResults)
-							{
-								SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { eventConfig }, performanceTracker);
-							}
-						},
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler);
+								if (pushResults)
+								{
+									SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { eventConfig }, performanceTracker);
+								}
+							},
+							CancellationToken.None,
+							TaskContinuationOptions.None,
+							taskScheduler);
 
 					tasks.Add(eventConnectionTask);
 				}
@@ -244,7 +241,7 @@
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
-				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = eventConfigurations.Where(ev => ev.HasConnections()).ToList();
+				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = eventConfigurations.Where(ev => ev.HasConnections).ToList();
 
 				Dictionary<OrchestrationEventConfiguration, List<Connection>> connectionsToConfigureByEvent = [];
 				Dictionary<OrchestrationEventConfiguration, List<Connection>> disconnectsToConfigureByEvent = [];

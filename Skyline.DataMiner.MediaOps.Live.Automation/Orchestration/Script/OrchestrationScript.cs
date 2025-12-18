@@ -222,7 +222,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				if (!EventConfiguration.HasConnections())
+				if (!EventConfiguration.HasConnections)
 				{
 					return;
 				}
