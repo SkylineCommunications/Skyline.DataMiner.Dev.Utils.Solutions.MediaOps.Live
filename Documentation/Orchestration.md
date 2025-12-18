@@ -2,7 +2,7 @@
 
 ## General
 The Orchestration module of the MediaOps Live solution allows for automated scheduling of orchestration events.
-By integrating the shipped API, any system can created and schedule these events to automate future orchestration actions,
+By integrating the shipped API, any system can create and schedule these events to automate future orchestration actions,
 such as connecting and disconnecting signals and/or executing required scripts to perform additional DataMiner actions.
 Additionally, with the help of a dedicated customizable service, monitoring/alarming the status of the applied configurations is possible.
 
@@ -22,7 +22,7 @@ The Orchestration module makes use of the following DataMiner features:
 ## Orchestration Events
 
 Orchestration events are the core of the Orchestration module.
-Each event represents a collection of specific action that needs to be executed at a scheduled time.
+Each event represents a collection of specific actions that need to be executed at a scheduled time.
 
 ### Create an event
 ```csharp
@@ -57,7 +57,7 @@ api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
 > [!NOTE]
 > When saving a job, the following validations are performed:
-> - A job can not contain events that were already part of another job.
+> - A job cannot contain events that were already part of another job.
 >
 > - If a starting event exists, a stopping event must also exist (and vice versa).
 > - Only one starting and one stopping event are allowed per job.
@@ -78,7 +78,7 @@ The main purpose of the orchestration event object is to provide the most import
 without loading the full added configuration.
 
 To provide any actual orchestration information, the orchestration event configuration object is used,
-which extends the options from the orchestration event object
+which extends the options from the orchestration event object.
 
 ### Create an orchestration event with configuration
 ```csharp
@@ -116,10 +116,10 @@ api.Orchestration.SaveOrchestrationJobConfiguration(orchestrationJobConfiguratio
 ### On saving a job
 Once the job is saved, all events with the 'Confirmed' event state will be scheduled for execution at the defined time.
 This is done via the DataMiner scheduler module.
-If at any point, a job and it's events are updated, the scheduling will be updated accordingly or removed (e.g. if the event was 'Cancelled').
+If at any point, a job and its events are updated, the scheduling will be updated accordingly or removed (e.g. if the event was 'Cancelled').
 
 ### Manually executing an event
-If needed, an event can also be executed immediately, regardless of it's scheduled time.
+If needed, an event can also be executed immediately, regardless of its scheduled time.
 The executed event can also be a completely new event that is not yet part of a job.
 If the executed event was already scheduled in the future, the scheduled instance will be removed.
 
@@ -192,7 +192,7 @@ A reference to the Virtual Signal Groups gives meaning to the connection and wil
 	},
 ```
 
-Without additional configuration, the above connection will fully connect all available signals on the the source and destination VSG.
+Without additional configuration, the above connection will fully connect all available signals on the source and destination VSG.
 In case a more refined connection is needed, level mapping can be added.
 
 In the example below, we only want to connect audio and video signals between the two nodes.
@@ -269,7 +269,7 @@ This information is not critical for the script to start, but can provide additi
 ```
 
 ### Use a profile as input to an orchestration script
-Some orchestration script need specific profile instances or profile parameters as input. (See Orchestration Scripts)
+Some orchestration scripts need specific profile instances or profile parameters as input. (See Orchestration Scripts)
 Additionally, profiles can also be used to provide values for script input parameters. In this case, matching is done based on the parameter names.
 
 Profile information can be provided as a whole profile instance
