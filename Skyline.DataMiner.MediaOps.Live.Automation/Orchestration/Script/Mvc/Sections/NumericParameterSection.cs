@@ -32,12 +32,12 @@
 				Value.Decimals = info.Decimals;
 			}
 
-			if (!Double.IsNaN(info.Step) && info.Min != double.MinValue)
+			if (!Double.IsNaN(info.Min) && info.Min != double.MinValue)
 			{
 				Value.Minimum = info.Min;
 			}
 
-			if (!Double.IsNaN(info.Step) && info.Max != double.MaxValue)
+			if (!Double.IsNaN(info.Max) && info.Max != double.MaxValue)
 			{
 				Value.Maximum = info.Max;
 			}
