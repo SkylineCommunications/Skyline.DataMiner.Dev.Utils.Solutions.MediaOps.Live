@@ -51,6 +51,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		private OrchestrationLevel _orchestrationLevel = OrchestrationLevel.Unknown;
 
 		private Lazy<OrchestrationEventConfiguration> _eventConfiguration;
+		private RequestScriptInfoOutput _returnResult;
 
 		private IEngine _engine;
 
@@ -282,14 +283,16 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				case OrchestrationScriptAction.OrchestrationScriptInfo:
 				{
 					ScriptInfo scriptInfo = GetScriptInfo();
-					return new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, scriptInfo == null ? null : JsonConvert.SerializeObject(scriptInfo) } };
+					return new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } };
 				}
 
 				case OrchestrationScriptAction.PerformOrchestration:
 				case OrchestrationScriptAction.PerformOrchestrationAskMissingValues:
 				{
-					OrchestrationScriptOutput orchestrationScriptOutput = PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
-					return new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, orchestrationScriptOutput == null ? null : JsonConvert.SerializeObject(orchestrationScriptOutput) } };
+					PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
+
+					// Currently there is no valuable output to provide for this flow.
+					return new Dictionary<string, string>();
 				}
 
 				default:
@@ -585,10 +588,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private IEnumerable<ParameterInfo> GetIncompleteInfos(IEnumerable<ParameterInfo> infos) => infos.Where(x => x.Value is null);
 
-		private OrchestrationScriptOutput PerformOrchestrationFromEntryPoint(IReadOnlyDictionary<string, string> metaData, bool askMissingValues)
+		private void PerformOrchestrationFromEntryPoint(IReadOnlyDictionary<string, string> metaData, bool askMissingValues)
 		{
-			OrchestrationScriptOutput orchestrationScriptOutput = new OrchestrationScriptOutput();
-
 			ScriptInfo scriptInfo = GetScriptInfo();
 
 			OrchestrationScriptInput orchestrationScriptInput = new OrchestrationScriptInput();
@@ -616,7 +617,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 			if (_orchestrationLevel != OrchestrationLevel.Global)
 			{
-				return orchestrationScriptOutput;
+				return;
 			}
 
 			if (EventConfiguration.IsStartEvent)
@@ -640,7 +641,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 				if (eventJobInfo == null || eventJobInfo.MonitoringService == default)
 				{
-					return orchestrationScriptOutput;
+					return;
 				}
 
 				IDms dms = _engine.GetDms();
@@ -653,8 +654,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				eventJobInfo.MonitoringService = default;
 				api.Orchestration.JobInfos.Update(eventJobInfo);
 			}
-
-			return orchestrationScriptOutput;
 		}
 	}
 }

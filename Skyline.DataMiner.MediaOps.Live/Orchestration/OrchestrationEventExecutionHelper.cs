@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Diagnostics;
 	using System.Linq;
 	using System.Text;
 	using System.Threading;
@@ -22,6 +23,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
@@ -647,42 +649,37 @@
 
 				result = OrchestrationAutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
 
-				return new OrchestrationScriptResult
-				{
-					ErrorMessages = new[] { "ORCHESTRATION ERROR" , JsonConvert.SerializeObject(result)},
-					HadError = true,
-				};
+				return ProcessOrchestrationScriptResult(result);
 			}
 			else
 			{
 				result = OrchestrationAutomationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out errorMessages);
-			}
 
-			OrchestrationScriptResult scriptResult;
-			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out string errors))
+				return new OrchestrationScriptResult
+				{
+					ErrorMessages = result.ErrorMessages,
+					HadError = result.HadError || result.ErrorMessages.Any(),
+				};
+			}
+		}
+
+		private static OrchestrationScriptResult ProcessOrchestrationScriptResult(ExecuteScriptResponseMessage result)
+		{
+			if (result.EntryPointResult?.Result is RequestScriptInfoOutput scriptOutput
+			    && scriptOutput.Data.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out string errors))
 			{
-				scriptResult = new OrchestrationScriptResult
+				return new OrchestrationScriptResult
 				{
 					ErrorMessages = [errors],
 					HadError = true,
 				};
 			}
-			else
-			{
-				scriptResult = new OrchestrationScriptResult
-				{
-					ErrorMessages = errorMessages,
-					HadError = result.HadError || errorMessages.Any(),
-				};
-			}
 
-			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, out string orchestrationOutputString))
+			return new OrchestrationScriptResult
 			{
-				OrchestrationScriptOutput orchestrationOutput = JsonConvert.DeserializeObject<OrchestrationScriptOutput>(orchestrationOutputString);
-				scriptResult.ServiceId = String.Join($"/", orchestrationOutput.OrchestrationServiceAgentId, orchestrationOutput.OrchestrationServiceId);
-			}
-
-			return scriptResult;
+				ErrorMessages = result.ErrorMessages,
+				HadError = result.HadError || result.ErrorMessages.Any(),
+			};
 		}
 
 		private static OrchestrationScriptResult PrepareScriptParams(
