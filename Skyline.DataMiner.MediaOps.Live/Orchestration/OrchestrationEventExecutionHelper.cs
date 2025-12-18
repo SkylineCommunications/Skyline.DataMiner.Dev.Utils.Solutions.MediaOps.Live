@@ -635,7 +635,6 @@
 			}
 
 			ExecuteScriptResponseMessage result;
-			string[] errorMessages;
 			if (OrchestrationScriptInfoHelper.IsOrchestrationScript(script))
 			{
 				OrchestrationScriptInput input = new(
@@ -647,20 +646,18 @@
 					input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
 				}
 
-				result = OrchestrationAutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
+				result = OrchestrationAutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out string[] _);
 
 				return ProcessOrchestrationScriptResult(result);
 			}
-			else
-			{
-				result = OrchestrationAutomationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out errorMessages);
 
-				return new OrchestrationScriptResult
-				{
-					ErrorMessages = result.ErrorMessages,
-					HadError = result.HadError || result.ErrorMessages.Any(),
-				};
-			}
+			result = OrchestrationAutomationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out string[] _);
+
+			return new OrchestrationScriptResult
+			{
+				ErrorMessages = result.ErrorMessages,
+				HadError = result.HadError || result.ErrorMessages.Any(),
+			};
 		}
 
 		private static OrchestrationScriptResult ProcessOrchestrationScriptResult(ExecuteScriptResponseMessage result)
