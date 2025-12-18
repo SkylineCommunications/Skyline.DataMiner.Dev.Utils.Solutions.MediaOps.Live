@@ -13,5 +13,4 @@ Welcome to the MediaOps.LIVE API documentation.
 
 ## External Resources
 
-- [Tutorials](https://github.com/SkylineCommunications/SLC-AS-MediaOps.LIVE/tree/main/Documentation/Tutorials) - Step-by-step guides to build common solutions
 - [DataMiner Docs](https://docs.dataminer.services/) - Official DataMiner documentation
