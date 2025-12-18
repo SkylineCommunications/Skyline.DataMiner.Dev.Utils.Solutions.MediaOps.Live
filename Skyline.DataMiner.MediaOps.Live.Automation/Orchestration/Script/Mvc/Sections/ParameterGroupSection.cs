@@ -28,7 +28,10 @@
 		public IEnumerable<(ParameterInfo, ParameterSection)> InitializeSection(IEnumerable<ParameterInfo> parameters)
 		{
 			var row = 0;
-			DefineHeaderLayout(row++);
+			var headerSection = DefineHeaderSection();
+			AddSection(headerSection, row, 0);
+
+			row += headerSection.RowCount;
 
 			var parameterSections = new Dictionary<ParameterInfo, ParameterSection>();
 			ParameterSections = parameterSections;
@@ -44,9 +47,11 @@
 			}
 		}
 
-		protected virtual void DefineHeaderLayout(int row)
+		protected virtual Section DefineHeaderSection()
 		{
-			AddWidget(Label, row, 0);
+			var section = new Section();
+			section.AddWidget(Label, 0, 0);
+			return section;
 		}
 	}
 }
