@@ -42,20 +42,16 @@
 			_queue.Enqueue(item);
 		}
 
+		public void Flush()
+		{
+			WriteItemsInQueue();
+		}
+
 		private void IntervalPassed(object sender, ElapsedEventArgs e)
 		{
 			try
 			{
-				List<T> items = new List<T>();
-				while (_queue.TryDequeue(out T item))
-				{
-					items.Add(item);
-				}
-
-				if (items.Any())
-				{
-					_repository.CreateOrUpdate(items);
-				}
+				WriteItemsInQueue();
 			}
 			catch (Exception)
 			{
@@ -63,8 +59,25 @@
 			}
 		}
 
+		private void WriteItemsInQueue()
+		{
+			List<T> items = new List<T>();
+			while (_queue.TryDequeue(out T item))
+			{
+				items.Add(item);
+			}
+
+			if (items.Any())
+			{
+				_repository.CreateOrUpdate(items);
+			}
+		}
+
 		public void Dispose()
 		{
+			Flush();
+
+			_timer.Elapsed -= IntervalPassed;
 			_timer?.Dispose();
 		}
 	}

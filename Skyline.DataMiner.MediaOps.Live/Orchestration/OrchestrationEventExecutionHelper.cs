@@ -97,7 +97,7 @@
 					// Events without scripts or connections (nothing to do) can be marked as completed right away.
 					SaveOrchestrationResults(eventConfigurations.Where(config => !config.HasScripts && !config.HasConnections), writeBuffer, performanceTracker);
 
-					Task.WaitAll(tasks.ToArray()); 
+					Task.WaitAll(tasks.ToArray());
 				}
 			}
 		}
