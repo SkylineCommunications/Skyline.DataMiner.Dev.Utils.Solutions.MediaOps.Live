@@ -51,7 +51,7 @@
 				return true;
 			}
 
-			var tcs = new TaskCompletionSource<bool>();
+			var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 			using var registration = cancellationToken.Register(() => tcs.TrySetResult(false));
 
 			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> changedEndpoints)
@@ -123,7 +123,7 @@
 				return true;
 			}
 
-			var tcs = new TaskCompletionSource<bool>();
+			var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 			using var registration = cancellationToken.Register(() => tcs.TrySetResult(false));
 
 			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> changedEndpoints)

@@ -9,7 +9,7 @@
 
 	internal abstract class TakeOperationContext
 	{
-		private readonly TaskCompletionSource<bool> _taskCompletionSource = new TaskCompletionSource<bool>();
+		private readonly TaskCompletionSource<bool> _taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
 		protected TakeOperationContext(Request request, Endpoint destination)
 		{

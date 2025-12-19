@@ -7,19 +7,15 @@
 
 	using Skyline.DataMiner.Net.Messages;
 
-	public class TableParameter
+	public class TableParameter : ParameterBase
 	{
 		private readonly ConcurrentDictionary<string, object[]> _rows = new();
 
-		public TableParameter(SimulatedElement element, int id)
+		public TableParameter(SimulatedElement element, int id) : base(element, id)
 		{
-			Element = element;
-			TableId = id;
 		}
 
-		public SimulatedElement Element { get; }
-
-		public int TableId { get; }
+		public int TableId => Id;
 
 		public IReadOnlyDictionary<string, object[]> Rows => _rows;
 

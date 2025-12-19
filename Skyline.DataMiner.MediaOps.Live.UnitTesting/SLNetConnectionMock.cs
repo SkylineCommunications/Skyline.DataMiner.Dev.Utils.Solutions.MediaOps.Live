@@ -140,7 +140,7 @@
 							if (filterParameter.ToTypeObject() == typeof(ParameterTableUpdateEventMessage) &&
 								Dms.Agents.TryGetValue(filterParameter.DmaID, out var dma) &&
 								dma.Elements.TryGetValue(filterParameter.ElementID, out var element) &&
-								element.Tables.TryGetValue(filterParameter.ParameterID, out var table))
+								element.TryGetTableParameter(filterParameter.ParameterID, out var table))
 							{
 								var initialEvent = new ParameterChangeEventMessage(filterParameter.DmaID, filterParameter.ElementID, filterParameter.ParameterID)
 								{

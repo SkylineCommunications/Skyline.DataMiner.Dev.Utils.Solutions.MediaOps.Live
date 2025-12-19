@@ -150,6 +150,9 @@
 				case nameof(OrchestrationEvent.EventTime):
 					return FilterElementFactory.Create<DateTimeOffset>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime), comparer, value);
 
+				case nameof(OrchestrationEvent.ActualStartTime):
+					return FilterElementFactory.Create<DateTimeOffset>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ActualStartTime), comparer, value);
+
 				case nameof(OrchestrationEvent.SchedulerReference):
 					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.SchedulerReference), comparer, value);
 
@@ -181,6 +184,9 @@
 
 				case nameof(OrchestrationEvent.EventTime):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime), sortOrder, naturalSort);
+
+				case nameof(OrchestrationEvent.ActualStartTime):
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ActualStartTime), sortOrder, naturalSort);
 
 				case nameof(OrchestrationEvent.SchedulerReference):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.SchedulerReference), sortOrder, naturalSort);

@@ -119,7 +119,7 @@
 			}
 		}
 
-		public ICollection<EndpointDisconnectResult> Disconnect(ICollection<EndpointDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
+		public ICollection<EndpointDisconnectResult> Disconnect(ICollection<EndpointDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, DisconnectOptions options = null)
 		{
 			if (disconnectRequests == null)
 			{
@@ -160,7 +160,7 @@
 			}
 		}
 
-		public ICollection<VsgDisconnectResult> Disconnect(ICollection<VsgDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
+		public ICollection<VsgDisconnectResult> Disconnect(ICollection<VsgDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, DisconnectOptions options = null)
 		{
 			if (disconnectRequests == null)
 			{
@@ -309,7 +309,7 @@
 			}
 		}
 
-		private void CheckDestinationLocks(ICollection<VirtualSignalGroup> destinationVsgs, TakeOptions options, PerformanceTracker performanceTracker)
+		private void CheckDestinationLocks(ICollection<VirtualSignalGroup> destinationVsgs, OptionsBase options, PerformanceTracker performanceTracker)
 		{
 			if (options != null && options.BypassLockValidation)
 			{
@@ -705,7 +705,7 @@
 			return result;
 		}
 
-		private void WaitUntilAllDisconnected(IEnumerable<DisconnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
+		private void WaitUntilAllDisconnected(IEnumerable<DisconnectOperationContext> takeContexts, PerformanceTracker performanceTracker, DisconnectOptions options)
 		{
 			_api.Logger?.Information($"Waiting for all disconnections to complete...");
 

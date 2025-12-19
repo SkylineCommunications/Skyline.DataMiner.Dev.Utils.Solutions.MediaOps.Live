@@ -4,10 +4,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
 
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 
-	/// <summary>
-	/// Represents additional options for Take and Disconnect operations.
-	/// </summary>
-	public class TakeOptions
+	public abstract class OptionsBase
 	{
 		/// <summary>
 		/// Gets or sets a value indicating whether to wait for the operation to complete.
@@ -24,5 +21,19 @@ namespace Skyline.DataMiner.MediaOps.Live.Take
 		/// Gets or sets a value indicating whether to bypass lock validation.
 		/// </summary>
 		public bool BypassLockValidation { get; set; }
+	}
+
+	/// <summary>
+	/// Represents additional options for take operations.
+	/// </summary>
+	public class TakeOptions : OptionsBase
+	{
+	}
+
+	/// <summary>
+	/// Represents additional options for disconnect operations.
+	/// </summary>
+	public class DisconnectOptions : OptionsBase
+	{
 	}
 }

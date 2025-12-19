@@ -2,17 +2,11 @@
 {
 	using Skyline.DataMiner.Net.Messages;
 
-	public class StandaloneParameter
+	public class StandaloneParameter : ParameterBase
 	{
-		public StandaloneParameter(SimulatedElement element, int id)
+		public StandaloneParameter(SimulatedElement element, int id) : base(element, id)
 		{
-			Element = element;
-			Id = id;
 		}
-
-		public SimulatedElement Element { get; }
-
-		public int Id { get; }
 
 		public object Value { get; private set; }
 
