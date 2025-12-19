@@ -493,6 +493,19 @@ public class OrchestrationHelper
 		}
 	}
 
+	/// <summary>
+	///     Saves a list of new or updated <see cref="OrchestrationEvent" /> objects to the DataMiner System.
+	/// </summary>
+	/// <param name="events">A list of configured or updated events.</param>
+	/// <param name="performanceTracker">Performance tracking object.</param>
+	internal void SaveEvents(IEnumerable<OrchestrationEvent> events, PerformanceTracker performanceTracker)
+	{
+		using (new PerformanceTracker(performanceTracker))
+		{
+			_orchestrationEventRepository.CreateOrUpdate(events);
+		}
+	}
+
 	internal void SaveEventConfigurations(IEnumerable<OrchestrationEventConfiguration> events)
 	{
 		List<Configuration> configsToDelete = [];

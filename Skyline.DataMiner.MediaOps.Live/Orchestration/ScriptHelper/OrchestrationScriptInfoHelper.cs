@@ -7,6 +7,7 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
@@ -120,7 +121,12 @@
 
 		private static ScriptInfo ParseScriptInfo(IReadOnlyDictionary<string, string> resultDictionary)
 		{
-			if (!resultDictionary.TryGetValue("OrchestrationScriptInfo", out var serializedScriptInfo))
+			if (resultDictionary.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out var scriptError))
+			{
+				throw new InvalidOperationException($"Error during orchestration script info request: " + scriptError);
+			}
+
+			if (!resultDictionary.TryGetValue(OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, out var serializedScriptInfo))
 			{
 				throw new InvalidOperationException($"Script didn't build the scriptInfo");
 			}

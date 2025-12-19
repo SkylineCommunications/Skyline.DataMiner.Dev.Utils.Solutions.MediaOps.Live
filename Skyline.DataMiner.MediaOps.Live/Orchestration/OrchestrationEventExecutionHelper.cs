@@ -232,7 +232,7 @@
 					orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
 				}
 
-				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
+				_api.Orchestration.SaveEvents(eventConfigurations, performanceTracker);
 			}
 		}
 
