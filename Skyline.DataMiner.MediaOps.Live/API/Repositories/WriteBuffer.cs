@@ -23,7 +23,7 @@
 			_repository = repository ?? throw new ArgumentNullException(nameof(repository));
 			_queue = new ConcurrentQueue<T>();
 
-			_timer = new Timer(writeInterval.Milliseconds);
+			_timer = new Timer(writeInterval.TotalMilliseconds);
 			_timer.Elapsed += IntervalPassed;
 			_timer.AutoReset = true;
 			_timer.Start();
