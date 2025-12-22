@@ -192,7 +192,7 @@
 			}
 
 			// Ensure the DomDefinition filter is applied.
-			var domFilter = AddDomDefinitionFilter(domQuery.Filter);
+			var domFilter = EnsureDomDefinitionFilter(domQuery.Filter);
 			domQuery = domQuery.WithFilter(domFilter);
 
 			return Helper.DomInstances.Count(domQuery);
@@ -355,7 +355,7 @@
 			}
 
 			// Ensure the DomDefinition filter is applied.
-			var domFilter = AddDomDefinitionFilter(domQuery.Filter);
+			var domFilter = EnsureDomDefinitionFilter(domQuery.Filter);
 			domQuery = domQuery.WithFilter(domFilter);
 
 			var domInstances = Helper.DomInstances.Read(domQuery);
@@ -383,6 +383,8 @@
 			}
 
 			var domFilter = TranslateFullFilter(query.Filter);
+			domFilter = EnsureDomDefinitionFilter(domFilter);
+
 			var domOrder = TranslateFullOrderBy(query.Order);
 
 			var domQuery = query
@@ -402,7 +404,7 @@
 			return ReadPaged(domFilter.ToQuery(), pageSize);
 		}
 
-		internal IEnumerable<RepositoryPage<T>> ReadPaged(IQuery<DomInstance> domQuery, int pageSize = _defaultPageSize)
+		internal IEnumerable<RepositoryPage<T>> ReadPaged(IQuery<DomInstance> domQuery, int pageSize)
 		{
 			if (domQuery == null)
 			{
@@ -410,7 +412,7 @@
 			}
 
 			// Ensure the DomDefinition filter is applied.
-			var domFilter = AddDomDefinitionFilter(domQuery.Filter);
+			var domFilter = EnsureDomDefinitionFilter(domQuery.Filter);
 			domQuery = domQuery.WithFilter(domFilter);
 
 			var pagingHelper = Helper.DomInstances.PreparePaging(domQuery, pageSize);
@@ -471,7 +473,7 @@
 			}
 
 			var domFilter = TranslateFullFilter(filter);
-			domFilter = AddDomDefinitionFilter(domFilter);
+			domFilter = EnsureDomDefinitionFilter(domFilter);
 
 			return new RepositorySubscription<T>(this, domFilter);
 		}
@@ -641,9 +643,14 @@
 			return translated;
 		}
 
-		private FilterElement<DomInstance> AddDomDefinitionFilter(FilterElement<DomInstance> domFilter)
+		private FilterElement<DomInstance> EnsureDomDefinitionFilter(FilterElement<DomInstance> domFilter)
 		{
-			if (domFilter == _domDefinitionFilter)
+			if (domFilter is null)
+			{
+				throw new ArgumentNullException(nameof(domFilter));
+			}
+
+			if (domFilter.Equals(_domDefinitionFilter))
 			{
 				return domFilter;
 			}
@@ -653,11 +660,22 @@
 				return _domDefinitionFilter;
 			}
 
+			if (domFilter is FALSEFilterElement<DomInstance>)
+			{
+				return domFilter;
+			}
+
 			if (domFilter is ANDFilterElement<DomInstance> andFilter)
 			{
-				return !andFilter.subFilters.Contains(_domDefinitionFilter)
-					? andFilter.AND(_domDefinitionFilter)
-					: domFilter;
+				if (andFilter.subFilters.Contains(_domDefinitionFilter))
+				{
+					return andFilter;
+				}
+
+				var subFilters = new List<FilterElement<DomInstance>>(andFilter.subFilters);
+				subFilters.Insert(0, _domDefinitionFilter);
+
+				return new ANDFilterElement<DomInstance>(subFilters.ToArray());
 			}
 
 			return new ANDFilterElement<DomInstance>(_domDefinitionFilter, domFilter);
@@ -665,12 +683,12 @@
 
 		public IEnumerable<SDM.IPagedResult<T>> ReadPaged(FilterElement<T> filter)
 		{
-			return ReadPaged(filter);
+			return ReadPaged(filter, _defaultPageSize);
 		}
 
 		public IEnumerable<SDM.IPagedResult<T>> ReadPaged(IQuery<T> query)
 		{
-			return ReadPaged(query);
+			return ReadPaged(query, _defaultPageSize);
 		}
 
 		IEnumerable<SDM.IPagedResult<T>> SDM.IPageableRepository<T>.ReadPaged(FilterElement<T> filter, int pageSize)
