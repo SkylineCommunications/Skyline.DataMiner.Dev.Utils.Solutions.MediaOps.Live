@@ -28,7 +28,7 @@
 		{
 			ManagedFilter<DomInstance, Guid> filter = DomInstanceExposers.Id.Equal(domInstanceId);
 
-			List<OrchestrationJobInfo> result = Read(filter).ToList();
+			List<OrchestrationJobInfo> result = ReadDom(filter).ToList();
 
 			if (!result.Any())
 			{

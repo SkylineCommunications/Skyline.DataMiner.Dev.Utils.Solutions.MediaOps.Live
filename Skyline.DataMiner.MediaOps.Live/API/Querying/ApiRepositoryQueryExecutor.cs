@@ -256,7 +256,7 @@
 		{
 			var query = BuildQuery();
 
-			Expression<Func<IQueryable<T>>> func = () => _provider.Repository.Read(query).AsQueryable();
+			Expression<Func<IQueryable<T>>> func = () => _provider.Repository.ReadDom(query).AsQueryable();
 			return func.Body;
 		}
 

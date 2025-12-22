@@ -932,7 +932,17 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagemen
 }
 namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
 {
-    public abstract class Repository<T>
+    public class RepositoryPage<T> : Skyline.DataMiner.SDM.IPagedResult<T>, System.Collections.Generic.IEnumerable<T>, System.Collections.Generic.IReadOnlyCollection<T>, System.Collections.Generic.IReadOnlyList<T>, System.Collections.IEnumerable
+        where T : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T>
+    {
+        public RepositoryPage(System.Collections.Generic.IEnumerable<T> items, int pageNumber, bool hasNextPage) { }
+        public int Count { get; }
+        public bool HasNextPage { get; }
+        public T this[int index] { get; }
+        public int PageNumber { get; }
+        public System.Collections.Generic.IEnumerator<T> GetEnumerator() { }
+    }
+    public abstract class Repository<T> : Skyline.DataMiner.SDM.IBulkCreatableRepository<T>, Skyline.DataMiner.SDM.IBulkDeletableRepository<T>, Skyline.DataMiner.SDM.IBulkRepository<T>, Skyline.DataMiner.SDM.IBulkUpdatableRepository<T>, Skyline.DataMiner.SDM.ICountableRepository<T>, Skyline.DataMiner.SDM.ICreatableRepository<T>, Skyline.DataMiner.SDM.IDeletableRepository<T>, Skyline.DataMiner.SDM.IPageableRepository<T>, Skyline.DataMiner.SDM.IQueryableRepository<T>, Skyline.DataMiner.SDM.IReadableRepository<T>, Skyline.DataMiner.SDM.IRepository<T>, Skyline.DataMiner.SDM.IUpdatableRepository<T>
         where T : Skyline.DataMiner.MediaOps.Live.API.Objects.ApiObject<T>
     {
         protected Repository(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api, Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
@@ -940,6 +950,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
         protected Skyline.DataMiner.Net.IConnection Connection { get; }
         protected abstract Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinition { get; }
         protected Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper Helper { get; }
+        public virtual long Count(SLDataGateway.API.Types.Querying.IQuery<T> query) { }
         public virtual long Count(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<T> filter) { }
         public virtual long CountAll() { }
         public virtual T Create(T instance) { }
@@ -963,9 +974,9 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
         public virtual T Read(System.Guid id) { }
         public virtual T Read(string name) { }
         public virtual System.Collections.Generic.IEnumerable<T> ReadAll() { }
-        public virtual System.Collections.Generic.IEnumerable<System.Collections.Generic.IEnumerable<T>> ReadAllPaged(long pageSize = 500) { }
-        public virtual System.Collections.Generic.IEnumerable<System.Collections.Generic.IEnumerable<T>> ReadPaged(SLDataGateway.API.Types.Querying.IQuery<T> query, long pageSize = 500) { }
-        public virtual System.Collections.Generic.IEnumerable<System.Collections.Generic.IEnumerable<T>> ReadPaged(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<T> filter, long pageSize = 500) { }
+        public virtual System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Repositories.RepositoryPage<T>> ReadAllPaged(int pageSize = 500) { }
+        public virtual System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Repositories.RepositoryPage<T>> ReadPaged(SLDataGateway.API.Types.Querying.IQuery<T> query, int pageSize = 500) { }
+        public virtual System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Repositories.RepositoryPage<T>> ReadPaged(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<T> filter, int pageSize = 500) { }
         public Skyline.DataMiner.MediaOps.Live.API.Subscriptions.RepositorySubscription<T> Subscribe() { }
         public Skyline.DataMiner.MediaOps.Live.API.Subscriptions.RepositorySubscription<T> Subscribe(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<T> filter) { }
         protected virtual Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance> TranslateFilter(Skyline.DataMiner.Net.Messages.SLDataGateway.ManagedFilterIdentifier managedFilter) { }

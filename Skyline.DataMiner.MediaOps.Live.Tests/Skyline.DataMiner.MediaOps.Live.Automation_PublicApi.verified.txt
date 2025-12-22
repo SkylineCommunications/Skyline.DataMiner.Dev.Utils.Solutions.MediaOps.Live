@@ -150,7 +150,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Se
         protected ParameterGroupSection(Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.IParameterGroupDisplayInfo displayInfo) { }
         public Skyline.DataMiner.Utils.InteractiveAutomationScript.Label Label { get; }
         public System.Collections.Generic.IReadOnlyDictionary<Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.ParameterInfo, Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections.ParameterSection> ParameterSections { get; }
-        protected virtual void DefineHeaderLayout(int row) { }
+        protected virtual Skyline.DataMiner.Utils.InteractiveAutomationScript.Section DefineHeaderSection() { }
         public System.Collections.Generic.IEnumerable<System.ValueTuple<Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.ParameterInfo, Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections.ParameterSection>> InitializeSection(System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects.ParameterInfo> parameters) { }
     }
     public abstract class ParameterSection : Skyline.DataMiner.Utils.InteractiveAutomationScript.Section

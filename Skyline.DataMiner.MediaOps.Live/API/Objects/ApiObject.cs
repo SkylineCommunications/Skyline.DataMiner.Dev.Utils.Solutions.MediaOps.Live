@@ -16,7 +16,7 @@
 
 		public Guid ID => DomInstance.ID.Id;
 
-		public ApiObjectReference<T> Reference => new ApiObjectReference<T>(DomInstance.ID.Id);
+		public ApiObjectReference<T> Reference => new ApiObjectReference<T>(ID);
 
 		public DateTimeOffset CreatedAt => DomInstance.CreatedAt;
 

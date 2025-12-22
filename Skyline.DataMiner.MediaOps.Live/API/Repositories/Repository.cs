@@ -18,7 +18,10 @@
 	using SLDataGateway.API.Querying;
 	using SLDataGateway.API.Types.Querying;
 
-	public abstract class Repository<T> where T : ApiObject<T>
+	using SDM = Skyline.DataMiner.SDM;
+
+	public abstract class Repository<T> : SDM.IBulkRepository<T>, SDM.IQueryableRepository<T>
+		where T : ApiObject<T>
 	{
 		private const int _defaultPageSize = 500;
 
@@ -151,10 +154,24 @@
 				throw new ArgumentNullException(nameof(filter));
 			}
 
-			var domFilter = TranslateFullFilter(filter);
-			domFilter = AddDomDefinitionFilter(domFilter);
+			return Count(filter.ToQuery());
+		}
 
-			return Count(domFilter);
+		public virtual long Count(IQuery<T> query)
+		{
+			if (query == null)
+			{
+				throw new ArgumentNullException(nameof(query));
+			}
+
+			var domFilter = TranslateFullFilter(query.Filter);
+			var domOrder = TranslateFullOrderBy(query.Order);
+
+			var domQuery = query
+				.WithFilter(domFilter)
+				.WithOrder(domOrder);
+
+			return Count(domQuery);
 		}
 
 		internal long Count(FilterElement<DomInstance> domFilter)
@@ -164,19 +181,31 @@
 				throw new ArgumentNullException(nameof(domFilter));
 			}
 
-			domFilter = AddDomDefinitionFilter(domFilter);
+			return Count(domFilter.ToQuery());
+		}
 
-			return Helper.DomInstances.Count(domFilter);
+		internal long Count(IQuery<DomInstance> domQuery)
+		{
+			if (domQuery is null)
+			{
+				throw new ArgumentNullException(nameof(domQuery));
+			}
+
+			// Ensure the DomDefinition filter is applied.
+			var domFilter = EnsureDomDefinitionFilter(domQuery.Filter);
+			domQuery = domQuery.WithFilter(domFilter);
+
+			return Helper.DomInstances.Count(domQuery);
 		}
 
 		public virtual IEnumerable<T> ReadAll()
 		{
-			return Read(_domDefinitionFilter);
+			return ReadDom(_domDefinitionFilter);
 		}
 
-		public virtual IEnumerable<IEnumerable<T>> ReadAllPaged(long pageSize = _defaultPageSize)
+		public virtual IEnumerable<RepositoryPage<T>> ReadAllPaged(int pageSize = _defaultPageSize)
 		{
-			return ReadPaged(_domDefinitionFilter, pageSize);
+			return ReadDomPaged(_domDefinitionFilter, pageSize);
 		}
 
 		public virtual T Read(Guid id)
@@ -189,7 +218,20 @@
 			var filter = _domDefinitionFilter
 				.AND(DomInstanceExposers.Id.Equal(id));
 
-			return Read(filter).SingleOrDefault();
+			return ReadDom(filter).SingleOrDefault();
+		}
+
+		public virtual T Read(string name)
+		{
+			if (name == null)
+			{
+				throw new ArgumentNullException(nameof(name));
+			}
+
+			var filter = _domDefinitionFilter
+				.AND(DomInstanceExposers.Name.Equal(name));
+
+			return ReadDom(filter).SingleOrDefault();
 		}
 
 		public virtual IDictionary<Guid, T> Read(IEnumerable<Guid> ids)
@@ -216,7 +258,7 @@
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					idsList,
 					x => CreateFilter(x),
-					x => Read(x))
+					x => ReadDom(x))
 				.SafeToDictionary(x => x.ID);
 		}
 
@@ -244,21 +286,8 @@
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					idsList,
 					x => CreateFilter(x),
-					x => Read(x))
+					x => ReadDom(x))
 				.SafeToDictionary(x => new ApiObjectReference<T>(x.ID));
-		}
-
-		public virtual T Read(string name)
-		{
-			if (name == null)
-			{
-				throw new ArgumentNullException(nameof(name));
-			}
-
-			var filter = _domDefinitionFilter
-				.AND(DomInstanceExposers.Name.Equal(name));
-
-			return Read(filter).SingleOrDefault();
 		}
 
 		public virtual IDictionary<string, T> Read(IEnumerable<string> names)
@@ -275,7 +304,7 @@
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					names,
 					x => CreateFilter(x),
-					x => Read(x))
+					x => ReadDom(x))
 				.SafeToDictionary(x => x.DomInstance.Name, x => x);
 		}
 
@@ -288,21 +317,7 @@
 
 			var domFilter = TranslateFullFilter(filter);
 
-			return Read(domFilter);
-		}
-
-		internal IEnumerable<T> Read(FilterElement<DomInstance> domFilter)
-		{
-			if (domFilter == null)
-			{
-				throw new ArgumentNullException(nameof(domFilter));
-			}
-
-			domFilter = AddDomDefinitionFilter(domFilter);
-
-			var domInstances = Helper.DomInstances.Read(domFilter);
-
-			return domInstances.Select(CreateInstance);
+			return ReadDom(domFilter);
 		}
 
 		public virtual IEnumerable<T> Read(IQuery<T> query)
@@ -319,18 +334,28 @@
 				.WithFilter(domFilter)
 				.WithOrder(domOrder);
 
-			return Read(domQuery);
+			return ReadDom(domQuery);
 		}
 
-		internal IEnumerable<T> Read(IQuery<DomInstance> domQuery)
+		internal IEnumerable<T> ReadDom(FilterElement<DomInstance> domFilter)
+		{
+			if (domFilter == null)
+			{
+				throw new ArgumentNullException(nameof(domFilter));
+			}
+
+			return ReadDom(domFilter.ToQuery());
+		}
+
+		internal IEnumerable<T> ReadDom(IQuery<DomInstance> domQuery)
 		{
 			if (domQuery == null)
 			{
 				throw new ArgumentNullException(nameof(domQuery));
 			}
 
-			var domFilter = AddDomDefinitionFilter(domQuery.Filter);
-
+			// Ensure the DomDefinition filter is applied.
+			var domFilter = EnsureDomDefinitionFilter(domQuery.Filter);
 			domQuery = domQuery.WithFilter(domFilter);
 
 			var domInstances = Helper.DomInstances.Read(domQuery);
@@ -338,7 +363,7 @@
 			return domInstances.Select(CreateInstance);
 		}
 
-		public virtual IEnumerable<IEnumerable<T>> ReadPaged(FilterElement<T> filter, long pageSize = _defaultPageSize)
+		public virtual IEnumerable<RepositoryPage<T>> ReadPaged(FilterElement<T> filter, int pageSize = _defaultPageSize)
 		{
 			if (filter == null)
 			{
@@ -347,24 +372,10 @@
 
 			var domFilter = TranslateFullFilter(filter);
 
-			return ReadPaged(domFilter, pageSize);
+			return ReadDomPaged(domFilter, pageSize);
 		}
 
-		internal IEnumerable<IEnumerable<T>> ReadPaged(FilterElement<DomInstance> domFilter, long pageSize = _defaultPageSize)
-		{
-			if (domFilter == null)
-			{
-				throw new ArgumentNullException(nameof(domFilter));
-			}
-
-			domFilter = AddDomDefinitionFilter(domFilter);
-
-			var domInstances = Helper.DomInstances.ReadPaged(domFilter, pageSize);
-
-			return domInstances.Select(x => x.Select(CreateInstance));
-		}
-
-		public virtual IEnumerable<IEnumerable<T>> ReadPaged(IQuery<T> query, long pageSize = _defaultPageSize)
+		public virtual IEnumerable<RepositoryPage<T>> ReadPaged(IQuery<T> query, int pageSize = _defaultPageSize)
 		{
 			if (query == null)
 			{
@@ -372,29 +383,48 @@
 			}
 
 			var domFilter = TranslateFullFilter(query.Filter);
+			domFilter = EnsureDomDefinitionFilter(domFilter);
+
 			var domOrder = TranslateFullOrderBy(query.Order);
 
 			var domQuery = query
 				.WithFilter(domFilter)
 				.WithOrder(domOrder);
 
-			return ReadPaged(domQuery, pageSize);
+			return ReadDomPaged(domQuery, pageSize);
 		}
 
-		internal IEnumerable<IEnumerable<T>> ReadPaged(IQuery<DomInstance> domQuery, long pageSize = _defaultPageSize)
+		internal IEnumerable<RepositoryPage<T>> ReadDomPaged(FilterElement<DomInstance> domFilter, int pageSize)
+		{
+			if (domFilter == null)
+			{
+				throw new ArgumentNullException(nameof(domFilter));
+			}
+
+			return ReadDomPaged(domFilter.ToQuery(), pageSize);
+		}
+
+		internal IEnumerable<RepositoryPage<T>> ReadDomPaged(IQuery<DomInstance> domQuery, int pageSize)
 		{
 			if (domQuery == null)
 			{
 				throw new ArgumentNullException(nameof(domQuery));
 			}
 
-			var domFilter = AddDomDefinitionFilter(domQuery.Filter);
-
+			// Ensure the DomDefinition filter is applied.
+			var domFilter = EnsureDomDefinitionFilter(domQuery.Filter);
 			domQuery = domQuery.WithFilter(domFilter);
 
-			var domInstances = Helper.DomInstances.ReadPaged(domQuery, pageSize);
+			var pagingHelper = Helper.DomInstances.PreparePaging(domQuery, pageSize);
+			var pageNumber = 0;
 
-			return domInstances.Select(x => x.Select(CreateInstance));
+			while (pagingHelper.MoveToNextPage())
+			{
+				var items = pagingHelper.GetCurrentPage().Select(CreateInstance).ToList();
+				var hasNextPage = pagingHelper.HasNextPage();
+
+				yield return new RepositoryPage<T>(items, pageNumber++, hasNextPage);
+			}
 		}
 
 		public virtual IQueryable<T> Query()
@@ -443,7 +473,7 @@
 			}
 
 			var domFilter = TranslateFullFilter(filter);
-			domFilter = AddDomDefinitionFilter(domFilter);
+			domFilter = EnsureDomDefinitionFilter(domFilter);
 
 			return new RepositorySubscription<T>(this, domFilter);
 		}
@@ -613,9 +643,14 @@
 			return translated;
 		}
 
-		private FilterElement<DomInstance> AddDomDefinitionFilter(FilterElement<DomInstance> domFilter)
+		private FilterElement<DomInstance> EnsureDomDefinitionFilter(FilterElement<DomInstance> domFilter)
 		{
-			if (domFilter == _domDefinitionFilter)
+			if (domFilter is null)
+			{
+				throw new ArgumentNullException(nameof(domFilter));
+			}
+
+			if (domFilter.Equals(_domDefinitionFilter))
 			{
 				return domFilter;
 			}
@@ -625,14 +660,74 @@
 				return _domDefinitionFilter;
 			}
 
+			if (domFilter is FALSEFilterElement<DomInstance>)
+			{
+				return domFilter;
+			}
+
 			if (domFilter is ANDFilterElement<DomInstance> andFilter)
 			{
-				return !andFilter.subFilters.Contains(_domDefinitionFilter)
-					? andFilter.AND(_domDefinitionFilter)
-					: domFilter;
+				if (andFilter.subFilters.Contains(_domDefinitionFilter))
+				{
+					return andFilter;
+				}
+
+				var subFilters = new List<FilterElement<DomInstance>>(andFilter.subFilters);
+				subFilters.Insert(0, _domDefinitionFilter);
+
+				return new ANDFilterElement<DomInstance>(subFilters.ToArray());
 			}
 
 			return new ANDFilterElement<DomInstance>(_domDefinitionFilter, domFilter);
 		}
+
+		#region SDM Interface Implementations
+
+		IEnumerable<SDM.IPagedResult<T>> SDM.IPageableRepository<T>.ReadPaged(FilterElement<T> filter)
+		{
+			return ReadPaged(filter);
+		}
+
+		IEnumerable<SDM.IPagedResult<T>> SDM.IPageableRepository<T>.ReadPaged(IQuery<T> query)
+		{
+			return ReadPaged(query);
+		}
+
+		IEnumerable<SDM.IPagedResult<T>> SDM.IPageableRepository<T>.ReadPaged(FilterElement<T> filter, int pageSize)
+		{
+			return ReadPaged(filter, pageSize);
+		}
+
+		IEnumerable<SDM.IPagedResult<T>> SDM.IPageableRepository<T>.ReadPaged(IQuery<T> query, int pageSize)
+		{
+			return ReadPaged(query, pageSize);
+		}
+
+		void SDM.ICreatableRepository<T>.Create(T oToCreate)
+		{
+			Create(oToCreate);
+		}
+
+		void SDM.IUpdatableRepository<T>.Update(T oToUpdate)
+		{
+			Update(oToUpdate);
+		}
+
+		void SDM.IBulkCreatableRepository<T>.Create(IEnumerable<T> oToCreate)
+		{
+			CreateOrUpdate(oToCreate);
+		}
+
+		void SDM.IBulkUpdatableRepository<T>.Update(IEnumerable<T> oToUpdate)
+		{
+			CreateOrUpdate(oToUpdate);
+		}
+
+		void SDM.IBulkRepository<T>.CreateOrUpdate(IEnumerable<T> oToCreateOrUpdate)
+		{
+			CreateOrUpdate(oToCreateOrUpdate);
+		}
+
+		#endregion
 	}
 }
