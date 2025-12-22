@@ -49,7 +49,7 @@
 			IEnumerable<Guid> eventsFromTasksToRemove = orchestrationSchedulerTasksToRemove.SelectMany(task => task.OrchestrationEventIds);
 
 			ORFilterElement<DomInstance> filter = new ORFilterElement<DomInstance>(eventsFromTasksToRemove.Select(id => FilterElementFactory.Create(DomInstanceExposers.Id, Comparer.Equals, id)).ToArray());
-			List<OrchestrationEvent> pastEvents = _repository.Read(filter).ToList();
+			List<OrchestrationEvent> pastEvents = _repository.ReadDom(filter).ToList();
 
 			_scheduler.DeleteEventTasks(pastEvents);
 

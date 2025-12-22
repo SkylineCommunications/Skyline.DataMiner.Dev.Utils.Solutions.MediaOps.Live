@@ -42,7 +42,7 @@
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).GreaterThanOrEqual(localStart))
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).LessThanOrEqual(localEnd));
 
-			return Read(filter);
+			return ReadDom(filter);
 		}
 
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsAfterTime(DateTime time)
@@ -52,7 +52,7 @@
 			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).GreaterThanOrEqual(localStart));
 
-			return Read(filter);
+			return ReadDom(filter);
 		}
 
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsBeforeTime(DateTime time)
@@ -62,7 +62,7 @@
 			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).LessThanOrEqual(localEnd));
 
-			return Read(filter);
+			return ReadDom(filter);
 		}
 
 		/// <summary>
@@ -83,7 +83,7 @@
 
 				ManagedFilter<DomInstance, IEnumerable> filter = DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobInformation).Equal(jobInfo.ID);
 
-				return Read(filter);
+				return ReadDom(filter);
 			}
 		}
 
@@ -116,7 +116,7 @@
 
 			ORFilterElement<DomInstance> combinedFilter = new ORFilterElement<DomInstance>(instanceIds.Select(id => FilterElementFactory.Create(DomInstanceExposers.Id, Comparer.Equals, id)).ToArray());
 
-			IEnumerable<OrchestrationEvent> result = Read(combinedFilter);
+			IEnumerable<OrchestrationEvent> result = ReadDom(combinedFilter);
 
 			return result;
 		}

@@ -25,7 +25,7 @@
 		{
 			ManagedFilter<DomInstance, Guid> filter = DomInstanceExposers.Id.Equal(domInstanceId);
 
-			List<Configuration> result = Read(filter).ToList();
+			List<Configuration> result = ReadDom(filter).ToList();
 
 			if (!result.Any())
 			{

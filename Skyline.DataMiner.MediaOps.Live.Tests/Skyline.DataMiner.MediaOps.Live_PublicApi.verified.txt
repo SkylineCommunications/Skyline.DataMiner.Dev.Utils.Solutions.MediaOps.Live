@@ -975,8 +975,6 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
         public virtual T Read(string name) { }
         public virtual System.Collections.Generic.IEnumerable<T> ReadAll() { }
         public virtual System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Repositories.RepositoryPage<T>> ReadAllPaged(int pageSize = 500) { }
-        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.SDM.IPagedResult<T>> ReadPaged(SLDataGateway.API.Types.Querying.IQuery<T> query) { }
-        public System.Collections.Generic.IEnumerable<Skyline.DataMiner.SDM.IPagedResult<T>> ReadPaged(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<T> filter) { }
         public virtual System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Repositories.RepositoryPage<T>> ReadPaged(SLDataGateway.API.Types.Querying.IQuery<T> query, int pageSize = 500) { }
         public virtual System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Repositories.RepositoryPage<T>> ReadPaged(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<T> filter, int pageSize = 500) { }
         public Skyline.DataMiner.MediaOps.Live.API.Subscriptions.RepositorySubscription<T> Subscribe() { }

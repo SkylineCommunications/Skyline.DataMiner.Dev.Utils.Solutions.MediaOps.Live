@@ -200,12 +200,12 @@
 
 		public virtual IEnumerable<T> ReadAll()
 		{
-			return Read(_domDefinitionFilter);
+			return ReadDom(_domDefinitionFilter);
 		}
 
 		public virtual IEnumerable<RepositoryPage<T>> ReadAllPaged(int pageSize = _defaultPageSize)
 		{
-			return ReadPaged(_domDefinitionFilter, pageSize);
+			return ReadDomPaged(_domDefinitionFilter, pageSize);
 		}
 
 		public virtual T Read(Guid id)
@@ -218,7 +218,7 @@
 			var filter = _domDefinitionFilter
 				.AND(DomInstanceExposers.Id.Equal(id));
 
-			return Read(filter).SingleOrDefault();
+			return ReadDom(filter).SingleOrDefault();
 		}
 
 		public virtual T Read(string name)
@@ -231,7 +231,7 @@
 			var filter = _domDefinitionFilter
 				.AND(DomInstanceExposers.Name.Equal(name));
 
-			return Read(filter).SingleOrDefault();
+			return ReadDom(filter).SingleOrDefault();
 		}
 
 		public virtual IDictionary<Guid, T> Read(IEnumerable<Guid> ids)
@@ -258,7 +258,7 @@
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					idsList,
 					x => CreateFilter(x),
-					x => Read(x))
+					x => ReadDom(x))
 				.SafeToDictionary(x => x.ID);
 		}
 
@@ -286,7 +286,7 @@
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					idsList,
 					x => CreateFilter(x),
-					x => Read(x))
+					x => ReadDom(x))
 				.SafeToDictionary(x => new ApiObjectReference<T>(x.ID));
 		}
 
@@ -304,7 +304,7 @@
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					names,
 					x => CreateFilter(x),
-					x => Read(x))
+					x => ReadDom(x))
 				.SafeToDictionary(x => x.DomInstance.Name, x => x);
 		}
 
@@ -317,7 +317,7 @@
 
 			var domFilter = TranslateFullFilter(filter);
 
-			return Read(domFilter);
+			return ReadDom(domFilter);
 		}
 
 		public virtual IEnumerable<T> Read(IQuery<T> query)
@@ -334,20 +334,20 @@
 				.WithFilter(domFilter)
 				.WithOrder(domOrder);
 
-			return Read(domQuery);
+			return ReadDom(domQuery);
 		}
 
-		internal IEnumerable<T> Read(FilterElement<DomInstance> domFilter)
+		internal IEnumerable<T> ReadDom(FilterElement<DomInstance> domFilter)
 		{
 			if (domFilter == null)
 			{
 				throw new ArgumentNullException(nameof(domFilter));
 			}
 
-			return Read(domFilter.ToQuery());
+			return ReadDom(domFilter.ToQuery());
 		}
 
-		internal IEnumerable<T> Read(IQuery<DomInstance> domQuery)
+		internal IEnumerable<T> ReadDom(IQuery<DomInstance> domQuery)
 		{
 			if (domQuery == null)
 			{
@@ -372,7 +372,7 @@
 
 			var domFilter = TranslateFullFilter(filter);
 
-			return ReadPaged(domFilter, pageSize);
+			return ReadDomPaged(domFilter, pageSize);
 		}
 
 		public virtual IEnumerable<RepositoryPage<T>> ReadPaged(IQuery<T> query, int pageSize = _defaultPageSize)
@@ -391,20 +391,20 @@
 				.WithFilter(domFilter)
 				.WithOrder(domOrder);
 
-			return ReadPaged(domQuery, pageSize);
+			return ReadDomPaged(domQuery, pageSize);
 		}
 
-		internal IEnumerable<RepositoryPage<T>> ReadPaged(FilterElement<DomInstance> domFilter, int pageSize = _defaultPageSize)
+		internal IEnumerable<RepositoryPage<T>> ReadDomPaged(FilterElement<DomInstance> domFilter, int pageSize)
 		{
 			if (domFilter == null)
 			{
 				throw new ArgumentNullException(nameof(domFilter));
 			}
 
-			return ReadPaged(domFilter.ToQuery(), pageSize);
+			return ReadDomPaged(domFilter.ToQuery(), pageSize);
 		}
 
-		internal IEnumerable<RepositoryPage<T>> ReadPaged(IQuery<DomInstance> domQuery, int pageSize)
+		internal IEnumerable<RepositoryPage<T>> ReadDomPaged(IQuery<DomInstance> domQuery, int pageSize)
 		{
 			if (domQuery == null)
 			{
@@ -681,14 +681,16 @@
 			return new ANDFilterElement<DomInstance>(_domDefinitionFilter, domFilter);
 		}
 
-		public IEnumerable<SDM.IPagedResult<T>> ReadPaged(FilterElement<T> filter)
+		#region SDM Interface Implementations
+
+		IEnumerable<SDM.IPagedResult<T>> SDM.IPageableRepository<T>.ReadPaged(FilterElement<T> filter)
 		{
-			return ReadPaged(filter, _defaultPageSize);
+			return ReadPaged(filter);
 		}
 
-		public IEnumerable<SDM.IPagedResult<T>> ReadPaged(IQuery<T> query)
+		IEnumerable<SDM.IPagedResult<T>> SDM.IPageableRepository<T>.ReadPaged(IQuery<T> query)
 		{
-			return ReadPaged(query, _defaultPageSize);
+			return ReadPaged(query);
 		}
 
 		IEnumerable<SDM.IPagedResult<T>> SDM.IPageableRepository<T>.ReadPaged(FilterElement<T> filter, int pageSize)
@@ -725,5 +727,7 @@
 		{
 			CreateOrUpdate(oToCreateOrUpdate);
 		}
+
+		#endregion
 	}
 }
