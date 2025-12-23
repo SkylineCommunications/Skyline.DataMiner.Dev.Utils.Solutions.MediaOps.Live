@@ -1,13 +1,13 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting.Extensions
 {
 	using System;
 	using System.Linq;
 	using System.Security.Cryptography;
 	using System.Text;
 
-	public static class Tools
+	public static class StringExtensions
 	{
-		public static Guid GuidFromString(string input)
+		public static Guid HashToGuid(this string input)
 		{
 			if (input == null)
 			{
