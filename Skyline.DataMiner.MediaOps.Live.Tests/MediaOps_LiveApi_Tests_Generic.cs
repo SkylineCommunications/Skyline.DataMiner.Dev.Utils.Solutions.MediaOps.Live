@@ -6,6 +6,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.GQI.Metrics;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_Generic

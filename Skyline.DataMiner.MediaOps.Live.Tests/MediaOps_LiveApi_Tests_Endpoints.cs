@@ -6,6 +6,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.TestData;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_Endpoints

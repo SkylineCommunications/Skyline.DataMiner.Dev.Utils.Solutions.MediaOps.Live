@@ -10,6 +10,9 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Extensions;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.TestData;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Utils.Categories.API;
@@ -204,7 +207,7 @@
 					{
 						vsgCounter++;
 
-						var videoSource = new Endpoint(Tools.GuidFromString($"Video Source {vsgCounter}"))
+						var videoSource = new Endpoint($"Video Source {vsgCounter}".HashToGuid())
 						{
 							Role = EndpointRole.Source,
 							Name = $"Video Source {vsgCounter}",
@@ -218,7 +221,7 @@
 								new TransportMetadata(TsoipTransportType.FieldNames.MulticastPort, "5000"),
 							},
 						};
-						var audioSource = new Endpoint(Tools.GuidFromString($"Audio Source {vsgCounter}"))
+						var audioSource = new Endpoint($"Audio Source {vsgCounter}".HashToGuid())
 						{
 							Role = EndpointRole.Source,
 							Name = $"Audio Source {vsgCounter}",
@@ -232,7 +235,7 @@
 								new TransportMetadata(TsoipTransportType.FieldNames.MulticastPort, "5000"),
 							},
 						};
-						var videoDestination = new Endpoint(Tools.GuidFromString($"Video Destination {vsgCounter}"))
+						var videoDestination = new Endpoint($"Video Destination {vsgCounter}".HashToGuid())
 						{
 							Role = EndpointRole.Destination,
 							Name = $"Video Destination {vsgCounter}",
@@ -240,7 +243,7 @@
 							Element = elementId,
 							Identifier = $"Video-{vsgCounter}",
 						};
-						var audioDestination = new Endpoint(Tools.GuidFromString($"Audio Destination {vsgCounter}"))
+						var audioDestination = new Endpoint($"Audio Destination {vsgCounter}".HashToGuid())
 						{
 							Role = EndpointRole.Destination,
 							Name = $"Audio Destination {vsgCounter}",
@@ -252,7 +255,7 @@
 
 						if (createVsgs)
 						{
-							var source1 = new VirtualSignalGroup(Tools.GuidFromString($"Source {vsgCounter}"))
+							var source1 = new VirtualSignalGroup($"Source {vsgCounter}".HashToGuid())
 							{
 								Role = EndpointRole.Source,
 								Name = $"Source {vsgCounter}",
@@ -264,7 +267,7 @@
 								],
 								Categories = [category1Sources],
 							};
-							var destination1 = new VirtualSignalGroup(Tools.GuidFromString($"Destination {vsgCounter}"))
+							var destination1 = new VirtualSignalGroup($"Destination {vsgCounter}".HashToGuid())
 							{
 								Role = EndpointRole.Destination,
 								Name = $"Destination {vsgCounter}",

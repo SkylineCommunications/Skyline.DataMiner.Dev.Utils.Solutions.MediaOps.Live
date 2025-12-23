@@ -3,6 +3,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Tests
 	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation;
 
 	[TestClass]
 	public class MediaOps_LiveApi_Tests_OrchestrationScheduler

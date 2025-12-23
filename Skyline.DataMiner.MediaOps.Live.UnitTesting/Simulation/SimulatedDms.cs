@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation
 {
 	using System;
 	using System.Collections;
@@ -10,6 +10,8 @@
 
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Connection;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Parameters;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Automation.CustomEntryPoint;
 	using Skyline.DataMiner.Net.Messages;
