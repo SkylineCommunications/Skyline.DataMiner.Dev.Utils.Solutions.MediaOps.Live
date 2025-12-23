@@ -1,5 +1,6 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting.Parameters
 {
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation;
 	using Skyline.DataMiner.Net.Messages;
 
 	public class StandaloneParameter : ParameterBase

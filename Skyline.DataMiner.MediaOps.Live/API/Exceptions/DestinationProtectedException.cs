@@ -2,7 +2,6 @@
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class DestinationProtectedException : Exception

@@ -7,8 +7,6 @@
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Converters;
 
-	using Skyline.DataMiner.Core.InterAppCalls.Common.Shared;
-
 	public class SubscriptionInfo
 	{
 		public enum ParameterType

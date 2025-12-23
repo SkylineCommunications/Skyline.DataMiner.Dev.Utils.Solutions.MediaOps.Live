@@ -11,6 +11,8 @@
 	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Extensions;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.TestData;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Utils.Categories.API;

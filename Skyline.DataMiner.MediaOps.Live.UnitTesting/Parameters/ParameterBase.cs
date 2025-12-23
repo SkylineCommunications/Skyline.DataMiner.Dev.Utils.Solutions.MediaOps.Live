@@ -1,6 +1,8 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting.Parameters
 {
 	using System;
+
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation;
 
 	public abstract class ParameterBase
 	{

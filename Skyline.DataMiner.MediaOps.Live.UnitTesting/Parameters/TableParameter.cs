@@ -1,10 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting.Parameters
 {
 	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation;
 	using Skyline.DataMiner.Net.Messages;
 
 	public class TableParameter : ParameterBase
