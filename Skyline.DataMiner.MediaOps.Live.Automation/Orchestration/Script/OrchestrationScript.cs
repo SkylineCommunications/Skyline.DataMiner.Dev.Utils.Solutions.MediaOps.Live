@@ -216,10 +216,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 			OrchestrationEventExecutionHelper orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
 
-			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-OrchestrateAllConnections", performanceLogFilename);
+			IPerformanceLogger performanceLogger = PerformanceLoggerFactory.Create("ORC-OrchestrateAllConnections");
 
-			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
+			using (PerformanceCollector collector = new PerformanceCollector(performanceLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
 				if (!EventConfiguration.HasConnections)
@@ -272,8 +271,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		{
 			string unparsedOrchestrationScriptAction = null;
 			if (metaData is null ||
-			    !metaData.TryGetValue(OrchestrationScriptConstants.OrchestrationScriptActionRequestScriptInfoKey, out unparsedOrchestrationScriptAction) ||
-			    !Enum.TryParse(unparsedOrchestrationScriptAction, out OrchestrationScriptAction orchestrationScriptAction))
+				!metaData.TryGetValue(OrchestrationScriptConstants.OrchestrationScriptActionRequestScriptInfoKey, out unparsedOrchestrationScriptAction) ||
+				!Enum.TryParse(unparsedOrchestrationScriptAction, out OrchestrationScriptAction orchestrationScriptAction))
 			{
 				throw new InvalidOperationException($"No orchestration script action was provided (got {unparsedOrchestrationScriptAction}");
 			}
@@ -281,19 +280,19 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			switch (orchestrationScriptAction)
 			{
 				case OrchestrationScriptAction.OrchestrationScriptInfo:
-				{
-					ScriptInfo scriptInfo = GetScriptInfo();
-					return new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } };
-				}
+					{
+						ScriptInfo scriptInfo = GetScriptInfo();
+						return new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } };
+					}
 
 				case OrchestrationScriptAction.PerformOrchestration:
 				case OrchestrationScriptAction.PerformOrchestrationAskMissingValues:
-				{
-					PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
+					{
+						PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
 
-					// Currently there is no valuable output to provide for this flow.
-					return new Dictionary<string, string>();
-				}
+						// Currently there is no valuable output to provide for this flow.
+						return new Dictionary<string, string>();
+					}
 
 				default:
 					throw new NotSupportedException($"No support for orchestration script action {orchestrationScriptAction}");
