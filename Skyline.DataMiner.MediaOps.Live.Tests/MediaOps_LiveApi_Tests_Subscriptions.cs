@@ -4,6 +4,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.TestData;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 
 	[TestClass]
