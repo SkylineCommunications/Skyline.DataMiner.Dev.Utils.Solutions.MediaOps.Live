@@ -19,8 +19,8 @@
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
 
-	using Parameter = Net.Profiles.Parameter;
-	using ParameterValue = Net.Profiles.ParameterValue;
+	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
+	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
 
 	public sealed class SimulatedDms
 	{

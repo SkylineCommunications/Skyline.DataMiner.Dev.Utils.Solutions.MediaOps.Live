@@ -7,7 +7,7 @@
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Parameters;
 	using Skyline.DataMiner.Net.Messages;
 
-	using DmsElementId = Core.DataMinerSystem.Common.DmsElementId;
+	using DmsElementId = Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId;
 
 	public sealed class SimulatedElement
 	{
