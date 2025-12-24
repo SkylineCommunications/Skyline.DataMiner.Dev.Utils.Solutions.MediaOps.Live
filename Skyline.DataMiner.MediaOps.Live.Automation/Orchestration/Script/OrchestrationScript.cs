@@ -610,10 +610,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				}
 			}
 
-			Orchestrate(_engine);
-
 			TryGetMetadataValue("{Orchestration Level}", out string orchestrationLevel);
 			_orchestrationLevel = Enum.TryParse(orchestrationLevel, out OrchestrationLevel parsedLevel) ? parsedLevel : OrchestrationLevel.Unknown;
+
+			Orchestrate(_engine);
 
 			if (_orchestrationLevel != OrchestrationLevel.Global)
 			{
