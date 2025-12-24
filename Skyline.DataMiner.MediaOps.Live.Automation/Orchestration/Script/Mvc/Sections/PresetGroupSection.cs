@@ -28,7 +28,6 @@
 			var labelSpan = Label.Text.Length / 5;
 			section.AddWidget(Label, 0, 0, 1, labelSpan);
 			section.AddWidget(Value, 1, 0, 1, labelSpan);
-			section.AddWidget(new WhiteSpace(), 2, 0, 1, labelSpan);
 			return section;
 		}
 
