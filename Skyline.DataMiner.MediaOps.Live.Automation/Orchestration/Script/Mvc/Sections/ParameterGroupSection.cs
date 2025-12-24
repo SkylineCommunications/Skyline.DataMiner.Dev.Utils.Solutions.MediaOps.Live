@@ -45,6 +45,8 @@
 				AddSection(section, row++, 1);
 				yield return (parameter, section);
 			}
+
+			AddWidget(new WhiteSpace(), row, 0);
 		}
 
 		protected virtual Section DefineHeaderSection()

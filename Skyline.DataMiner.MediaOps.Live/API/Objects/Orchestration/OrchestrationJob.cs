@@ -102,6 +102,11 @@
 			{
 				throw new InvalidOperationException("Job cannot contain event with 'Confirmed' state in the past.");
 			}
+
+			if (orchestrationEvents.Any(e => e.EventTime < DateTimeOffset.UtcNow + TimeSpan.FromSeconds(5) && e.EventState == EventState.Confirmed))
+			{
+				throw new InvalidOperationException("Cannot save/update an event with 'Confirmed' state that is about the start in less than 5 seconds.");
+			}
 		}
 
 		private static void ValidateEventTypesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
