@@ -22,12 +22,12 @@
 			// Init widgets
 			Value = new Numeric();
 
-			Value.StepSize = !Double.IsNaN(info.Step) && info.Step > 0 ? info.Step : 3;
-
-			if (!Double.IsNaN(info.Decimals) && info.Decimals >= 0)
+			if (!Double.IsNaN(info.Step) && info.Step > 0)
 			{
-				Value.Decimals = info.Decimals;
+				Value.StepSize = info.Step;
 			}
+
+			Value.Decimals = !Double.IsNaN(info.Decimals) && info.Decimals >= 0 ? info.Decimals : 3;
 
 			if (!Double.IsNaN(info.Min) && info.Min != double.MinValue)
 			{
