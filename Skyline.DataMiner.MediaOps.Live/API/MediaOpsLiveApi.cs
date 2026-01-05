@@ -141,7 +141,7 @@
 				   orchestrationDefinitions.Contains(SlcOrchestrationIds.Definitions.OrchestrationEvent);
 		}
 
-		public string GetVersion()
+		public static string GetVersion()
 		{
 #pragma warning disable CS0618 // Type or member is obsolete
 			if (!String.IsNullOrWhiteSpace(ThisAssembly.Git.Tag))

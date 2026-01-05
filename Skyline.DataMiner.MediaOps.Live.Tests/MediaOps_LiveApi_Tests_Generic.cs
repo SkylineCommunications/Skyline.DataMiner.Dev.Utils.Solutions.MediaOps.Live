@@ -28,8 +28,7 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Version()
 		{
-			var api = new MediaOpsLiveApiMock();
-			var version = api.GetVersion();
+			var version = MediaOpsLiveApi.GetVersion();
 
 			version.Should().NotBeNullOrEmpty();
 		}
