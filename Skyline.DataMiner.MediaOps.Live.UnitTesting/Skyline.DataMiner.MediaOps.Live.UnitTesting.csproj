@@ -3,13 +3,13 @@
 		<TargetFramework>net48</TargetFramework>
 		<LangVersion>latest</LangVersion>
 		<OutputType>Library</OutputType>
-		<AssemblyTitle>Skyline.DataMiner.MediaOps.Live.UnitTesting</AssemblyTitle>
-		<Product>Skyline.DataMiner.MediaOps.Live.UnitTesting</Product>
+		<Product>Skyline DataMiner MediaOps.LIVE</Product>
 		<Copyright>Copyright © 2025</Copyright>
-		<AssemblyName>Skyline.DataMiner.MediaOps.Live.UnitTesting</AssemblyName>
+		<AssemblyName>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting</AssemblyName>
+		<AssemblyTitle>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting</AssemblyTitle>
 		<RootNamespace>Skyline.DataMiner.MediaOps.Live.UnitTesting</RootNamespace>
 
-		<PackageId>Skyline.DataMiner.MediaOps.Live.UnitTesting</PackageId>
+		<PackageId>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting</PackageId>
 		<PackageTags>Skyline;DataMiner</PackageTags>
 		<PackageProjectUrl>https://skyline.be</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
