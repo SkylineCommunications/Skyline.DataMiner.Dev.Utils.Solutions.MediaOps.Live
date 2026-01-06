@@ -3,13 +3,13 @@
 		<TargetFramework>net48</TargetFramework>
 		<LangVersion>latest</LangVersion>
 		<OutputType>Library</OutputType>
-		<AssemblyTitle>Skyline.DataMiner.MediaOps.Live.GQI</AssemblyTitle>
-		<Product>Skyline.DataMiner.MediaOps.Live.GQI</Product>
+		<Product>Skyline DataMiner MediaOps.LIVE</Product>
 		<Copyright>Copyright © 2025</Copyright>
-		<AssemblyName>Skyline.DataMiner.MediaOps.Live.GQI</AssemblyName>
+		<AssemblyName>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI</AssemblyName>
+		<AssemblyTitle>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI</AssemblyTitle>
 		<RootNamespace>Skyline.DataMiner.MediaOps.Live.GQI</RootNamespace>
 
-		<PackageId>Skyline.DataMiner.MediaOps.Live.GQI</PackageId>
+		<PackageId>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI</PackageId>
 		<PackageTags>Skyline;DataMiner</PackageTags>
 		<PackageProjectUrl>https://skyline.be</PackageProjectUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
@@ -32,8 +32,8 @@
 		<None Include="..\nuget\Icon.png" Pack="true" PackagePath="" />
 	</ItemGroup>
 	<ItemGroup>
-		<InternalsVisibleTo Include="$(MSBuildProjectName).UnitTesting" />
-		<InternalsVisibleTo Include="$(MSBuildProjectName).Tests" />
+		<InternalsVisibleTo Include="$(AssemblyName).UnitTesting" />
+		<InternalsVisibleTo Include="$(AssemblyName).Tests" />
 		<InternalsVisibleTo Include="SLC-AS-MediaOps.LIVE.Tests" />
 	</ItemGroup>
 	<ItemGroup>
