@@ -6,6 +6,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.GQI.Metrics;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
+	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_Generic
@@ -13,9 +14,13 @@
 		[TestMethod]
 		public void MediaOps_LiveApi_Tests_IsInstalled()
 		{
-			var simulation = new MediaOpsLiveSimulation();
-			var connection = simulation.Dms.CreateConnection();
+			var dms = new SimulatedDms();
+			var connection = dms.CreateConnection();
 			var api = connection.GetMediaOpsLiveApi();
+
+			Assert.IsFalse(api.IsInstalled());
+
+			dms.AddApplicationPackage(Constants.AppPackageName, MediaOpsLiveApi.GetVersion());
 
 			Assert.IsTrue(api.IsInstalled());
 		}

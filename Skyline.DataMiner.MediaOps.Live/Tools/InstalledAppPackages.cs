@@ -1,7 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Tools
 {
 	using System;
-	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.Net;
@@ -12,10 +11,9 @@
 	{
 		private readonly IConnection _connection;
 
-		private readonly ConcurrentDictionary<string, InstalledAppInfo> _installedAppPackagesCache = new(StringComparer.OrdinalIgnoreCase);
+		private readonly Dictionary<string, InstalledAppInfo> _installedAppPackagesCache = new(StringComparer.OrdinalIgnoreCase);
 
 		private readonly object _loadLock = new();
-		private DateTimeOffset _lastLoaded;
 
 		public InstalledAppPackages(IConnection connection)
 		{
@@ -24,7 +22,7 @@
 
 		public IEnumerable<InstalledAppInfo> GetAllInstalledPackages()
 		{
-			RefreshCache();
+			LoadInstalledAppPackages();
 
 			foreach (var installedApp in _installedAppPackagesCache.Values)
 			{
@@ -49,8 +47,8 @@
 				return true;
 			}
 
-			// Ensure cache is loaded
-			RefreshCache();
+			// Reload cache
+			LoadInstalledAppPackages();
 
 			return _installedAppPackagesCache.TryGetValue(appPackageName, out installedAppInfo) &&
 				   installedAppInfo.InstallState.InstallStatus == AppInstallStatus.INSTALLED;
@@ -61,31 +59,19 @@
 			return IsInstalled(appPackageName, out _);
 		}
 
-		private void RefreshCache()
+		private void LoadInstalledAppPackages()
 		{
 			lock (_loadLock)
 			{
-				var now = DateTimeOffset.UtcNow;
+				var request = new GetInstalledAppPackagesRequest();
+				var response = (GetInstalledAppPackagesResponse)_connection.HandleSingleResponseMessage(request);
 
-				// Throttle reloads to at most once per minute
-				if (now - _lastLoaded <= TimeSpan.FromMinutes(1))
+				_installedAppPackagesCache.Clear();
+
+				foreach (var appPackage in response.InstalledAppPackages)
 				{
-					return;
+					_installedAppPackagesCache[appPackage.AppInfo.Name] = appPackage;
 				}
-
-				LoadInstalledAppPackages();
-				_lastLoaded = now;
-			}
-		}
-
-		private void LoadInstalledAppPackages()
-		{
-			var request = new GetInstalledAppPackagesRequest();
-			var response = (GetInstalledAppPackagesResponse)_connection.HandleSingleResponseMessage(request);
-
-			foreach (var appPackage in response.InstalledAppPackages)
-			{
-				_installedAppPackagesCache[appPackage.AppInfo.Name] = appPackage;
 			}
 		}
 	}

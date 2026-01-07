@@ -1132,8 +1132,8 @@ namespace Skyline.DataMiner.MediaOps.Live
         public const int SchedulerSlidingWindowRangeHours_Future = 12;
         public const int SchedulerSlidingWindowRangeHours_Past = 1;
         public const int SlidingWindowSchedulerExecutionFrequencyInMinutes = 360;
+        public static string AppPackageName { get; }
         public static string MediationProtocolName { get; }
-        public static string PackageName { get; }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement
