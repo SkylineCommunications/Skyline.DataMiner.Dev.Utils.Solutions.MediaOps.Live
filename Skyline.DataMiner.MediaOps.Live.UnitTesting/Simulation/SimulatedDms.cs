@@ -12,6 +12,8 @@
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Connection;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Parameters;
+	using Skyline.DataMiner.Net.AppPackages;
+	using Skyline.DataMiner.Net.AppPackages.Messages;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Automation.CustomEntryPoint;
 	using Skyline.DataMiner.Net.Messages;
@@ -30,6 +32,7 @@
 		private readonly ConcurrentBag<Parameter> _profileParameters = [];
 		private readonly ConcurrentBag<ProfileDefinition> _profileDefinitions = [];
 		private readonly ConcurrentBag<ProfileInstance> _profileInstances = [];
+		private readonly ConcurrentBag<InstalledAppInfo> _appPackages = [];
 		private readonly DomSLNetMessageHandler _domSlNetMessageHandler = new(validateAgainstDefinition: true);
 
 		public SimulatedDms()
@@ -132,6 +135,26 @@
 			}
 
 			_profileInstances.Add(instance);
+		}
+
+		public void AddApplicationPackage(string name, string version)
+		{
+			var appInfo = new InstalledAppInfo
+			{
+				AppInfo = new AppInfo
+				{
+					Name = name,
+					DisplayName = name,
+					Version = version,
+					LastModifiedAt = DateTime.UtcNow,
+				},
+				InstallState = new AppInstallState
+				{
+					InstallStatus = AppInstallStatus.INSTALLED,
+				},
+			};
+
+			_appPackages.Add(appInfo);
 		}
 
 		public IEnumerable<SimulatedSchedulerTask> GetAllDmsSchedulerTasks()
@@ -243,6 +266,10 @@
 					return true;
 
 				case ManagerStoreStartPagingRequest<ProfileInstance> msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				case GetInstalledAppPackagesRequest msg:
 					responses = HandleMessage(msg);
 					return true;
 
@@ -566,6 +593,14 @@
 					},
 				],
 				Folder = script.Folder,
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(GetInstalledAppPackagesRequest msg)
+		{
+			yield return new GetInstalledAppPackagesResponse
+			{
+				InstalledAppPackages = _appPackages.ToList(),
 			};
 		}
 

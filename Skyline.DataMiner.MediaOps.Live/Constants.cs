@@ -6,6 +6,11 @@
 	public static class Constants
 	{
 		/// <summary>
+		/// Gets the name of the MediaOps.LIVE package.
+		/// </summary>
+		public static string PackageName => "MediaOps.Live-Package";
+
+		/// <summary>
 		/// Gets the name of the MediaOps Live mediation protocol.
 		/// </summary>
 		public static string MediationProtocolName => "Skyline MediaOps Mediation";

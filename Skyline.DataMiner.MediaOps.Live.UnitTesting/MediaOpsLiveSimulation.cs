@@ -30,6 +30,8 @@
 		public MediaOpsLiveSimulation(bool createEndpoints = true, bool createVsgs = true, bool createConnections = false, bool createElements = true)
 		{
 			_dms = new SimulatedDms();
+			_dms.AddApplicationPackage(Constants.PackageName, MediaOpsLiveApi.GetVersion());
+
 			_connection = Dms.CreateConnection();
 
 			Api = new MediaOpsLiveApi(_connection);
