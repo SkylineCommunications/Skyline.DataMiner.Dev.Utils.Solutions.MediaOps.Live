@@ -20,7 +20,7 @@
 
 			Assert.IsFalse(api.IsInstalled());
 
-			api.InstallDomModules();
+			dms.AddApplicationPackage(Constants.AppPackageName, MediaOpsLiveApi.GetVersion());
 
 			Assert.IsTrue(api.IsInstalled());
 		}
