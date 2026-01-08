@@ -24,7 +24,7 @@
 		{
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
 
-			InstalledAppPackages = new InstalledAppPackages(connection);
+			InstalledAppPackages = new InstalledAppPackageCache(connection);
 
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
@@ -44,7 +44,7 @@
 
 		protected internal ILogger Logger { get; private set; }
 
-		internal InstalledAppPackages InstalledAppPackages { get; }
+		internal InstalledAppPackageCache InstalledAppPackages { get; }
 
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
@@ -112,11 +112,36 @@
 			DomModuleInstaller.Install(Connection.HandleMessages, new SlcOrchestrationDomModule(), logAction);
 		}
 
+		/// <summary>
+		/// Determines whether the MediaOps.LIVE application is installed on the DataMiner System.
+		/// </summary>
+		/// <param name="version">
+		/// When this method returns <c>true</c>, contains the version of the installed application;
+		/// otherwise, <c>null</c>.
+		/// </param>
+		/// <returns>
+		/// <c>true</c> if the application is installed; otherwise, <c>false</c>.
+		/// </returns>
+		public bool IsInstalled(out string version)
+		{
+			var isInstalled = InstalledAppPackages.IsInstalled("MediaOps.Live-Package", out var installedAppInfo) ||
+				InstalledAppPackages.IsInstalled("MediaOps.Live-DemoPackage", out installedAppInfo) ||
+				InstalledAppPackages.IsInstalled("MediaOps.Live-InternalPackage", out installedAppInfo);
+
+			version = isInstalled ? installedAppInfo?.AppInfo?.Version : null;
+
+			return isInstalled;
+		}
+
+		/// <summary>
+		/// Determines whether the MediaOps.LIVE application is installed on the DataMiner System.
+		/// </summary>
+		/// <returns>
+		/// <c>true</c> if the application is installed; otherwise, <c>false</c>.
+		/// </returns>
 		public bool IsInstalled()
 		{
-			return InstalledAppPackages.IsInstalled("MediaOps.Live-Package") ||
-				InstalledAppPackages.IsInstalled("MediaOps.Live-DemoPackage") ||
-				InstalledAppPackages.IsInstalled("MediaOps.Live-InternalPackage");
+			return IsInstalled(out _);
 		}
 
 		public static string GetVersion()

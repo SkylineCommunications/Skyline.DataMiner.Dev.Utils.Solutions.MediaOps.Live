@@ -22,6 +22,7 @@
 
 			dms.AddApplicationPackage(Constants.AppPackageName, MediaOpsLiveApi.GetVersion());
 
+			api.InstalledAppPackages.Refresh();
 			Assert.IsTrue(api.IsInstalled());
 		}
 
