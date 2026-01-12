@@ -12,6 +12,7 @@
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Net.Messages.Advanced;
 	using Skyline.DataMiner.Net.Profiles;
 
 	/// <summary>
@@ -74,10 +75,40 @@
 		/// Get the names of all orchestration scripts.
 		/// </summary>
 		/// <returns>A list of all orchestration script names.</returns>
-		public List<string> GetOrchestrationScripts()
+		public IEnumerable<string> GetOrchestrationScripts()
 		{
-			IDms dms = _connection.GetDms();
-			return dms.GetScripts().Where(IsOrchestrationScript).Select(script => script.Name).ToList();
+			var message = new GetAutomationInfoMessage
+			{
+				What = (int)AutomationInfoType.ScriptFolders,
+			};
+
+			var response = _connection.HandleSingleResponseMessage(message) as GetAutomationInfoResponseMessage;
+
+			var psa = response?.psaRet?.Psa;
+			if (psa == null)
+			{
+				throw new InvalidOperationException("Failed to retrieve orchestration script information.");
+			}
+
+			foreach (string[] sa in psa.Select(x => x.Sa))
+			{
+				if (sa.Length < 2)
+				{
+					continue;
+				}
+
+				var folderPath = sa[0].Split(['/', '\\'], StringSplitOptions.RemoveEmptyEntries);
+
+				if (folderPath.Length >= 2 &&
+					String.Equals(folderPath[0], "MediaOps", StringComparison.OrdinalIgnoreCase) &&
+					String.Equals(folderPath[1], "OrchestrationScripts", StringComparison.OrdinalIgnoreCase))
+				{
+					foreach (var script in sa.Skip(1))
+					{
+						yield return script;
+					}
+				}
+			}
 		}
 
 		internal static bool IsOrchestrationScript(IDmsAutomationScript script)

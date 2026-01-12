@@ -229,6 +229,10 @@
 					responses = HandleMessage(msg);
 					return true;
 
+				case GetAutomationInfoMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
 				case GetDataMinerByIDMessage msg:
 					responses = HandleMessage(msg);
 					return true;
@@ -485,6 +489,18 @@
 			}
 		}
 
+		private IEnumerable<DMSMessage> HandleMessage(GetAutomationInfoMessage msg)
+		{
+			switch (msg.What)
+			{
+				case (int)AutomationInfoType.ScriptFolders:
+					return HandleScriptFoldersMessage();
+
+				default:
+					throw new NotSupportedException($"Unsupported AutomationInfoType: {msg.What}");
+			}
+		}
+
 		private IEnumerable<DMSMessage> HandleElementInfoMessage()
 		{
 			foreach (SimulatedElement element in Agents.Values.SelectMany(agent => agent.Elements.Values))
@@ -507,6 +523,18 @@
 			yield return new GetScriptsResponseMessage
 			{
 				Scripts = _scripts.Select(script => script.Name).ToArray(),
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleScriptFoldersMessage()
+		{
+			var sa = _scripts
+				.GroupBy(x => x.Folder)
+				.Select(group => new SA([group.Key, .. group.Select(x => x.Name)]));
+
+			yield return new GetAutomationInfoResponseMessage
+			{
+				psaRet = new PSA { Psa = [.. sa] },
 			};
 		}
 

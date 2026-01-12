@@ -1518,7 +1518,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
     public class OrchestrationScriptInfoHelper
     {
         public Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper.OrchestrationScriptInputInfo GetOrchestrationScriptInputInfo(string scriptName) { }
-        public System.Collections.Generic.List<string> GetOrchestrationScripts() { }
+        public System.Collections.Generic.IEnumerable<string> GetOrchestrationScripts() { }
     }
     public class OrchestrationScriptInputElement
     {

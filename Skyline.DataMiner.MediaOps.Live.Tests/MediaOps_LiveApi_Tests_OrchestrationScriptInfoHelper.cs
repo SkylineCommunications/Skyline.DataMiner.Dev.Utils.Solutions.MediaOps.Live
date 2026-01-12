@@ -28,7 +28,7 @@
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 
-			List<string> info = api.Orchestration.Scripts.GetOrchestrationScripts();
+			var info = api.Orchestration.Scripts.GetOrchestrationScripts();
 
 			Assert.HasCount(1, info);
 		}
