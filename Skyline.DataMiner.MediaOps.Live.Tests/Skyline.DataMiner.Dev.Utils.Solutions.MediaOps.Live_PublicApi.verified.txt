@@ -1525,6 +1525,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
         public OrchestrationScriptInputElement(Skyline.DataMiner.Net.Messages.AutomationProtocolInfo protocolInfo) { }
         public string Name { get; }
         public Skyline.DataMiner.Net.Messages.AutomationProtocolInfo ProtocolInfo { get; }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.Core.DataMinerSystem.Common.IDmsElement> GetApplicableElements(Skyline.DataMiner.Core.DataMinerSystem.Common.IDms dms) { }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.Core.DataMinerSystem.Common.IDmsElement> GetApplicableElements(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.Core.DataMinerSystem.Common.IDmsElement> GetApplicableElements(Skyline.DataMiner.Net.IConnection connection) { }
     }
     public class OrchestrationScriptInputInfo
@@ -1535,15 +1537,17 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
         public System.Collections.Generic.List<Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper.OrchestrationScriptInputParameter> Parameters { get; }
         public System.Guid ProfileDefinition { get; set; }
         public string ScriptName { get; set; }
-        public System.Collections.Generic.List<Skyline.DataMiner.Net.Profiles.ProfileInstance> GetApplicableInstances(Skyline.DataMiner.Net.Profiles.ProfileHelper helper) { }
+        public System.Collections.Generic.List<Skyline.DataMiner.Net.Profiles.ProfileInstance> GetApplicableInstances(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
+        public System.Collections.Generic.List<Skyline.DataMiner.Net.Profiles.ProfileInstance> GetApplicableInstances(Skyline.DataMiner.Net.IConnection connection) { }
+        public System.Collections.Generic.List<Skyline.DataMiner.Net.Profiles.ProfileInstance> GetApplicableInstances(Skyline.DataMiner.Net.Profiles.ProfileHelper profileHelper) { }
     }
     public class OrchestrationScriptInputParameter
     {
         public OrchestrationScriptInputParameter(string name, System.Guid profileParameter) { }
         public bool FromProfile { get; }
-        public Skyline.DataMiner.Net.Profiles.Parameter LinkedProfileParameter { get; set; }
-        public string Name { get; set; }
-        public System.Guid ProfileParameter { get; set; }
+        public Skyline.DataMiner.Net.Profiles.Parameter LinkedProfileParameter { get; }
+        public string Name { get; }
+        public System.Guid ProfileParameter { get; }
     }
 }
 namespace Skyline.DataMiner.MediaOps.Live.Take

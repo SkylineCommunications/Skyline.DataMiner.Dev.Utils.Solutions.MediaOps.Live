@@ -7,7 +7,7 @@
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 
-	using Parameter = Net.Profiles.Parameter;
+	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
 
 	public class OrchestrationScriptInputParameter
 	{
@@ -17,13 +17,13 @@
 			ProfileParameter = profileParameter;
 		}
 
-		public Guid ProfileParameter { get; set; }
+		public Guid ProfileParameter { get; }
 
 		public bool FromProfile => ProfileParameter != Guid.Empty;
 
-		public string Name { get; set; }
+		public string Name { get; }
 
-		public Parameter LinkedProfileParameter { get; set; }
+		public Parameter LinkedProfileParameter { get; private set; }
 
 		internal void LoadLinkedProfileParameter(ProfileHelper helper)
 		{

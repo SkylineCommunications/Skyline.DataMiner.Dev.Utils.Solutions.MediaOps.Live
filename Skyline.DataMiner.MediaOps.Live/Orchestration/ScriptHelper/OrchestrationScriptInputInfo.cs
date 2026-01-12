@@ -3,6 +3,8 @@
 	using System;
 	using System.Collections.Generic;
 
+	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 
@@ -27,9 +29,36 @@
 
 		public List<OrchestrationScriptInputElement> Elements { get; }
 
-		public List<ProfileInstance> GetApplicableInstances(ProfileHelper helper)
+		public List<ProfileInstance> GetApplicableInstances(ProfileHelper profileHelper)
 		{
-			return helper.ProfileInstances.Read(ProfileInstanceExposers.AppliesToID.Equal(ProfileDefinition));
+			if (profileHelper is null)
+			{
+				throw new ArgumentNullException(nameof(profileHelper));
+			}
+
+			return profileHelper.ProfileInstances.Read(ProfileInstanceExposers.AppliesToID.Equal(ProfileDefinition));
+		}
+
+		public List<ProfileInstance> GetApplicableInstances(IConnection connection)
+		{
+			if (connection is null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			var profileHelper = new ProfileHelper(connection.HandleMessages);
+
+			return GetApplicableInstances(profileHelper);
+		}
+
+		public List<ProfileInstance> GetApplicableInstances(MediaOpsLiveApi api)
+		{
+			if (api is null)
+			{
+				throw new ArgumentNullException(nameof(api));
+			}
+
+			return GetApplicableInstances(api.Connection);
 		}
 	}
 }
