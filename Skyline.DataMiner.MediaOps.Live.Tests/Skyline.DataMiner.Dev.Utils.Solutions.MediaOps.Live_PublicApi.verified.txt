@@ -448,6 +448,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API
         public virtual Skyline.DataMiner.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider GetLiteConnectivityInfoProvider() { }
         public void InstallDomModules(System.Action<string> logAction = null) { }
         public bool IsInstalled() { }
+        public bool IsInstalled(out string version) { }
         public void SetLogger(Skyline.DataMiner.MediaOps.Live.Logging.ILogger logger) { }
         public static string GetVersion() { }
     }
@@ -1521,9 +1522,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
     }
     public class OrchestrationScriptInputElement
     {
-        public OrchestrationScriptInputElement() { }
-        public Skyline.DataMiner.Net.Messages.AutomationProtocolInfo ProtocolInfo { get; set; }
-        public System.Collections.Generic.List<Skyline.DataMiner.Core.DataMinerSystem.Common.IDmsElement> GetApplicableElements(Skyline.DataMiner.Net.IConnection connection) { }
+        public OrchestrationScriptInputElement(Skyline.DataMiner.Net.Messages.AutomationProtocolInfo protocolInfo) { }
+        public string Name { get; }
+        public Skyline.DataMiner.Net.Messages.AutomationProtocolInfo ProtocolInfo { get; }
+        public System.Collections.Generic.ICollection<Skyline.DataMiner.Core.DataMinerSystem.Common.IDmsElement> GetApplicableElements(Skyline.DataMiner.Net.IConnection connection) { }
     }
     public class OrchestrationScriptInputInfo
     {
