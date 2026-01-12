@@ -64,7 +64,7 @@
 
 			foreach (AutomationProtocolInfo inputDummy in scriptInputInfoResponse.Dummies)
 			{
-				result.Elements.Add(new OrchestrationScriptInputElement { ProtocolInfo = inputDummy });
+				result.Elements.Add(new OrchestrationScriptInputElement(inputDummy));
 			}
 
 			return result;

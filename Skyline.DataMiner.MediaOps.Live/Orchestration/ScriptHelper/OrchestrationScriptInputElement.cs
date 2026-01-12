@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
 {
+	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
@@ -9,9 +10,16 @@
 
 	public class OrchestrationScriptInputElement
 	{
-		public AutomationProtocolInfo ProtocolInfo { get; set; }
+		public OrchestrationScriptInputElement(AutomationProtocolInfo protocolInfo)
+		{
+			ProtocolInfo = protocolInfo ?? throw new ArgumentNullException(nameof(protocolInfo));
+		}
 
-		public List<IDmsElement> GetApplicableElements(IConnection connection)
+		public AutomationProtocolInfo ProtocolInfo { get; }
+
+		public string Name => ProtocolInfo.Description;
+
+		public ICollection<IDmsElement> GetApplicableElements(IConnection connection)
 		{
 			IDms dms = connection.GetDms();
 
