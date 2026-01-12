@@ -7,6 +7,7 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
@@ -20,17 +21,22 @@
 	/// </summary>
 	public class OrchestrationScriptInfoHelper
 	{
-		private readonly ProfileHelper _profileHelper;
 		private readonly IConnection _connection;
+		private readonly ProfileHelper _profileHelper;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationScriptInfoHelper"/> class.
 		/// </summary>
-		/// <param name="connection">Instance of SLNet connection.</param>
-		internal OrchestrationScriptInfoHelper(IConnection connection)
+		/// <param name="api">Instance of MediaOpsLiveApi.</param>
+		internal OrchestrationScriptInfoHelper(MediaOpsLiveApi api)
 		{
-			_connection = connection;
-			_profileHelper = new ProfileHelper(connection.HandleMessages);
+			if (api is null)
+			{
+				throw new ArgumentNullException(nameof(api));
+			}
+
+			_connection = api.Connection;
+			_profileHelper = new ProfileHelper(_connection.HandleMessages);
 		}
 
 		/// <summary>
@@ -41,7 +47,7 @@
 		/// <returns>Returns the orchestration script input information for the specified script.</returns>
 		public OrchestrationScriptInputInfo GetOrchestrationScriptInputInfo(string scriptName)
 		{
-			OrchestrationScriptInputInfo result = new(scriptName);
+			OrchestrationScriptInputInfo result = new OrchestrationScriptInputInfo(scriptName);
 
 			ScriptInfo scriptOrchestrationInfo = GetScriptOrchestrationInfo(scriptName);
 

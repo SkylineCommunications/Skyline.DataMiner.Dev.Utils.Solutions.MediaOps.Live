@@ -5,6 +5,7 @@
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages;
 
@@ -19,13 +20,37 @@
 
 		public string Name => ProtocolInfo.Description;
 
-		public ICollection<IDmsElement> GetApplicableElements(IConnection connection)
+		public ICollection<IDmsElement> GetApplicableElements(IDms dms)
 		{
-			IDms dms = connection.GetDms();
+			if (dms is null)
+			{
+				throw new ArgumentNullException(nameof(dms));
+			}
 
-			return dms.GetElements()
+			return dms
+				.GetElements()
 				.Where(e => e.Protocol.Name == ProtocolInfo.ProtocolName && e.Protocol.Version == ProtocolInfo.ProtocolVersion)
 				.ToList();
+		}
+
+		public ICollection<IDmsElement> GetApplicableElements(IConnection connection)
+		{
+			if (connection is null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			return GetApplicableElements(connection.GetDms());
+		}
+
+		public ICollection<IDmsElement> GetApplicableElements(MediaOpsLiveApi api)
+		{
+			if (api is null)
+			{
+				throw new ArgumentNullException(nameof(api));
+			}
+
+			return GetApplicableElements(api.Connection);
 		}
 	}
 }

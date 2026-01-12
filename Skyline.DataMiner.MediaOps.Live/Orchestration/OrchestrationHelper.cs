@@ -44,7 +44,7 @@ public class OrchestrationHelper
 			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
 			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future));
 
-		Scripts = new OrchestrationScriptInfoHelper(api.Connection);
+		Scripts = new OrchestrationScriptInfoHelper(api);
 	}
 
 	public OrchestrationScriptInfoHelper Scripts { get; }

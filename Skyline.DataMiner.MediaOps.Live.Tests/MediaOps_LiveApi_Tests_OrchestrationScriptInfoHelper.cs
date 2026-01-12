@@ -39,7 +39,7 @@
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 			OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("OrchestrationScript");
 
-			var elements = info.Elements.First().GetApplicableElements(api.Connection);
+			var elements = info.Elements.First().GetApplicableElements(api);
 			Console.WriteLine(JsonConvert.SerializeObject(elements.Select(e => e.Name), Formatting.Indented));
 			Assert.HasCount(2, elements);
 		}
