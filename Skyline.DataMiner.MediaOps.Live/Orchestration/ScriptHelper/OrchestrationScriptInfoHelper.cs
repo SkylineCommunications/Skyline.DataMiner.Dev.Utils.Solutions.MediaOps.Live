@@ -14,6 +14,7 @@
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.Advanced;
+	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 
 	/// <summary>
@@ -53,7 +54,9 @@
 
 			if (scriptOrchestrationInfo.ProfileDefinitions.Any())
 			{
-				result.ProfileDefinition = scriptOrchestrationInfo.ProfileDefinitions.First();
+				var profileDefinitionId = scriptOrchestrationInfo.ProfileDefinitions.First();
+				var profileDefinition = _profileHelper.ProfileDefinitions.Read(ProfileDefinitionExposers.ID.Equal(profileDefinitionId)).FirstOrDefault();
+				result.ProfileDefinition = profileDefinition;
 			}
 
 			foreach (KeyValuePair<string, Guid> profileParameter in scriptOrchestrationInfo.ProfileParameters)

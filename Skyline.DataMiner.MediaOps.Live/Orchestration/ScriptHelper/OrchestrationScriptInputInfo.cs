@@ -23,7 +23,7 @@
 
 		public string ScriptName { get; set; }
 
-		public Guid ProfileDefinition { get; set; }
+		public ProfileDefinition ProfileDefinition { get; set; }
 
 		public List<OrchestrationScriptInputParameter> Parameters { get; }
 
@@ -36,7 +36,12 @@
 				throw new ArgumentNullException(nameof(profileHelper));
 			}
 
-			return profileHelper.ProfileInstances.Read(ProfileInstanceExposers.AppliesToID.Equal(ProfileDefinition));
+			if (ProfileDefinition == null)
+			{
+				return [];
+			}
+
+			return profileHelper.ProfileInstances.Read(ProfileInstanceExposers.AppliesToID.Equal(ProfileDefinition.ID));
 		}
 
 		public List<ProfileInstance> GetApplicableInstances(IConnection connection)

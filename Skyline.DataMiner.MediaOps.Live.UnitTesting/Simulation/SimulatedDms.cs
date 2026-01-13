@@ -269,6 +269,10 @@
 					responses = HandleMessage(msg);
 					return true;
 
+				case ManagerStoreStartPagingRequest<ProfileDefinition> msg:
+					responses = HandleMessage(msg);
+					return true;
+
 				case ManagerStoreStartPagingRequest<ProfileInstance> msg:
 					responses = HandleMessage(msg);
 					return true;
@@ -289,6 +293,15 @@
 			{
 				IsFinalPage = true,
 				Objects = _profileParameters.Where(msg.Filter.Filter.getLambda()).ToList(),
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(ManagerStoreStartPagingRequest<ProfileDefinition> msg)
+		{
+			yield return new ManagerStorePagingResponse<ProfileDefinition>
+			{
+				IsFinalPage = true,
+				Objects = _profileDefinitions.Where(msg.Filter.Filter.getLambda()).ToList(),
 			};
 		}
 

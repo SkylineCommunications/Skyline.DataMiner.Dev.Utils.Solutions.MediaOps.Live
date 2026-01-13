@@ -1535,7 +1535,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
         public OrchestrationScriptInputInfo(string scriptName) { }
         public System.Collections.Generic.List<Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper.OrchestrationScriptInputElement> Elements { get; }
         public System.Collections.Generic.List<Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper.OrchestrationScriptInputParameter> Parameters { get; }
-        public System.Guid ProfileDefinition { get; set; }
+        public Skyline.DataMiner.Net.Profiles.ProfileDefinition ProfileDefinition { get; set; }
         public string ScriptName { get; set; }
         public System.Collections.Generic.List<Skyline.DataMiner.Net.Profiles.ProfileInstance> GetApplicableInstances(Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi api) { }
         public System.Collections.Generic.List<Skyline.DataMiner.Net.Profiles.ProfileInstance> GetApplicableInstances(Skyline.DataMiner.Net.IConnection connection) { }
