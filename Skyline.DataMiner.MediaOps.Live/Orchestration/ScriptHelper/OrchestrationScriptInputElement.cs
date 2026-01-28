@@ -7,18 +7,21 @@
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.Net;
-	using Skyline.DataMiner.Net.Messages;
 
 	public class OrchestrationScriptInputElement
 	{
-		public OrchestrationScriptInputElement(AutomationProtocolInfo protocolInfo)
+		public OrchestrationScriptInputElement(IDmsAutomationScriptDummy inputDummy)
 		{
-			ProtocolInfo = protocolInfo ?? throw new ArgumentNullException(nameof(protocolInfo));
+			InputDummy = inputDummy ?? throw new ArgumentNullException(nameof(inputDummy));
 		}
 
-		public AutomationProtocolInfo ProtocolInfo { get; }
+		public IDmsAutomationScriptDummy InputDummy { get; }
 
-		public string Name => ProtocolInfo.Description;
+		public string Name => InputDummy.Description;
+
+		public string ProtocolName => InputDummy.Protocol.Name;
+
+		public string ProtocolVersion => InputDummy.Protocol.Version;
 
 		public ICollection<IDmsElement> GetApplicableElements(IDms dms)
 		{
@@ -27,9 +30,8 @@
 				throw new ArgumentNullException(nameof(dms));
 			}
 
-			return dms
-				.GetElements()
-				.Where(e => e.Protocol.Name == ProtocolInfo.ProtocolName && e.Protocol.Version == ProtocolInfo.ProtocolVersion)
+			return dms.GetElements()
+				.Where(e => e.Protocol.Name == ProtocolName && e.Protocol.Version == ProtocolVersion)
 				.ToList();
 		}
 

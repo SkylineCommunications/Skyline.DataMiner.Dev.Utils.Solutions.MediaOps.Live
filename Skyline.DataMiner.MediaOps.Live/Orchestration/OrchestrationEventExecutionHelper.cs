@@ -633,7 +633,7 @@
 			}
 
 			ExecuteScriptResponseMessage result;
-			if (OrchestrationScriptInfoHelper.IsOrchestrationScript(script))
+			if (OrchestrationScriptInfoHelper.IsValidOrchestrationScript(script))
 			{
 				OrchestrationScriptInput input = new(
 					profile.Values.ToDictionary(value => value.Name, value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),

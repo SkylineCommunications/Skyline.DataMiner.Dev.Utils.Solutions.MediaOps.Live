@@ -6,7 +6,7 @@
 
 	using Skyline.DataMiner.Net.Profiles;
 
-	public class ScriptInfo
+	public class OrchestrationScriptInfo
 	{
 		[IgnoreDataMember]
 		public Dictionary<string, Parameter> ProfileParameterReferences { get; } = new Dictionary<string, Parameter>();

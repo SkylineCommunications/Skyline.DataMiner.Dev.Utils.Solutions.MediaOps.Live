@@ -25,11 +25,11 @@
 
 		public ProfileDefinition ProfileDefinition { get; set; }
 
-		public List<OrchestrationScriptInputParameter> Parameters { get; }
+		public ICollection<OrchestrationScriptInputParameter> Parameters { get; }
 
-		public List<OrchestrationScriptInputElement> Elements { get; }
+		public ICollection<OrchestrationScriptInputElement> Elements { get; }
 
-		public List<ProfileInstance> GetApplicableInstances(ProfileHelper profileHelper)
+		public ICollection<ProfileInstance> GetApplicableProfileInstances(ProfileHelper profileHelper)
 		{
 			if (profileHelper is null)
 			{
@@ -41,10 +41,12 @@
 				return [];
 			}
 
-			return profileHelper.ProfileInstances.Read(ProfileInstanceExposers.AppliesToID.Equal(ProfileDefinition.ID));
+			var filter = ProfileInstanceExposers.AppliesToID.Equal(ProfileDefinition.ID);
+
+			return profileHelper.ProfileInstances.Read(filter);
 		}
 
-		public List<ProfileInstance> GetApplicableInstances(IConnection connection)
+		public ICollection<ProfileInstance> GetApplicableProfileInstances(IConnection connection)
 		{
 			if (connection is null)
 			{
@@ -53,17 +55,17 @@
 
 			var profileHelper = new ProfileHelper(connection.HandleMessages);
 
-			return GetApplicableInstances(profileHelper);
+			return GetApplicableProfileInstances(profileHelper);
 		}
 
-		public List<ProfileInstance> GetApplicableInstances(MediaOpsLiveApi api)
+		public ICollection<ProfileInstance> GetApplicableProfileInstances(MediaOpsLiveApi api)
 		{
 			if (api is null)
 			{
 				throw new ArgumentNullException(nameof(api));
 			}
 
-			return GetApplicableInstances(api.Connection);
+			return GetApplicableProfileInstances(api.Connection);
 		}
 	}
 }

@@ -19,7 +19,7 @@
 
 			Assert.AreEqual("OrchestrationScript", info.ScriptName);
 			Assert.HasCount(5, info.Parameters);
-			Assert.HasCount(4, info.Parameters.Where(param => param.FromProfile));
+			Assert.HasCount(4, info.Parameters.Where(param => param.IsFromProfile));
 			Assert.HasCount(1, info.Elements);
 		}
 
@@ -51,7 +51,7 @@
 
 			OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("OrchestrationScript");
 
-			var instances = info.GetApplicableInstances(new ProfileHelper(api.Connection.HandleMessages));
+			var instances = info.GetApplicableProfileInstances(new ProfileHelper(api.Connection.HandleMessages));
 			Assert.HasCount(1, instances);
 		}
 	}

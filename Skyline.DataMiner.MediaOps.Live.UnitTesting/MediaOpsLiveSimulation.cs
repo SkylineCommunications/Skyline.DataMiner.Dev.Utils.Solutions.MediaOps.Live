@@ -368,7 +368,7 @@
 				"OrchestrationScript",
 				new List<string> { "InputParam" },
 				new List<string> { "InputDummy" },
-				new ScriptInfo
+				new OrchestrationScriptInfo
 				{
 					ProfileParameters =
 					{

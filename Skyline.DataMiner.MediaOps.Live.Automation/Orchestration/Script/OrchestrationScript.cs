@@ -236,7 +236,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
-			ScriptInfo scriptInfo = GetScriptInfo();
+			OrchestrationScriptInfo scriptInfo = GetScriptInfo();
 
 			_parameterInfos = CreateParameterInfos(scriptInfo, new OrchestrationScriptInput());
 
@@ -281,7 +281,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			{
 				case OrchestrationScriptAction.OrchestrationScriptInfo:
 					{
-						ScriptInfo scriptInfo = GetScriptInfo();
+						OrchestrationScriptInfo scriptInfo = GetScriptInfo();
 						return new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } };
 					}
 
@@ -299,9 +299,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			}
 		}
 
-		private ScriptInfo GetScriptInfo()
+		private OrchestrationScriptInfo GetScriptInfo()
 		{
-			ScriptInfo info = new ScriptInfo();
+			OrchestrationScriptInfo info = new OrchestrationScriptInfo();
 			foreach (IOrchestrationParameters orchestrationParameters in GetParameters())
 			{
 				if (orchestrationParameters is OrchestrationProfileDefinition definition)
@@ -339,7 +339,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			controller.ShowDialog(dialog);
 		}
 
-		private List<ParameterInfo> CreateParameterInfos(ScriptInfo scriptInfo, OrchestrationScriptInput input)
+		private List<ParameterInfo> CreateParameterInfos(OrchestrationScriptInfo scriptInfo, OrchestrationScriptInput input)
 		{
 			List<ParameterInfo> parameterInfos = new List<ParameterInfo>();
 
@@ -424,7 +424,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			}
 		}
 
-		private void LinkParameters(ScriptInfo scriptInfo, List<ParameterInfo> infos)
+		private void LinkParameters(OrchestrationScriptInfo scriptInfo, List<ParameterInfo> infos)
 		{
 			Dictionary<Guid, ParameterInfo> profileParameterInfos = infos
 				.Where(x => x.Reference is ProfileParameterID)
@@ -589,7 +589,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private void PerformOrchestrationFromEntryPoint(IReadOnlyDictionary<string, string> metaData, bool askMissingValues)
 		{
-			ScriptInfo scriptInfo = GetScriptInfo();
+			OrchestrationScriptInfo scriptInfo = GetScriptInfo();
 
 			OrchestrationScriptInput orchestrationScriptInput = new OrchestrationScriptInput();
 			if (metaData.TryGetValue(OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey, out string serializedScriptInputRequestScriptInfo))

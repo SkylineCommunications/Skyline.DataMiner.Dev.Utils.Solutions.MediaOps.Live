@@ -48,33 +48,48 @@
 		/// <returns>Returns the orchestration script input information for the specified script.</returns>
 		public OrchestrationScriptInputInfo GetOrchestrationScriptInputInfo(string scriptName)
 		{
-			OrchestrationScriptInputInfo result = new OrchestrationScriptInputInfo(scriptName);
+			var script = _connection.GetDms().GetScript(scriptName)
+				?? throw new InvalidOperationException("The specified script was not found.");
 
-			ScriptInfo scriptOrchestrationInfo = GetScriptOrchestrationInfo(scriptName);
-
-			if (scriptOrchestrationInfo.ProfileDefinitions.Any())
+			if (!IsValidOrchestrationScript(script))
 			{
-				var profileDefinitionId = scriptOrchestrationInfo.ProfileDefinitions.First();
-				var profileDefinition = _profileHelper.ProfileDefinitions.Read(ProfileDefinitionExposers.ID.Equal(profileDefinitionId)).FirstOrDefault();
-				result.ProfileDefinition = profileDefinition;
+				throw new InvalidOperationException("The specified script is not a valid orchestration script.");
 			}
 
-			foreach (KeyValuePair<string, Guid> profileParameter in scriptOrchestrationInfo.ProfileParameters)
+			var result = new OrchestrationScriptInputInfo(scriptName);
+
+			foreach (var inputParam in script.Parameters)
 			{
-				var orchestrationParam = new OrchestrationScriptInputParameter(profileParameter.Key, profileParameter.Value);
-				orchestrationParam.LoadLinkedProfileParameter(_profileHelper);
-				result.Parameters.Add(orchestrationParam);
+				result.Parameters.Add(new OrchestrationScriptInputParameter(inputParam.Description));
 			}
 
-			GetScriptInfoResponseMessage scriptInputInfoResponse = GetScriptInputInfo(scriptName);
-			foreach (AutomationParameterInfo inputParam in scriptInputInfoResponse.Parameters)
-			{
-				result.Parameters.Add(new OrchestrationScriptInputParameter(inputParam.Description, Guid.Empty));
-			}
-
-			foreach (AutomationProtocolInfo inputDummy in scriptInputInfoResponse.Dummies)
+			foreach (var inputDummy in script.Dummies)
 			{
 				result.Elements.Add(new OrchestrationScriptInputElement(inputDummy));
+			}
+
+			var hasCsharpCode = script.CSharpBlocks.Any();
+			if (!hasCsharpCode)
+			{
+				// We have everything we need from the script itself, so we can return.
+				return result;
+			}
+
+			if (TryGetScriptOrchestrationInfo(scriptName, out var scriptOrchestrationInfo))
+			{
+				if (scriptOrchestrationInfo.ProfileDefinitions.Any())
+				{
+					var profileDefinitionId = scriptOrchestrationInfo.ProfileDefinitions.First();
+					var profileDefinition = _profileHelper.ProfileDefinitions.Read(ProfileDefinitionExposers.ID.Equal(profileDefinitionId)).FirstOrDefault();
+					result.ProfileDefinition = profileDefinition;
+				}
+
+				foreach (var profileParameter in scriptOrchestrationInfo.ProfileParameters)
+				{
+					var orchestrationParam = new OrchestrationScriptInputParameter(profileParameter.Key, profileParameter.Value);
+					orchestrationParam.LoadLinkedProfileParameter(_profileHelper);
+					result.Parameters.Add(orchestrationParam);
+				}
 			}
 
 			return result;
@@ -82,6 +97,7 @@
 
 		/// <summary>
 		/// Get the names of all orchestration scripts.
+		/// All scripts that are located in the "MediaOps/OrchestrationScripts" folder are considered orchestration scripts.
 		/// </summary>
 		/// <returns>A list of all orchestration script names.</returns>
 		public IEnumerable<string> GetOrchestrationScripts()
@@ -120,46 +136,46 @@
 			}
 		}
 
-		internal static bool IsOrchestrationScript(IDmsAutomationScript script)
+		internal static bool IsValidOrchestrationScript(IDmsAutomationScript script)
 		{
 			if (script == null)
 			{
 				throw new ArgumentNullException(nameof(script));
 			}
 
-			if (!script.Folder.StartsWith("MediaOps/OrchestrationScripts"))
+			if (!script.Folder.StartsWith("MediaOps/OrchestrationScripts", StringComparison.OrdinalIgnoreCase))
 			{
 				return false;
 			}
 
-			return script.CSharpBlocks.Count() == 1;
+			return true;
 		}
 
-		private GetScriptInfoResponseMessage GetScriptInputInfo(string scriptName)
+		private bool TryGetScriptOrchestrationInfo(string scriptName, out OrchestrationScriptInfo orchestrationScriptInfo)
 		{
-			return (GetScriptInfoResponseMessage)_connection.HandleSingleResponseMessage(new GetScriptInfoMessage(scriptName));
-		}
-
-		private ScriptInfo GetScriptOrchestrationInfo(string scriptName)
-		{
-			var response = OrchestrationAutomationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName);
-
-			if (response?.EntryPointResult?.Result == null || response.HadError)
+			try
 			{
-				throw new InvalidOperationException("Script not found or an error occurred while retrieving script information.");
+				var response = OrchestrationAutomationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName);
+
+				if (response != null &&
+					!response.HadError &&
+					response.EntryPointResult?.Result is RequestScriptInfoOutput scriptInfoOutput)
+				{
+					orchestrationScriptInfo = ParseScriptInfo(scriptInfoOutput.Data);
+					return true;
+				}
+			}
+			catch (Exception)
+			{
+				// Swallow exception and return false.
+				// This can happen when the OnRequestScriptInfo entry point doesn't exist.
 			}
 
-			var scriptInfoOutput = (RequestScriptInfoOutput)response.EntryPointResult.Result;
-
-			if (scriptInfoOutput?.Data is not IReadOnlyDictionary<string, string> returnedInfo)
-			{
-				throw new InvalidOperationException("Invalid result received");
-			}
-
-			return ParseScriptInfo(returnedInfo);
+			orchestrationScriptInfo = null;
+			return false;
 		}
 
-		private static ScriptInfo ParseScriptInfo(IReadOnlyDictionary<string, string> resultDictionary)
+		private static OrchestrationScriptInfo ParseScriptInfo(IReadOnlyDictionary<string, string> resultDictionary)
 		{
 			if (resultDictionary.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out var scriptError))
 			{
@@ -171,7 +187,7 @@
 				throw new InvalidOperationException($"Script didn't build the scriptInfo");
 			}
 
-			return JsonConvert.DeserializeObject<ScriptInfo>(serializedScriptInfo);
+			return JsonConvert.DeserializeObject<OrchestrationScriptInfo>(serializedScriptInfo);
 		}
 	}
 }
