@@ -96,7 +96,6 @@
 		/// <summary>
 		/// Installs the required DOM modules for the MediaOps.LIVE API.
 		/// </summary>
-		/// <param name="logAction">Optional action to log progress or messages during installation. If null, logging is suppressed.</param>
 		public void InstallDomModules()
 		{
 			Action<string> logAction = x => Logger?.Information(x);
