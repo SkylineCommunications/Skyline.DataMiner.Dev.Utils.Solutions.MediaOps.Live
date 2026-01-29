@@ -4,6 +4,7 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.MediaOps.Live.Protocol.Logging;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Scripting;
 
@@ -12,6 +13,8 @@
 		public ProtocolMediaOpsLiveApi(SLProtocol protocol, IConnection connection) : base(connection)
 		{
 			Protocol = protocol ?? throw new ArgumentNullException(nameof(protocol));
+
+			SetLogger(new ProtocolLogger(protocol));
 		}
 
 		public ProtocolMediaOpsLiveApi(SLProtocol protocol) : this(protocol, protocol.GetUserConnection())

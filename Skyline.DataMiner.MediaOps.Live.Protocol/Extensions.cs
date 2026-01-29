@@ -4,7 +4,6 @@
 
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.Protocol.API;
-	using Skyline.DataMiner.MediaOps.Live.Protocol.Logging;
 	using Skyline.DataMiner.Scripting;
 
 	public static class Extensions
@@ -17,7 +16,6 @@
 			}
 
 			var api = new ProtocolMediaOpsLiveApi(protocol);
-			api.SetLogger(new ProtocolLogger(protocol));
 
 			return api;
 		}

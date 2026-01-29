@@ -40,7 +40,7 @@
 
 		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, OrchestrationSettings settings)
 		{
-			_api = api;
+			_api = api ?? throw new ArgumentNullException(nameof(api));
 			_settings = settings ?? new OrchestrationSettings();
 		}
 

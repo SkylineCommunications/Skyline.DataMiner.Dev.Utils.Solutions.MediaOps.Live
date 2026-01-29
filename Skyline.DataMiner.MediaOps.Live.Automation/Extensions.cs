@@ -21,7 +21,6 @@
 			}
 
 			var api = new EngineMediaOpsLiveApi(engine);
-			api.SetLogger(new EngineLogger(engine));
 
 			return api;
 		}
