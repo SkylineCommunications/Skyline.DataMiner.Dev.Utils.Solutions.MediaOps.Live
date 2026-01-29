@@ -275,7 +275,7 @@
 			}
 		}
 
-		public OrchestrationJobInfo GetJobInfo(MediaOpsLiveApi api)
+		public OrchestrationJobInfo GetJobInfo(IMediaOpsLiveApi api)
 		{
 			return api.Orchestration.JobInfos.Read(JobInfoReference.Value);
 		}

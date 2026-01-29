@@ -16,13 +16,13 @@
 		internal static readonly int PendingConnectionActionsTableId = 3000;
 		internal static readonly int ConnectionsTableId = 5000;
 
-		internal MediationElement(MediaOpsLiveApi api, IDmsElement dmsElement)
+		internal MediationElement(IMediaOpsLiveApi api, IDmsElement dmsElement)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 			DmsElement = dmsElement ?? throw new ArgumentNullException(nameof(dmsElement));
 		}
 
-		internal MediaOpsLiveApi Api { get; }
+		internal IMediaOpsLiveApi Api { get; }
 
 		public IDmsElement DmsElement { get; }
 

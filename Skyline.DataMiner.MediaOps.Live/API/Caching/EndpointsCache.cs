@@ -197,7 +197,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 			}
 		}
 
-		public void LoadInitialData(MediaOpsLiveApi api)
+		public void LoadInitialData(IMediaOpsLiveApi api)
 		{
 			if (api is null)
 			{

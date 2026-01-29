@@ -32,7 +32,7 @@
 
 		private bool _isDisposed;
 
-		public LiteConnectivityInfoProvider(MediaOpsLiveApi api, bool subscribe = false)
+		public LiteConnectivityInfoProvider(IMediaOpsLiveApi api, bool subscribe = false)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 
@@ -41,7 +41,7 @@
 
 		public event EventHandler<ICollection<ApiObjectReference<Endpoint>>> EndpointsImpacted;
 
-		internal MediaOpsLiveApi Api { get; }
+		internal IMediaOpsLiveApi Api { get; }
 
 		public bool IsSubscribed { get; private set; }
 
@@ -388,7 +388,7 @@
 					return;
 				}
 
-				var dms = Api.GetDms();
+				var dms = Api.Connection.GetDms();
 
 				var dmsElement = Retry.Do(
 					() => dms.GetElement(elementId),

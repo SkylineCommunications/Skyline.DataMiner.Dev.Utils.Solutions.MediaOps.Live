@@ -14,15 +14,15 @@
 
 	internal class EngineMediaOpsPlanHelper : MediaOpsPlanHelper
 	{
-		internal EngineMediaOpsPlanHelper(IEngine engine, EngineMediaOpsLiveApi api)
+		internal EngineMediaOpsPlanHelper(EngineMediaOpsLiveApi api)
 		{
-			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 			Api = api ?? throw new ArgumentNullException(nameof(api));
+			Engine = api.Engine;
 		}
 
-		internal IEngine Engine { get; }
-
 		internal EngineMediaOpsLiveApi Api { get; }
+
+		internal IEngine Engine { get; }
 
 		internal override void UpdateJobState(OrchestrationEvent orchestrationEvent)
 		{

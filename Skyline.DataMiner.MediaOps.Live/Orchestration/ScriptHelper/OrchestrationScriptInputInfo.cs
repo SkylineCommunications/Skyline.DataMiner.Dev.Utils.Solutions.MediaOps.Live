@@ -58,7 +58,7 @@
 			return GetApplicableProfileInstances(profileHelper);
 		}
 
-		public ICollection<ProfileInstance> GetApplicableProfileInstances(MediaOpsLiveApi api)
+		public ICollection<ProfileInstance> GetApplicableProfileInstances(IMediaOpsLiveApi api)
 		{
 			if (api is null)
 			{

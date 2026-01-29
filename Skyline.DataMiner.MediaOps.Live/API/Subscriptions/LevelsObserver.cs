@@ -20,7 +20,7 @@
 		/// </summary>
 		/// <param name="api">The API object to use for subscriptions.</param>
 		/// <param name="cache">The cache to update when changes occur.</param>
-		public LevelsObserver(MediaOpsLiveApi api, LevelsCache cache)
+		public LevelsObserver(IMediaOpsLiveApi api, LevelsCache cache)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 			Cache = cache ?? throw new ArgumentNullException(nameof(cache));
@@ -33,13 +33,13 @@
 		/// It raises events when levels are created, updated, or deleted.
 		/// </summary>
 		/// <param name="api">The API object to use for subscriptions.</param>
-		public LevelsObserver(MediaOpsLiveApi api) : this(api, new LevelsCache())
+		public LevelsObserver(IMediaOpsLiveApi api) : this(api, new LevelsCache())
 		{
 		}
 
 		public event EventHandler<ApiObjectsChangedEvent<Level>> LevelsChanged;
 
-		internal MediaOpsLiveApi Api { get; }
+		internal IMediaOpsLiveApi Api { get; }
 
 		public LevelsCache Cache { get; }
 

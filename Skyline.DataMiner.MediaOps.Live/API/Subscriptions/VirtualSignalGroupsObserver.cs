@@ -23,7 +23,7 @@
 		/// </summary>
 		/// <param name="api">The API object to use for subscriptions.</param>
 		/// <param name="cache">The cache to update when changes occur.</param>
-		public VirtualSignalGroupsObserver(MediaOpsLiveApi api, VirtualSignalGroupsCache cache)
+		public VirtualSignalGroupsObserver(IMediaOpsLiveApi api, VirtualSignalGroupsCache cache)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 			Cache = cache ?? throw new ArgumentNullException(nameof(cache));
@@ -36,13 +36,13 @@
 		/// It raises events when virtual signal groups are created, updated, or deleted.
 		/// </summary>
 		/// <param name="api">The API object to use for subscriptions.</param>
-		public VirtualSignalGroupsObserver(MediaOpsLiveApi api) : this(api, new VirtualSignalGroupsCache())
+		public VirtualSignalGroupsObserver(IMediaOpsLiveApi api) : this(api, new VirtualSignalGroupsCache())
 		{
 		}
 
 		public event EventHandler<ApiObjectsChangedEvent<VirtualSignalGroup>> VirtualSignalGroupsChanged;
 
-		internal MediaOpsLiveApi Api { get; }
+		internal IMediaOpsLiveApi Api { get; }
 
 		public VirtualSignalGroupsCache Cache { get; }
 

@@ -20,7 +20,7 @@
 		/// </summary>
 		/// <param name="api">The API object to use for subscriptions.</param>
 		/// <param name="cache">The cache to update when changes occur.</param>
-		public EndpointsObserver(MediaOpsLiveApi api, EndpointsCache cache)
+		public EndpointsObserver(IMediaOpsLiveApi api, EndpointsCache cache)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 			Cache = cache ?? throw new ArgumentNullException(nameof(cache));
@@ -33,13 +33,13 @@
 		/// It raises events when endpoints are created, updated, or deleted.
 		/// </summary>
 		/// <param name="api">The API object to use for subscriptions.</param>
-		public EndpointsObserver(MediaOpsLiveApi api) : this(api, new EndpointsCache())
+		public EndpointsObserver(IMediaOpsLiveApi api) : this(api, new EndpointsCache())
 		{
 		}
 
 		public event EventHandler<ApiObjectsChangedEvent<Endpoint>> EndpointsChanged;
 
-		internal MediaOpsLiveApi Api { get; }
+		internal IMediaOpsLiveApi Api { get; }
 
 		public EndpointsCache Cache { get; }
 

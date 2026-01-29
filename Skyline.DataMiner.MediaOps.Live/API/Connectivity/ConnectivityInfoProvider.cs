@@ -34,7 +34,7 @@
 		private bool _isDisposed;
 
 		public ConnectivityInfoProvider(
-			MediaOpsLiveApi api,
+			IMediaOpsLiveApi api,
 			LiteConnectivityInfoProvider liteConnectivityInfoProvider = null,
 			VirtualSignalGroupEndpointsObserver virtualSignalGroupsObserver = null,
 			LevelsObserver levelsObserver = null,
@@ -47,7 +47,7 @@
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
 
-		internal MediaOpsLiveApi Api { get; }
+		internal IMediaOpsLiveApi Api { get; }
 
 		public bool IsSubscribed { get; private set; }
 
