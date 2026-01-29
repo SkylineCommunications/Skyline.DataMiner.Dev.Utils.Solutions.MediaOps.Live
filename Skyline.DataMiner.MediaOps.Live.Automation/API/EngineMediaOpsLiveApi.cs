@@ -11,7 +11,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net;
 
-	public class EngineMediaOpsLiveApi : MediaOpsLiveApi
+	public class EngineMediaOpsLiveApi : MediaOpsLiveApi, IEngineMediaOpsLiveApi
 	{
 		public EngineMediaOpsLiveApi(IEngine engine, IConnection connection) : base(connection)
 		{

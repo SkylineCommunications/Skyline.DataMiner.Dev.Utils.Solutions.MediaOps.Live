@@ -2,7 +2,6 @@
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.Protocol.API;
 	using Skyline.DataMiner.MediaOps.Live.Protocol.Logging;
@@ -10,7 +9,7 @@
 
 	public static class Extensions
 	{
-		public static MediaOpsLiveApi GetMediaOpsLiveApi(this SLProtocol protocol)
+		public static IProtocolMediaOpsLiveApi GetMediaOpsLiveApi(this SLProtocol protocol)
 		{
 			if (protocol is null)
 			{

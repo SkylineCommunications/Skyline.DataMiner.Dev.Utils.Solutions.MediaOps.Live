@@ -7,7 +7,7 @@
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.Net;
 
-	public class GqiMediaOpsLiveApi : MediaOpsLiveApi
+	public class GqiMediaOpsLiveApi : MediaOpsLiveApi, IGqiMediaOpsLiveApi
 	{
 		public GqiMediaOpsLiveApi(GQIDMS gqiDms, IConnection connection) : base(connection)
 		{

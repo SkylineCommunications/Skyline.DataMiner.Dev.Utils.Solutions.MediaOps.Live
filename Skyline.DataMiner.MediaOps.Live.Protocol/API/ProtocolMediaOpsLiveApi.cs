@@ -7,7 +7,7 @@
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Scripting;
 
-	public class ProtocolMediaOpsLiveApi : MediaOpsLiveApi
+	public class ProtocolMediaOpsLiveApi : MediaOpsLiveApi, IProtocolMediaOpsLiveApi
 	{
 		public ProtocolMediaOpsLiveApi(SLProtocol protocol, IConnection connection) : base(connection)
 		{

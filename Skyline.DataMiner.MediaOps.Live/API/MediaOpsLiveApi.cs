@@ -2,7 +2,6 @@
 {
 	using System;
 
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
@@ -18,7 +17,7 @@
 	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 
-	public class MediaOpsLiveApi
+	public class MediaOpsLiveApi : IMediaOpsLiveApi
 	{
 		public MediaOpsLiveApi(IConnection connection)
 		{
@@ -40,15 +39,9 @@
 			Orchestration = new OrchestrationHelper(SlcOrchestrationHelper, this);
 		}
 
-		protected internal IConnection Connection { get; }
+		public IConnection Connection { get; }
 
-		protected internal ILogger Logger { get; private set; }
-
-		internal InstalledAppPackageCache InstalledAppPackages { get; }
-
-		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
-
-		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+		public ILogger Logger { get; private set; }
 
 		public MediationElements MediationElements { get; }
 
@@ -64,14 +57,15 @@
 
 		public OrchestrationHelper Orchestration { get; }
 
+		internal InstalledAppPackageCache InstalledAppPackages { get; }
+
+		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
+
+		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+
 		public void SetLogger(ILogger logger)
 		{
 			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
-		}
-
-		public IDms GetDms()
-		{
-			return Connection.GetDms();
 		}
 
 		public virtual MediaOpsLiveCache GetCache()
@@ -103,10 +97,9 @@
 		/// Installs the required DOM modules for the MediaOps.LIVE API.
 		/// </summary>
 		/// <param name="logAction">Optional action to log progress or messages during installation. If null, logging is suppressed.</param>
-		public void InstallDomModules(Action<string> logAction = null)
+		public void InstallDomModules()
 		{
-			// When no logging action is provided, use a no-op.
-			logAction ??= x => { };
+			Action<string> logAction = x => Logger?.Information(x);
 
 			DomModuleInstaller.Install(Connection.HandleMessages, new SlcConnectivityManagementDomModule(), logAction);
 			DomModuleInstaller.Install(Connection.HandleMessages, new SlcOrchestrationDomModule(), logAction);

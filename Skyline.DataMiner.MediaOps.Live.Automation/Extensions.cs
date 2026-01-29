@@ -6,7 +6,6 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.MediaOps.Live.Automation.API;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Logging;
@@ -14,7 +13,7 @@
 
 	public static class Extensions
 	{
-		public static MediaOpsLiveApi GetMediaOpsLiveApi(this IEngine engine)
+		public static IEngineMediaOpsLiveApi GetMediaOpsLiveApi(this IEngine engine)
 		{
 			if (engine is null)
 			{
