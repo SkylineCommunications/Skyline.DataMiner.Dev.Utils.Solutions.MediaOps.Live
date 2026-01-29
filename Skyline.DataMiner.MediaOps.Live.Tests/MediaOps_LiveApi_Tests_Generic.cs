@@ -3,7 +3,6 @@
 	using FluentAssertions;
 
 	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.MediaOps.Live.GQI.Metrics;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation;
@@ -16,7 +15,7 @@
 		{
 			var dms = new SimulatedDms();
 			var connection = dms.CreateConnection();
-			var api = connection.GetMediaOpsLiveApi();
+			var api = new MediaOpsLiveApi(connection);
 
 			Assert.IsFalse(api.IsInstalled());
 

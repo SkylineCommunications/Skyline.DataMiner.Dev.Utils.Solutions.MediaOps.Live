@@ -43,7 +43,7 @@
 				throw new ArgumentNullException(nameof(endpoints));
 			}
 
-			var dms = _api.GetDms();
+			var dms = _api.Connection.GetDms();
 
 			var endpointToElement = endpoints
 				.Where(e => e.Element.HasValue)
@@ -96,7 +96,7 @@
 		private IReadOnlyCollection<MediationElement> LoadMediationElements()
 		{
 			var elements = new List<MediationElement>();
-			var dms = _api.GetDms();
+			var dms = _api.Connection.GetDms();
 
 			var request = new GetLiteElementInfo
 			{

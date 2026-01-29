@@ -13,7 +13,7 @@
 
 	public interface IConnectionHandlerEngine
 	{
-		MediaOpsLiveApi Api { get; }
+		IMediaOpsLiveApi Api { get; }
 
 		ILogger Logger { get; }
 

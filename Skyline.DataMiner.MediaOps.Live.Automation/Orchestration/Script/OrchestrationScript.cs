@@ -13,6 +13,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.MediaOps.Live.Automation;
+	using Skyline.DataMiner.MediaOps.Live.Automation.API;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects;
@@ -73,8 +74,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		public DmsServiceId GetEventMonitoringService()
 		{
-			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-			OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+			var api = _engine.GetMediaOpsLiveApi();
+			var eventJobInfo = EventConfiguration.GetJobInfo(api);
 
 			if (eventJobInfo == null)
 			{
@@ -212,9 +213,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				return;
 			}
 
-			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+			var api = new EngineMediaOpsLiveApi(_engine);
 
-			OrchestrationEventExecutionHelper orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
+			var orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
 
 			IPerformanceLogger performanceLogger = PerformanceLoggerFactory.Create("ORC-OrchestrateAllConnections");
 
@@ -250,7 +251,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private OrchestrationEventConfiguration LoadEventFromMetaData(IEngine engine)
 		{
-			MediaOpsLiveApi api = engine.GetMediaOpsLiveApi();
+			var api = engine.GetMediaOpsLiveApi();
 
 			if (!TryGetMetadataValue("{Event ID}", out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid) || eventGuid == Guid.Empty)
 			{
@@ -621,8 +622,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 			if (EventConfiguration.IsStartEvent)
 			{
-				MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-				OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+				var api = _engine.GetMediaOpsLiveApi();
+				var eventJobInfo = EventConfiguration.GetJobInfo(api);
 
 				if (eventJobInfo != null)
 				{
@@ -635,8 +636,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			{
 				TearDownService(_engine);
 
-				MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-				OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+				var api = _engine.GetMediaOpsLiveApi();
+				var eventJobInfo = EventConfiguration.GetJobInfo(api);
 
 				if (eventJobInfo == null || eventJobInfo.MonitoringService == default)
 				{

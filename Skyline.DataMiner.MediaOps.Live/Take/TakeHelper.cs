@@ -25,7 +25,7 @@
 	{
 		private readonly MediaOpsLiveApi _api;
 
-		protected internal TakeHelper(MediaOpsLiveApi api)
+		internal TakeHelper(MediaOpsLiveApi api)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 		}
@@ -367,7 +367,7 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var dms = _api.GetDms();
+				var dms = _api.Connection.GetDms();
 
 				GetDestinationElements(dms, takeContexts, performanceTracker);
 				GetMediationElements(takeContexts, performanceTracker);

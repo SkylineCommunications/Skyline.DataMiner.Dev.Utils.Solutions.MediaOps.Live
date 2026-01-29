@@ -44,7 +44,5 @@
 		bool IsInstalled(out string version);
 
 		void SetLogger(ILogger logger);
-
-		ILogger Logger { get; }
 	}
 }

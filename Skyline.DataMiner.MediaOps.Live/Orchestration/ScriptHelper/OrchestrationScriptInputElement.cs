@@ -45,7 +45,7 @@
 			return GetApplicableElements(connection.GetDms());
 		}
 
-		public ICollection<IDmsElement> GetApplicableElements(MediaOpsLiveApi api)
+		public ICollection<IDmsElement> GetApplicableElements(IMediaOpsLiveApi api)
 		{
 			if (api is null)
 			{

@@ -13,7 +13,7 @@
 		private readonly LiteConnectivityInfoProvider _connectivityInfoProvider;
 		private readonly bool _ownsConnectivityInfoProvider;
 
-		public ConnectionMonitor(MediaOpsLiveApi api, LiteConnectivityInfoProvider liteConnectivityInfoProvider = null)
+		public ConnectionMonitor(IMediaOpsLiveApi api, LiteConnectivityInfoProvider liteConnectivityInfoProvider = null)
 		{
 			if (api is null)
 			{

@@ -28,7 +28,7 @@
 		private readonly FilterElement<DomInstance> _domDefinitionFilter;
 		private readonly ApiRepositoryQueryProvider<T> _queryProvider;
 
-		protected Repository(MediaOpsLiveApi api, DomHelper helper)
+		protected Repository(IMediaOpsLiveApi api, DomHelper helper)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 			Helper = helper ?? throw new ArgumentNullException(nameof(helper));
@@ -37,7 +37,7 @@
 			_queryProvider = new ApiRepositoryQueryProvider<T>(this);
 		}
 
-		protected internal MediaOpsLiveApi Api { get; }
+		protected internal IMediaOpsLiveApi Api { get; }
 
 		protected internal DomHelper Helper { get; }
 

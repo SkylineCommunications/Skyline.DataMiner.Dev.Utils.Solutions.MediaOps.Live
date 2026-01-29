@@ -20,7 +20,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
 		/// </summary>
 		/// <param name="api">The API object to use for subscriptions.</param>
 		/// <param name="cache">The cache to update when changes occur.</param>
-		public TransportTypesObserver(MediaOpsLiveApi api, TransportTypesCache cache)
+		public TransportTypesObserver(IMediaOpsLiveApi api, TransportTypesCache cache)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 			Cache = cache ?? throw new ArgumentNullException(nameof(cache));
@@ -33,13 +33,13 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
 		/// It raises events when transport types are created, updated, or deleted.
 		/// </summary>
 		/// <param name="api">The API object to use for subscriptions.</param>
-		public TransportTypesObserver(MediaOpsLiveApi api) : this(api, new TransportTypesCache())
+		public TransportTypesObserver(IMediaOpsLiveApi api) : this(api, new TransportTypesCache())
 		{
 		}
 
 		public event EventHandler<ApiObjectsChangedEvent<TransportType>> TransportTypesChanged;
 
-		internal MediaOpsLiveApi Api { get; }
+		internal IMediaOpsLiveApi Api { get; }
 
 		public TransportTypesCache Cache { get; }
 

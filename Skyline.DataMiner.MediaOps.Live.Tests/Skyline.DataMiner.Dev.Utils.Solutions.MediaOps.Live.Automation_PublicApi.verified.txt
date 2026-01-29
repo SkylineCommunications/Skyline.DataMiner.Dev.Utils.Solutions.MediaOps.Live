@@ -5,7 +5,7 @@
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8", FrameworkDisplayName=".NET Framework 4.8")]
 namespace Skyline.DataMiner.MediaOps.Live.Automation.API
 {
-    public class EngineMediaOpsLiveApi : Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi
+    public class EngineMediaOpsLiveApi : Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi, Skyline.DataMiner.MediaOps.Live.API.IMediaOpsLiveApi, Skyline.DataMiner.MediaOps.Live.Automation.API.IEngineMediaOpsLiveApi
     {
         public EngineMediaOpsLiveApi(Skyline.DataMiner.Automation.IEngine engine) { }
         public EngineMediaOpsLiveApi(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Net.IConnection connection) { }
@@ -13,12 +13,16 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.API
         public override Skyline.DataMiner.MediaOps.Live.API.Caching.MediaOpsLiveCache GetCache() { }
         public override Skyline.DataMiner.MediaOps.Live.Take.TakeHelper GetConnectionHandler() { }
     }
+    public interface IEngineMediaOpsLiveApi : Skyline.DataMiner.MediaOps.Live.API.IMediaOpsLiveApi
+    {
+        Skyline.DataMiner.Automation.IEngine Engine { get; }
+    }
 }
 namespace Skyline.DataMiner.MediaOps.Live.Automation
 {
     public static class Extensions
     {
-        public static Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi GetMediaOpsLiveApi(this Skyline.DataMiner.Automation.IEngine engine) { }
+        public static Skyline.DataMiner.MediaOps.Live.Automation.API.IEngineMediaOpsLiveApi GetMediaOpsLiveApi(this Skyline.DataMiner.Automation.IEngine engine) { }
         public static Skyline.DataMiner.MediaOps.Live.API.Caching.MediaOpsLiveCache GetMediaOpsLiveCache(this Skyline.DataMiner.Automation.IEngine engine) { }
         public static System.Collections.Generic.IList<T> ReadScriptParamListFromApp<T>(this Skyline.DataMiner.Automation.IEngine engine, string name) { }
         public static T ReadScriptParamSingleFromApp<T>(this Skyline.DataMiner.Automation.IEngine engine, string name) { }
@@ -77,7 +81,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandler
     }
     public interface IConnectionHandlerEngine
     {
-        Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi Api { get; }
+        Skyline.DataMiner.MediaOps.Live.API.IMediaOpsLiveApi Api { get; }
         Skyline.DataMiner.MediaOps.Live.Logging.ILogger Logger { get; }
         System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetAllEndpoints();
         System.Collections.Generic.IEnumerable<Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> GetAllEndpoints(Skyline.DataMiner.MediaOps.Live.API.Enums.EndpointRole role);

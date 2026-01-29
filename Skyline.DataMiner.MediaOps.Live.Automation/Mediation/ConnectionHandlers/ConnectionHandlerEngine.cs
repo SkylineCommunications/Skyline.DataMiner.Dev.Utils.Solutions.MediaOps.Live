@@ -38,7 +38,7 @@
 
 		public ILogger Logger { get; }
 
-		public MediaOpsLiveApi Api { get; }
+		public IMediaOpsLiveApi Api { get; }
 
 		public void Log(string message, LogType logLevel = LogType.Information)
 		{

@@ -41,8 +41,6 @@
 
 		public IConnection Connection { get; }
 
-		public ILogger Logger { get; private set; }
-
 		public MediationElements MediationElements { get; }
 
 		public EndpointRepository Endpoints { get; }
@@ -62,6 +60,8 @@
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
 		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+
+		internal ILogger Logger { get; private set; }
 
 		public void SetLogger(ILogger logger)
 		{

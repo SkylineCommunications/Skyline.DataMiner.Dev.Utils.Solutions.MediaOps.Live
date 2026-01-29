@@ -5,7 +5,11 @@
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8", FrameworkDisplayName=".NET Framework 4.8")]
 namespace Skyline.DataMiner.MediaOps.Live.Protocol.API
 {
-    public class ProtocolMediaOpsLiveApi : Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi
+    public interface IProtocolMediaOpsLiveApi : Skyline.DataMiner.MediaOps.Live.API.IMediaOpsLiveApi
+    {
+        Skyline.DataMiner.Scripting.SLProtocol Protocol { get; }
+    }
+    public class ProtocolMediaOpsLiveApi : Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi, Skyline.DataMiner.MediaOps.Live.API.IMediaOpsLiveApi, Skyline.DataMiner.MediaOps.Live.Protocol.API.IProtocolMediaOpsLiveApi
     {
         public ProtocolMediaOpsLiveApi(Skyline.DataMiner.Scripting.SLProtocol protocol) { }
         public ProtocolMediaOpsLiveApi(Skyline.DataMiner.Scripting.SLProtocol protocol, Skyline.DataMiner.Net.IConnection connection) { }
@@ -17,7 +21,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Protocol
 {
     public static class Extensions
     {
-        public static Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi GetMediaOpsLiveApi(this Skyline.DataMiner.Scripting.SLProtocol protocol) { }
+        public static Skyline.DataMiner.MediaOps.Live.Protocol.API.IProtocolMediaOpsLiveApi GetMediaOpsLiveApi(this Skyline.DataMiner.Scripting.SLProtocol protocol) { }
         public static Skyline.DataMiner.MediaOps.Live.API.Caching.MediaOpsLiveCache GetMediaOpsLiveCache(this Skyline.DataMiner.Scripting.SLProtocol protocol) { }
     }
 }
