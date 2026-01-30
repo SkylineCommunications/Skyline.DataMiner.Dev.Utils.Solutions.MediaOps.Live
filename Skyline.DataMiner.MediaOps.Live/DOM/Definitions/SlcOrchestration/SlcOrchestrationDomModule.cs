@@ -1,11 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Definitions.SlcOrchestration
 {
 	using System.Collections.Generic;
-
-	using Skyline.DataMiner.MediaOps.Live.DOM.Interfaces;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel.Settings;
 	using Skyline.DataMiner.Net.Apps.Modules;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Interfaces;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
 
 	public class SlcOrchestrationDomModule : IDomModuleInfo
 	{

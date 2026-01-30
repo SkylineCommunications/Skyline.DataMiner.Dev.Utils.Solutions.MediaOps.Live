@@ -1,16 +1,16 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Plan
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Plan
 {
 	using System;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Automation.API;
-	using Skyline.DataMiner.MediaOps.Live.Plan;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler;
 	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums;
 
-	using OrchestrationEvent = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent;
+	using OrchestrationEvent = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent;
 
 	internal class EngineMediaOpsPlanHelper : MediaOpsPlanHelper
 	{

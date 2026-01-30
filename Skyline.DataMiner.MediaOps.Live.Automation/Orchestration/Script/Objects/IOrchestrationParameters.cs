@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects
 {
 	using System;
 	using System.Collections.Generic;

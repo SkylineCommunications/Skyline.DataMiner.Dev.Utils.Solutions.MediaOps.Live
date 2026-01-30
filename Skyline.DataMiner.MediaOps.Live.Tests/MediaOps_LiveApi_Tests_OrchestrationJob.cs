@@ -1,10 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_OrchestrationJob

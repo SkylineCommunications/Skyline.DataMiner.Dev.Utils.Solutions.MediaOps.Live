@@ -1,41 +1,38 @@
-namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Threading.Tasks;
-
 	using Newtonsoft.Json;
-
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Automation;
-	using Skyline.DataMiner.MediaOps.Live.Automation.API;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Enums;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
-
-	using DropdownParameterDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.DropdownParameterDisplayInfo;
+	using DropdownParameterDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.DropdownParameterDisplayInfo;
 	using GroupPresetOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<Mvc.DisplayTypes.PresetGroupDisplayInfo.PresetInfo>;
-	using NumericParameterDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.NumericParameterDisplayInfo;
+	using NumericParameterDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.NumericParameterDisplayInfo;
 	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
-	using PresetGroupDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.PresetGroupDisplayInfo;
+	using PresetGroupDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.PresetGroupDisplayInfo;
 	using ValueOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<object>;
 
 	public abstract class OrchestrationScript

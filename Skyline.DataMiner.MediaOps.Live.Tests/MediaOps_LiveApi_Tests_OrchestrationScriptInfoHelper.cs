@@ -1,11 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
 	using Newtonsoft.Json;
-
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_OrchestrationScriptInfoHelper

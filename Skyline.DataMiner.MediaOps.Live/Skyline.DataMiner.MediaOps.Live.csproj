@@ -7,7 +7,7 @@
 		<Copyright>Copyright © 2025</Copyright>
 		<AssemblyName>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live</AssemblyName>
 		<AssemblyTitle>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live</AssemblyTitle>
-		<RootNamespace>Skyline.DataMiner.MediaOps.Live</RootNamespace>
+		<RootNamespace>Skyline.DataMiner.Solutions.MediaOps.Live</RootNamespace>
 
 		<PackageId>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live</PackageId>
 		<PackageTags>Skyline;DataMiner</PackageTags>

@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity
 {
 	public enum EndpointConnectionState
 	{

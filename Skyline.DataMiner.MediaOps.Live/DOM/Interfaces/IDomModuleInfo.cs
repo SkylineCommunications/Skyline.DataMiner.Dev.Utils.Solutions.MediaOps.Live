@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Interfaces
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Interfaces
 {
 	using System.Collections.Generic;
 

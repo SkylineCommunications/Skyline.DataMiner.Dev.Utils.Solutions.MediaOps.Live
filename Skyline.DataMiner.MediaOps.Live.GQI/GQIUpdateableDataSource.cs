@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.GQI
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.GQI
 {
 	using System;
 	using System.Collections.Generic;

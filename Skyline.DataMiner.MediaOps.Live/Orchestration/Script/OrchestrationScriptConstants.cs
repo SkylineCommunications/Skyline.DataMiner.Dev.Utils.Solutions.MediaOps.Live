@@ -1,6 +1,6 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script
 {
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Enums;
 
 	internal static class OrchestrationScriptConstants
 	{

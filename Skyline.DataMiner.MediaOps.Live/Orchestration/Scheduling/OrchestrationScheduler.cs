@@ -1,17 +1,16 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Async;
 	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Solutions.MediaOps.Live;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 
 	/// <summary>
 	/// Class that handled orchestration scheduled tasks that execute the orchestration for orchestration events.

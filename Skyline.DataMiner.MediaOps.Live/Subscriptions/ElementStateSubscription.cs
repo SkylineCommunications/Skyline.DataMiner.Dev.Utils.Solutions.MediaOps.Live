@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Subscriptions
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Subscriptions
 {
 	using System;
 	using System.Collections.Concurrent;

@@ -1,4 +1,4 @@
-namespace Skyline.DataMiner.MediaOps.Live.Automation.Tools
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Tools
 {
 	using System;
 

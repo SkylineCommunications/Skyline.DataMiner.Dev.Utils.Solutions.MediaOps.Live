@@ -1,9 +1,9 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Take
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
 {
 	using System;
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class VsgConnectionRequest : ConnectionRequest
 	{

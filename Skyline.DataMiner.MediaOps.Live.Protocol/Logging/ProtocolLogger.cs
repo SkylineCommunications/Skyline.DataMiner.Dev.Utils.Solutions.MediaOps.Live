@@ -1,11 +1,9 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Protocol.Logging
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Protocol.Logging
 {
 	using System;
-
-	using Skyline.DataMiner.MediaOps.Live.Logging;
 	using Skyline.DataMiner.Scripting;
-
-	using LogType = Skyline.DataMiner.MediaOps.Live.Logging.LogType;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Logging;
+	using LogType = Skyline.DataMiner.Solutions.MediaOps.Live.Logging.LogType;
 
 	public class ProtocolLogger : LoggerBase
 	{

@@ -1,14 +1,13 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using SLDataGateway.API.Types.Querying;
 
 	internal class JobInfoRepository : Repository<OrchestrationJobInfo>

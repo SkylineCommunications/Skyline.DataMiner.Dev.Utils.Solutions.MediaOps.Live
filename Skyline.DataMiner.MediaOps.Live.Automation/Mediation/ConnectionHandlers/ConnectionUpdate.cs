@@ -1,8 +1,8 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Mediation.ConnectionHandlers
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class ConnectionUpdate
 	{

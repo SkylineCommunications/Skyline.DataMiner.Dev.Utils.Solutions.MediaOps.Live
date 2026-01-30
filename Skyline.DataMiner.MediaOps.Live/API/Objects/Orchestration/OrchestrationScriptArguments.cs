@@ -1,6 +1,6 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
 {
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 
 	/// <summary>
 	/// An argument that can be applied to an orchestration script.

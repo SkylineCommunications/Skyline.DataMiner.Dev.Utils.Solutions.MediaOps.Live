@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 
 	public sealed class MediationElement
 	{

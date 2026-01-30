@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
 {
 	/// <summary>
 	/// Contains information on a specific mapping between a source and destination level.

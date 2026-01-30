@@ -1,23 +1,20 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Querying;
-	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
-	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Querying;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Utils.DOM.Extensions;
-
 	using SLDataGateway.API.Querying;
 	using SLDataGateway.API.Types.Querying;
-
 	using SDM = Skyline.DataMiner.SDM;
 
 	public abstract class Repository<T> : SDM.IBulkRepository<T>, SDM.IQueryableRepository<T>

@@ -1,6 +1,6 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting
 {
-	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 
 	public class MediaOpsLiveApiMock : MediaOpsLiveApi
 	{

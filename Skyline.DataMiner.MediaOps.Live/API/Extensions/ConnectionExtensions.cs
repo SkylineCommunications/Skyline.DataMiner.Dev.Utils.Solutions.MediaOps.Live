@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Extensions
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Extensions
 {
 	using System;
 

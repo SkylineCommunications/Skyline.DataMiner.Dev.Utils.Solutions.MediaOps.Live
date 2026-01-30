@@ -1,13 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tools
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tools
 {
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Runtime.ExceptionServices;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 
 	internal static class AutomationHelper
 	{

@@ -1,8 +1,8 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting.TestData
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.TestData
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class TsoipTransportType : TransportType
 	{

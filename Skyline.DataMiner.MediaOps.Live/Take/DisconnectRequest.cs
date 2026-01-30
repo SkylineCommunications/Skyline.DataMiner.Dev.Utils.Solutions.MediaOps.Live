@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Take
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
 {
 	public abstract class DisconnectRequest : Request
 	{

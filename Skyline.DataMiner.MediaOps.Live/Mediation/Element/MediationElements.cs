@@ -1,15 +1,14 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Solutions.MediaOps.Live;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
 	public sealed class MediationElements
 	{

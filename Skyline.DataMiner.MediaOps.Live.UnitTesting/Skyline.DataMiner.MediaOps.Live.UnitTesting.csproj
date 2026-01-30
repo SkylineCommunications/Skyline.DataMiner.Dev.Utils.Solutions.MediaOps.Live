@@ -7,7 +7,7 @@
 		<Copyright>Copyright © 2025</Copyright>
 		<AssemblyName>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting</AssemblyName>
 		<AssemblyTitle>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting</AssemblyTitle>
-		<RootNamespace>Skyline.DataMiner.MediaOps.Live.UnitTesting</RootNamespace>
+		<RootNamespace>Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting</RootNamespace>
 
 		<PackageId>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting</PackageId>
 		<PackageTags>Skyline;DataMiner</PackageTags>

@@ -1,14 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Tools
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model;
 	using Skyline.DataMiner.Utils.DOM.Extensions;
-
 	using SLDataGateway.API.Types.Querying;
 
 	internal static class InstanceFactory

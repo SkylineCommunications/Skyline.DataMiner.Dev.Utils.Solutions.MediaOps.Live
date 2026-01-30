@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Caching
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching
 {
 	using System;
 	using System.Collections.Generic;
@@ -6,8 +6,8 @@
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
 

@@ -1,17 +1,17 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration;
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-using Skyline.DataMiner.MediaOps.Live.API;
-using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
-using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
-using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
-using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
-using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions;
+using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Helpers;
+using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
+using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
+using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
 using Skyline.DataMiner.Net.Messages.SLDataGateway;
 using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 

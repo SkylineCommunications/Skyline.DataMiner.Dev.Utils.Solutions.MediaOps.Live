@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Tools
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools
 {
 	using System;
 	using System.ComponentModel;

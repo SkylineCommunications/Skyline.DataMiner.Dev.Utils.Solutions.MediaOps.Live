@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections
 {
 	using System;
 	using System.Linq;
 
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
-	using DropdownParameterDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.DropdownParameterDisplayInfo;
+	using DropdownParameterDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.DropdownParameterDisplayInfo;
 
 	internal class DropdownParameterSection : ParameterSection
 	{

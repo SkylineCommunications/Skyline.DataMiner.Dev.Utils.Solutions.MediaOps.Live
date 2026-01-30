@@ -1,12 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper
 {
 	using System;
 	using System.Collections.Generic;
-
-	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 
 	public class OrchestrationScriptInputInfo
 	{

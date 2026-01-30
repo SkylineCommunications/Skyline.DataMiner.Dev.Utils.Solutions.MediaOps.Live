@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Querying
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Querying
 {
 	using System;
 	using System.Linq;
 	using System.Linq.Expressions;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories;
 
 	public class ApiRepositoryQueryProvider<T> : IQueryProvider where T : ApiObject<T>
 	{

@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting.Connection
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Connection
 {
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;

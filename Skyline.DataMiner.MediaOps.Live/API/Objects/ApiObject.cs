@@ -1,8 +1,8 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model;
 
 	public abstract class ApiObject<T> : IApiObjectReference, IEquatable<ApiObject<T>>
 		where T : ApiObject<T>

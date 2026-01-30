@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting.Extensions
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Extensions
 {
 	using System;
 	using System.Linq;

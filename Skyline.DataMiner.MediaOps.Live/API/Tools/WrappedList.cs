@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Tools
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools
 {
 	using System;
 	using System.Collections;

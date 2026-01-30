@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories
 {
 	using System;
 	using System.Collections.Concurrent;
@@ -6,7 +6,7 @@
 	using System.Linq;
 	using System.Timers;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 
 	internal class WriteBuffer<T> : IDisposable where T : ApiObject<T>
 	{

@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration
 {
 	using System;
 	using System.Collections.Generic;
@@ -6,7 +6,7 @@
 
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 
 	internal partial class ConnectionSection
 	{

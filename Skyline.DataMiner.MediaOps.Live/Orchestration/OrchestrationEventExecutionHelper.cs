@@ -1,36 +1,34 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Threading;
 	using System.Threading.Tasks;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Enums;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
-	using Skyline.DataMiner.MediaOps.Live.Take;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
-
-	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection;
-	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
-	using LevelMapping = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.LevelMapping;
+	using Connection = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.Connection;
+	using Level = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
+	using LevelMapping = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.LevelMapping;
 	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
 
 	internal class OrchestrationEventExecutionHelper

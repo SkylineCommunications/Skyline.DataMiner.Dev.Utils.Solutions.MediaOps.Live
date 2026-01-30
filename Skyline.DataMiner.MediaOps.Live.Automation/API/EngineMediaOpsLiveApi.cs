@@ -1,16 +1,15 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.API
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.API
 {
 	using System;
-
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Logging;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Plan;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Take;
-	using Skyline.DataMiner.MediaOps.Live.Plan;
-	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Logging;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Plan;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Take;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 
 	public class EngineMediaOpsLiveApi : MediaOpsLiveApi, IEngineMediaOpsLiveApi
 	{

@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live
 {
 	/// <summary>
 	/// Contains static fields used in MediaOps Live solution.

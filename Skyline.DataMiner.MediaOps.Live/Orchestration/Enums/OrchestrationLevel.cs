@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Enums
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Enums
 {
 	internal enum OrchestrationLevel
 	{
