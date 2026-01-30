@@ -1,9 +1,9 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.Logging;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Logging;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
 
 	internal static class PerformanceLoggerFactory

@@ -1,18 +1,16 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 {
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Newtonsoft.Json;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
 	internal static class OrchestrationAutomationHelper
 	{

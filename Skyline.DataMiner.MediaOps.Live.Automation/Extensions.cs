@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation
 {
 	using System;
 	using System.Collections.Generic;
@@ -6,10 +6,10 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.Automation.API;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Logging;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Logging;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Tools;
 
 	public static class Extensions
 	{

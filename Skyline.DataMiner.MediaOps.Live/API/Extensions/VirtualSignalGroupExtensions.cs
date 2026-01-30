@@ -1,13 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Extensions
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Extensions
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
-	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net.Helper;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Extensions;
 
 	public static class VirtualSignalGroupExtensions
 	{

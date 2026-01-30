@@ -1,15 +1,14 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API
 {
 	using System;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Logging;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Logging;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 
 	public interface IMediaOpsLiveApi
 	{

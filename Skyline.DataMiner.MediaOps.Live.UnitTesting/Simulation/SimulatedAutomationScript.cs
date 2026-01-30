@@ -1,9 +1,9 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 {
 	using System;
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 
 	public class SimulatedAutomationScript
 	{

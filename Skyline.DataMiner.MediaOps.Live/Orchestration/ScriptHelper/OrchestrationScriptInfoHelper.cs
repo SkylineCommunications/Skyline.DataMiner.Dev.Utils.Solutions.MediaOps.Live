@@ -1,21 +1,19 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Newtonsoft.Json;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.Advanced;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 
 	/// <summary>
 	/// Helper class to retrieve orchestration script input information.

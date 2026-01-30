@@ -1,12 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class VirtualSignalGroupsObserver : IDisposable
 	{

@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration
 {
 	internal partial class OrchestrationEventInstance
 	{

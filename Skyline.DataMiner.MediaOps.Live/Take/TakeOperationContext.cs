@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Take
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
 {
 	using System;
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element;
 
 	internal abstract class TakeOperationContext
 	{

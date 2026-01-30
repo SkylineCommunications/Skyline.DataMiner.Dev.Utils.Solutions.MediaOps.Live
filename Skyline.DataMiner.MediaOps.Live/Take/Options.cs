@@ -1,6 +1,6 @@
-namespace Skyline.DataMiner.MediaOps.Live.Take
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
 {
-	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity;
 
 	public abstract class OptionsBase
 	{

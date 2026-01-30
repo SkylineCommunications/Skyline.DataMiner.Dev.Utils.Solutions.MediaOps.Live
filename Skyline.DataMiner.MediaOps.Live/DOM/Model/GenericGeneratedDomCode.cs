@@ -4,7 +4,7 @@
 //     Changes to this file will be lost if the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model
 {
 	using System;
 	using System.Linq;
@@ -270,7 +270,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
 //     Changes to this file will be lost if the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-namespace Skyline.DataMiner.MediaOps.Live.DOM.Model
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model
 {
 	using System;
 	using System.Linq;

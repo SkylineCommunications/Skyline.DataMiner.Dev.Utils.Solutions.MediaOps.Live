@@ -1,10 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element
 {
 	using System;
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public sealed class PendingConnectionAction : IEquatable<PendingConnectionAction>
 	{

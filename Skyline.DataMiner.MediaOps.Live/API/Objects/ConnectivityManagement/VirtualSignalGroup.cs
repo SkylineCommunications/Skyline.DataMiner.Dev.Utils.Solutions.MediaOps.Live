@@ -1,18 +1,16 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.API.Validation;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
-
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Validation;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
 
 	public class VirtualSignalGroup : ApiObject<VirtualSignalGroup>

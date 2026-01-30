@@ -1,9 +1,9 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
 	using FluentAssertions;
 
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_MediationElements

@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Take
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
 {
 	using System;
 	using System.Collections.Generic;
@@ -10,15 +10,15 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
-	using Skyline.DataMiner.MediaOps.Live.API.Exceptions;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Extensions;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Extensions;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.ConnectionHandlers;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.ConnectionHandlers.Data;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.InterApp.Messages;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
 	public class TakeHelper

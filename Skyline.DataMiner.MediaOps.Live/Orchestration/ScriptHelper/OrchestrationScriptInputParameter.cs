@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper
 {
 	using System;
 	using System.Collections.Generic;

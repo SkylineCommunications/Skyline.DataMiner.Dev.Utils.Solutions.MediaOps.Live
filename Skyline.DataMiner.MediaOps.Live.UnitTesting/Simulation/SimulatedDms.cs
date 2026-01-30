@@ -1,17 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 {
 	using System;
 	using System.Collections;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Newtonsoft.Json;
-
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Connection;
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Parameters;
 	using Skyline.DataMiner.Net.AppPackages;
 	using Skyline.DataMiner.Net.AppPackages.Messages;
 	using Skyline.DataMiner.Net.Automation;
@@ -19,8 +13,11 @@
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.Advanced;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Connection;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Parameters;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
-
 	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
 	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
 

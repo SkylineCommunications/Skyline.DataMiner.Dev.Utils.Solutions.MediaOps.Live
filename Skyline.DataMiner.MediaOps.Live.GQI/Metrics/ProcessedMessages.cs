@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.GQI.Metrics
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.GQI.Metrics
 {
 	using System;
 	using System.Collections.Generic;

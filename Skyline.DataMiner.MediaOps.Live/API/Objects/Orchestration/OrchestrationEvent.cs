@@ -1,14 +1,13 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
 {
 	using System;
 	using System.Collections.Generic;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
 
 	/// <summary>
 	/// Information about an orchestration event.

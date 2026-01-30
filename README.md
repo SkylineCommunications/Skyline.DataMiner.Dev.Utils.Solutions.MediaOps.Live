@@ -1,4 +1,4 @@
-# Skyline.DataMiner.MediaOps.Live
+# Skyline.DataMiner.Solutions.MediaOps.Live
 
 ## Documentation
 

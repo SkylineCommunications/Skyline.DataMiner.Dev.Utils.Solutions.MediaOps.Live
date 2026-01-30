@@ -1,9 +1,9 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Exceptions
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
 {
 	using System;
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.Take;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 
 	public class DisconnectFailedException : Exception
 	{

@@ -1,14 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Caching
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching
 {
 	using System;
 	using System.Threading;
-
-	using Skyline.DataMiner.MediaOps.Live.API;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
-	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
 	public sealed class MediaOpsLiveCache : IDisposable
 	{
@@ -205,7 +203,7 @@
 
 			try
 			{
-				if (baseConnection.GetType().FullName == "Skyline.DataMiner.MediaOps.Live.UnitTesting.SLNetConnectionMock")
+				if (baseConnection.GetType().FullName == "Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.SLNetConnectionMock")
 				{
 					// If the connection is a mock connection used for unit testing, use the existing connection directly.
 					// Such connection cannot be cloned.

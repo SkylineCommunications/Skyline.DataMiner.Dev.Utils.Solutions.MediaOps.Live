@@ -1,12 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
 	using FluentAssertions;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting.TestData;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.TestData;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_Endpoints

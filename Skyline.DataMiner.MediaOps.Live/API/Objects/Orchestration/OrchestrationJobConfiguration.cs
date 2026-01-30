@@ -1,11 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 
 	/// <summary>
 	///     This object groups the orchestration event configurations belonging to the same job.

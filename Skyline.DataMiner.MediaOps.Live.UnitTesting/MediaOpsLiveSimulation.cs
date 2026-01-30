@@ -1,24 +1,22 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting
 {
 	using System;
 	using System.Collections.Generic;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Extensions;
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation;
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting.TestData;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Extensions;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.TestData;
 	using Skyline.DataMiner.Utils.Categories.API;
 	using Skyline.DataMiner.Utils.Categories.API.Objects;
-
-	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
+	using Level = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
 	public class MediaOpsLiveSimulation
 	{

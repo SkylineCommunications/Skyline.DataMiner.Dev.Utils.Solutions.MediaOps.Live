@@ -1,9 +1,9 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 
 	public sealed class LevelEndpoint : IEquatable<LevelEndpoint>
 	{

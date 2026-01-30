@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element
 {
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 

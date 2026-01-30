@@ -1,7 +1,7 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Protocol.API
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Protocol.API
 {
-	using Skyline.DataMiner.MediaOps.Live.API;
 	using Skyline.DataMiner.Scripting;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 
 	public interface IProtocolMediaOpsLiveApi : IMediaOpsLiveApi
 	{

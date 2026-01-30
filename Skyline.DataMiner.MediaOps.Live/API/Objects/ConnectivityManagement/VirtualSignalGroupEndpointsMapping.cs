@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
 	public class VirtualSignalGroupEndpointsMapping
 	{

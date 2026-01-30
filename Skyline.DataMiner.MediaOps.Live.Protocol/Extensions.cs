@@ -1,10 +1,9 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Protocol
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Protocol
 {
 	using System;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.Protocol.API;
 	using Skyline.DataMiner.Scripting;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Protocol.API;
 
 	public static class Extensions
 	{

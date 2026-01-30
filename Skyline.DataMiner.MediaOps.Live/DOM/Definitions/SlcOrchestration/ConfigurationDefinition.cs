@@ -1,15 +1,14 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Definitions.SlcOrchestration
 {
 	using System;
 	using System.Collections.Generic;
-
-	using Skyline.DataMiner.MediaOps.Live.DOM.Interfaces;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel.Concatenation;
 	using Skyline.DataMiner.Net.Apps.Sections.SectionDefinitions;
 	using Skyline.DataMiner.Net.Sections;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Interfaces;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
 
 	internal class ConfigurationDefinition : IDomDefinitionInfo
 	{

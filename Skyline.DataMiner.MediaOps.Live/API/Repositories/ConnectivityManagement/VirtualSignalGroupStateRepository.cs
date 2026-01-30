@@ -1,18 +1,16 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
-	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
-
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Extensions;
 	using SLDataGateway.API.Types.Querying;
 
 	public class VirtualSignalGroupStateRepository : Repository<VirtualSignalGroupState>

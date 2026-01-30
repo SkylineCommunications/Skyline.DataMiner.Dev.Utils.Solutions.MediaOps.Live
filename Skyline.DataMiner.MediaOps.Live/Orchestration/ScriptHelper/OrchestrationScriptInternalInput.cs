@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper
 {
 	using System;
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Enums;
 
 	internal class OrchestrationScriptInternalInput
 	{

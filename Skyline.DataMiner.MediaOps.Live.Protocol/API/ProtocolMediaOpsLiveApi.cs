@@ -1,12 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Protocol.API
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Protocol.API
 {
 	using System;
-
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.Protocol.Logging;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Scripting;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Protocol.Logging;
 
 	public class ProtocolMediaOpsLiveApi : MediaOpsLiveApi, IProtocolMediaOpsLiveApi
 	{

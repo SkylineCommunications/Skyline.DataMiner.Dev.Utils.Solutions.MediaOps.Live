@@ -1,10 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element
 {
 	using System;
 	using System.Linq;
 
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.Subscriptions;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Subscriptions;
 
 	public sealed class MediationElementSubscription : IDisposable
 	{

@@ -1,9 +1,9 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class VirtualSignalGroupEndpointsObserver : IDisposable
 	{

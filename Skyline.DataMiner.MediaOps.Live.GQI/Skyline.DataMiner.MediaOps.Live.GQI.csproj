@@ -7,7 +7,7 @@
 		<Copyright>Copyright © 2025</Copyright>
 		<AssemblyName>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI</AssemblyName>
 		<AssemblyTitle>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI</AssemblyTitle>
-		<RootNamespace>Skyline.DataMiner.MediaOps.Live.GQI</RootNamespace>
+		<RootNamespace>Skyline.DataMiner.Solutions.MediaOps.Live.GQI</RootNamespace>
 
 		<PackageId>Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI</PackageId>
 		<PackageTags>Skyline;DataMiner</PackageTags>

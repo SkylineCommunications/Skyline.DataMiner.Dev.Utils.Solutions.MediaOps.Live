@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Mediation.ConnectionHandlers
 {
 	using System;
 	using System.Collections.Generic;
@@ -7,10 +7,10 @@
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Logging;
-	using Skyline.DataMiner.MediaOps.Live.Logging;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Logging;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Logging;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.ConnectionHandlers;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.ConnectionHandlers.Data;
 
 	public abstract class ConnectionHandler
 	{

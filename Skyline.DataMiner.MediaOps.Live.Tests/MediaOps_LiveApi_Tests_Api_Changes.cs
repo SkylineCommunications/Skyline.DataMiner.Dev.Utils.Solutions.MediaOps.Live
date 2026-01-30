@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
 	using System.Reflection;
 

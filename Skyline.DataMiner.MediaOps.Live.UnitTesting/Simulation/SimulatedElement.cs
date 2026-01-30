@@ -1,12 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting.Simulation
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 {
 	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
-
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting.Parameters;
 	using Skyline.DataMiner.Net.Messages;
-
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Parameters;
 	using DmsElementId = Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId;
 
 	public sealed class SimulatedElement

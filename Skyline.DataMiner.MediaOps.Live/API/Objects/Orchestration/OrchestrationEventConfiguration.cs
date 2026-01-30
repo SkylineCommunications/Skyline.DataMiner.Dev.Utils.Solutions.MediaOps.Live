@@ -1,12 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
 
 	/// <summary>
 	/// This type inherits the information from <see cref="OrchestrationEvent"/> and exposes the full event configuration.

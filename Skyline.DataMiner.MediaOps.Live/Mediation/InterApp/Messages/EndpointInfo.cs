@@ -1,8 +1,8 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.InterApp.Messages
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class EndpointInfo
 	{
