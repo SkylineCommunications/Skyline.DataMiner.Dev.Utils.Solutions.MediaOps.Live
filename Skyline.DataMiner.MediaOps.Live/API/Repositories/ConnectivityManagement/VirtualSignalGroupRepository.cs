@@ -173,7 +173,7 @@
 			return newInstance;
 		}
 
-		public override IEnumerable<VirtualSignalGroup> CreateOrUpdate(IEnumerable<VirtualSignalGroup> instances)
+		public override IReadOnlyCollection<VirtualSignalGroup> CreateOrUpdate(IEnumerable<VirtualSignalGroup> instances)
 		{
 			if (instances is null)
 			{
@@ -181,10 +181,11 @@
 			}
 
 			var instancesCollection = instances.AsCollection();
+
 			if (instancesCollection.Count == 0)
 			{
 				// Nothing to create or update
-				return instancesCollection;
+				return [];
 			}
 
 			// First create or update the instances
