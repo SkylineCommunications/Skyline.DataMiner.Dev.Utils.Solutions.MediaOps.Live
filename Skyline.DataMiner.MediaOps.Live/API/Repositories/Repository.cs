@@ -74,19 +74,19 @@
 			return CreateInstance(newInstance);
 		}
 
-		public virtual IEnumerable<T> CreateOrUpdate(IEnumerable<T> instances)
+		public virtual IReadOnlyCollection<T> CreateOrUpdate(IEnumerable<T> instances)
 		{
 			if (instances == null)
 			{
 				throw new ArgumentNullException(nameof(instances));
 			}
 
-			var instanceCollection = instances as ICollection<T> ?? instances.ToList();
+			var instanceCollection = instances.AsCollection();
 
 			if (instanceCollection.Count == 0)
 			{
 				// Nothing to create or update.
-				return instanceCollection;
+				return [];
 			}
 
 			ValidateBeforeSave(instanceCollection);
@@ -96,7 +96,9 @@
 
 			result.ThrowOnFailure();
 
-			return result.SuccessfulItems.Select(CreateInstance);
+			return result.SuccessfulItems
+				.Select(CreateInstance)
+				.ToList();
 		}
 
 		public virtual T CreateOrUpdate(T instance)
@@ -700,29 +702,29 @@
 			return ReadPaged(query, pageSize);
 		}
 
-		void SDM.ICreatableRepository<T>.Create(T oToCreate)
+		T SDM.ICreatableRepository<T>.Create(T oToCreate)
 		{
-			Create(oToCreate);
+			return Create(oToCreate);
 		}
 
-		void SDM.IUpdatableRepository<T>.Update(T oToUpdate)
+		T SDM.IUpdatableRepository<T>.Update(T oToUpdate)
 		{
-			Update(oToUpdate);
+			return Update(oToUpdate);
 		}
 
-		void SDM.IBulkCreatableRepository<T>.Create(IEnumerable<T> oToCreate)
+		IReadOnlyCollection<T> SDM.IBulkCreatableRepository<T>.Create(IEnumerable<T> oToCreate)
 		{
-			CreateOrUpdate(oToCreate);
+			return CreateOrUpdate(oToCreate);
 		}
 
-		void SDM.IBulkUpdatableRepository<T>.Update(IEnumerable<T> oToUpdate)
+		IReadOnlyCollection<T> SDM.IBulkUpdatableRepository<T>.Update(IEnumerable<T> oToUpdate)
 		{
-			CreateOrUpdate(oToUpdate);
+			return CreateOrUpdate(oToUpdate);
 		}
 
-		void SDM.IBulkRepository<T>.CreateOrUpdate(IEnumerable<T> oToCreateOrUpdate)
+		IReadOnlyCollection<T> SDM.IBulkRepository<T>.CreateOrUpdate(IEnumerable<T> oToCreateOrUpdate)
 		{
-			CreateOrUpdate(oToCreateOrUpdate);
+			return CreateOrUpdate(oToCreateOrUpdate);
 		}
 
 		#endregion
