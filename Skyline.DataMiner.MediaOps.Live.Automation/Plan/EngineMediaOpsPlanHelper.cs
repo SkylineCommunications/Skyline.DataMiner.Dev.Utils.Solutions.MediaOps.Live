@@ -2,13 +2,11 @@
 {
 	using System;
 
-	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
-	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler;
-	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Plan.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Plan.Automation;
 
 	using OrchestrationEvent = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent;
 
@@ -17,12 +15,13 @@
 		internal EngineMediaOpsPlanHelper(EngineMediaOpsLiveApi api)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
-			Engine = api.Engine;
+
+			PlanApi = api.Engine.GetMediaOpsPlanApi();
 		}
 
 		internal EngineMediaOpsLiveApi Api { get; }
 
-		internal IEngine Engine { get; }
+		internal IMediaOpsPlanApi PlanApi { get; }
 
 		internal override void UpdateJobState(OrchestrationEvent orchestrationEvent)
 		{
@@ -33,24 +32,22 @@
 
 			try
 			{
-				OrchestrationJobInfo info = orchestrationEvent.GetJobInfo(Api);
+				var jobInfo = orchestrationEvent.GetJobInfo(Api)
+					?? throw new InvalidOperationException("Orchestration event does not have associated job info.");
 
-				if (info == null)
-				{
-					return;
-				}
-
-				SetJobOrchestrationStateAction setStateAction = new SetJobOrchestrationStateAction
-				{
-					DomJobId = Guid.Parse(info.JobReference),
-					Event = GetEventTypeAsPlanJobEvent(orchestrationEvent),
-					EventState = orchestrationEvent.EventState == EventState.Failed || !String.IsNullOrEmpty(orchestrationEvent.FailureInfo)
+				var jobId = Guid.Parse(jobInfo.JobReference);
+				var eventState = orchestrationEvent.EventState == EventState.Failed || !String.IsNullOrEmpty(orchestrationEvent.FailureInfo)
 						? OrchestrationEventState.Failed
-						: OrchestrationEventState.Succeeded,
+						: OrchestrationEventState.Succeeded;
+
+				var updateDetails = new OrchestrationUpdateDetails()
+				{
+					Event = GetEventTypeAsPlanJobEvent(orchestrationEvent),
+					EventState = eventState,
 					Message = orchestrationEvent.FailureInfo,
 				};
 
-				setStateAction.SendToJobHandler(Engine);
+				PlanApi.Jobs.SetOrchestrationState(jobId, updateDetails);
 			}
 			catch (Exception)
 			{
