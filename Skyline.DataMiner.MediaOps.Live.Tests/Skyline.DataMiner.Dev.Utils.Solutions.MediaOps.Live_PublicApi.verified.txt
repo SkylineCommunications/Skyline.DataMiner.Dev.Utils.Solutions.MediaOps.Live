@@ -908,7 +908,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
         public override Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup Create(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup instance) { }
         protected override Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance> CreateFilter(string fieldName, Skyline.DataMiner.Net.Messages.SLDataGateway.Comparer comparer, object value) { }
         protected override Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup CreateInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
-        public override System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> CreateOrUpdate(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> instances) { }
+        public override System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> CreateOrUpdate(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> instances) { }
         protected override SLDataGateway.API.Types.Querying.IOrderByElement CreateOrderBy(string fieldName, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }
         public override void Delete(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> instances) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetByCategory(Skyline.DataMiner.Utils.Categories.API.Objects.ApiObjectReference<Skyline.DataMiner.Utils.Categories.API.Objects.Category> category) { }
@@ -960,7 +960,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories
         public int PageNumber { get; }
         public System.Collections.Generic.IEnumerator<T> GetEnumerator() { }
     }
-    public abstract class Repository<T> : Skyline.DataMiner.SDM.IBulkCreatableRepository<T>, Skyline.DataMiner.SDM.IBulkDeletableRepository<T>, Skyline.DataMiner.SDM.IBulkRepository<T>, Skyline.DataMiner.SDM.IBulkUpdatableRepository<T>, Skyline.DataMiner.SDM.ICountableRepository<T>, Skyline.DataMiner.SDM.ICreatableRepository<T>, Skyline.DataMiner.SDM.IDeletableRepository<T>, Skyline.DataMiner.SDM.IPageableRepository<T>, Skyline.DataMiner.SDM.IQueryableRepository<T>, Skyline.DataMiner.SDM.IReadableRepository<T>, Skyline.DataMiner.SDM.IRepository<T>, Skyline.DataMiner.SDM.IUpdatableRepository<T>
+    public abstract class Repository<T> : Skyline.DataMiner.SDM.IBulkCreatableRepository<T>, Skyline.DataMiner.SDM.IBulkDeletableRepository<T>, Skyline.DataMiner.SDM.IBulkRepository<T>, Skyline.DataMiner.SDM.IBulkUpdatableRepository<T>, Skyline.DataMiner.SDM.ICountableRepository<T>, Skyline.DataMiner.SDM.ICreatableRepository<T>, Skyline.DataMiner.SDM.IDeletableRepository<T>, Skyline.DataMiner.SDM.IPageableRepository<T>, Skyline.DataMiner.SDM.IQueryableRepository<T>, Skyline.DataMiner.SDM.IReadableRepository<T>, Skyline.DataMiner.SDM.IRepositoryMarker<T>, Skyline.DataMiner.SDM.IRepository<T>, Skyline.DataMiner.SDM.IUpdatableRepository<T>
         where T : Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObject<T>
     {
         protected Repository(Skyline.DataMiner.Solutions.MediaOps.Live.API.IMediaOpsLiveApi api, Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomHelper helper) { }
@@ -974,7 +974,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories
         public virtual T Create(T instance) { }
         protected virtual Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance> CreateFilter(string fieldName, Skyline.DataMiner.Net.Messages.SLDataGateway.Comparer comparer, object value) { }
         protected abstract T CreateInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance);
-        public virtual System.Collections.Generic.IEnumerable<T> CreateOrUpdate(System.Collections.Generic.IEnumerable<T> instances) { }
+        public virtual System.Collections.Generic.IReadOnlyCollection<T> CreateOrUpdate(System.Collections.Generic.IEnumerable<T> instances) { }
         public virtual T CreateOrUpdate(T instance) { }
         protected virtual void CreateOrUpdateWithoutValidation(System.Collections.Generic.IEnumerable<T> instances) { }
         protected virtual SLDataGateway.API.Types.Querying.IOrderByElement CreateOrderBy(string fieldName, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }

@@ -12,19 +12,19 @@
 	/// </summary>
 	public class OrchestrationJob
 	{
-		private static readonly List<EventType> StartTypes =
+		internal static readonly IReadOnlyList<EventType> StartTypes =
 		[
 			EventType.Start,
 			EventType.PrerollStart,
 		];
 
-		private static readonly List<EventType> StopTypes =
+		internal static readonly IReadOnlyList<EventType> StopTypes =
 		[
 			EventType.Stop,
 			EventType.PostrollStop,
 		];
 
-		private static readonly List<EventType> ExpectedOrderOfTypes =
+		internal static readonly IReadOnlyList<EventType> ExpectedOrderOfTypes =
 		[
 			EventType.Start,
 			EventType.PrerollStart,
@@ -32,6 +32,7 @@
 			EventType.PostrollStart,
 			EventType.PostrollStop,
 			EventType.Stop,
+			EventType.Other,
 		];
 
 		/// <summary>
@@ -135,9 +136,12 @@
 
 		private static void ValidateEventOrderBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			var eventWithoutOtherType = orchestrationEvents.Where(e => e.EventType != EventType.Other);
+			var expectedOrderList = ExpectedOrderOfTypes.ToList();
 
-			var orderedByExpectedTypeOrder = eventWithoutOtherType.OrderBy(e => ExpectedOrderOfTypes.IndexOf(e.EventType)).ToList();
+			var orderedByExpectedTypeOrder = orchestrationEvents
+				.Where(e => e.EventType != EventType.Other)
+				.OrderBy(e => expectedOrderList.IndexOf(e.EventType))
+				.ToList();
 
 			for (int i = 0; i < orderedByExpectedTypeOrder.Count - 1; i++)
 			{

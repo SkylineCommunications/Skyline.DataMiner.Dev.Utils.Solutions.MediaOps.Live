@@ -46,54 +46,97 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				IEnumerable<OrchestrationEventConfiguration> events = orchestrationEvents.ToList();
-				if (!events.Any())
+				var confirmedEvents = orchestrationEvents
+					.Where(e => e.EventState == EventState.Confirmed)
+					.ToList();
+
+				if (!confirmedEvents.Any())
 				{
 					return;
 				}
 
-				List<EventState> statesToDiscard =
-				[
-					EventState.Failed,
-					EventState.Completed,
-					EventState.Configuring,
-				];
-
-				ExecuteEvents(events.Where(e => !statesToDiscard.Contains(e.EventState)), performanceTracker);
+				ExecuteEvents(confirmedEvents, performanceTracker);
 			}
 		}
 
-		private void ExecuteEvents(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
+		private void ExecuteEvents(List<OrchestrationEventConfiguration> eventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			using (var taskScheduler = new MediaOpsTaskScheduler())
+			using (var writeBuffer = new WriteBuffer<OrchestrationEvent>(new OrchestrationEventRepository(_api)))
 			{
-				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
+				var now = DateTimeOffset.UtcNow;
+				var tasks = new List<Task>();
+
 				foreach (OrchestrationEventConfiguration orchestrationEvent in eventConfigurations)
 				{
 					orchestrationEvent.InternalSetState(EventState.Configuring);
-					orchestrationEvent.ActualStartTime = DateTimeOffset.UtcNow;
+					orchestrationEvent.ActualStartTime = now;
 				}
 
 				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
 
-				using (var writeBuffer = new WriteBuffer<OrchestrationEvent>(new OrchestrationEventRepository(_api)))
+				foreach (var groupedByJob in eventConfigurations.GroupBy(x => x.JobInfoReference))
 				{
-					// Events with global orchestration script
-					List<Task> tasks = GetGlobalOrchestrationTasks(eventConfigurations.Where(config => config.HasGlobalOrchestrationScript), taskScheduler, writeBuffer, performanceTracker);
+					var jobTask = ExecuteJobEvents(groupedByJob, taskScheduler, writeBuffer, performanceTracker);
 
-					// Events with node-by-node orchestration scripts
-					tasks.AddRange(GetNodeByNodeOrchestrationTasks(eventConfigurations.Where(config => config.HasScripts && !config.HasGlobalOrchestrationScript), taskScheduler, writeBuffer, performanceTracker));
-
-					// Events without scripts but with connections
-					tasks.AddRange(GetProcessConnectionTasks(eventConfigurations.Where(config => !config.HasScripts && config.HasConnections), taskScheduler, true, writeBuffer, performanceTracker));
-
-					// Events without scripts or connections (nothing to do) can be marked as completed right away.
-					SaveOrchestrationResults(eventConfigurations.Where(config => !config.HasScripts && !config.HasConnections), writeBuffer, performanceTracker);
-
-					Task.WaitAll(tasks.ToArray());
+					tasks.Add(jobTask);
 				}
+
+				Task.WaitAll(tasks.ToArray());
 			}
+		}
+
+		private Task ExecuteJobEvents(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
+		{
+			return Task.Factory.StartNew(
+				() =>
+				{
+					var expectedOrderList = OrchestrationJob.ExpectedOrderOfTypes.ToList();
+
+					var groupedAndSortedEvents = eventConfigurations
+						.GroupBy(x => x.EventType)
+						.OrderBy(x => expectedOrderList.IndexOf(x.Key))
+						.ToList();
+
+					foreach (var events in groupedAndSortedEvents)
+					{
+						var jobEventTasks = new List<Task>();
+
+						// Events with global orchestration script
+						jobEventTasks.AddRange(GetGlobalOrchestrationTasks(
+							events.Where(c => c.HasGlobalOrchestrationScript),
+							taskScheduler,
+							writeBuffer,
+							performanceTracker));
+
+						// Events with node-by-node orchestration scripts
+						jobEventTasks.AddRange(GetNodeByNodeOrchestrationTasks(
+							events.Where(c => c.HasScripts && !c.HasGlobalOrchestrationScript),
+							taskScheduler,
+							writeBuffer,
+							performanceTracker));
+
+						// Events without scripts but with connections
+						jobEventTasks.AddRange(GetProcessConnectionTasks(
+							events.Where(c => !c.HasScripts && c.HasConnections),
+							pushResults: true,
+							taskScheduler,
+							writeBuffer,
+							performanceTracker));
+
+						// Events without scripts or connections (nothing to do) can be marked as completed right away.
+						SaveOrchestrationResults(
+							events.Where(c => !c.HasScripts && !c.HasConnections),
+							writeBuffer,
+							performanceTracker);
+
+						Task.WaitAll(jobEventTasks.ToArray());
+					}
+				},
+				CancellationToken.None,
+				TaskCreationOptions.None,
+				taskScheduler);
 		}
 
 		private List<Task> GetGlobalOrchestrationTasks(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
@@ -112,7 +155,7 @@
 							ExecuteGlobalConfiguration(orchestrationEventConfiguration, performanceTracker);
 
 							// Update event state once finished
-							SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, writeBuffer, performanceTracker);
+							SaveOrchestrationResults([orchestrationEventConfiguration], writeBuffer, performanceTracker);
 						},
 						CancellationToken.None,
 						TaskCreationOptions.None,
@@ -135,7 +178,7 @@
 				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurationWithNodeScripts)
 				{
 					// Connections tasks
-					List<Task> connectionsTasks = GetProcessConnectionTasks(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, taskScheduler, false, writeBuffer, performanceTracker);
+					List<Task> connectionsTasks = GetProcessConnectionTasks([orchestrationEventConfiguration], pushResults: false, taskScheduler, writeBuffer, performanceTracker);
 
 					// Node scripts task
 					Task nodeScriptsTask = Task.Factory.StartNew(
@@ -167,7 +210,7 @@
 			}
 		}
 
-		private List<Task> GetProcessConnectionTasks(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, bool pushResults, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
+		private List<Task> GetProcessConnectionTasks(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, bool pushResults, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -177,9 +220,8 @@
 
 				foreach (KeyValuePair<OrchestrationEventConfiguration, ICollection<Task>> keyValuePair in connectionTasksPerEvent)
 				{
-					OrchestrationEventConfiguration eventConfig = keyValuePair.Key;
+					var eventConfig = keyValuePair.Key;
 					var tasksForEvent = keyValuePair.Value;
-
 
 					var eventConnectionTask = Task.WhenAll(tasksForEvent)
 						.ContinueWith(
@@ -274,19 +316,20 @@
 				foreach (VsgDisconnectResult vsgDisconnectResult in disconnectResults)
 				{
 					var metaDataConnectionResult = (VsgDisconnectRequestWithMetadata)vsgDisconnectResult.VsgDisconnectRequest;
-					OrchestrationEventConfiguration matchingEvent = disconnectsToConfigureByEvent.Keys.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
+					var matchingEvent = disconnectsToConfigureByEvent.Keys.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
 
 					if (matchingEvent == null)
 					{
 						continue;
 					}
 
-					if (!resultTasksByEvent.ContainsKey(matchingEvent))
+					if (!resultTasksByEvent.TryGetValue(matchingEvent, out var tasks))
 					{
-						resultTasksByEvent[matchingEvent] = [];
+						tasks = [];
+						resultTasksByEvent[matchingEvent] = tasks;
 					}
 
-					resultTasksByEvent[matchingEvent].Add(vsgDisconnectResult.CompletionTask);
+					tasks.Add(vsgDisconnectResult.CompletionTask);
 				}
 			}
 			catch (Exception e)
@@ -304,22 +347,24 @@
 			try
 			{
 				var connectionResults = ExecuteAndReturnConnectResults(connectionsToConfigureByEvent, performanceTracker);
+
 				foreach (VsgConnectionResult vsgConnectionResult in connectionResults)
 				{
 					var metaDataConnectionResult = (VsgConnectionRequestWithMetaData)vsgConnectionResult.VsgConnectionRequest;
-					OrchestrationEventConfiguration matchingEvent = connectionsToConfigureByEvent.Keys.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
+					var matchingEvent = connectionsToConfigureByEvent.Keys.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
 
 					if (matchingEvent == null)
 					{
 						continue;
 					}
 
-					if (!resultTasksByEvent.ContainsKey(matchingEvent))
+					if (!resultTasksByEvent.TryGetValue(matchingEvent, out var tasks))
 					{
-						resultTasksByEvent[matchingEvent] = [];
+						tasks = [];
+						resultTasksByEvent[matchingEvent] = tasks;
 					}
 
-					resultTasksByEvent[matchingEvent].Add(vsgConnectionResult.CompletionTask);
+					tasks.Add(vsgConnectionResult.CompletionTask);
 				}
 			}
 			catch (Exception e)
@@ -659,7 +704,7 @@
 		private static OrchestrationScriptResult ProcessOrchestrationScriptResult(ExecuteScriptResponseMessage result)
 		{
 			if (result.EntryPointResult?.Result is RequestScriptInfoOutput scriptOutput
-			    && scriptOutput.Data.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out string errors))
+				&& scriptOutput.Data.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out string errors))
 			{
 				return new OrchestrationScriptResult
 				{
