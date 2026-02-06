@@ -273,7 +273,7 @@
 					orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
 				}
 
-				writeBuffer.QueueItems(eventConfigurations);
+				writeBuffer.Enqueue(eventConfigurations);
 			}
 		}
 
