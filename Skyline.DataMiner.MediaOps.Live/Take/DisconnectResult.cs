@@ -1,9 +1,8 @@
 ﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
 {
 	using System;
-	using System.Threading.Tasks;
 
-	public abstract class DisconnectResult
+	public abstract class DisconnectResult : Result
 	{
 		protected DisconnectResult(DisconnectRequest request)
 		{
@@ -11,16 +10,6 @@
 		}
 
 		public DisconnectRequest DisconnectRequest { get; }
-
-		/// <summary>
-		/// Gets a value indicating whether the disconnect operation was successful.
-		/// </summary>
-		public bool IsSuccessful { get; internal set; }
-
-		/// <summary>
-		/// Gets the task that represents the completion of the disconnect operation.
-		/// </summary>
-		public Task CompletionTask { get; internal set; }
 	}
 
 	public class EndpointDisconnectResult : DisconnectResult

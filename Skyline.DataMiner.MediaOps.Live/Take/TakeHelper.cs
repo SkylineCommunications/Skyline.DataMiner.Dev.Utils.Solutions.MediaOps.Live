@@ -700,7 +700,7 @@
 			}
 
 			takeContext.IsSuccessful = result;
-			takeContext.SetCompleted();
+			takeContext.SetCompleted(result);
 
 			return result;
 		}
@@ -750,7 +750,7 @@
 			}
 
 			takeContext.IsSuccessful = result;
-			takeContext.SetCompleted();
+			takeContext.SetCompleted(result);
 
 			return result;
 		}
@@ -779,10 +779,15 @@
 
 			foreach (var group in takeContexts.GroupBy(x => x.VsgConnectionRequest))
 			{
+				var completionTask = Task.WhenAll(group.Select(x => x.CompletionTask))
+					.ContinueWith(
+						t => t.Status == TaskStatus.RanToCompletion && t.Result.All(r => r),
+						TaskContinuationOptions.ExecuteSynchronously);
+
 				var result = new VsgConnectionResult(group.Key)
 				{
 					IsSuccessful = group.All(x => x.IsSuccessful),
-					CompletionTask = Task.WhenAll(group.Select(x => x.CompletionTask)),
+					CompletionTask = completionTask,
 				};
 
 				results.Add(result);
@@ -815,10 +820,15 @@
 
 			foreach (var group in takeContexts.GroupBy(x => x.VsgDisconnectRequest))
 			{
+				var completionTask = Task.WhenAll(group.Select(x => x.CompletionTask))
+					.ContinueWith(
+						t => t.Status == TaskStatus.RanToCompletion && t.Result.All(r => r),
+						TaskContinuationOptions.ExecuteSynchronously);
+
 				var result = new VsgDisconnectResult(group.Key)
 				{
 					IsSuccessful = group.All(x => x.IsSuccessful),
-					CompletionTask = Task.WhenAll(group.Select(x => x.CompletionTask)),
+					CompletionTask = completionTask,
 				};
 
 				results.Add(result);

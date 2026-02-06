@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Collections.Generic;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
@@ -287,6 +288,16 @@
 		internal void InternalSetState(EventState state)
 		{
 			_domInstance.OrchestrationEventInfo.EventState = (SlcOrchestrationIds.Enums.EventState)(int)state;
+		}
+
+		internal void AppendFailureInfo(string text)
+		{
+			if (!String.IsNullOrEmpty(_domInstance.OrchestrationEventInfo.FailureInfo))
+			{
+				_domInstance.OrchestrationEventInfo.FailureInfo += Environment.NewLine;
+			}
+
+			_domInstance.OrchestrationEventInfo.FailureInfo += text;
 		}
 
 		internal void SendPlanJobStateUpdate(MediaOpsLiveApi api)

@@ -36,11 +36,11 @@
 
 		public bool IsSuccessful { get; set; }
 
-		public Task CompletionTask => _taskCompletionSource.Task;
+		public Task<bool> CompletionTask => _taskCompletionSource.Task;
 
-		public void SetCompleted()
+		public void SetCompleted(bool isSuccess)
 		{
-			_taskCompletionSource.TrySetResult(true);
+			_taskCompletionSource.TrySetResult(isSuccess);
 		}
 	}
 }

@@ -1576,12 +1576,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
     {
         protected ConnectionRequest() { }
     }
-    public abstract class ConnectionResult
+    public abstract class ConnectionResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.Result
     {
         protected ConnectionResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest request) { }
-        public System.Threading.Tasks.Task CompletionTask { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest ConnectionRequest { get; }
-        public bool IsSuccessful { get; }
     }
     public class DisconnectOptions : Skyline.DataMiner.Solutions.MediaOps.Live.Take.OptionsBase
     {
@@ -1591,12 +1589,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
     {
         protected DisconnectRequest() { }
     }
-    public abstract class DisconnectResult
+    public abstract class DisconnectResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.Result
     {
         protected DisconnectResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest request) { }
-        public System.Threading.Tasks.Task CompletionTask { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest DisconnectRequest { get; }
-        public bool IsSuccessful { get; }
     }
     public class EndpointConnectionRequest : Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest
     {
@@ -1638,6 +1634,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
     {
         protected Request() { }
         public System.TimeSpan? Timeout { get; set; }
+    }
+    public abstract class Result
+    {
+        protected Result() { }
+        public System.Threading.Tasks.Task<bool> CompletionTask { get; }
+        public bool IsSuccessful { get; }
     }
     public class TakeHelper
     {
