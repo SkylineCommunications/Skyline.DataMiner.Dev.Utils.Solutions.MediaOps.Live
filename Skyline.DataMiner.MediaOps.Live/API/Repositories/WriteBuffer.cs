@@ -60,7 +60,7 @@
 
 		private void WriteItemsInQueue()
 		{
-			var localItems = new Dictionary<Guid, T>();
+			var localItems = new Dictionary<Guid, T>(_queue.Count);
 
 			while (_queue.TryDequeue(out T item))
 			{

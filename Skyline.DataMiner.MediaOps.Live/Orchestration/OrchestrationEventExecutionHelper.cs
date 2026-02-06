@@ -175,12 +175,15 @@
 			{
 				var tasks = new List<Task>();
 
-				var connectionsTask = Task.Factory.StartNew(
-					() => ExecuteConnections(orchestrationEvent, performanceTracker),
-					CancellationToken.None,
-					TaskCreationOptions.None,
-					taskScheduler);
-				tasks.Add(connectionsTask);
+				if (orchestrationEvent.HasConnections)
+				{
+					var connectionsTask = Task.Factory.StartNew(
+						() => ExecuteConnections(orchestrationEvent, performanceTracker),
+						CancellationToken.None,
+						TaskCreationOptions.None,
+						taskScheduler);
+					tasks.Add(connectionsTask); 
+				}
 
 				var nodeScriptsTask = Task.Factory.StartNew(
 					() => ExecuteNodesConfiguration(orchestrationEvent, taskScheduler, performanceTracker),
@@ -231,6 +234,11 @@
 
 		internal void ExecuteConnections(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
 		{
+			if (!orchestrationEvent.HasConnections)
+			{
+				return;
+			}
+
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				try
