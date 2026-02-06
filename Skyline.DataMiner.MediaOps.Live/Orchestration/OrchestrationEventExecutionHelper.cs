@@ -182,7 +182,7 @@
 						CancellationToken.None,
 						TaskCreationOptions.None,
 						taskScheduler);
-					tasks.Add(connectionsTask); 
+					tasks.Add(connectionsTask);
 				}
 
 				var nodeScriptsTask = Task.Factory.StartNew(

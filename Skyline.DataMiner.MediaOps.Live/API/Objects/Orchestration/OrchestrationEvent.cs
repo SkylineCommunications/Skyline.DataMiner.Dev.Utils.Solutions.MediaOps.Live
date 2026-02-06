@@ -292,6 +292,11 @@
 
 		internal void AppendFailureInfo(string text)
 		{
+			if (String.IsNullOrEmpty(text))
+			{
+				return;
+			}
+
 			if (!String.IsNullOrEmpty(_domInstance.OrchestrationEventInfo.FailureInfo))
 			{
 				_domInstance.OrchestrationEventInfo.FailureInfo += Environment.NewLine;
