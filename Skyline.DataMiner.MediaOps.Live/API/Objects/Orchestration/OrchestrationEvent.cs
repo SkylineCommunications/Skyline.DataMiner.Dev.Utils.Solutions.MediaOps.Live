@@ -18,6 +18,7 @@
 	public class OrchestrationEvent : ApiObject<OrchestrationEvent>
 	{
 		private readonly OrchestrationEventInstance _domInstance;
+		private readonly object _lock = new object();
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class.
@@ -287,7 +288,10 @@
 
 		internal void InternalSetState(EventState state)
 		{
-			_domInstance.OrchestrationEventInfo.EventState = (SlcOrchestrationIds.Enums.EventState)(int)state;
+			lock (_lock)
+			{
+				_domInstance.OrchestrationEventInfo.EventState = (SlcOrchestrationIds.Enums.EventState)(int)state;
+			}
 		}
 
 		internal void AppendFailureInfo(string text)
@@ -297,12 +301,15 @@
 				return;
 			}
 
-			if (!String.IsNullOrEmpty(_domInstance.OrchestrationEventInfo.FailureInfo))
+			lock (_lock)
 			{
-				_domInstance.OrchestrationEventInfo.FailureInfo += Environment.NewLine;
-			}
+				if (!String.IsNullOrEmpty(_domInstance.OrchestrationEventInfo.FailureInfo))
+				{
+					_domInstance.OrchestrationEventInfo.FailureInfo += Environment.NewLine;
+				}
 
-			_domInstance.OrchestrationEventInfo.FailureInfo += text;
+				_domInstance.OrchestrationEventInfo.FailureInfo += text;
+			}
 		}
 
 		internal void SendPlanJobStateUpdate(MediaOpsLiveApi api)
