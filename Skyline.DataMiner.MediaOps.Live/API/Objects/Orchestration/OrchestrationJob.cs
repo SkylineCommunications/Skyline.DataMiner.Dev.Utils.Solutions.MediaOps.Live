@@ -32,7 +32,6 @@
 			EventType.PostrollStart,
 			EventType.PostrollStop,
 			EventType.Stop,
-			EventType.Other,
 		];
 
 		/// <summary>
