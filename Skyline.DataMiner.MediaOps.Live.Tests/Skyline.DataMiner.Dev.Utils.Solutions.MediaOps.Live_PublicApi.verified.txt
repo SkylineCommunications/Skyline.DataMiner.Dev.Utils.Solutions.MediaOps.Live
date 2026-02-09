@@ -1572,26 +1572,28 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
 {
-    public abstract class ConnectionRequest : Skyline.DataMiner.Solutions.MediaOps.Live.Take.Request
+    public abstract class ConnectionRequest : Skyline.DataMiner.Solutions.MediaOps.Live.Take.TakeRequest
     {
         protected ConnectionRequest() { }
     }
-    public abstract class ConnectionResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.Result
+    public abstract class ConnectionResult<T> : Skyline.DataMiner.Solutions.MediaOps.Live.Take.TakeResult<T>
+        where T : Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest
     {
-        protected ConnectionResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest request) { }
+        protected ConnectionResult(T request, bool isSuccessful, System.Threading.Tasks.Task<bool> completionTask) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest ConnectionRequest { get; }
     }
     public class DisconnectOptions : Skyline.DataMiner.Solutions.MediaOps.Live.Take.OptionsBase
     {
         public DisconnectOptions() { }
     }
-    public abstract class DisconnectRequest : Skyline.DataMiner.Solutions.MediaOps.Live.Take.Request
+    public abstract class DisconnectRequest : Skyline.DataMiner.Solutions.MediaOps.Live.Take.TakeRequest
     {
         protected DisconnectRequest() { }
     }
-    public abstract class DisconnectResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.Result
+    public abstract class DisconnectResult<T> : Skyline.DataMiner.Solutions.MediaOps.Live.Take.TakeResult<T>
+        where T : Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest
     {
-        protected DisconnectResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest request) { }
+        protected DisconnectResult(T request, bool isSuccessful, System.Threading.Tasks.Task<bool> completionTask) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest DisconnectRequest { get; }
     }
     public class EndpointConnectionRequest : Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest
@@ -1600,20 +1602,18 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint Destination { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint Source { get; }
     }
-    public class EndpointConnectionResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionResult
+    public class EndpointConnectionResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionResult<Skyline.DataMiner.Solutions.MediaOps.Live.Take.EndpointConnectionRequest>
     {
-        public EndpointConnectionResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.EndpointConnectionRequest request) { }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Take.EndpointConnectionRequest EndpointConnectionRequest { get; }
+        public EndpointConnectionResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.EndpointConnectionRequest request, bool isSuccessful, System.Threading.Tasks.Task<bool> completionTask) { }
     }
     public class EndpointDisconnectRequest : Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest
     {
         public EndpointDisconnectRequest(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint destination) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint Destination { get; }
     }
-    public class EndpointDisconnectResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectResult
+    public class EndpointDisconnectResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectResult<Skyline.DataMiner.Solutions.MediaOps.Live.Take.EndpointDisconnectRequest>
     {
-        public EndpointDisconnectResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.EndpointDisconnectRequest request) { }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Take.EndpointDisconnectRequest EndpointDisconnectRequest { get; }
+        public EndpointDisconnectResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.EndpointDisconnectRequest request, bool isSuccessful, System.Threading.Tasks.Task<bool> completionTask) { }
     }
     public class LevelMapping
     {
@@ -1630,17 +1630,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity.ConnectionMonitor ConnectionMonitor { get; set; }
         public bool WaitForCompletion { get; set; }
     }
-    public abstract class Request
-    {
-        protected Request() { }
-        public System.TimeSpan? Timeout { get; set; }
-    }
-    public abstract class Result
-    {
-        protected Result() { }
-        public System.Threading.Tasks.Task<bool> CompletionTask { get; }
-        public bool IsSuccessful { get; }
-    }
     public class TakeHelper
     {
         public System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.EndpointDisconnectResult> Disconnect(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.EndpointDisconnectRequest> disconnectRequests, Skyline.DataMiner.Utils.PerformanceAnalyzer.PerformanceTracker performanceTracker, Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectOptions options = null) { }
@@ -1654,6 +1643,19 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
     {
         public TakeOptions() { }
     }
+    public abstract class TakeRequest
+    {
+        protected TakeRequest() { }
+        public System.TimeSpan? Timeout { get; set; }
+    }
+    public abstract class TakeResult<T>
+        where T : Skyline.DataMiner.Solutions.MediaOps.Live.Take.TakeRequest
+    {
+        protected TakeResult(T request, bool isSuccessful, System.Threading.Tasks.Task<bool> completionTask) { }
+        public System.Threading.Tasks.Task<bool> CompletionTask { get; }
+        public bool IsSuccessful { get; }
+        public T Request { get; }
+    }
     public class VsgConnectionRequest : Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest
     {
         public VsgConnectionRequest(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup source, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup destination, System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.LevelMapping> levelMappings = null) { }
@@ -1662,10 +1664,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
         public System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.LevelMapping> LevelMappings { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup Source { get; }
     }
-    public class VsgConnectionResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionResult
+    public class VsgConnectionResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionResult<Skyline.DataMiner.Solutions.MediaOps.Live.Take.VsgConnectionRequest>
     {
-        public VsgConnectionResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.VsgConnectionRequest request) { }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Take.VsgConnectionRequest VsgConnectionRequest { get; }
+        public VsgConnectionResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.VsgConnectionRequest request, bool isSuccessful, System.Threading.Tasks.Task<bool> completionTask) { }
     }
     public class VsgDisconnectRequest : Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest
     {
@@ -1674,10 +1675,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
         public bool IsDisconnectAllLevels { get; }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level>> Levels { get; }
     }
-    public class VsgDisconnectResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectResult
+    public class VsgDisconnectResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectResult<Skyline.DataMiner.Solutions.MediaOps.Live.Take.VsgDisconnectRequest>
     {
-        public VsgDisconnectResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.VsgDisconnectRequest request) { }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Take.VsgDisconnectRequest VsgDisconnectRequest { get; }
+        public VsgDisconnectResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.VsgDisconnectRequest request, bool isSuccessful, System.Threading.Tasks.Task<bool> completionTask) { }
     }
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tools

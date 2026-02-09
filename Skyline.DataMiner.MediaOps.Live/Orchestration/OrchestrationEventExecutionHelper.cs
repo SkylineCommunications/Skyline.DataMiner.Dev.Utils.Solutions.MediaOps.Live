@@ -253,8 +253,8 @@
 
 						foreach (var result in results.Where(r => !r.IsSuccessful))
 						{
-							var source = result.VsgConnectionRequest.Source.Name;
-							var destination = result.VsgConnectionRequest.Destination.Name;
+							var source = result.Request.Source.Name;
+							var destination = result.Request.Destination.Name;
 
 							orchestrationEvent.InternalSetState(EventState.Failed);
 							orchestrationEvent.AppendFailureInfo($"Could not connect {source} to {destination}");
@@ -269,7 +269,7 @@
 
 						foreach (var result in results.Where(r => !r.IsSuccessful))
 						{
-							var destination = result.VsgDisconnectRequest.Destination.Name;
+							var destination = result.Request.Destination.Name;
 
 							orchestrationEvent.InternalSetState(EventState.Failed);
 							orchestrationEvent.AppendFailureInfo($"Could not disconnect from {destination}");

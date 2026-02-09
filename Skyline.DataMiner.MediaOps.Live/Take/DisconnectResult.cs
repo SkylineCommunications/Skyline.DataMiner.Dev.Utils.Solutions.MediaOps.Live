@@ -1,36 +1,28 @@
 ﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
 {
-	using System;
+	using System.Threading.Tasks;
 
-	public abstract class DisconnectResult : Result
+	public abstract class DisconnectResult<T> : TakeResult<T> where T : DisconnectRequest
 	{
-		protected DisconnectResult(DisconnectRequest request)
+		protected DisconnectResult(T request, bool isSuccessful, Task<bool> completionTask)
+			: base(request, isSuccessful, completionTask)
 		{
-			DisconnectRequest = request ?? throw new ArgumentNullException(nameof(request));
 		}
-
-		public DisconnectRequest DisconnectRequest { get; }
 	}
 
-	public class EndpointDisconnectResult : DisconnectResult
+	public class EndpointDisconnectResult : DisconnectResult<EndpointDisconnectRequest>
 	{
-		public EndpointDisconnectResult(EndpointDisconnectRequest request)
-			: base(request)
+		public EndpointDisconnectResult(EndpointDisconnectRequest request, bool isSuccessful, Task<bool> completionTask)
+			: base(request, isSuccessful, completionTask)
 		{
-			EndpointDisconnectRequest = request ?? throw new ArgumentNullException(nameof(request));
 		}
-
-		public EndpointDisconnectRequest EndpointDisconnectRequest { get; }
 	}
 
-	public class VsgDisconnectResult : DisconnectResult
+	public class VsgDisconnectResult : DisconnectResult<VsgDisconnectRequest>
 	{
-		public VsgDisconnectResult(VsgDisconnectRequest request)
-			: base(request)
+		public VsgDisconnectResult(VsgDisconnectRequest request, bool isSuccessful, Task<bool> completionTask)
+			: base(request, isSuccessful, completionTask)
 		{
-			VsgDisconnectRequest = request ?? throw new ArgumentNullException(nameof(request));
 		}
-
-		public VsgDisconnectRequest VsgDisconnectRequest { get; }
 	}
 }

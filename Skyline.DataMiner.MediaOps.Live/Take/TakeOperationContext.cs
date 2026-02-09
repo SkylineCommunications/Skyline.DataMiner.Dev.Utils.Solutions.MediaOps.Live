@@ -11,7 +11,7 @@
 	{
 		private readonly TaskCompletionSource<bool> _taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-		protected TakeOperationContext(Request request, Endpoint destination)
+		protected TakeOperationContext(TakeRequest request, Endpoint destination)
 		{
 			Request = request ?? throw new ArgumentNullException(nameof(request));
 			Destination = destination ?? throw new ArgumentNullException(nameof(destination));
@@ -22,7 +22,7 @@
 			}
 		}
 
-		public Request Request { get; }
+		public TakeRequest Request { get; }
 
 		public Endpoint Destination { get; }
 

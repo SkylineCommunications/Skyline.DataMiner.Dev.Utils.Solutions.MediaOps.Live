@@ -761,11 +761,10 @@
 
 			foreach (var context in takeContexts)
 			{
-				var result = new EndpointConnectionResult(context.EndpointConnectionRequest)
-				{
-					IsSuccessful = context.IsSuccessful,
-					CompletionTask = context.CompletionTask,
-				};
+				var result = new EndpointConnectionResult(
+					context.EndpointConnectionRequest,
+					context.IsSuccessful,
+					context.CompletionTask);
 
 				results.Add(result);
 			}
@@ -779,16 +778,14 @@
 
 			foreach (var group in takeContexts.GroupBy(x => x.VsgConnectionRequest))
 			{
+				var isSuccessful = group.All(x => x.IsSuccessful);
+
 				var completionTask = Task.WhenAll(group.Select(x => x.CompletionTask))
 					.ContinueWith(
 						t => t.Status == TaskStatus.RanToCompletion && t.Result.All(r => r),
 						TaskContinuationOptions.ExecuteSynchronously);
 
-				var result = new VsgConnectionResult(group.Key)
-				{
-					IsSuccessful = group.All(x => x.IsSuccessful),
-					CompletionTask = completionTask,
-				};
+				var result = new VsgConnectionResult(group.Key, isSuccessful, completionTask);
 
 				results.Add(result);
 			}
@@ -802,11 +799,10 @@
 
 			foreach (var context in takeContexts)
 			{
-				var result = new EndpointDisconnectResult(context.EndpointDisconnectRequest)
-				{
-					IsSuccessful = context.IsSuccessful,
-					CompletionTask = context.CompletionTask,
-				};
+				var result = new EndpointDisconnectResult(
+					context.EndpointDisconnectRequest,
+					context.IsSuccessful,
+					context.CompletionTask);
 
 				results.Add(result);
 			}
@@ -820,17 +816,14 @@
 
 			foreach (var group in takeContexts.GroupBy(x => x.VsgDisconnectRequest))
 			{
+				var isSuccessful = group.All(x => x.IsSuccessful);
+
 				var completionTask = Task.WhenAll(group.Select(x => x.CompletionTask))
 					.ContinueWith(
 						t => t.Status == TaskStatus.RanToCompletion && t.Result.All(r => r),
 						TaskContinuationOptions.ExecuteSynchronously);
 
-				var result = new VsgDisconnectResult(group.Key)
-				{
-					IsSuccessful = group.All(x => x.IsSuccessful),
-					CompletionTask = completionTask,
-				};
-
+				var result = new VsgDisconnectResult(group.Key, isSuccessful, completionTask);
 				results.Add(result);
 			}
 

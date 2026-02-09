@@ -1,36 +1,28 @@
 ﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
 {
-	using System;
+	using System.Threading.Tasks;
 
-	public abstract class ConnectionResult : Result
+	public abstract class ConnectionResult<T> : TakeResult<T> where T : ConnectionRequest
 	{
-		protected ConnectionResult(ConnectionRequest request)
+		protected ConnectionResult(T request, bool isSuccessful, Task<bool> completionTask)
+			: base(request, isSuccessful, completionTask)
 		{
-			ConnectionRequest = request ?? throw new ArgumentNullException(nameof(request));
 		}
-
-		public ConnectionRequest ConnectionRequest { get; }
 	}
 
-	public class EndpointConnectionResult : ConnectionResult
+	public class EndpointConnectionResult : ConnectionResult<EndpointConnectionRequest>
 	{
-		public EndpointConnectionResult(EndpointConnectionRequest request)
-			: base(request)
+		public EndpointConnectionResult(EndpointConnectionRequest request, bool isSuccessful, Task<bool> completionTask)
+			: base(request, isSuccessful, completionTask)
 		{
-			EndpointConnectionRequest = request ?? throw new ArgumentNullException(nameof(request));
 		}
-
-		public EndpointConnectionRequest EndpointConnectionRequest { get; }
 	}
 
-	public class VsgConnectionResult : ConnectionResult
+	public class VsgConnectionResult : ConnectionResult<VsgConnectionRequest>
 	{
-		public VsgConnectionResult(VsgConnectionRequest request)
-			: base(request)
+		public VsgConnectionResult(VsgConnectionRequest request, bool isSuccessful, Task<bool> completionTask)
+			: base(request, isSuccessful, completionTask)
 		{
-			VsgConnectionRequest = request ?? throw new ArgumentNullException(nameof(request));
 		}
-
-		public VsgConnectionRequest VsgConnectionRequest { get; }
 	}
 }
