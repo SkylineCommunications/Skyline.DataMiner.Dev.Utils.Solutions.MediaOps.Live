@@ -3,7 +3,6 @@
 	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
-	using System.Linq;
 	using System.Timers;
 
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
@@ -29,7 +28,7 @@
 			_timer.Start();
 		}
 
-		public void QueueItems(IEnumerable<T> items)
+		public void Enqueue(IEnumerable<T> items)
 		{
 			foreach (T item in items)
 			{
@@ -37,7 +36,7 @@
 			}
 		}
 
-		public void Queue(T item)
+		public void Enqueue(T item)
 		{
 			_queue.Enqueue(item);
 		}
@@ -61,15 +60,17 @@
 
 		private void WriteItemsInQueue()
 		{
-			List<T> items = new List<T>();
+			var localItems = new Dictionary<Guid, T>(_queue.Count);
+
 			while (_queue.TryDequeue(out T item))
 			{
-				items.Add(item);
+				// In case multiple items with the same ID are enqueued, only the last one will be written to the repository.
+				localItems[item.ID] = item;
 			}
 
-			if (items.Any())
+			if (localItems.Count > 0)
 			{
-				_repository.CreateOrUpdate(items);
+				_repository.CreateOrUpdate(localItems.Values);
 			}
 		}
 

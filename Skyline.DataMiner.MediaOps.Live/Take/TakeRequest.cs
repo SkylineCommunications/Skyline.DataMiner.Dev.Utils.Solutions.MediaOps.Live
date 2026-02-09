@@ -2,7 +2,7 @@
 {
 	using System;
 
-	public abstract class Request
+	public abstract class TakeRequest
 	{
 		public TimeSpan? Timeout { get; set; }
 	}
