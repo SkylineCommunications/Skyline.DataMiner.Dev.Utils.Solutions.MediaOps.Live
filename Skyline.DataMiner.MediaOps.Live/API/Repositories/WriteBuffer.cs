@@ -11,6 +11,7 @@
 	{
 		private readonly Repository<T> _repository;
 		private readonly ConcurrentQueue<T> _queue;
+		private readonly ConcurrentBag<Exception> _exceptions;
 		private readonly Timer _timer;
 
 		public WriteBuffer(Repository<T> repository) : this(repository, TimeSpan.FromSeconds(1))
@@ -20,7 +21,9 @@
 		public WriteBuffer(Repository<T> repository, TimeSpan writeInterval)
 		{
 			_repository = repository ?? throw new ArgumentNullException(nameof(repository));
+
 			_queue = new ConcurrentQueue<T>();
+			_exceptions = new ConcurrentBag<Exception>();
 
 			_timer = new Timer(writeInterval.TotalMilliseconds);
 			_timer.Elapsed += IntervalPassed;
@@ -60,26 +63,38 @@
 
 		private void WriteItemsInQueue()
 		{
-			var localItems = new Dictionary<Guid, T>(_queue.Count);
-
-			while (_queue.TryDequeue(out T item))
+			try
 			{
-				// In case multiple items with the same ID are enqueued, only the last one will be written to the repository.
-				localItems[item.ID] = item;
+				var localItems = new Dictionary<Guid, T>(_queue.Count);
+
+				while (_queue.TryDequeue(out T item))
+				{
+					// In case multiple items with the same ID are enqueued, only the last one will be written to the repository.
+					localItems[item.ID] = item;
+				}
+
+				if (localItems.Count > 0)
+				{
+					_repository.CreateOrUpdate(localItems.Values);
+				}
 			}
-
-			if (localItems.Count > 0)
+			catch (Exception ex)
 			{
-				_repository.CreateOrUpdate(localItems.Values);
+				_exceptions.Add(ex);
 			}
 		}
 
 		public void Dispose()
 		{
-			Flush();
-
 			_timer.Elapsed -= IntervalPassed;
 			_timer?.Dispose();
+
+			Flush();
+
+			if (_exceptions.Count > 0)
+			{
+				throw new AggregateException("One or more exceptions occurred while writing items to the repository.", _exceptions);
+			}
 		}
 	}
 }
