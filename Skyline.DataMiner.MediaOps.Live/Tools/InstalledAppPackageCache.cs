@@ -49,7 +49,6 @@
 
 				return _cache.TryGetValue(appPackageName, out installedAppInfo) &&
 					   installedAppInfo.InstallState.InstallStatus == AppInstallStatus.INSTALLED;
-
 			}
 		}
 

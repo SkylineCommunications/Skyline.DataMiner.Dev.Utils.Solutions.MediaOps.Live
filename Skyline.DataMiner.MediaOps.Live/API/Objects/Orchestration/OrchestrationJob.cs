@@ -138,8 +138,6 @@
 
 		private static void ValidateEventOrderBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			var expectedOrderList = ExpectedOrderOfTypes.ToList();
-
 			var orderedByExpectedTypeOrder = orchestrationEvents
 				.Where(e => e.EventType != EventType.Other)
 				.OrderBy(e => e.EventType, EventTypeOrderComparer)

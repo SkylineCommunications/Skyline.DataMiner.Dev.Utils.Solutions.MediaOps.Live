@@ -5,13 +5,14 @@
 	using System.Collections.Generic;
 	using System.Timers;
 
+	using Skyline.DataMiner.Net.Helper;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 
 	internal class WriteBuffer<T> : IDisposable where T : ApiObject<T>
 	{
 		private readonly Repository<T> _repository;
 		private readonly ConcurrentQueue<T> _queue;
-		private readonly ConcurrentBag<Exception> _exceptions;
+		private readonly ConcurrentQueue<Exception> _exceptions;
 		private readonly Timer _timer;
 
 		public WriteBuffer(Repository<T> repository) : this(repository, TimeSpan.FromSeconds(1))
@@ -23,7 +24,7 @@
 			_repository = repository ?? throw new ArgumentNullException(nameof(repository));
 
 			_queue = new ConcurrentQueue<T>();
-			_exceptions = new ConcurrentBag<Exception>();
+			_exceptions = new ConcurrentQueue<Exception>();
 
 			_timer = new Timer(writeInterval.TotalMilliseconds);
 			_timer.Elapsed += IntervalPassed;
@@ -47,6 +48,11 @@
 		public void Flush()
 		{
 			WriteItemsInQueue();
+
+			if (TryDequeueExceptions(out List<Exception> exceptions))
+			{
+				throw new AggregateException("One or more exceptions occurred while writing items to the repository.", exceptions);
+			}
 		}
 
 		private void IntervalPassed(object sender, ElapsedEventArgs e)
@@ -80,8 +86,21 @@
 			}
 			catch (Exception ex)
 			{
-				_exceptions.Add(ex);
+				_exceptions.Enqueue(ex);
 			}
+		}
+
+		private bool TryDequeueExceptions(out List<Exception> exceptions)
+		{
+			exceptions = null;
+
+			while (_exceptions.TryDequeue(out Exception ex))
+			{
+				exceptions ??= new List<Exception>();
+				exceptions.Add(ex);
+			}
+
+			return exceptions != null;
 		}
 
 		public void Dispose()
@@ -90,11 +109,6 @@
 			_timer?.Dispose();
 
 			Flush();
-
-			if (_exceptions.Count > 0)
-			{
-				throw new AggregateException("One or more exceptions occurred while writing items to the repository.", _exceptions);
-			}
 		}
 	}
 }
