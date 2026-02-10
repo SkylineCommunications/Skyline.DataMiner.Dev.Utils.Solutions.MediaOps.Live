@@ -57,11 +57,11 @@
 					return;
 				}
 
-				ExecuteEvents(confirmedEvents, performanceTracker);
+				ExecuteEventsAsync(confirmedEvents, performanceTracker).GetAwaiter().GetResult();
 			}
 		}
 
-		private void ExecuteEvents(List<OrchestrationEventConfiguration> eventConfigurations, PerformanceTracker performanceTracker)
+		private async Task ExecuteEventsAsync(List<OrchestrationEventConfiguration> eventConfigurations, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			using (var taskScheduler = new MediaOpsTaskScheduler())
@@ -72,47 +72,50 @@
 				foreach (var groupedByJob in eventConfigurations.GroupBy(x => x.JobInfoReference))
 				{
 					var jobTask = Task.Factory.StartNew(
-						() => ExecuteJobEvents(groupedByJob, taskScheduler, writeBuffer, performanceTracker),
+						() => ExecuteJobEventsAsync(groupedByJob, taskScheduler, writeBuffer, performanceTracker),
 						CancellationToken.None,
 						TaskCreationOptions.None,
-						taskScheduler);
+						taskScheduler).Unwrap();
 
 					jobTasks.Add(jobTask);
 				}
 
-				Task.WaitAll(jobTasks.ToArray());
+				await Task.WhenAll(jobTasks);
 			}
 		}
 
-		private void ExecuteJobEvents(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
+		private async Task ExecuteJobEventsAsync(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
 		{
-			var groupedAndSortedEvents = eventConfigurations
-				.GroupBy(x => x.EventType)
-				.OrderBy(x => x.Key, OrchestrationJob.EventTypeOrderComparer)
-				.ToList();
-
-			foreach (var jobEvents in groupedAndSortedEvents)
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteJobEventsAsync)))
 			{
-				var jobEventTasks = new List<Task>();
+				var groupedAndSortedEvents = eventConfigurations
+					.GroupBy(x => x.EventType)
+					.OrderBy(x => x.Key, OrchestrationJob.EventTypeOrderComparer)
+					.ToList();
 
-				foreach (var jobEvent in jobEvents)
+				foreach (var jobEvents in groupedAndSortedEvents)
 				{
-					var jobEventTask = Task.Factory.StartNew(
-						() => ExecuteJobEvent(jobEvent, taskScheduler, writeBuffer, performanceTracker),
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler);
+					var jobEventTasks = new List<Task>();
 
-					jobEventTasks.Add(jobEventTask);
+					foreach (var jobEvent in jobEvents)
+					{
+						var jobEventTask = Task.Factory.StartNew(
+							() => ExecuteJobEventAsync(jobEvent, taskScheduler, writeBuffer, performanceTracker),
+							CancellationToken.None,
+							TaskCreationOptions.None,
+							taskScheduler).Unwrap();
+
+						jobEventTasks.Add(jobEventTask);
+					}
+
+					await Task.WhenAll(jobEventTasks);
 				}
-
-				Task.WaitAll(jobEventTasks.ToArray());
 			}
 		}
 
-		private void ExecuteJobEvent(OrchestrationEventConfiguration orchestrationEvent, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
+		private async Task ExecuteJobEventAsync(OrchestrationEventConfiguration orchestrationEvent, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteJobEventAsync)))
 			{
 				SetConfiguringState(orchestrationEvent, writeBuffer);
 
@@ -124,18 +127,18 @@
 					}
 					else if (orchestrationEvent.HasScripts)
 					{
-						ExecuteNodeScriptsEvent(orchestrationEvent, taskScheduler, performanceTracker);
+						await ExecuteNodeScriptsEventAsync(orchestrationEvent, taskScheduler, performanceTracker);
 					}
 					else if (orchestrationEvent.HasConnections)
 					{
-						ExecuteConnectionsOnlyEvent(orchestrationEvent, performanceTracker);
+						await ExecuteConnectionsOnlyEventAsync(orchestrationEvent, performanceTracker);
 					}
 					else
 					{
 						// No scripts or connections, mark as completed right away
 					}
 				}
-				catch(Exception ex)
+				catch (Exception ex)
 				{
 					orchestrationEvent.InternalSetState(EventState.Failed);
 					orchestrationEvent.AppendFailureInfo($"An unexpected error occurred during orchestration: {ex.Message}");
@@ -167,38 +170,30 @@
 			}
 		}
 
-		private void ExecuteNodeScriptsEvent(OrchestrationEventConfiguration orchestrationEvent, MediaOpsTaskScheduler taskScheduler, PerformanceTracker performanceTracker)
+		private async Task ExecuteNodeScriptsEventAsync(OrchestrationEventConfiguration orchestrationEvent, MediaOpsTaskScheduler taskScheduler, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteNodeScriptsEventAsync)))
 			{
 				var tasks = new List<Task>();
 
 				if (orchestrationEvent.HasConnections)
 				{
-					var connectionsTask = Task.Factory.StartNew(
-						() => ExecuteConnections(orchestrationEvent, performanceTracker),
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler);
+					var connectionsTask = ExecuteConnectionsAsync(orchestrationEvent, performanceTracker);
 					tasks.Add(connectionsTask);
 				}
 
-				var nodeScriptsTask = Task.Factory.StartNew(
-					() => ExecuteNodesConfiguration(orchestrationEvent, taskScheduler, performanceTracker),
-					CancellationToken.None,
-					TaskCreationOptions.None,
-					taskScheduler);
+				var nodeScriptsTask = ExecuteNodesConfigurationAsync(orchestrationEvent, taskScheduler, performanceTracker);
 				tasks.Add(nodeScriptsTask);
 
-				Task.WaitAll(tasks.ToArray());
+				await Task.WhenAll(tasks);
 			}
 		}
 
-		private void ExecuteConnectionsOnlyEvent(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
+		private async Task ExecuteConnectionsOnlyEventAsync(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteConnectionsOnlyEventAsync)))
 			{
-				ExecuteConnections(orchestrationEvent, performanceTracker);
+				await ExecuteConnectionsAsync(orchestrationEvent, performanceTracker);
 			}
 		}
 
@@ -232,12 +227,17 @@
 
 		internal void ExecuteConnections(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
 		{
+			ExecuteConnectionsAsync(orchestrationEvent, performanceTracker).GetAwaiter().GetResult();
+		}
+
+		private async Task ExecuteConnectionsAsync(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
+		{
 			if (!orchestrationEvent.HasConnections)
 			{
 				return;
 			}
 
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteConnectionsAsync)))
 			{
 				try
 				{
@@ -247,7 +247,7 @@
 					{
 						var results = ExecuteConnectionsAndReturnResults(orchestrationEvent, connections, performanceTracker);
 
-						Task.WaitAll(results.Select(r => r.CompletionTask).ToArray());
+						await Task.WhenAll(results.Select(r => r.CompletionTask));
 
 						foreach (var result in results.Where(r => !r.IsSuccessful))
 						{
@@ -263,7 +263,7 @@
 					{
 						var results = ExecuteDisconnectionsAndReturnResults(orchestrationEvent, connections, performanceTracker);
 
-						Task.WaitAll(results.Select(r => r.CompletionTask).ToArray());
+						await Task.WhenAll(results.Select(r => r.CompletionTask));
 
 						foreach (var result in results.Where(r => !r.IsSuccessful))
 						{
@@ -463,9 +463,9 @@
 			}
 		}
 
-		private void ExecuteNodesConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
+		private async Task ExecuteNodesConfigurationAsync(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteNodesConfigurationAsync)))
 			{
 				ConcurrentHashSet<string> errors = new();
 
@@ -504,7 +504,7 @@
 						nodeOrchestrationTasks.Add(nodeOrchestrationTask);
 					}
 
-					Task.WaitAll(nodeOrchestrationTasks.ToArray());
+					await Task.WhenAll(nodeOrchestrationTasks);
 				}
 				finally
 				{
