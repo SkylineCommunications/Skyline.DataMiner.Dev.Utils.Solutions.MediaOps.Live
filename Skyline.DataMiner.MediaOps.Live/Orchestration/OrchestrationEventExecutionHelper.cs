@@ -86,11 +86,9 @@
 
 		private void ExecuteJobEvents(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
 		{
-			var expectedOrderList = OrchestrationJob.ExpectedOrderOfTypes.ToList();
-
 			var groupedAndSortedEvents = eventConfigurations
 				.GroupBy(x => x.EventType)
-				.OrderBy(x => expectedOrderList.IndexOf(x.Key))
+				.OrderBy(x => x.Key, OrchestrationJob.EventTypeOrderComparer)
 				.ToList();
 
 			foreach (var jobEvents in groupedAndSortedEvents)

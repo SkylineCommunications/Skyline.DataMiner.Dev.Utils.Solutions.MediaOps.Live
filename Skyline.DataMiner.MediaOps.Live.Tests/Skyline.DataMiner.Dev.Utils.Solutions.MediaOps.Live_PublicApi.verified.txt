@@ -747,6 +747,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
         public bool HasSource() { }
         public bool HasSourceAndDestination() { }
     }
+    public sealed class EventTypeOrderComparer : System.Collections.Generic.IComparer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums.EventType>
+    {
+        public EventTypeOrderComparer(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums.EventType> order) { }
+        public int Compare(Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums.EventType x, Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums.EventType y) { }
+    }
     public class Level
     {
         public Level(string name, int number) { }
@@ -799,6 +804,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
     }
     public class OrchestrationJob
     {
+        public static readonly Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.EventTypeOrderComparer EventTypeOrderComparer;
         public string JobId { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobInfo JobInfo { get; }
         public System.Collections.Generic.List<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> OrchestrationEvents { get; }
@@ -1580,7 +1586,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
         where T : Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest
     {
         protected ConnectionResult(T request, bool isSuccessful, System.Threading.Tasks.Task<bool> completionTask) { }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest ConnectionRequest { get; }
     }
     public class DisconnectOptions : Skyline.DataMiner.Solutions.MediaOps.Live.Take.OptionsBase
     {
@@ -1594,7 +1599,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
         where T : Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest
     {
         protected DisconnectResult(T request, bool isSuccessful, System.Threading.Tasks.Task<bool> completionTask) { }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest DisconnectRequest { get; }
     }
     public class EndpointConnectionRequest : Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest
     {

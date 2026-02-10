@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
@@ -33,6 +34,8 @@
 			EventType.PostrollStop,
 			EventType.Stop,
 		];
+
+		public static readonly EventTypeOrderComparer EventTypeOrderComparer = new(ExpectedOrderOfTypes);
 
 		/// <summary>
 		/// Holds the list of event IDs at the start of this objects creation.
@@ -139,7 +142,7 @@
 
 			var orderedByExpectedTypeOrder = orchestrationEvents
 				.Where(e => e.EventType != EventType.Other)
-				.OrderBy(e => expectedOrderList.IndexOf(e.EventType))
+				.OrderBy(e => e.EventType, EventTypeOrderComparer)
 				.ToList();
 
 			for (int i = 0; i < orderedByExpectedTypeOrder.Count - 1; i++)
