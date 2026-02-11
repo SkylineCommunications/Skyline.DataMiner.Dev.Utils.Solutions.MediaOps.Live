@@ -9,10 +9,10 @@
 	public class OrchestrationScriptInfo
 	{
 		[IgnoreDataMember]
-		public Dictionary<string, Parameter> ProfileParameterReferences { get; } = new Dictionary<string, Parameter>();
+		public Dictionary<Guid, Parameter> ProfileParameterReferences { get; } = new Dictionary<Guid, Parameter>();
 
 		[DataMember]
-		public Dictionary<string, Guid> ProfileParameters { get; } = new Dictionary<string, Guid>();
+		public Dictionary<string, Guid> ProfileParametersIdByName { get; } = new Dictionary<string, Guid>();
 
 		[IgnoreDataMember]
 		public List<ProfileDefinition> ProfileDefinitionReferences { get; } = new List<ProfileDefinition>();

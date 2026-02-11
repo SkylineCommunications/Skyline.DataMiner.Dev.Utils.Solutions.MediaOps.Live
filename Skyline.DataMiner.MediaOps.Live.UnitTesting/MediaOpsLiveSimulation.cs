@@ -368,7 +368,7 @@
 				new List<string> { "InputDummy" },
 				new OrchestrationScriptInfo
 				{
-					ProfileParameters =
+					ProfileParametersIdByName =
 					{
 						{ "IndividualProfileParam_Int", new Guid("986528dc-78af-4b09-b1c1-11dac21744b1") },
 						{ "IndividualProfileParam_String", new Guid("b0e37ff1-fe56-4bd7-b108-9e8c992eb6d9") },

@@ -82,7 +82,7 @@
 					result.ProfileDefinition = profileDefinition;
 				}
 
-				foreach (var profileParameter in scriptOrchestrationInfo.ProfileParameters)
+				foreach (var profileParameter in scriptOrchestrationInfo.ProfileParametersIdByName)
 				{
 					var orchestrationParam = new OrchestrationScriptInputParameter(profileParameter.Key, profileParameter.Value);
 					orchestrationParam.LoadLinkedProfileParameter(_profileHelper);
