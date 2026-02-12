@@ -344,9 +344,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			foreach (KeyValuePair<Guid, Parameter> profileParameter in scriptInfo.ProfileParameterReferences)
 			{
 				ProfileParameterID reference = new ProfileParameterID(profileParameter.Key);
+				var overrideName = scriptInfo.ProfileParametersIdByName.FirstOrDefault(kv => kv.Value == profileParameter.Key).Key;
 				ParameterInfo info = new ParameterInfo
 				{
-					Name = profileParameter.Value.Name,
+					Name = overrideName ?? profileParameter.Value.Name,
 					Reference = reference,
 				};
 
