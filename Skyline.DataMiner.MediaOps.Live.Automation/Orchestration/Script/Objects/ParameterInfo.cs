@@ -10,7 +10,7 @@
 
 		public IParameterDisplayInfo DisplayInfo { get; set; }
 
-		public string Id { get; set; }
+		public string Name { get; set; }
 
 		public IDMAObjectRef Reference { get; set; }
 
@@ -24,7 +24,7 @@
 
 		public override string ToString()
 		{
-			return $"{Id}: {Type} with reference {Reference} ({Description}) / Value: {Value} ({ValueType})";
+			return $"{Name}: {Type} with reference {Reference} ({Description}) / Value: {Value} ({ValueType})";
 		}
 	}
 }

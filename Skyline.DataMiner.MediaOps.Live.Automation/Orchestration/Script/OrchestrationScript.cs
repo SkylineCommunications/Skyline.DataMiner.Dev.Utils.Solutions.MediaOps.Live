@@ -145,7 +145,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 		public object GetParameterValue(string paramName)
 		{
-			ParameterInfo param = _parameterInfos.FirstOrDefault(paramInfo => paramInfo.Id == paramName);
+			ParameterInfo param = _parameterInfos.FirstOrDefault(paramInfo => paramInfo.Name == paramName);
 
 			if (param == null)
 			{
@@ -309,8 +309,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 				foreach (KeyValuePair<string, Parameter> keyValuePair in orchestrationParameters.GetParameterReferences(_engine))
 				{
-					info.ProfileParameterReferences.Add(keyValuePair.Key, keyValuePair.Value);
-					info.ProfileParameters.Add(keyValuePair.Key, keyValuePair.Value.ID);
+					info.ProfileParameterReferences.Add(keyValuePair.Value.ID, keyValuePair.Value);
+					info.ProfileParametersIdByName.Add(keyValuePair.Key, keyValuePair.Value.ID);
 				}
 			}
 
@@ -341,12 +341,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			List<ParameterInfo> parameterInfos = new List<ParameterInfo>();
 
 			// Create objects for all orchestration parameters.
-			foreach (KeyValuePair<string, Parameter> profileParameter in scriptInfo.ProfileParameterReferences)
+			foreach (KeyValuePair<Guid, Parameter> profileParameter in scriptInfo.ProfileParameterReferences)
 			{
-				ProfileParameterID reference = new ProfileParameterID(profileParameter.Value.ID);
+				ProfileParameterID reference = new ProfileParameterID(profileParameter.Key);
+				var overrideName = scriptInfo.ProfileParametersIdByName.FirstOrDefault(kv => kv.Value == profileParameter.Key).Key;
 				ParameterInfo info = new ParameterInfo
 				{
-					Id = profileParameter.Key,
+					Name = overrideName ?? profileParameter.Value.Name,
 					Reference = reference,
 				};
 
@@ -411,8 +412,15 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		{
 			foreach (KeyValuePair<string, object> parameterValue in input.ProfileParameterValues)
 			{
-				ParameterInfo matchInfo = parameterInfos
-					.FirstOrDefault(x => x.Id == parameterValue.Key);
+				ParameterInfo matchInfo = null;
+				if (Guid.TryParse(parameterValue.Key, out Guid profileParameterId))
+				{
+					matchInfo = parameterInfos.FirstOrDefault(x => x.Reference is ProfileParameterID id && id.Id == profileParameterId);
+				}
+				else
+				{
+					matchInfo = parameterInfos.FirstOrDefault(x => x.Name == parameterValue.Key);
+				}
 
 				if (matchInfo != null)
 				{
@@ -427,7 +435,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				.Where(x => x.Reference is ProfileParameterID)
 				.ToDictionary(x => (x.Reference as ProfileParameterID).Id);
 
-			Dictionary<string, Parameter>.ValueCollection profileParameters = scriptInfo.ProfileParameterReferences.Values;
+			Dictionary<Guid, Parameter>.ValueCollection profileParameters = scriptInfo.ProfileParameterReferences.Values;
 
 			foreach (Parameter parameter in profileParameters)
 			{
@@ -478,7 +486,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 							parameterInfo.DisplayInfo = new DropdownParameterDisplayInfo
 							{
-								Label = parameterInfo.Id,
+								Label = parameterInfo.Name,
 								Options = options,
 							};
 						}
@@ -489,7 +497,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 						{
 							parameterInfo.DisplayInfo = new NumericParameterDisplayInfo()
 							{
-								Label = parameterInfo.Id,
+								Label = parameterInfo.Name,
 								Min = parameter.RangeMin,
 								Max = parameter.RangeMax,
 								Step = parameter.Stepsize,
@@ -504,7 +512,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 						{
 							parameterInfo.DisplayInfo = new TextParameterDisplayInfo()
 							{
-								Label = parameterInfo.Id,
+								Label = parameterInfo.Name,
 							};
 						}
 
