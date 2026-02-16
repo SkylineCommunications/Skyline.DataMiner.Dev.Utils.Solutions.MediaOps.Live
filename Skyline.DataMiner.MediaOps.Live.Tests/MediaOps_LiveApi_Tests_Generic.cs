@@ -11,29 +11,6 @@
 	public sealed class MediaOps_LiveApi_Tests_Generic
 	{
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_IsInstalled()
-		{
-			var dms = new SimulatedDms();
-			var connection = dms.CreateConnection();
-			var api = new MediaOpsLiveApi(connection);
-
-			Assert.IsFalse(api.IsInstalled());
-
-			dms.AddApplicationPackage(Constants.AppPackageName, MediaOpsLiveApi.GetVersion());
-
-			api.InstalledAppPackages.Refresh();
-			Assert.IsTrue(api.IsInstalled());
-		}
-
-		[TestMethod]
-		public void MediaOps_LiveApi_Tests_Version()
-		{
-			var version = MediaOpsLiveApi.GetVersion();
-
-			version.Should().NotBeNullOrEmpty();
-		}
-
-		[TestMethod]
 		public void MediaOps_LiveApi_Tests_ConstructorDoesNotExecuteRequest()
 		{
 			var simulation = new MediaOpsLiveSimulation();

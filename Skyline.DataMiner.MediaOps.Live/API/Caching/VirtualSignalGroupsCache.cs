@@ -10,7 +10,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
-	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+	using Categories = Skyline.DataMiner.Solutions.Categories.API;
 
 	public class VirtualSignalGroupsCache
 	{

@@ -3,16 +3,15 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Analytics.GenericInterface.JoinFilter;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.Categories.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Extensions;
-	using Skyline.DataMiner.Utils.Categories.API;
-	using Skyline.DataMiner.Utils.Categories.API.Extensions;
-	using Skyline.DataMiner.Utils.Categories.API.Objects;
 
 	/// <summary>
 	/// Helper class to manage categories of Virtual Signal Groups.
@@ -20,7 +19,7 @@
 	/// </summary>
 	internal class CategoriesHelper
 	{
-		private readonly CategoriesApi _api;
+		private readonly ICategoriesApi _api;
 
 		public CategoriesHelper(IConnection connection)
 		{

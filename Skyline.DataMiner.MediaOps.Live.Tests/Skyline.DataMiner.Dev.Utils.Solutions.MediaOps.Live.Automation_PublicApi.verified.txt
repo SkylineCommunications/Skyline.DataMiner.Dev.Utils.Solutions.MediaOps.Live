@@ -208,7 +208,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
         public string Description { get; set; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.IParameterDisplayInfo DisplayInfo { get; set; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects.ParameterGroup Group { get; set; }
-        public string Id { get; set; }
+        public string Name { get; set; }
         public Skyline.DataMiner.Net.IDMAObjectRef Reference { get; set; }
         public string Type { get; set; }
         public object Value { get; set; }

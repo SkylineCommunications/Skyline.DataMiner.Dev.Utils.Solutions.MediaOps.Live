@@ -9,7 +9,7 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+	using Categories = Skyline.DataMiner.Solutions.Categories.API;
 
 	/// <summary>
 	/// Coordinates caching and updates for both endpoints and virtual signal groups.

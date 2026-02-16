@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -11,8 +12,10 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Extensions;
+
 	using SLDataGateway.API.Types.Querying;
-	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+
+	using Categories = Skyline.DataMiner.Solutions.Categories.API;
 
 	public class VirtualSignalGroupRepository : Repository<VirtualSignalGroup>
 	{

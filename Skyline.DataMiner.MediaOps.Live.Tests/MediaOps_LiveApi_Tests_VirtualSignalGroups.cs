@@ -1,12 +1,13 @@
 ﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.Categories.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
-	using Skyline.DataMiner.Utils.Categories.API.Objects;
-	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+
+	using Categories = Skyline.DataMiner.Solutions.Categories.API;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_VirtualSignalGroups

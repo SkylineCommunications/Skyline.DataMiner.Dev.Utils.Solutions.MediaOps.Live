@@ -4,6 +4,7 @@
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
@@ -11,7 +12,8 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Validation;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
-	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+
+	using Categories = Skyline.DataMiner.Solutions.Categories.API;
 
 	public class VirtualSignalGroup : ApiObject<VirtualSignalGroup>
 	{
