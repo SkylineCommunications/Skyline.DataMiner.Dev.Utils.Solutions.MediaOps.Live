@@ -33,6 +33,12 @@
 				_domInstance.EndpointTransportMetadata,
 				x => new TransportMetadata(x),
 				x => x.DomSection);
+
+			// Set default values for required fields if they are not already set
+			if (!_domInstance.EndpointInfo.Role.HasValue)
+			{
+				_domInstance.EndpointInfo.Role = SlcConnectivityManagementIds.Enums.Role.Source;
+			}
 		}
 
 		internal Endpoint(DomInstance domInstance) : this(new EndpointInstance(domInstance))

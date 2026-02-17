@@ -41,6 +41,12 @@
 				_domInstance.VirtualSignalGroupInfo.Categories,
 				x => new Categories.ApiObjectReference<Categories.Category>(x),
 				x => x.ID);
+
+			// Set default values for required fields if they are not already set
+			if (!_domInstance.VirtualSignalGroupInfo.Role.HasValue)
+			{
+				_domInstance.VirtualSignalGroupInfo.Role = SlcConnectivityManagementIds.Enums.Role.Source;
+			}
 		}
 
 		internal VirtualSignalGroup(DomInstance domInstance) : this(new VirtualSignalGroupInstance(domInstance))
