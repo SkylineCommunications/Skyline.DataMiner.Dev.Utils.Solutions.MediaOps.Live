@@ -48,22 +48,25 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				var confirmedEvents = orchestrationEvents
-					.Where(e => e.EventState == EventState.Confirmed)
+				var eventsToExecute = orchestrationEvents
+					.Where(e => e.EventState != EventState.Configuring
+						&& e.EventState != EventState.Completed
+						&& e.EventState != EventState.Failed
+						&& e.EventState != EventState.Cancelled)
 					.ToList();
 
-				if (!confirmedEvents.Any())
+				if (!eventsToExecute.Any())
 				{
 					return;
 				}
 
-				ExecuteEventsAsync(confirmedEvents, performanceTracker).GetAwaiter().GetResult();
+				ExecuteEventsAsync(eventsToExecute, performanceTracker).GetAwaiter().GetResult();
 			}
 		}
 
 		private async Task ExecuteEventsAsync(List<OrchestrationEventConfiguration> eventConfigurations, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteEventsAsync)))
 			using (var taskScheduler = new MediaOpsTaskScheduler())
 			using (var writeBuffer = new WriteBuffer<OrchestrationEvent>(new OrchestrationEventRepository(_api)))
 			{
