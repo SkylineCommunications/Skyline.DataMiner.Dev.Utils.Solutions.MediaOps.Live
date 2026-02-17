@@ -100,39 +100,58 @@
 
 		private static void ValidateEventTimesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			if (orchestrationEvents.Any(e => e.EventTime < DateTimeOffset.UtcNow && e.EventState == EventState.Confirmed))
-			{
-				throw new InvalidOperationException("Job cannot contain event with 'Confirmed' state in the past.");
-			}
+			var now = DateTimeOffset.UtcNow;
 
-			if (orchestrationEvents.Any(e => e.EventTime < DateTimeOffset.UtcNow + TimeSpan.FromSeconds(5) && e.EventState == EventState.Confirmed))
+			foreach (var e in orchestrationEvents)
 			{
-				throw new InvalidOperationException("Cannot save/update an event with 'Confirmed' state that is about the start in less than 5 seconds.");
+				if (e.EventState != EventState.Confirmed)
+				{
+					continue;
+				}
+
+				var timeUntilStart = e.EventTime - now;
+
+				if (timeUntilStart < TimeSpan.Zero)
+				{
+					throw new InvalidOperationException("Job cannot contain an event with 'Confirmed' state in the past.");
+				}
+
+				if (timeUntilStart < TimeSpan.FromSeconds(5))
+				{
+					throw new InvalidOperationException("Cannot save/update an event with 'Confirmed' state that starts in less than 5 seconds.");
+				}
 			}
 		}
 
 		private static void ValidateEventTypesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			if (orchestrationEvents.All(e => e.EventType == EventType.Other))
+			var startCount = orchestrationEvents.Count(x => StartTypes.Contains(x.EventType));
+			var stopCount = orchestrationEvents.Count(x => StopTypes.Contains(x.EventType));
+
+			// If all events are "Other", validation is not required
+			if (startCount == 0 && stopCount == 0)
 			{
 				return;
 			}
 
-			OrchestrationEvent startEvent;
-			OrchestrationEvent stopEvent;
-			try
+			if (startCount == 0)
 			{
-				startEvent = orchestrationEvents.SingleOrDefault(e => StartTypes.Contains(e.EventType));
-				stopEvent = orchestrationEvents.SingleOrDefault(e => StopTypes.Contains(e.EventType));
-			}
-			catch (InvalidOperationException)
-			{
-				throw new InvalidOperationException("Job can have only a single starting event (Start, PrerollStart) and a single ending event (Stop, PostrollStop).");
+				throw new InvalidOperationException("Job must have a starting event (Start, PrerollStart).");
 			}
 
-			if (startEvent == null || stopEvent == null)
+			if (startCount > 1)
 			{
-				throw new InvalidOperationException("Job must have a starting event (Start, PrerollStart) and an ending event (Stop, PostrollStop).");
+				throw new InvalidOperationException("Job can have only a single starting event (Start, PrerollStart).");
+			}
+
+			if (stopCount == 0)
+			{
+				throw new InvalidOperationException("Job must have an ending event (Stop, PostrollStop).");
+			}
+
+			if (stopCount > 1)
+			{
+				throw new InvalidOperationException("Job can have only a single ending event (Stop, PostrollStop).");
 			}
 		}
 
@@ -153,7 +172,7 @@
 
 				if (earlierEventTime > laterEventTime)
 				{
-					throw new InvalidOperationException($"Event of type {laterEvent.EventType.ToString()} can not be scheduled before an event of type {earlierEvent.EventType.ToString()}");
+					throw new InvalidOperationException($"Event of type {laterEvent.EventType} can not be scheduled before an event of type {earlierEvent.EventType}");
 				}
 			}
 		}
