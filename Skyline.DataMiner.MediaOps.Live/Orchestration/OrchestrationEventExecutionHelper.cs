@@ -48,11 +48,10 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
+				// Only allow execution of events that are in Draft or Confirmed state.
+				// Configuring events are already being executed, and Cancelled, Completed or Failed events should not be executed.
 				var eventsToExecute = orchestrationEvents
-					.Where(e => e.EventState != EventState.Configuring
-						&& e.EventState != EventState.Completed
-						&& e.EventState != EventState.Failed
-						&& e.EventState != EventState.Cancelled)
+					.Where(e => e.EventState == EventState.Draft || e.EventState == EventState.Confirmed)
 					.ToList();
 
 				if (!eventsToExecute.Any())
