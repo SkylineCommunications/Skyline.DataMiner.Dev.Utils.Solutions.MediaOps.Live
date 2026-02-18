@@ -2,9 +2,11 @@
 {
 	using System;
 	using System.Collections.Generic;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Solutions.Categories.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
@@ -14,8 +16,7 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Extensions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.TestData;
-	using Skyline.DataMiner.Utils.Categories.API;
-	using Skyline.DataMiner.Utils.Categories.API.Objects;
+
 	using Level = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
 	public class MediaOpsLiveSimulation
@@ -35,7 +36,7 @@
 			Api = new MediaOpsLiveApi(_connection);
 			Api.InstallDomModules();
 
-			CategoriesApi = new CategoriesApi(_connection);
+			CategoriesApi = _connection.GetCategoriesApi();
 			CategoriesApi.InstallDomModules();
 
 			InitializeConnectivityManagement(createEndpoints, createVsgs, createConnections, createElements);
@@ -46,7 +47,7 @@
 
 		public MediaOpsLiveApi Api { get; }
 
-		public CategoriesApi CategoriesApi { get; }
+		public ICategoriesApi CategoriesApi { get; }
 
 		public void CreateTestConnection(Endpoint source, Endpoint destination)
 		{

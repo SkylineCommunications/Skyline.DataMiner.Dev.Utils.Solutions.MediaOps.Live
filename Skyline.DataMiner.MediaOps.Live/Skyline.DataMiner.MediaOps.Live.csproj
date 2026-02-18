@@ -43,8 +43,9 @@
 		<PackageReference Include="Skyline.DataMiner.Core.DataMinerSystem.Common" Version="1.1.3.7" />
 		<PackageReference Include="Skyline.DataMiner.Core.InterAppCalls.Common" Version="1.1.1.1" />
 		<PackageReference Include="Skyline.DataMiner.Dev.Common" Version="10.5.11.1" />
-		<PackageReference Include="Skyline.DataMiner.SDM.Abstractions" Version="0.3.1" />
-		<PackageReference Include="Skyline.DataMiner.Utils.Categories" Version="1.0.5" />
+		<PackageReference Include="Skyline.DataMiner.Dev.Utils.SDM.Abstractions" Version="1.0.1" />
+		<PackageReference Include="Skyline.DataMiner.Dev.Utils.Solutions.Categories" Version="1.1.0" />
+		<PackageReference Include="Skyline.DataMiner.SDM.Registration.Common" Version="2.0.0" />
 		<PackageReference Include="Skyline.DataMiner.Utils.DOM" Version="10.5.2.5" />
 		<PackageReference Include="Skyline.DataMiner.Utils.PerformanceAnalyzer" Version="3.0.2" />
 		<PackageReference Include="GitInfo" Version="3.6.0" PrivateAssets="All" />

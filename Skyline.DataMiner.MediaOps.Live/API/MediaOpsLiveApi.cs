@@ -1,7 +1,11 @@
 ﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API
 {
 	using System;
+	using System.Linq;
+
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.SDM.Registration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement;
@@ -14,15 +18,14 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
-	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
 	public class MediaOpsLiveApi : IMediaOpsLiveApi
 	{
+		private const string CatalogItemId = "213031b9-af0b-488c-be20-934912b967c0";
+
 		public MediaOpsLiveApi(IConnection connection)
 		{
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
-
-			InstalledAppPackages = new InstalledAppPackageCache(connection);
 
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
@@ -53,8 +56,6 @@
 		public TransportTypeRepository TransportTypes { get; }
 
 		public OrchestrationHelper Orchestration { get; }
-
-		internal InstalledAppPackageCache InstalledAppPackages { get; }
 
 		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
 
@@ -115,13 +116,16 @@
 		/// </returns>
 		public bool IsInstalled(out string version)
 		{
-			var isInstalled = InstalledAppPackages.IsInstalled("MediaOps.Live-Package", out var installedAppInfo) ||
-				InstalledAppPackages.IsInstalled("MediaOps.Live-DemoPackage", out installedAppInfo) ||
-				InstalledAppPackages.IsInstalled("MediaOps.Live-InternalPackage", out installedAppInfo);
+			var registrar = Connection.GetSdmRegistrar();
+			var mediaOpsLiveRegistration = registrar.Solutions.Read(SolutionRegistrationExposers.ID.Equal(CatalogItemId)).FirstOrDefault();
+			if (mediaOpsLiveRegistration == null)
+			{
+				version = null;
+				return false;
+			}
 
-			version = isInstalled ? installedAppInfo?.AppInfo?.Version : null;
-
-			return isInstalled;
+			version = mediaOpsLiveRegistration.Version;
+			return true;
 		}
 
 		/// <summary>

@@ -6,7 +6,7 @@
 
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
-	using CategoryRef = Skyline.DataMiner.Utils.Categories.API.Objects.ApiObjectReference<Skyline.DataMiner.Utils.Categories.API.Objects.Category>;
+	using CategoryRef = Skyline.DataMiner.Solutions.Categories.API.ApiObjectReference<Skyline.DataMiner.Solutions.Categories.API.Category>;
 
 	public class VirtualSignalGroupCategoriesMapping
 	{
