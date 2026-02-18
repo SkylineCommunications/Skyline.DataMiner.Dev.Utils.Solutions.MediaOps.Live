@@ -30,6 +30,11 @@
 				throw new ArgumentNullException(nameof(orchestrationEvent));
 			}
 
+			if (!PlanApi.IsInstalled())
+			{
+				return;
+			}
+
 			try
 			{
 				var jobInfo = orchestrationEvent.GetJobInfo(Api)
