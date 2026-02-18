@@ -1531,9 +1531,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects
         [System.Runtime.Serialization.DataMember]
         public System.Collections.Generic.List<System.Guid> ProfileDefinitions { get; }
         [System.Runtime.Serialization.IgnoreDataMember]
-        public System.Collections.Generic.Dictionary<string, Skyline.DataMiner.Net.Profiles.Parameter> ProfileParameterReferences { get; }
+        public System.Collections.Generic.Dictionary<System.Guid, Skyline.DataMiner.Net.Profiles.Parameter> ProfileParameterReferences { get; }
         [System.Runtime.Serialization.DataMember]
-        public System.Collections.Generic.Dictionary<string, System.Guid> ProfileParameters { get; }
+        public System.Collections.Generic.Dictionary<string, System.Guid> ProfileParametersIdByName { get; }
     }
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper
