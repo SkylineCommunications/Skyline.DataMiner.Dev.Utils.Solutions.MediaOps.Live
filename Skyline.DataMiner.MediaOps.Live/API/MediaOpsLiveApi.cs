@@ -21,6 +21,8 @@
 
 	public class MediaOpsLiveApi : IMediaOpsLiveApi
 	{
+		private const string CatalogItemId = "213031b9-af0b-488c-be20-934912b967c0";
+
 		public MediaOpsLiveApi(IConnection connection)
 		{
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -115,14 +117,14 @@
 		public bool IsInstalled(out string version)
 		{
 			var registrar = Connection.GetSdmRegistrar();
-			var categoriesRegistration = registrar.Solutions.Read(SolutionRegistrationExposers.ID.Equal("standard_solution_mediaops_live")).FirstOrDefault();
-			if (categoriesRegistration == null)
+			var mediaOpsLiveRegistration = registrar.Solutions.Read(SolutionRegistrationExposers.ID.Equal(CatalogItemId)).FirstOrDefault();
+			if (mediaOpsLiveRegistration == null)
 			{
-				version = String.Empty;
+				version = null;
 				return false;
 			}
 
-			version = categoriesRegistration.Version;
+			version = mediaOpsLiveRegistration.Version;
 			return true;
 		}
 
