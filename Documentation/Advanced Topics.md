@@ -1,6 +1,6 @@
 # Advanced Topics
 
-This document covers advanced features of the `Skyline.DataMiner.MediaOps.Live` API including caching, subscriptions, validation, logging, and error handling.
+This document covers advanced features of the `Skyline.DataMiner.Solutions.MediaOps.Live` API including caching, subscriptions, validation, logging, and error handling.
 
 ## Caching
 
@@ -10,14 +10,13 @@ The cache is automatically kept up-to-date in the background through subscriptio
 ### Getting the Cache
 
 ```csharp
-using Skyline.DataMiner.MediaOps.Live.API;
-using Skyline.DataMiner.MediaOps.Live.API.Caching;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
 
 var api = engine.GetMediaOpsLiveApi();
 
 // Get or create the cache singleton
 var cache = api.GetCache();
-
 ```
 
 ### Available Caches
@@ -62,7 +61,7 @@ Subscriptions allow you to receive real-time notifications when objects are crea
 Subscribe to changes in a repository:
 
 ```csharp
-using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions;
 
 var api = engine.GetMediaOpsLiveApi();
 
@@ -97,7 +96,7 @@ subscription.Dispose();
 Subscribe to a subset of objects using filters:
 
 ```csharp
-using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 // Subscribe only to source endpoints
 var filter = EndpointExposers.Role.Equal(EndpointRole.Source);
@@ -107,7 +106,6 @@ subscription.Changed += (sender, e) =>
 {
     // Only source endpoint changes will trigger this
 };
-
 ```
 
 ## Logging
@@ -117,7 +115,7 @@ The API supports custom logging through the `ILogger` interface.
 ### Setting a Logger
 
 ```csharp
-using Skyline.DataMiner.MediaOps.Live.Logging;
+using Skyline.DataMiner.Solutions.MediaOps.Live.Logging;
 
 var api = engine.GetMediaOpsLiveApi();
 

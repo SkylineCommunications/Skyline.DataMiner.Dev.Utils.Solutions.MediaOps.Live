@@ -1,6 +1,6 @@
 # Skyline.DataMiner.Solutions.MediaOps.Live
 
-This documentation describes how to use the public API exposed by `Skyline.DataMiner.MediaOps.Live`.
+This documentation describes how to use the public API exposed by `Skyline.DataMiner.Solutions.MediaOps.Live`.
 The API is intended to be used when developing custom solutions based on the MediaOps.LIVE solution.
 
 ## Installation
@@ -8,13 +8,14 @@ The API is intended to be used when developing custom solutions based on the Med
 Add the NuGet package to your solution:
 
 ```bash
-dotnet add package Skyline.DataMiner.MediaOps.Live
+dotnet add package Skyline.DataMiner.Solutions.MediaOps.Live
 ```
 
 Depending on your project type, one of the following additional packages is also required:
-- Automation scripts: `Skyline.DataMiner.MediaOps.Live.Automation`
-- Protocols: `Skyline.DataMiner.MediaOps.Live.Protocol`
-- GQI Ad-hoc data sources and custom operators: `Skyline.DataMiner.MediaOps.Live.GQI`
+
+- Automation scripts: `Skyline.DataMiner.Solutions.MediaOps.Live.Automation`
+- Protocols: `Skyline.DataMiner.Solutions.MediaOps.Live.Protocol`
+- GQI Ad-hoc data sources and custom operators: `Skyline.DataMiner.Solutions.MediaOps.Live.GQI`
 
 > [!NOTE]
 > This library targets `.NET Framework 4.8`.
@@ -22,13 +23,14 @@ Depending on your project type, one of the following additional packages is also
 ## Documentation
 
 | Document | Description |
-|----------|-------------|
+| -------- | ----------- |
 | [Getting Started](Documentation/Getting%20Started.md) | Installation, prerequisites, and basic usage |
 | [Quick Reference](Documentation/Quick%20Reference.md) | Common code snippets for repositories, querying, and connectivity |
 | [Advanced Topics](Documentation/Advanced%20Topics.md) | Caching, subscriptions, validation, logging, and error handling |
 | [Orchestration](Documentation/Orchestration.md) | Automated scheduling and execution of orchestration events |
 
 External resources:
+
 - [DataMiner Docs](https://docs.dataminer.services/) - Official DataMiner documentation
 
 ## About DataMiner

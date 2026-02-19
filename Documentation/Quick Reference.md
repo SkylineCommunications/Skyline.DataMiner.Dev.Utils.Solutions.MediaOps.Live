@@ -1,11 +1,11 @@
 # Quick Reference
 
-Common snippets for the public API in `Skyline.DataMiner.MediaOps.Live`.
+Common snippets for the public API in `Skyline.DataMiner.Solutions.MediaOps.Live`.
 
 ## Instantiate `MediaOpsLiveApi`
 
 ```csharp
-using Skyline.DataMiner.MediaOps.Live.API;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 using Skyline.DataMiner.Net;
 
 IConnection connection = /* create or retrieve connection */;
@@ -59,7 +59,7 @@ var allEndpoints = api.Endpoints.ReadAll();
 ### Filtered Reading
 
 ```csharp
-using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 // With filter using exposers
 var filter = EndpointExposers.Name.Contains("Network");

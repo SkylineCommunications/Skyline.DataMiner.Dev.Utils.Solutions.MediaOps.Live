@@ -1,19 +1,20 @@
 # Getting Started
 
-This documentation describes how to use the public API exposed by `Skyline.DataMiner.MediaOps.Live`.
+This documentation describes how to use the public API exposed by `Skyline.DataMiner.Solutions.MediaOps.Live`.
 
 ## Installation
 
 Add the NuGet package to your solution:
 
 ```bash
-dotnet add package Skyline.DataMiner.MediaOps.Live
+dotnet add package Skyline.DataMiner.Solutions.MediaOps.Live
 ```
 
 Depending on your project type, one of the following additional packages is also required:
-- Automation scripts: `Skyline.DataMiner.MediaOps.Live.Automation`
-- Protocols: `Skyline.DataMiner.MediaOps.Live.Protocol`
-- GQI Ad-hoc Data Sources and custom operators: `Skyline.DataMiner.MediaOps.Live.GQI`
+
+- Automation scripts: `Skyline.DataMiner.Solutions.MediaOps.Live.Automation`
+- Protocols: `Skyline.DataMiner.Solutions.MediaOps.Live.Protocol`
+- GQI Ad-hoc Data Sources and custom operators: `Skyline.DataMiner.Solutions.MediaOps.Live.GQI`
 
 > [!NOTE]
 > This library targets `.NET Framework 4.8`.
@@ -35,8 +36,8 @@ To obtain an instance of the `MediaOpsLiveApi` class, use the `GetMediaOpsLiveAp
 This extension method is available for automation scripts, connectors, GQI ad-hoc data sources, and custom operators.
 
 ```csharp
-using Skyline.DataMiner.MediaOps.Live.API;
-using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 // Automation scripts
 var api = engine.GetMediaOpsLiveApi();
@@ -235,6 +236,6 @@ var connectedSource = connectivity.ConnectedSource;
 ## Next steps
 
 - **[Quick Reference](Quick%20Reference.md)** - Common snippets for repositories, querying, and connectivity
-- **[Advanced Topics](Advanced%20Topics.md)** – Caching, subscriptions, validation, and more
-- **[Tutorials](https://github.com/SkylineCommunications/SLC-AS-MediaOps.LIVE/blob/main/Documentation/Tutorials/Tutorials.md)** - Step-by-step guides to build common solutions
-- **[Orchestration](Orchestration.md)** – Orchestration concepts and usage
+- **[Advanced Topics](Advanced%20Topics.md)** ï¿½ Caching, subscriptions, validation, and more
+- **[Documentation & Tutorials](https://docs.dataminer.services/solutions/standard_solutions/MediaOps%20Live/MediaOps.Live.html)** - Public documentation including tutorials
+- **[Orchestration](Orchestration.md)** ï¿½ Orchestration concepts and usage
