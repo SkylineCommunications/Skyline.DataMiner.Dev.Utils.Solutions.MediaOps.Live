@@ -1,13 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions
 {
 	using System;
 	using System.Linq;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories;
 	using Skyline.DataMiner.Utils.DOM;
 
 	public sealed class RepositorySubscription<T> : IDisposable

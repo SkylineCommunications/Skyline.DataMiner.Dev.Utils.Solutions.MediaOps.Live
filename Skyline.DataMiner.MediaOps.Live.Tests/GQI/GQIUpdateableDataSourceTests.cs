@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tests.GQI
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.GQI
 {
 	using System;
 
 	using Moq;
 
 	using Skyline.DataMiner.Analytics.GenericInterface;
-	using Skyline.DataMiner.MediaOps.Live.GQI;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.GQI;
 
 	[TestClass]
 	public class GQIUpdateableDataSourceTests

@@ -1,14 +1,14 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
 {
 	using System;
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
 
 	/// <summary>
 	/// Information about an orchestration event.
@@ -18,6 +18,7 @@
 	public class OrchestrationEvent : ApiObject<OrchestrationEvent>
 	{
 		private readonly OrchestrationEventInstance _domInstance;
+		private readonly object _lock = new object();
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class.
@@ -275,7 +276,7 @@
 			}
 		}
 
-		public OrchestrationJobInfo GetJobInfo(MediaOpsLiveApi api)
+		public OrchestrationJobInfo GetJobInfo(IMediaOpsLiveApi api)
 		{
 			return api.Orchestration.JobInfos.Read(JobInfoReference.Value);
 		}
@@ -287,7 +288,28 @@
 
 		internal void InternalSetState(EventState state)
 		{
-			_domInstance.OrchestrationEventInfo.EventState = (SlcOrchestrationIds.Enums.EventState)(int)state;
+			lock (_lock)
+			{
+				_domInstance.OrchestrationEventInfo.EventState = (SlcOrchestrationIds.Enums.EventState)(int)state;
+			}
+		}
+
+		internal void AppendFailureInfo(string text)
+		{
+			if (String.IsNullOrEmpty(text))
+			{
+				return;
+			}
+
+			lock (_lock)
+			{
+				if (!String.IsNullOrEmpty(_domInstance.OrchestrationEventInfo.FailureInfo))
+				{
+					_domInstance.OrchestrationEventInfo.FailureInfo += Environment.NewLine;
+				}
+
+				_domInstance.OrchestrationEventInfo.FailureInfo += text;
+			}
 		}
 
 		internal void SendPlanJobStateUpdate(MediaOpsLiveApi api)
@@ -325,6 +347,7 @@
 		public static readonly Exposer<OrchestrationEvent, Guid> ID = new Exposer<OrchestrationEvent, Guid>(x => x.ID, nameof(OrchestrationEvent.ID));
 		public static readonly Exposer<OrchestrationEvent, string> Name = new Exposer<OrchestrationEvent, string>(x => x.Name, nameof(OrchestrationEvent.Name));
 		public static readonly Exposer<OrchestrationEvent, DateTimeOffset> EventTime = new Exposer<OrchestrationEvent, DateTimeOffset>(x => x.EventTime.Value, nameof(OrchestrationEvent.EventTime));
+		public static readonly Exposer<OrchestrationEvent, DateTimeOffset> ActualStartTime = new Exposer<OrchestrationEvent, DateTimeOffset>(x => x.ActualStartTime.Value, nameof(OrchestrationEvent.ActualStartTime));
 		public static readonly Exposer<OrchestrationEvent, Guid> JobInfoReference = new Exposer<OrchestrationEvent, Guid>(x => x.JobInfoReference.Value.ID, nameof(OrchestrationEvent.JobInfoReference));
 	}
 }

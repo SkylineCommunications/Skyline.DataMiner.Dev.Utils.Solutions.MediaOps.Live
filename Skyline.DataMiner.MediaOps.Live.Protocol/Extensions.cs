@@ -1,16 +1,13 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Protocol
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Protocol
 {
 	using System;
-
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.Protocol.API;
-	using Skyline.DataMiner.MediaOps.Live.Protocol.Logging;
 	using Skyline.DataMiner.Scripting;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Protocol.API;
 
 	public static class Extensions
 	{
-		public static MediaOpsLiveApi GetMediaOpsLiveApi(this SLProtocol protocol)
+		public static IProtocolMediaOpsLiveApi GetMediaOpsLiveApi(this SLProtocol protocol)
 		{
 			if (protocol is null)
 			{
@@ -18,7 +15,6 @@
 			}
 
 			var api = new ProtocolMediaOpsLiveApi(protocol);
-			api.SetLogger(new ProtocolLogger(protocol));
 
 			return api;
 		}

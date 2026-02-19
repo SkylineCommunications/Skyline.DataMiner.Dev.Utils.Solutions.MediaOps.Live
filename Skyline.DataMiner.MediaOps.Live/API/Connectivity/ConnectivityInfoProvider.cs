@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity
 {
 	using System;
 	using System.Collections.Generic;
@@ -6,12 +6,12 @@
 	using System.Linq;
 	using System.Threading;
 
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element;
 
 	public sealed class ConnectivityInfoProvider : IDisposable
 	{
@@ -34,7 +34,7 @@
 		private bool _isDisposed;
 
 		public ConnectivityInfoProvider(
-			MediaOpsLiveApi api,
+			IMediaOpsLiveApi api,
 			LiteConnectivityInfoProvider liteConnectivityInfoProvider = null,
 			VirtualSignalGroupEndpointsObserver virtualSignalGroupsObserver = null,
 			LevelsObserver levelsObserver = null,
@@ -47,7 +47,7 @@
 
 		public event EventHandler<ConnectionsUpdatedEvent> ConnectionsUpdated;
 
-		internal MediaOpsLiveApi Api { get; }
+		internal IMediaOpsLiveApi Api { get; }
 
 		public bool IsSubscribed { get; private set; }
 

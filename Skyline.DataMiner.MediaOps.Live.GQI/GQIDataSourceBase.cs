@@ -1,10 +1,9 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.GQI
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.GQI
 {
 	using System.Text;
-
 	using Skyline.DataMiner.Analytics.GenericInterface;
-	using Skyline.DataMiner.MediaOps.Live.GQI.Metrics;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.GQI.Metrics;
 
 	public abstract class GQIDataSourceBase : IGQIDataSource, IGQIOnInit, IGQIOnDestroy
 	{

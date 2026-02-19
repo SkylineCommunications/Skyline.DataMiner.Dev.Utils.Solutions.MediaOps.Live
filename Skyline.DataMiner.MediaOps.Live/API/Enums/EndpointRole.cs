@@ -1,6 +1,6 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Enums
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums
 {
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 
 	// Keep in sync with SlcConnectivityManagementIds.Enums.Role
 	public enum EndpointRole

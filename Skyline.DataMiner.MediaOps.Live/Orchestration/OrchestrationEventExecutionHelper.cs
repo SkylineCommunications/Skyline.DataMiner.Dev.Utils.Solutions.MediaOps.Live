@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 {
 	using System;
 	using System.Collections.Generic;
@@ -6,30 +6,31 @@
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using Newtonsoft.Json;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Enums;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
-	using Skyline.DataMiner.MediaOps.Live.Take;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
-	using Connection = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.Connection;
-	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
-	using LevelMapping = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.LevelMapping;
+	using Connection = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.Connection;
+	using Level = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
+	using LevelMapping = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.LevelMapping;
 	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
 
 	internal class OrchestrationEventExecutionHelper
@@ -39,7 +40,7 @@
 
 		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, OrchestrationSettings settings)
 		{
-			_api = api;
+			_api = api ?? throw new ArgumentNullException(nameof(api));
 			_settings = settings ?? new OrchestrationSettings();
 		}
 
@@ -47,543 +48,111 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				IEnumerable<OrchestrationEventConfiguration> events = orchestrationEvents.ToList();
-				if (!events.Any())
+				// Only allow execution of events that are in Draft or Confirmed state.
+				// Configuring events are already being executed, and Cancelled, Completed or Failed events should not be executed.
+				var eventsToExecute = orchestrationEvents
+					.Where(e => e.EventState == EventState.Draft || e.EventState == EventState.Confirmed)
+					.ToList();
+
+				if (!eventsToExecute.Any())
 				{
 					return;
 				}
 
-				List<EventState> statesToDiscard =
-				[
-					EventState.Failed,
-					EventState.Completed,
-					EventState.Configuring,
-				];
-
-				ExecuteEvents(events.Where(e => !statesToDiscard.Contains(e.EventState)), performanceTracker);
+				ExecuteEventsAsync(eventsToExecute, performanceTracker).GetAwaiter().GetResult();
 			}
 		}
 
-		private void ExecuteEvents(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
+		private async Task ExecuteEventsAsync(List<OrchestrationEventConfiguration> eventConfigurations, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteEventsAsync)))
 			using (var taskScheduler = new MediaOpsTaskScheduler())
+			using (var writeBuffer = new WriteBuffer<OrchestrationEvent>(new OrchestrationEventRepository(_api)))
 			{
-				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
-				foreach (OrchestrationEventConfiguration orchestrationEvent in eventConfigurations)
+				var jobTasks = new List<Task>();
+
+				foreach (var groupedByJob in eventConfigurations.GroupBy(x => x.JobInfoReference))
 				{
-					orchestrationEvent.InternalSetState(EventState.Configuring);
-					orchestrationEvent.ActualStartTime = DateTimeOffset.UtcNow;
+					var jobTask = Task.Factory.StartNew(
+						() => ExecuteJobEventsAsync(groupedByJob, taskScheduler, writeBuffer, performanceTracker),
+						CancellationToken.None,
+						TaskCreationOptions.None,
+						taskScheduler).Unwrap();
+
+					jobTasks.Add(jobTask);
 				}
 
-				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
-
-				// Events with global orchestration script
-				List<Task> tasks = GetGlobalOrchestrationTasks(eventConfigurations.Where(config => !String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker);
-
-				// Events with node-by-node orchestration scripts
-				tasks.AddRange(GetNodeByNodeOrchestrationTasks(eventConfigurations.Where(config => config.HasScripts() && String.IsNullOrEmpty(config.GlobalOrchestrationScript)), taskScheduler, performanceTracker));
-
-				// Events without scripts but with connections
-				tasks.AddRange(GetProcessConnectionTasks(eventConfigurations.Where(config => !config.HasScripts() && config.HasConnections() ), taskScheduler, true, performanceTracker));
-
-				// Events without scripts or connections (nothing to do) can be marked as completed right away.
-				SaveOrchestrationResults(eventConfigurations.Where(config => !config.HasScripts() && !config.HasConnections()), performanceTracker);
-
-				Task.WaitAll(tasks.ToArray());
+				await Task.WhenAll(jobTasks);
 			}
 		}
 
-		private List<Task> GetGlobalOrchestrationTasks(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, PerformanceTracker performanceTracker)
+		private async Task ExecuteJobEventsAsync(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteJobEventsAsync)))
 			{
-				List<Task> tasks = [];
-				var eventConfigurationWithGlobalScripts = eventConfigurations.Where(e => !String.IsNullOrEmpty(e.GlobalOrchestrationScript)).ToList();
+				var groupedAndSortedEvents = eventConfigurations
+					.GroupBy(x => x.EventType)
+					.OrderBy(x => x.Key, OrchestrationJob.EventTypeOrderComparer)
+					.ToList();
 
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurationWithGlobalScripts)
+				foreach (var jobEvents in groupedAndSortedEvents)
 				{
-					Task scriptsExecutionTask = Task.Factory.StartNew(
-						() =>
-						{
-							// Execute global script
-							ExecuteGlobalConfiguration(orchestrationEventConfiguration, performanceTracker);
+					var jobEventTasks = new List<Task>();
 
-							// Update event state once finished
-							SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
-						},
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler);
-
-					tasks.Add(scriptsExecutionTask);
-				}
-
-				return tasks;
-			}
-		}
-
-		private List<Task> GetNodeByNodeOrchestrationTasks(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				List<Task> tasks = [];
-				var eventConfigurationWithNodeScripts = eventConfigurations.Where(e => e.HasScripts()).ToList();
-
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurationWithNodeScripts.Where(e => e.HasScripts()))
-				{
-					// Connections tasks
-					List<Task> connectionsTasks = GetProcessConnectionTasks(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, taskScheduler, false, performanceTracker);
-
-					// Node scripts task
-					Task nodeScriptsTask = Task.Factory.StartNew(
-						() =>
-						{
-							ExecuteNodesConfiguration(orchestrationEventConfiguration, taskScheduler, performanceTracker);
-						},
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler);
-
-					connectionsTasks.Add(nodeScriptsTask);
-
-					Task combinedTask = Task.Factory.StartNew(
-						() =>
-						{
-							// Wait for both connections and node scripts to finish
-							Task.WaitAll(connectionsTasks.ToArray());
-
-							// Update event state once finished
-							SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration }, performanceTracker);
-						},
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler);
-
-					tasks.Add(combinedTask);
-				}
-
-				return tasks;
-			}
-		}
-
-		private List<Task> GetProcessConnectionTasks(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, bool pushResults, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				var tasks = new List<Task>();
-
-				var connectionTasksPerEvent = ProcessAndReturnConnectionResults(eventConfigurations, performanceTracker);
-
-				foreach (KeyValuePair<OrchestrationEventConfiguration, ICollection<Task>> keyValuePair in connectionTasksPerEvent)
-				{
-					OrchestrationEventConfiguration eventConfig = keyValuePair.Key;
-					var tasksForEvent = keyValuePair.Value;
-
-					var eventConnectionTask = Task.Factory.StartNew(
-						() =>
-						{
-							Task.WaitAll(tasksForEvent.ToArray());
-
-							foreach (Task completedTask in tasksForEvent)
-							{
-								if (!completedTask.IsFaulted)
-								{
-									continue;
-								}
-
-								eventConfig.InternalSetState(EventState.Failed);
-								eventConfig.FailureInfo += $"\n{completedTask.Exception?.GetBaseException().Message}";
-							}
-
-							if (pushResults)
-							{
-								SaveOrchestrationResults(new List<OrchestrationEventConfiguration> { eventConfig }, performanceTracker);
-							}
-						},
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler);
-
-					tasks.Add(eventConnectionTask);
-				}
-
-				return tasks;
-			}
-		}
-
-		private void SaveOrchestrationResults(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in eventConfigurations)
-				{
-					if (orchestrationEventConfiguration.ActualStartTime != null)
+					foreach (var jobEvent in jobEvents)
 					{
-						orchestrationEventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - orchestrationEventConfiguration.ActualStartTime;
+						var jobEventTask = Task.Factory.StartNew(
+							() => ExecuteJobEventAsync(jobEvent, taskScheduler, writeBuffer, performanceTracker),
+							CancellationToken.None,
+							TaskCreationOptions.None,
+							taskScheduler).Unwrap();
+
+						jobEventTasks.Add(jobEventTask);
 					}
 
-					if (orchestrationEventConfiguration.EventState != EventState.Failed)
-					{
-						orchestrationEventConfiguration.InternalSetState(EventState.Completed);
-					}
-
-					orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
+					await Task.WhenAll(jobEventTasks);
 				}
-
-				_api.Orchestration.SaveEventConfigurations(eventConfigurations, performanceTracker);
 			}
 		}
 
-		internal Dictionary<OrchestrationEventConfiguration, ICollection<Task>> ProcessAndReturnConnectionResults(IEnumerable<OrchestrationEventConfiguration> orchestrationEventConfigurations, PerformanceTracker performanceTracker)
+		private async Task ExecuteJobEventAsync(OrchestrationEventConfiguration orchestrationEvent, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
 		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteJobEventAsync)))
 			{
-				IEnumerable<OrchestrationEventConfiguration> eventConfigurations = orchestrationEventConfigurations.ToList();
-				List<OrchestrationEventConfiguration> eventConfigurationsWithConnections = eventConfigurations.Where(ev => ev.HasConnections()).ToList();
+				SetConfiguringState(orchestrationEvent, writeBuffer);
 
-				Dictionary<OrchestrationEventConfiguration, List<Connection>> connectionsToConfigureByEvent = [];
-				Dictionary<OrchestrationEventConfiguration, List<Connection>> disconnectsToConfigureByEvent = [];
-
-				foreach (OrchestrationEventConfiguration eventConfigurationsWithConnection in eventConfigurationsWithConnections)
+				try
 				{
-					if (eventConfigurationsWithConnection.IsDisconnectEvent)
+					if (orchestrationEvent.HasGlobalOrchestrationScript)
 					{
-						disconnectsToConfigureByEvent.Add(eventConfigurationsWithConnection, eventConfigurationsWithConnection.Configuration.Connections.ToList());
+						ExecuteGlobalOrchestrationScriptEvent(orchestrationEvent, performanceTracker);
+					}
+					else if (orchestrationEvent.HasScripts)
+					{
+						await ExecuteNodeScriptsEventAsync(orchestrationEvent, taskScheduler, performanceTracker);
+					}
+					else if (orchestrationEvent.HasConnections)
+					{
+						await ExecuteConnectionsOnlyEventAsync(orchestrationEvent, performanceTracker);
 					}
 					else
 					{
-						connectionsToConfigureByEvent.Add(eventConfigurationsWithConnection, eventConfigurationsWithConnection.Configuration.Connections.ToList());
+						// No scripts or connections, mark as completed right away
 					}
 				}
-
-				var resultTasksByEvent = new Dictionary<OrchestrationEventConfiguration, ICollection<Task>>();
-				ProcessAndAddConnectResults(connectionsToConfigureByEvent, resultTasksByEvent, performanceTracker);
-				ProcessAndAddDisconnectResults(disconnectsToConfigureByEvent, resultTasksByEvent, performanceTracker);
-
-				return resultTasksByEvent;
-			}
-		}
-
-		private void ProcessAndAddDisconnectResults(Dictionary<OrchestrationEventConfiguration, List<Connection>> disconnectsToConfigureByEvent, Dictionary<OrchestrationEventConfiguration, ICollection<Task>> resultTasksByEvent, PerformanceTracker performanceTracker)
-		{
-			try
-			{
-				var disconnectResults = ExecuteAndReturnDisconnectResults(disconnectsToConfigureByEvent, performanceTracker);
-
-				foreach (VsgDisconnectResult vsgDisconnectResult in disconnectResults)
+				catch (Exception ex)
 				{
-					var metaDataConnectionResult = (VsgDisconnectRequestWithMetadata)vsgDisconnectResult.VsgDisconnectRequest;
-					OrchestrationEventConfiguration matchingEvent = disconnectsToConfigureByEvent.Keys.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
-
-					if (matchingEvent == null)
-					{
-						continue;
-					}
-
-					if (!resultTasksByEvent.ContainsKey(matchingEvent))
-					{
-						resultTasksByEvent[matchingEvent] = [];
-					}
-
-					resultTasksByEvent[matchingEvent].Add(vsgDisconnectResult.CompletionTask);
+					orchestrationEvent.InternalSetState(EventState.Failed);
+					orchestrationEvent.AppendFailureInfo($"An unexpected error occurred during orchestration: {ex.Message}");
 				}
-			}
-			catch (Exception e)
-			{
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in disconnectsToConfigureByEvent.Keys)
+				finally
 				{
-					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
-					orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
+					SaveOrchestrationResult(orchestrationEvent, writeBuffer, performanceTracker);
 				}
 			}
 		}
 
-		private void ProcessAndAddConnectResults(Dictionary<OrchestrationEventConfiguration, List<Connection>> connectionsToConfigureByEvent, Dictionary<OrchestrationEventConfiguration, ICollection<Task>> resultTasksByEvent, PerformanceTracker performanceTracker)
-		{
-			try
-			{
-				var connectionResults = ExecuteAndReturnConnectResults(connectionsToConfigureByEvent, performanceTracker);
-				foreach (VsgConnectionResult vsgConnectionResult in connectionResults)
-				{
-					var metaDataConnectionResult = (VsgConnectionRequestWithMetaData)vsgConnectionResult.VsgConnectionRequest;
-					OrchestrationEventConfiguration matchingEvent = connectionsToConfigureByEvent.Keys.FirstOrDefault(ev => ev.ID.ToString() == metaDataConnectionResult.MetaData.ToString());
-
-					if (matchingEvent == null)
-					{
-						continue;
-					}
-
-					if (!resultTasksByEvent.ContainsKey(matchingEvent))
-					{
-						resultTasksByEvent[matchingEvent] = [];
-					}
-
-					resultTasksByEvent[matchingEvent].Add(vsgConnectionResult.CompletionTask);
-				}
-			}
-			catch (Exception e)
-			{
-				foreach (OrchestrationEventConfiguration orchestrationEventConfiguration in connectionsToConfigureByEvent.Keys)
-				{
-					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
-					orchestrationEventConfiguration.FailureInfo += $"\n{e.Message}";
-				}
-			}
-		}
-
-		private ICollection<VsgDisconnectResult> ExecuteAndReturnDisconnectResults(Dictionary<OrchestrationEventConfiguration, List<Connection>> disconnectsPerEvent, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				if (!disconnectsPerEvent.Any())
-				{
-					return new List<VsgDisconnectResult>();
-				}
-
-				List<VsgDisconnectRequest> requests = [];
-				List<VirtualSignalGroup> virtualSignalGroupsToUnlock = [];
-
-				HashSet<Guid> allInvolvedVsgIds = [];
-				HashSet<int> allInvolvedLevelNumbers = [];
-
-				foreach (Connection connection in disconnectsPerEvent.SelectMany(kv => kv.Value))
-				{
-					if (connection.DestinationVsg.HasValue)
-					{
-						allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
-					}
-
-					if (connection.LevelMappings == null || !connection.LevelMappings.Any())
-					{
-						continue;
-					}
-
-					foreach (LevelMapping connectionLevelMapping in connection.LevelMappings)
-					{
-						allInvolvedLevelNumbers.Add(connectionLevelMapping.Destination.Number);
-					}
-				}
-
-				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
-
-				if (allInvolvedVsgIds.Count != allInvolvedVsgs.Count)
-				{
-					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
-				}
-
-				ORFilterElement<Level> filter = new(allInvolvedLevelNumbers.Select(number => LevelExposers.Number.Equal(number)).ToArray());
-				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
-
-				foreach (KeyValuePair<OrchestrationEventConfiguration, List<Connection>> keyValuePair in disconnectsPerEvent)
-				{
-					Guid eventId = keyValuePair.Key.ID;
-
-					foreach (Connection connection in keyValuePair.Value)
-					{
-						if (!connection.HasDestination())
-						{
-							continue;
-						}
-
-						VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
-						virtualSignalGroupsToUnlock.Add(dstVirtualSignalGroup);
-
-						ICollection<ApiObjectReference<Level>> levels = null;
-
-						if (connection.LevelMappings != null && connection.LevelMappings.Any())
-						{
-							levels = allInvolvedLevels
-								.Select(level => level.Reference)
-								.Distinct()
-								.ToList();
-						}
-
-						requests.Add(new VsgDisconnectRequestWithMetadata(dstVirtualSignalGroup, levels)
-						{
-							MetaData = eventId.ToString(),
-							Timeout = _settings.Timeout,
-						});
-					}
-				}
-
-				// Perform disconnects
-				var takeHelper = _api.GetConnectionHandler();
-
-				var results = takeHelper.Disconnect(
-					requests,
-					performanceTracker,
-					new() { WaitForCompletion = true, BypassLockValidation = true });
-
-				// Unlock all involved VSGs after disconnect
-				_api.VirtualSignalGroups.UnlockVirtualSignalGroups(virtualSignalGroupsToUnlock);
-
-				return results;
-			}
-		}
-
-		private ICollection<VsgConnectionResult> ExecuteAndReturnConnectResults(Dictionary<OrchestrationEventConfiguration, List<Connection>> connectionsPerEvent, PerformanceTracker performanceTracker)
-		{
-			using (new PerformanceTracker(performanceTracker))
-			{
-				if (!connectionsPerEvent.Any())
-				{
-					return new List<VsgConnectionResult>();
-				}
-
-				List<VsgConnectionRequest> requests = [];
-				List<VirtualSignalGroupLockRequest> lockRequests = [];
-
-				HashSet<Guid> allInvolvedVsgIds = [];
-				HashSet<int> allInvolvedLevelNumbers = [];
-				foreach (Connection connection in connectionsPerEvent.SelectMany(kv => kv.Value))
-				{
-					if (connection.SourceVsg.HasValue)
-					{
-						allInvolvedVsgIds.Add(connection.SourceVsg.Value.ID);
-					}
-
-					if (connection.DestinationVsg.HasValue)
-					{
-						allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
-					}
-
-					if (connection.LevelMappings == null || !connection.LevelMappings.Any())
-					{
-						continue;
-					}
-
-					foreach (LevelMapping connectionLevelMapping in connection.LevelMappings)
-					{
-						allInvolvedLevelNumbers.Add(connectionLevelMapping.Source.Number);
-						allInvolvedLevelNumbers.Add(connectionLevelMapping.Destination.Number);
-					}
-				}
-
-				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
-
-				if (allInvolvedVsgIds.Count != allInvolvedVsgs.Count)
-				{
-					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
-				}
-
-				ORFilterElement<Level> filter = new(allInvolvedLevelNumbers.Select(number => LevelExposers.Number.Equal(number)).ToArray());
-				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
-
-				foreach (KeyValuePair<OrchestrationEventConfiguration, List<Connection>> keyValuePair in connectionsPerEvent)
-				{
-					OrchestrationEventConfiguration eventConfig = keyValuePair.Key;
-					Guid eventId = eventConfig.ID;
-
-					OrchestrationJobInfo jobInfo = eventConfig.GetJobInfo(_api)
-						?? throw new InvalidOperationException($"No job info found for orchestration event with ID '{eventConfig.ID}'.");
-
-					foreach (Connection connection in keyValuePair.Value)
-					{
-						if (!connection.HasDestination())
-						{
-							continue;
-						}
-
-						VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
-
-						lockRequests.Add(new VirtualSignalGroupLockRequest(
-							dstVirtualSignalGroup,
-							"Orchestration Engine",
-							$"Locked for job: {jobInfo.JobReference}",
-							$"{jobInfo.JobReference}",
-							eventConfig.EventTime));
-
-						if (!connection.HasSource())
-						{
-							continue;
-						}
-
-						VirtualSignalGroup srcVirtualSignalGroup = allInvolvedVsgs[connection.SourceVsg.Value.ID];
-
-						ICollection<Take.LevelMapping> levelMappings = null;
-
-						if (connection.LevelMappings != null && connection.LevelMappings.Any())
-						{
-							levelMappings = connection.LevelMappings
-								.Select(map => new Take.LevelMapping(
-									allInvolvedLevels.FirstOrDefault(level => level.Number == map.Source.Number),
-									allInvolvedLevels.FirstOrDefault(level => level.Number == map.Destination.Number)))
-								.ToList();
-						}
-
-						requests.Add(new VsgConnectionRequestWithMetaData(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings)
-						{
-							MetaData = eventId.ToString(),
-							Timeout = _settings.Timeout,
-						});
-					}
-				}
-
-				// Lock all involved VSGs before connecting
-				_api.VirtualSignalGroups.LockVirtualSignalGroups(lockRequests);
-
-				// Perform connections
-				var takeHelper = _api.GetConnectionHandler();
-
-				return takeHelper.Take(
-					requests,
-					performanceTracker,
-					new() { WaitForCompletion = true, BypassLockValidation = true });
-			}
-		}
-
-		private void ExecuteNodesConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
-		{
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
-			{
-				ConcurrentHashSet<string> errors = new();
-				List<Task> nodeOrchestrationTasks = [];
-
-				foreach (NodeConfiguration nodeConfiguration in orchestrationEventConfiguration.Configuration.NodeConfigurations)
-				{
-					if (String.IsNullOrEmpty(nodeConfiguration.OrchestrationScriptName))
-					{
-						continue;
-					}
-
-					Task nodeOrchestrationTask = Task.Factory.StartNew(
-						() =>
-						{
-							IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(orchestrationEventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
-
-							OrchestrationScriptResult nodeScriptResult = ExecuteOrchestrationScript(
-								nodeConfiguration.OrchestrationScriptName,
-								nodeConfiguration.OrchestrationScriptArguments.Union(addedInputParams),
-								nodeConfiguration.Profile,
-								performanceTracker);
-
-							if (!nodeScriptResult.HadError)
-							{
-								return;
-							}
-
-							errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: {String.Join("\n", nodeScriptResult.ErrorMessages)}");
-							orchestrationEventConfiguration.InternalSetState(EventState.Failed);
-						},
-						CancellationToken.None,
-						TaskCreationOptions.None,
-						taskScheduler);
-
-					nodeOrchestrationTasks.Add(nodeOrchestrationTask);
-				}
-
-				Task.WaitAll(nodeOrchestrationTasks.ToArray());
-
-				if (orchestrationEventConfiguration.EventState == EventState.Failed)
-				{
-					orchestrationEventConfiguration.FailureInfo += String.Join("\n", errors);
-				}
-			}
-		}
-
-		private void ExecuteGlobalConfiguration(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
+		private void ExecuteGlobalOrchestrationScriptEvent(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
@@ -597,8 +166,355 @@
 
 				if (globalScriptResult.HadError)
 				{
-					orchestrationEventConfiguration.FailureInfo += $"Error during global orchestration: {String.Join("\n", globalScriptResult.ErrorMessages)}";
 					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
+					orchestrationEventConfiguration.AppendFailureInfo($"Error during global orchestration: {String.Join("\n", globalScriptResult.ErrorMessages)}");
+				}
+			}
+		}
+
+		private async Task ExecuteNodeScriptsEventAsync(OrchestrationEventConfiguration orchestrationEvent, MediaOpsTaskScheduler taskScheduler, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteNodeScriptsEventAsync)))
+			{
+				var tasks = new List<Task>();
+
+				if (orchestrationEvent.HasConnections)
+				{
+					var connectionsTask = ExecuteConnectionsAsync(orchestrationEvent, performanceTracker);
+					tasks.Add(connectionsTask);
+				}
+
+				var nodeScriptsTask = ExecuteNodesConfigurationAsync(orchestrationEvent, taskScheduler, performanceTracker);
+				tasks.Add(nodeScriptsTask);
+
+				await Task.WhenAll(tasks);
+			}
+		}
+
+		private async Task ExecuteConnectionsOnlyEventAsync(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteConnectionsOnlyEventAsync)))
+			{
+				await ExecuteConnectionsAsync(orchestrationEvent, performanceTracker);
+			}
+		}
+
+		private void SetConfiguringState(OrchestrationEventConfiguration orchestrationEvent, WriteBuffer<OrchestrationEvent> writeBuffer)
+		{
+			orchestrationEvent.InternalSetState(EventState.Configuring);
+			orchestrationEvent.ActualStartTime = DateTimeOffset.UtcNow;
+
+			writeBuffer.Enqueue(orchestrationEvent);
+		}
+
+		private void SaveOrchestrationResult(OrchestrationEventConfiguration orchestrationEventConfiguration, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				if (orchestrationEventConfiguration.ActualStartTime != null)
+				{
+					orchestrationEventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - orchestrationEventConfiguration.ActualStartTime;
+				}
+
+				if (orchestrationEventConfiguration.EventState != EventState.Failed)
+				{
+					orchestrationEventConfiguration.InternalSetState(EventState.Completed);
+				}
+
+				orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
+
+				writeBuffer.Enqueue(orchestrationEventConfiguration);
+			}
+		}
+
+		internal void ExecuteConnections(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
+		{
+			ExecuteConnectionsAsync(orchestrationEvent, performanceTracker).GetAwaiter().GetResult();
+		}
+
+		private async Task ExecuteConnectionsAsync(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
+		{
+			if (!orchestrationEvent.HasConnections)
+			{
+				return;
+			}
+
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteConnectionsAsync)))
+			{
+				try
+				{
+					var connections = orchestrationEvent.Configuration.Connections.ToList();
+
+					if (orchestrationEvent.IsConnectEvent)
+					{
+						var results = ExecuteConnectionsAndReturnResults(orchestrationEvent, connections, performanceTracker);
+
+						await Task.WhenAll(results.Select(r => r.CompletionTask));
+
+						foreach (var result in results.Where(r => !r.IsSuccessful))
+						{
+							var source = result.Request.Source.Name;
+							var destination = result.Request.Destination.Name;
+
+							orchestrationEvent.InternalSetState(EventState.Failed);
+							orchestrationEvent.AppendFailureInfo($"Could not connect {source} to {destination}");
+						}
+					}
+
+					if (orchestrationEvent.IsDisconnectEvent)
+					{
+						var results = ExecuteDisconnectionsAndReturnResults(orchestrationEvent, connections, performanceTracker);
+
+						await Task.WhenAll(results.Select(r => r.CompletionTask));
+
+						foreach (var result in results.Where(r => !r.IsSuccessful))
+						{
+							var destination = result.Request.Destination.Name;
+
+							orchestrationEvent.InternalSetState(EventState.Failed);
+							orchestrationEvent.AppendFailureInfo($"Could not disconnect from {destination}");
+						}
+					}
+				}
+				catch (Exception e)
+				{
+					orchestrationEvent.InternalSetState(EventState.Failed);
+					orchestrationEvent.AppendFailureInfo($"Error during connection operations: {e.Message}");
+				}
+			}
+		}
+
+		private ICollection<VsgDisconnectResult> ExecuteDisconnectionsAndReturnResults(OrchestrationEventConfiguration orchestrationEvent, IList<Connection> disconnects, PerformanceTracker performanceTracker)
+		{
+			if (disconnects.Count == 0)
+			{
+				return [];
+			}
+
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				List<VsgDisconnectRequest> requests = [];
+				List<VirtualSignalGroup> virtualSignalGroupsToUnlock = [];
+
+				HashSet<Guid> allInvolvedVsgIds = [];
+				HashSet<int> allInvolvedLevelNumbers = [];
+
+				foreach (Connection connection in disconnects)
+				{
+					if (connection.DestinationVsg.HasValue)
+					{
+						allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
+					}
+
+					if (connection.LevelMappings != null)
+					{
+						foreach (LevelMapping connectionLevelMapping in connection.LevelMappings)
+						{
+							allInvolvedLevelNumbers.Add(connectionLevelMapping.Destination.Number);
+						}
+					}
+				}
+
+				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
+
+				if (allInvolvedVsgIds.Count != allInvolvedVsgs.Count)
+				{
+					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
+				}
+
+				ORFilterElement<Level> filter = new(allInvolvedLevelNumbers.Select(number => LevelExposers.Number.Equal(number)).ToArray());
+				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
+
+				foreach (Connection connection in disconnects.Where(x => x.HasDestination()))
+				{
+					VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
+					virtualSignalGroupsToUnlock.Add(dstVirtualSignalGroup);
+
+					ICollection<ApiObjectReference<Level>> levels = null;
+
+					if (connection.LevelMappings != null && connection.LevelMappings.Any())
+					{
+						levels = allInvolvedLevels
+							.Select(level => level.Reference)
+							.Distinct()
+							.ToList();
+					}
+
+					requests.Add(new VsgDisconnectRequestWithMetadata(dstVirtualSignalGroup, levels)
+					{
+						MetaData = orchestrationEvent,
+						Timeout = _settings.Timeout,
+					});
+				}
+
+				// Perform disconnects
+				var takeHelper = _api.GetConnectionHandler();
+
+				var results = takeHelper.Disconnect(
+					requests,
+					performanceTracker,
+					new() { WaitForCompletion = true, BypassLockValidation = true });
+
+				// Unlock all involved VSGs after disconnect
+				_api.VirtualSignalGroups.UnlockVirtualSignalGroups(virtualSignalGroupsToUnlock);
+
+				// Return results
+				return results;
+			}
+		}
+
+		private ICollection<VsgConnectionResult> ExecuteConnectionsAndReturnResults(OrchestrationEventConfiguration orchestrationEvent, IList<Connection> connections, PerformanceTracker performanceTracker)
+		{
+			if (connections.Count == 0)
+			{
+				return [];
+			}
+
+			using (new PerformanceTracker(performanceTracker))
+			{
+				List<VsgConnectionRequest> requests = [];
+				List<VirtualSignalGroupLockRequest> lockRequests = [];
+
+				HashSet<Guid> allInvolvedVsgIds = [];
+				HashSet<int> allInvolvedLevelNumbers = [];
+
+				foreach (Connection connection in connections)
+				{
+					if (connection.SourceVsg.HasValue)
+					{
+						allInvolvedVsgIds.Add(connection.SourceVsg.Value.ID);
+					}
+
+					if (connection.DestinationVsg.HasValue)
+					{
+						allInvolvedVsgIds.Add(connection.DestinationVsg.Value.ID);
+					}
+
+					if (connection.LevelMappings != null)
+					{
+						foreach (LevelMapping connectionLevelMapping in connection.LevelMappings)
+						{
+							allInvolvedLevelNumbers.Add(connectionLevelMapping.Source.Number);
+							allInvolvedLevelNumbers.Add(connectionLevelMapping.Destination.Number);
+						}
+					}
+				}
+
+				IDictionary<Guid, VirtualSignalGroup> allInvolvedVsgs = _api.VirtualSignalGroups.Read(allInvolvedVsgIds);
+
+				if (allInvolvedVsgIds.Count != allInvolvedVsgs.Count)
+				{
+					throw new InvalidOperationException("One or more Virtual Signal Groups involved in the connections could not be found.");
+				}
+
+				ORFilterElement<Level> filter = new(allInvolvedLevelNumbers.Select(number => LevelExposers.Number.Equal(number)).ToArray());
+				List<Level> allInvolvedLevels = _api.Levels.Read(filter).ToList();
+
+				OrchestrationJobInfo jobInfo = orchestrationEvent.GetJobInfo(_api)
+					?? throw new InvalidOperationException($"No job info found for orchestration event with ID '{orchestrationEvent.ID}'.");
+
+				foreach (Connection connection in connections.Where(x => x.HasDestination()))
+				{
+					VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
+
+					lockRequests.Add(new VirtualSignalGroupLockRequest(
+						dstVirtualSignalGroup,
+						"Orchestration Engine",
+						$"Locked for job: {jobInfo.JobReference}",
+						$"{jobInfo.JobReference}",
+						orchestrationEvent.EventTime));
+
+					if (!connection.HasSource())
+					{
+						continue;
+					}
+
+					VirtualSignalGroup srcVirtualSignalGroup = allInvolvedVsgs[connection.SourceVsg.Value.ID];
+
+					ICollection<Take.LevelMapping> levelMappings = null;
+
+					if (connection.LevelMappings != null && connection.LevelMappings.Any())
+					{
+						levelMappings = connection.LevelMappings
+							.Select(map => new Take.LevelMapping(
+								allInvolvedLevels.FirstOrDefault(level => level.Number == map.Source.Number),
+								allInvolvedLevels.FirstOrDefault(level => level.Number == map.Destination.Number)))
+							.ToList();
+					}
+
+					requests.Add(new VsgConnectionRequestWithMetaData(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings)
+					{
+						MetaData = orchestrationEvent,
+						Timeout = _settings.Timeout,
+					});
+				}
+
+				// Lock all involved VSGs before connecting
+				_api.VirtualSignalGroups.LockVirtualSignalGroups(lockRequests);
+
+				// Perform connections
+				var takeHelper = _api.GetConnectionHandler();
+
+				var results = takeHelper.Take(
+					requests,
+					performanceTracker,
+					new() { WaitForCompletion = true, BypassLockValidation = true });
+
+				// Return results
+				return results;
+			}
+		}
+
+		private async Task ExecuteNodesConfigurationAsync(OrchestrationEventConfiguration orchestrationEventConfiguration, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteNodesConfigurationAsync)))
+			{
+				ConcurrentHashSet<string> errors = new();
+
+				try
+				{
+					List<Task> nodeOrchestrationTasks = [];
+
+					foreach (NodeConfiguration nodeConfiguration in orchestrationEventConfiguration.Configuration.NodeConfigurations)
+					{
+						if (String.IsNullOrEmpty(nodeConfiguration.OrchestrationScriptName))
+						{
+							continue;
+						}
+
+						Task nodeOrchestrationTask = Task.Factory.StartNew(
+							() =>
+							{
+								IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(orchestrationEventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
+
+								OrchestrationScriptResult nodeScriptResult = ExecuteOrchestrationScript(
+									nodeConfiguration.OrchestrationScriptName,
+									nodeConfiguration.OrchestrationScriptArguments.Union(addedInputParams),
+									nodeConfiguration.Profile,
+									performanceTracker);
+
+								if (nodeScriptResult.HadError)
+								{
+									errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: " +
+										$"{String.Join("\n", nodeScriptResult.ErrorMessages)}");
+								}
+							},
+							CancellationToken.None,
+							TaskCreationOptions.None,
+							taskScheduler);
+
+						nodeOrchestrationTasks.Add(nodeOrchestrationTask);
+					}
+
+					await Task.WhenAll(nodeOrchestrationTasks);
+				}
+				finally
+				{
+					if (errors.Count > 0)
+					{
+						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
+						orchestrationEventConfiguration.AppendFailureInfo($"Errors occurred during node orchestration: {String.Join("\n", errors)}");
+					}
 				}
 			}
 		}
@@ -632,8 +548,8 @@
 			}
 
 			ExecuteScriptResponseMessage result;
-			string[] errorMessages;
-			if (OrchestrationScriptInfoHelper.IsOrchestrationScript(script))
+
+			if (OrchestrationScriptInfoHelper.IsValidOrchestrationScript(script))
 			{
 				OrchestrationScriptInput input = new(
 					profile.Values.ToDictionary(value => value.Name, value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
@@ -644,38 +560,37 @@
 					input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
 				}
 
-				result = OrchestrationAutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out errorMessages);
-			}
-			else
-			{
-				result = OrchestrationAutomationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out errorMessages);
+				result = OrchestrationAutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out string[] _);
+
+				return ProcessOrchestrationScriptResult(result);
 			}
 
-			OrchestrationScriptResult scriptResult;
-			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out string errors))
+			result = OrchestrationAutomationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out string[] _);
+
+			return new OrchestrationScriptResult
 			{
-				scriptResult = new OrchestrationScriptResult
+				ErrorMessages = result.ErrorMessages,
+				HadError = result.HadError || result.ErrorMessages.Any(),
+			};
+		}
+
+		private static OrchestrationScriptResult ProcessOrchestrationScriptResult(ExecuteScriptResponseMessage result)
+		{
+			if (result.EntryPointResult?.Result is RequestScriptInfoOutput scriptOutput
+				&& scriptOutput.Data.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out string errors))
+			{
+				return new OrchestrationScriptResult
 				{
 					ErrorMessages = [errors],
 					HadError = true,
 				};
 			}
-			else
-			{
-				scriptResult = new OrchestrationScriptResult
-				{
-					ErrorMessages = errorMessages,
-					HadError = result.HadError || errorMessages.Any(),
-				};
-			}
 
-			if (result.ScriptOutput.TryGetValue(OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, out string orchestrationOutputString))
+			return new OrchestrationScriptResult
 			{
-				OrchestrationScriptOutput orchestrationOutput = JsonConvert.DeserializeObject<OrchestrationScriptOutput>(orchestrationOutputString);
-				scriptResult.ServiceId = String.Join($"/", orchestrationOutput.OrchestrationServiceAgentId, orchestrationOutput.OrchestrationServiceId);
-			}
-
-			return scriptResult;
+				ErrorMessages = result.ErrorMessages,
+				HadError = result.HadError || result.ErrorMessages.Any(),
+			};
 		}
 
 		private static OrchestrationScriptResult PrepareScriptParams(

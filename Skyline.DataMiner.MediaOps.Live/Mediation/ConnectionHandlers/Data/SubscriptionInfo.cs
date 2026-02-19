@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers.Data
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.ConnectionHandlers.Data
 {
 	using System;
 	using System.Collections.Generic;
@@ -6,8 +6,6 @@
 
 	using Newtonsoft.Json;
 	using Newtonsoft.Json.Converters;
-
-	using Skyline.DataMiner.Core.InterAppCalls.Common.Shared;
 
 	public class SubscriptionInfo
 	{

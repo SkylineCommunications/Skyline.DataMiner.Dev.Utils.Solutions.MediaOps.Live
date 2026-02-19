@@ -1,9 +1,8 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Exceptions
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public class DestinationProtectedException : Exception
 	{

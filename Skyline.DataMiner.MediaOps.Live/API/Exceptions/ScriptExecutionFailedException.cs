@@ -1,4 +1,4 @@
-namespace Skyline.DataMiner.MediaOps.Live.API.Exceptions
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
 {
 	using System;
 	using System.Collections.Generic;

@@ -1,4 +1,4 @@
-# Skyline.DataMiner.MediaOps.Live
+# Skyline.DataMiner.Solutions.MediaOps.Live
 
 This documentation describes how to use the public API exposed by `Skyline.DataMiner.MediaOps.Live`.
 The API is intended to be used when developing custom solutions based on the MediaOps.LIVE solution.

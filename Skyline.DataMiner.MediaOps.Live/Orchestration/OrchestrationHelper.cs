@@ -1,19 +1,19 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration;
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
 
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Skyline.DataMiner.MediaOps.Live.API;
-using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-using Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration;
-using Skyline.DataMiner.MediaOps.Live.API.Subscriptions;
-using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
-using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
-using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
+
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions;
+using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Helpers;
+using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
+using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
+using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
 using Skyline.DataMiner.Net.Messages.SLDataGateway;
 using Skyline.DataMiner.Utils.PerformanceAnalyzer;
-using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
 
 /// <summary>
 /// Exposes API methods to interact with and orchestrate MediaOps Live Orchestration events.
@@ -44,7 +44,7 @@ public class OrchestrationHelper
 			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
 			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future));
 
-		Scripts = new OrchestrationScriptInfoHelper(api.Connection);
+		Scripts = new OrchestrationScriptInfoHelper(api);
 	}
 
 	public OrchestrationScriptInfoHelper Scripts { get; }
@@ -76,10 +76,7 @@ public class OrchestrationHelper
 	/// <returns>A <see cref="OrchestrationJob" /> object with all events found for the given job reference.</returns>
 	public OrchestrationJob GetOrCreateNewOrchestrationJob(string jobReference)
 	{
-		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-		PerformanceFileLogger performanceFileLogger = new("ORC-GetOrCreateJob", performanceLogFilename);
-
-		using (PerformanceCollector collector = new(performanceFileLogger))
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-GetOrCreateJob")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
 			OrchestrationJobInfo jobInfo = _jobInfoRepository.GetJobInfoByJobReference(jobReference);
@@ -105,10 +102,7 @@ public class OrchestrationHelper
 	/// </returns>
 	public OrchestrationJobConfiguration GetOrCreateNewOrchestrationJobConfiguration(string jobReference)
 	{
-		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-		PerformanceFileLogger performanceFileLogger = new("ORC-GetOrCreateJobConfiguration", performanceLogFilename);
-
-		using (PerformanceCollector collector = new(performanceFileLogger))
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-GetOrCreateJobConfiguration")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
 			OrchestrationJobInfo jobInfo = _jobInfoRepository.GetJobInfoByJobReference(jobReference);
@@ -257,10 +251,7 @@ public class OrchestrationHelper
 	/// <param name="job">The <see cref="OrchestrationJobConfiguration" /> object to save.</param>
 	public void SaveOrchestrationJobConfiguration(OrchestrationJobConfiguration job)
 	{
-		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-		PerformanceFileLogger performanceFileLogger = new("ORC-SaveJobConfiguration", performanceLogFilename);
-
-		using (PerformanceCollector collector = new(performanceFileLogger))
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-SaveJobConfiguration")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
 			DeleteOrchestrationEvents(job.RemovedIds, performanceTracker);
@@ -280,10 +271,7 @@ public class OrchestrationHelper
 	/// <param name="job">The <see cref="OrchestrationJob" /> object to save.</param>
 	public void SaveOrchestrationJob(OrchestrationJob job)
 	{
-		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-		PerformanceFileLogger performanceFileLogger = new("ORC-SaveJob", performanceLogFilename);
-
-		using (PerformanceCollector collector = new(performanceFileLogger))
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-SaveJob")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
 			DeleteOrchestrationEvents(job.RemovedIds, performanceTracker);
@@ -302,10 +290,7 @@ public class OrchestrationHelper
 	/// <param name="job">Job to remove.</param>
 	public void DeleteJob(OrchestrationJob job)
 	{
-		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-		PerformanceFileLogger performanceFileLogger = new("ORC-DeleteJob", performanceLogFilename);
-
-		using (PerformanceCollector collector = new(performanceFileLogger))
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-DeleteJob")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
 			DeleteOrchestrationEvents(job.OrchestrationEvents, performanceTracker);
@@ -320,10 +305,7 @@ public class OrchestrationHelper
 	/// <param name="jobs">Jobs to remove.</param>
 	public void DeleteJobs(IEnumerable<OrchestrationJob> jobs)
 	{
-		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-		PerformanceFileLogger performanceFileLogger = new("ORC-DeleteJobs", performanceLogFilename);
-
-		using (PerformanceCollector collector = new(performanceFileLogger))
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-DeleteJobs")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
 			IEnumerable<OrchestrationJob> orchestrationJobs = jobs.ToList();
@@ -339,10 +321,7 @@ public class OrchestrationHelper
 	/// <param name="job">Job configuration to remove.</param>
 	public void DeleteJobConfiguration(OrchestrationJobConfiguration job)
 	{
-		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-		PerformanceFileLogger performanceFileLogger = new("ORC-DeleteJobConfiguration", performanceLogFilename);
-
-		using (PerformanceCollector collector = new(performanceFileLogger))
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-DeleteJobConfiguration")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
 			DeleteOrchestrationEvents(job.OrchestrationEvents, performanceTracker);
@@ -357,10 +336,7 @@ public class OrchestrationHelper
 	/// <param name="jobs">Job configurations to remove.</param>
 	public void DeleteJobConfigurations(IEnumerable<OrchestrationJobConfiguration> jobs)
 	{
-		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-		PerformanceFileLogger performanceFileLogger = new("ORC-DeleteJobConfigurations", performanceLogFilename);
-
-		using (PerformanceCollector collector = new(performanceFileLogger))
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-DeleteJobConfigurations")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
 			IEnumerable<OrchestrationJobConfiguration> orchestrationJobs = jobs.ToList();
@@ -408,10 +384,7 @@ public class OrchestrationHelper
 	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
 	public void ExecuteEventsNow(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents, OrchestrationSettings settings = null)
 	{
-		string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-		PerformanceFileLogger performanceFileLogger = new("ORC-ExecuteEventsNow", performanceLogFilename);
-
-		using (PerformanceCollector collector = new(performanceFileLogger))
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-ExecuteEventsNow")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
 			OrchestrationEventExecutionHelper eventExecutionHelper = new(_api, settings);

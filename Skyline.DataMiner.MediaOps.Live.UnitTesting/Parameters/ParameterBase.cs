@@ -1,10 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Parameters
 {
 	using System;
 
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation;
+
 	public abstract class ParameterBase
 	{
-		public ParameterBase(SimulatedElement element, int id)
+		protected ParameterBase(SimulatedElement element, int id)
 		{
 			Element = element ?? throw new ArgumentNullException(nameof(element));
 			Id = id;

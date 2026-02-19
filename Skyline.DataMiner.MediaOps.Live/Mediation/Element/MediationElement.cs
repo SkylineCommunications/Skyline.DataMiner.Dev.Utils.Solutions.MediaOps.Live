@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 
 	public sealed class MediationElement
 	{
@@ -16,13 +16,13 @@
 		internal static readonly int PendingConnectionActionsTableId = 3000;
 		internal static readonly int ConnectionsTableId = 5000;
 
-		internal MediationElement(MediaOpsLiveApi api, IDmsElement dmsElement)
+		internal MediationElement(IMediaOpsLiveApi api, IDmsElement dmsElement)
 		{
 			Api = api ?? throw new ArgumentNullException(nameof(api));
 			DmsElement = dmsElement ?? throw new ArgumentNullException(nameof(dmsElement));
 		}
 
-		internal MediaOpsLiveApi Api { get; }
+		internal IMediaOpsLiveApi Api { get; }
 
 		public IDmsElement DmsElement { get; }
 

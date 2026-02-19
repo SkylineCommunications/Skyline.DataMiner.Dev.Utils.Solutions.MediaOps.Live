@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Logging
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Logging
 {
 	public enum LogType
 	{

@@ -1,8 +1,8 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Subscriptions
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions
 {
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 
 	public sealed class ApiObjectsChangedEvent<T>
 		where T : ApiObject<T>

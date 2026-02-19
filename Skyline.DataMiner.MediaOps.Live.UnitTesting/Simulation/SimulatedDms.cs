@@ -1,22 +1,23 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 {
 	using System;
 	using System.Collections;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Newtonsoft.Json;
-
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Net.AppPackages;
+	using Skyline.DataMiner.Net.AppPackages.Messages;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Automation.CustomEntryPoint;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.Advanced;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Connection;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Parameters;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
-
 	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
 	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
 
@@ -28,6 +29,7 @@
 		private readonly ConcurrentBag<Parameter> _profileParameters = [];
 		private readonly ConcurrentBag<ProfileDefinition> _profileDefinitions = [];
 		private readonly ConcurrentBag<ProfileInstance> _profileInstances = [];
+		private readonly ConcurrentBag<InstalledAppInfo> _appPackages = [];
 		private readonly DomSLNetMessageHandler _domSlNetMessageHandler = new(validateAgainstDefinition: true);
 
 		public SimulatedDms()
@@ -52,14 +54,14 @@
 				id => new SimulatedDma(this, id));
 		}
 
-		public void AddScript(string name, ICollection<string> parameters = null, ICollection<string> dummies = null, ScriptInfo orchestrationScriptInfo = null)
+		public void AddScript(string name, ICollection<string> parameters = null, ICollection<string> dummies = null, OrchestrationScriptInfo orchestrationScriptInfo = null)
 		{
 			parameters ??= [];
 			dummies ??= [];
 
 			if (orchestrationScriptInfo == null)
 			{
-				_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, new ScriptInfo()));
+				_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, new OrchestrationScriptInfo()));
 				return;
 			}
 
@@ -130,6 +132,26 @@
 			}
 
 			_profileInstances.Add(instance);
+		}
+
+		public void AddApplicationPackage(string name, string version)
+		{
+			var appInfo = new InstalledAppInfo
+			{
+				AppInfo = new AppInfo
+				{
+					Name = name,
+					DisplayName = name,
+					Version = version,
+					LastModifiedAt = DateTime.UtcNow,
+				},
+				InstallState = new AppInstallState
+				{
+					InstallStatus = AppInstallStatus.INSTALLED,
+				},
+			};
+
+			_appPackages.Add(appInfo);
 		}
 
 		public IEnumerable<SimulatedSchedulerTask> GetAllDmsSchedulerTasks()
@@ -204,6 +226,10 @@
 					responses = HandleMessage(msg);
 					return true;
 
+				case GetAutomationInfoMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
 				case GetDataMinerByIDMessage msg:
 					responses = HandleMessage(msg);
 					return true;
@@ -240,7 +266,15 @@
 					responses = HandleMessage(msg);
 					return true;
 
+				case ManagerStoreStartPagingRequest<ProfileDefinition> msg:
+					responses = HandleMessage(msg);
+					return true;
+
 				case ManagerStoreStartPagingRequest<ProfileInstance> msg:
+					responses = HandleMessage(msg);
+					return true;
+
+				case GetInstalledAppPackagesRequest msg:
 					responses = HandleMessage(msg);
 					return true;
 
@@ -256,6 +290,15 @@
 			{
 				IsFinalPage = true,
 				Objects = _profileParameters.Where(msg.Filter.Filter.getLambda()).ToList(),
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(ManagerStoreStartPagingRequest<ProfileDefinition> msg)
+		{
+			yield return new ManagerStorePagingResponse<ProfileDefinition>
+			{
+				IsFinalPage = true,
+				Objects = _profileDefinitions.Where(msg.Filter.Filter.getLambda()).ToList(),
 			};
 		}
 
@@ -456,6 +499,18 @@
 			}
 		}
 
+		private IEnumerable<DMSMessage> HandleMessage(GetAutomationInfoMessage msg)
+		{
+			switch (msg.What)
+			{
+				case (int)AutomationInfoType.ScriptFolders:
+					return HandleScriptFoldersMessage();
+
+				default:
+					throw new NotSupportedException($"Unsupported AutomationInfoType: {msg.What}");
+			}
+		}
+
 		private IEnumerable<DMSMessage> HandleElementInfoMessage()
 		{
 			foreach (SimulatedElement element in Agents.Values.SelectMany(agent => agent.Elements.Values))
@@ -478,6 +533,18 @@
 			yield return new GetScriptsResponseMessage
 			{
 				Scripts = _scripts.Select(script => script.Name).ToArray(),
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleScriptFoldersMessage()
+		{
+			var sa = _scripts
+				.GroupBy(x => x.Folder)
+				.Select(group => new SA([group.Key, .. group.Select(x => x.Name)]));
+
+			yield return new GetAutomationInfoResponseMessage
+			{
+				psaRet = new PSA { Psa = [.. sa] },
 			};
 		}
 
@@ -564,6 +631,14 @@
 					},
 				],
 				Folder = script.Folder,
+			};
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(GetInstalledAppPackagesRequest msg)
+		{
+			yield return new GetInstalledAppPackagesResponse
+			{
+				InstalledAppPackages = _appPackages.ToList(),
 			};
 		}
 

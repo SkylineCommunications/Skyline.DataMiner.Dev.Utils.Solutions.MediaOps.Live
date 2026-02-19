@@ -1,12 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Tools
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools
 {
 	using System;
 	using System.Linq;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 
 	public static class FilterElementFactory
 	{

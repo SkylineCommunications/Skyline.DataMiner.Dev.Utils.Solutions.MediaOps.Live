@@ -1,10 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections
 {
 	using System;
 
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
-	using PresetGroupDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.PresetGroupDisplayInfo;
+	using PresetGroupDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.PresetGroupDisplayInfo;
 
 	internal class PresetGroupSection : ParameterGroupSection
 	{
@@ -22,10 +22,13 @@
 
 		public DropDown<PresetGroupDisplayInfo.PresetInfo> Value { get; }
 
-		protected override void DefineHeaderLayout(int row)
+		protected override Section DefineHeaderSection()
 		{
-			base.DefineHeaderLayout(row);
-			AddWidget(Value, row, 1);
+			var section = new Section();
+			var labelSpan = Label.Text.Length / 5;
+			section.AddWidget(Label, 0, 0, 1, labelSpan);
+			section.AddWidget(Value, 1, 0, 1, labelSpan);
+			return section;
 		}
 
 		private void OnPreselectChanged(object sender, DropDown<PresetGroupDisplayInfo.PresetInfo>.DropDownChangedEventArgs e)

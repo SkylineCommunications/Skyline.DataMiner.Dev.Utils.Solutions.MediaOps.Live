@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Querying
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Querying
 {
 	using System;
 	using System.Collections;
@@ -6,7 +6,7 @@
 	using System.Linq;
 	using System.Linq.Expressions;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 
 	internal class ApiRepositoryQuery<T> : IOrderedQueryable<T> where T : ApiObject<T>
 	{

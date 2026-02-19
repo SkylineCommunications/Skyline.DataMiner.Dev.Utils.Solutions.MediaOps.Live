@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Enums
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums
 {
 	public enum OrchestrationScriptArgumentType
 	{

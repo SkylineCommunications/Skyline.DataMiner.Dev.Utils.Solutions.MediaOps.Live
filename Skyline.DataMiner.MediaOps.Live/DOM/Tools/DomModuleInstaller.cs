@@ -1,14 +1,13 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Tools
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools
 {
 	using System;
 	using System.Linq;
-
-	using Skyline.DataMiner.MediaOps.Live.DOM.Interfaces;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Apps.Modules;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Sections;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Interfaces;
 
 	public static class DomModuleInstaller
 	{

@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
 	using System.Reflection;
 
@@ -8,48 +8,50 @@
 	[UsesVerify]
 	public sealed partial class MediaOps_LiveApi_Tests_Api_PublicChanges
 	{
+		private const string RootAssemblyName = "Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live";
+
 		[TestMethod]
 		public Task MediaOps_LiveApi_Tests_Api_NoPublicApiChanges_Common()
 		{
-			var assemblyName = "Skyline.DataMiner.MediaOps.Live";
+			var assemblyName = RootAssemblyName;
 			var publicApi = Assembly.Load(assemblyName).GeneratePublicApi();
 
 			return Verifier.Verify(publicApi)
 				.UseFileName($"{assemblyName}_PublicApi")
-				.AutoVerify();
+				.AutoVerify(includeBuildServer: false);
 		}
 
 		[TestMethod]
 		public Task MediaOps_LiveApi_Tests_Api_NoPublicApiChanges_Automation()
 		{
-			var assemblyName = "Skyline.DataMiner.MediaOps.Live.Automation";
+			var assemblyName = $"{RootAssemblyName}.Automation";
 			var publicApi = Assembly.Load(assemblyName).GeneratePublicApi();
 
 			return Verifier.Verify(publicApi)
 				.UseFileName($"{assemblyName}_PublicApi")
-				.AutoVerify();
+				.AutoVerify(includeBuildServer: false);
 		}
 
 		[TestMethod]
 		public Task MediaOps_LiveApi_Tests_Api_NoPublicApiChanges_Protocol()
 		{
-			var assemblyName = "Skyline.DataMiner.MediaOps.Live.Protocol";
+			var assemblyName = $"{RootAssemblyName}.Protocol";
 			var publicApi = Assembly.Load(assemblyName).GeneratePublicApi();
 
 			return Verifier.Verify(publicApi)
 				.UseFileName($"{assemblyName}_PublicApi")
-				.AutoVerify();
+				.AutoVerify(includeBuildServer: false);
 		}
 
 		[TestMethod]
 		public Task MediaOps_LiveApi_Tests_Api_NoPublicApiChanges_GQI()
 		{
-			var assemblyName = "Skyline.DataMiner.MediaOps.Live.GQI";
+			var assemblyName = $"{RootAssemblyName}.GQI";
 			var publicApi = Assembly.Load(assemblyName).GeneratePublicApi();
 
 			return Verifier.Verify(publicApi)
 				.UseFileName($"{assemblyName}_PublicApi")
-				.AutoVerify();
+				.AutoVerify(includeBuildServer: false);
 		}
 	}
 }

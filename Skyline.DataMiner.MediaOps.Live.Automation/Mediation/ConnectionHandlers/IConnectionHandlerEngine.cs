@@ -1,19 +1,19 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Mediation.ConnectionHandlers
 {
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Logging;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Logging;
 
-	using LogType = Skyline.DataMiner.MediaOps.Live.Logging.LogType;
+	using LogType = Skyline.DataMiner.Solutions.MediaOps.Live.Logging.LogType;
 
 	public interface IConnectionHandlerEngine
 	{
-		MediaOpsLiveApi Api { get; }
+		IMediaOpsLiveApi Api { get; }
 
 		ILogger Logger { get; }
 

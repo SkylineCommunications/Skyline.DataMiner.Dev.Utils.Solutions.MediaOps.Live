@@ -1,16 +1,16 @@
-namespace Skyline.DataMiner.MediaOps.Live.API.Caching
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Threading.Tasks;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
-	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+	using Categories = Skyline.DataMiner.Solutions.Categories.API;
 
 	public class VirtualSignalGroupsCache
 	{
@@ -206,7 +206,7 @@ namespace Skyline.DataMiner.MediaOps.Live.API.Caching
 			}
 		}
 
-		public void LoadInitialData(MediaOpsLiveApi api)
+		public void LoadInitialData(IMediaOpsLiveApi api)
 		{
 			if (api is null)
 			{

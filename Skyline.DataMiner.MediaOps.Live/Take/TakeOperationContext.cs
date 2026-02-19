@@ -1,17 +1,17 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Take
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
 {
 	using System;
 	using System.Threading.Tasks;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element;
 
 	internal abstract class TakeOperationContext
 	{
-		private readonly TaskCompletionSource<bool> _taskCompletionSource = new TaskCompletionSource<bool>();
+		private readonly TaskCompletionSource<bool> _taskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-		protected TakeOperationContext(Request request, Endpoint destination)
+		protected TakeOperationContext(TakeRequest request, Endpoint destination)
 		{
 			Request = request ?? throw new ArgumentNullException(nameof(request));
 			Destination = destination ?? throw new ArgumentNullException(nameof(destination));
@@ -22,7 +22,7 @@
 			}
 		}
 
-		public Request Request { get; }
+		public TakeRequest Request { get; }
 
 		public Endpoint Destination { get; }
 
@@ -36,11 +36,11 @@
 
 		public bool IsSuccessful { get; set; }
 
-		public Task CompletionTask => _taskCompletionSource.Task;
+		public Task<bool> CompletionTask => _taskCompletionSource.Task;
 
-		public void SetCompleted()
+		public void SetCompleted(bool isSuccess)
 		{
-			_taskCompletionSource.TrySetResult(true);
+			_taskCompletionSource.TrySetResult(isSuccess);
 		}
 	}
 }

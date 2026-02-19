@@ -1,6 +1,6 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Take
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
 {
-	public abstract class ConnectionRequest : Request
+	public abstract class ConnectionRequest : TakeRequest
 	{
 	}
 }

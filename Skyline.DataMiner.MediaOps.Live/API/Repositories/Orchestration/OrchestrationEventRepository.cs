@@ -1,19 +1,16 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration
 {
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
-
 	using SLDataGateway.API.Types.Querying;
-
 	using Comparer = Skyline.DataMiner.Net.Messages.SLDataGateway.Comparer;
 
 	internal class OrchestrationEventRepository : Repository<OrchestrationEvent>
@@ -42,7 +39,7 @@
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).GreaterThanOrEqual(localStart))
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).LessThanOrEqual(localEnd));
 
-			return Read(filter);
+			return ReadDom(filter);
 		}
 
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsAfterTime(DateTime time)
@@ -52,7 +49,7 @@
 			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).GreaterThanOrEqual(localStart));
 
-			return Read(filter);
+			return ReadDom(filter);
 		}
 
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsBeforeTime(DateTime time)
@@ -62,7 +59,7 @@
 			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationEvent.Id)
 				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime).LessThanOrEqual(localEnd));
 
-			return Read(filter);
+			return ReadDom(filter);
 		}
 
 		/// <summary>
@@ -83,7 +80,7 @@
 
 				ManagedFilter<DomInstance, IEnumerable> filter = DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.JobInformation).Equal(jobInfo.ID);
 
-				return Read(filter);
+				return ReadDom(filter);
 			}
 		}
 
@@ -116,7 +113,7 @@
 
 			ORFilterElement<DomInstance> combinedFilter = new ORFilterElement<DomInstance>(instanceIds.Select(id => FilterElementFactory.Create(DomInstanceExposers.Id, Comparer.Equals, id)).ToArray());
 
-			IEnumerable<OrchestrationEvent> result = Read(combinedFilter);
+			IEnumerable<OrchestrationEvent> result = ReadDom(combinedFilter);
 
 			return result;
 		}
@@ -150,6 +147,9 @@
 				case nameof(OrchestrationEvent.EventTime):
 					return FilterElementFactory.Create<DateTimeOffset>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime), comparer, value);
 
+				case nameof(OrchestrationEvent.ActualStartTime):
+					return FilterElementFactory.Create<DateTimeOffset>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ActualStartTime), comparer, value);
+
 				case nameof(OrchestrationEvent.SchedulerReference):
 					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.SchedulerReference), comparer, value);
 
@@ -181,6 +181,9 @@
 
 				case nameof(OrchestrationEvent.EventTime):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.EventTime), sortOrder, naturalSort);
+
+				case nameof(OrchestrationEvent.ActualStartTime):
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.ActualStartTime), sortOrder, naturalSort);
 
 				case nameof(OrchestrationEvent.SchedulerReference):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.OrchestrationEventInfo.SchedulerReference), sortOrder, naturalSort);

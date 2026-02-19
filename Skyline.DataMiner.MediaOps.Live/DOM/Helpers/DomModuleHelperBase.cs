@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Helpers
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Helpers
 {
 	using System;
 

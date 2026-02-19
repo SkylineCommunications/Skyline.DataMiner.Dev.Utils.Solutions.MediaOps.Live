@@ -1,10 +1,15 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live
 {
 	/// <summary>
 	/// Contains static fields used in MediaOps Live solution.
 	/// </summary>
 	public static class Constants
 	{
+		/// <summary>
+		/// Gets the name of the MediaOps.LIVE package.
+		/// </summary>
+		public static string AppPackageName => "MediaOps.Live-Package";
+
 		/// <summary>
 		/// Gets the name of the MediaOps Live mediation protocol.
 		/// </summary>

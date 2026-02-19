@@ -1,19 +1,19 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.API.Validation;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Validation;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 
-	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+	using Categories = Skyline.DataMiner.Solutions.Categories.API;
 
 	public class VirtualSignalGroup : ApiObject<VirtualSignalGroup>
 	{
@@ -43,6 +43,12 @@
 				_domInstance.VirtualSignalGroupInfo.Categories,
 				x => new Categories.ApiObjectReference<Categories.Category>(x),
 				x => x.ID);
+
+			// Set default values for required fields if they are not already set
+			if (!_domInstance.VirtualSignalGroupInfo.Role.HasValue)
+			{
+				_domInstance.VirtualSignalGroupInfo.Role = SlcConnectivityManagementIds.Enums.Role.Source;
+			}
 		}
 
 		internal VirtualSignalGroup(DomInstance domInstance) : this(new VirtualSignalGroupInstance(domInstance))

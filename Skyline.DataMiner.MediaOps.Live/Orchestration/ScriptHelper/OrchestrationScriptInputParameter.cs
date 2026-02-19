@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper
 {
 	using System;
 	using System.Collections.Generic;
@@ -7,36 +7,46 @@
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 
-	using Parameter = Net.Profiles.Parameter;
+	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
 
 	public class OrchestrationScriptInputParameter
 	{
-		public OrchestrationScriptInputParameter(string name, Guid profileParameter)
+		public OrchestrationScriptInputParameter(string name, Guid profileParameterId)
 		{
 			Name = name;
-			ProfileParameter = profileParameter;
+			ProfileParameterId = profileParameterId;
 		}
 
-		public Guid ProfileParameter { get; set; }
+		public OrchestrationScriptInputParameter(string name)
+		{
+			Name = name;
+		}
 
-		public bool FromProfile => ProfileParameter != Guid.Empty;
+		public string Name { get; }
 
-		public string Name { get; set; }
+		public Guid ProfileParameterId { get; }
 
-		public Parameter LinkedProfileParameter { get; set; }
+		public Parameter LinkedProfileParameter { get; private set; }
+
+		public bool IsFromProfile => ProfileParameterId != Guid.Empty;
 
 		internal void LoadLinkedProfileParameter(ProfileHelper helper)
 		{
-			if (ProfileParameter == Guid.Empty)
+			if (helper is null)
+			{
+				throw new ArgumentNullException(nameof(helper));
+			}
+
+			if (ProfileParameterId == Guid.Empty)
 			{
 				throw new InvalidOperationException("There is no profile parameter ID linked to this script parameter");
 			}
 
-			List<Parameter> result = helper.ProfileParameters.Read(ParameterExposers.ID.Equal(ProfileParameter));
+			List<Parameter> result = helper.ProfileParameters.Read(ParameterExposers.ID.Equal(ProfileParameterId));
 
 			if (result.Count == 0)
 			{
-				throw new InvalidOperationException($"No profile parameter found with ID {ProfileParameter}");
+				throw new InvalidOperationException($"No profile parameter found with ID {ProfileParameterId}");
 			}
 
 			LinkedProfileParameter = result.First();

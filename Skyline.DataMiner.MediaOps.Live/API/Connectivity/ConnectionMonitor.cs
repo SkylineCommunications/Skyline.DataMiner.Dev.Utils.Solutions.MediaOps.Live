@@ -1,19 +1,19 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Threading;
 	using System.Threading.Tasks;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 	public sealed class ConnectionMonitor : IDisposable
 	{
 		private readonly LiteConnectivityInfoProvider _connectivityInfoProvider;
 		private readonly bool _ownsConnectivityInfoProvider;
 
-		public ConnectionMonitor(MediaOpsLiveApi api, LiteConnectivityInfoProvider liteConnectivityInfoProvider = null)
+		public ConnectionMonitor(IMediaOpsLiveApi api, LiteConnectivityInfoProvider liteConnectivityInfoProvider = null)
 		{
 			if (api is null)
 			{
@@ -51,7 +51,7 @@
 				return true;
 			}
 
-			var tcs = new TaskCompletionSource<bool>();
+			var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 			using var registration = cancellationToken.Register(() => tcs.TrySetResult(false));
 
 			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> changedEndpoints)
@@ -123,7 +123,7 @@
 				return true;
 			}
 
-			var tcs = new TaskCompletionSource<bool>();
+			var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 			using var registration = cancellationToken.Register(() => tcs.TrySetResult(false));
 
 			void ConnectionEventHandler(object s, ICollection<ApiObjectReference<Endpoint>> changedEndpoints)

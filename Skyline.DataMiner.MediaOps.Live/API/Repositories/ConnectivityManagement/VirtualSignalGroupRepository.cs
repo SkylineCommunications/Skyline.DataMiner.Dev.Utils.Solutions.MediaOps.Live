@@ -1,21 +1,21 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
-	using Skyline.DataMiner.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Extensions;
 
 	using SLDataGateway.API.Types.Querying;
 
-	using Categories = Skyline.DataMiner.Utils.Categories.API.Objects;
+	using Categories = Skyline.DataMiner.Solutions.Categories.API;
 
 	public class VirtualSignalGroupRepository : Repository<VirtualSignalGroup>
 	{
@@ -176,7 +176,7 @@
 			return newInstance;
 		}
 
-		public override IEnumerable<VirtualSignalGroup> CreateOrUpdate(IEnumerable<VirtualSignalGroup> instances)
+		public override IReadOnlyCollection<VirtualSignalGroup> CreateOrUpdate(IEnumerable<VirtualSignalGroup> instances)
 		{
 			if (instances is null)
 			{
@@ -184,10 +184,11 @@
 			}
 
 			var instancesCollection = instances.AsCollection();
+
 			if (instancesCollection.Count == 0)
 			{
 				// Nothing to create or update
-				return instancesCollection;
+				return [];
 			}
 
 			// First create or update the instances
@@ -292,7 +293,7 @@
 					DomInstanceExposers.Id.NotEqual(vsg.ID),
 					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Name).Equal(vsg.Name));
 
-			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Read).ToList();
+			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom).ToList();
 
 			if (conflicts.Count > 0)
 			{

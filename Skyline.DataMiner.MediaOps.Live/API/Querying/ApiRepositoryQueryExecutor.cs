@@ -1,15 +1,12 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Querying
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Querying
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Linq.Expressions;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
-
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 	using SLDataGateway.API.Querying;
 	using SLDataGateway.API.Types.Querying;
 
@@ -256,7 +253,7 @@
 		{
 			var query = BuildQuery();
 
-			Expression<Func<IQueryable<T>>> func = () => _provider.Repository.Read(query).AsQueryable();
+			Expression<Func<IQueryable<T>>> func = () => _provider.Repository.ReadDom(query).AsQueryable();
 			return func.Body;
 		}
 

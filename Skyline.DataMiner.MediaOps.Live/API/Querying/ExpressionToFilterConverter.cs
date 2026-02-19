@@ -1,12 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Querying
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Querying
 {
 	using System;
 	using System.Linq.Expressions;
-
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories;
 
 	internal class ExpressionToFilterConverter<T>
 		where T : ApiObject<T>

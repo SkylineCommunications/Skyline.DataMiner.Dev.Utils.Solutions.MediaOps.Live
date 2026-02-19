@@ -1,23 +1,57 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper
 {
+	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
-	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 
 	public class OrchestrationScriptInputElement
 	{
-		public AutomationProtocolInfo ProtocolInfo { get; set; }
-
-		public List<IDmsElement> GetApplicableElements(IConnection connection)
+		public OrchestrationScriptInputElement(IDmsAutomationScriptDummy inputDummy)
 		{
-			IDms dms = connection.GetDms();
+			InputDummy = inputDummy ?? throw new ArgumentNullException(nameof(inputDummy));
+		}
+
+		public IDmsAutomationScriptDummy InputDummy { get; }
+
+		public string Name => InputDummy.Description;
+
+		public string ProtocolName => InputDummy.Protocol.Name;
+
+		public string ProtocolVersion => InputDummy.Protocol.Version;
+
+		public ICollection<IDmsElement> GetApplicableElements(IDms dms)
+		{
+			if (dms is null)
+			{
+				throw new ArgumentNullException(nameof(dms));
+			}
 
 			return dms.GetElements()
-				.Where(e => e.Protocol.Name == ProtocolInfo.ProtocolName && e.Protocol.Version == ProtocolInfo.ProtocolVersion)
+				.Where(e => e.Protocol.Name == ProtocolName && e.Protocol.Version == ProtocolVersion)
 				.ToList();
+		}
+
+		public ICollection<IDmsElement> GetApplicableElements(IConnection connection)
+		{
+			if (connection is null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			return GetApplicableElements(connection.GetDms());
+		}
+
+		public ICollection<IDmsElement> GetApplicableElements(IMediaOpsLiveApi api)
+		{
+			if (api is null)
+			{
+				throw new ArgumentNullException(nameof(api));
+			}
+
+			return GetApplicableElements(api.Connection);
 		}
 	}
 }

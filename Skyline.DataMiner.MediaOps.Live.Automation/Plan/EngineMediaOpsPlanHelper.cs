@@ -1,28 +1,27 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Plan
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Plan
 {
 	using System;
 
-	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Automation.API;
-	using Skyline.DataMiner.MediaOps.Live.Plan;
-	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler;
-	using Skyline.DataMiner.Utils.MediaOps.Common.IOData.Scheduling.Scripts.JobHandler.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
+	using Skyline.DataMiner.Solutions.MediaOps.Plan.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Plan.Automation;
 
-	using OrchestrationEvent = Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent;
+	using OrchestrationEvent = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent;
 
 	internal class EngineMediaOpsPlanHelper : MediaOpsPlanHelper
 	{
-		internal EngineMediaOpsPlanHelper(IEngine engine, EngineMediaOpsLiveApi api)
+		internal EngineMediaOpsPlanHelper(EngineMediaOpsLiveApi api)
 		{
-			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
 			Api = api ?? throw new ArgumentNullException(nameof(api));
+
+			PlanApi = api.Engine.GetMediaOpsPlanApi();
 		}
 
-		internal IEngine Engine { get; }
-
 		internal EngineMediaOpsLiveApi Api { get; }
+
+		internal IMediaOpsPlanApi PlanApi { get; }
 
 		internal override void UpdateJobState(OrchestrationEvent orchestrationEvent)
 		{
@@ -31,26 +30,29 @@
 				throw new ArgumentNullException(nameof(orchestrationEvent));
 			}
 
+			if (!PlanApi.IsInstalled())
+			{
+				return;
+			}
+
 			try
 			{
-				OrchestrationJobInfo info = orchestrationEvent.GetJobInfo(Api);
+				var jobInfo = orchestrationEvent.GetJobInfo(Api)
+					?? throw new InvalidOperationException("Orchestration event does not have associated job info.");
 
-				if (info == null)
-				{
-					return;
-				}
-
-				SetJobOrchestrationStateAction setStateAction = new SetJobOrchestrationStateAction
-				{
-					DomJobId = Guid.Parse(info.JobReference),
-					Event = GetEventTypeAsPlanJobEvent(orchestrationEvent),
-					EventState = orchestrationEvent.EventState == EventState.Failed || !String.IsNullOrEmpty(orchestrationEvent.FailureInfo)
+				var jobId = Guid.Parse(jobInfo.JobReference);
+				var eventState = orchestrationEvent.EventState == EventState.Failed || !String.IsNullOrEmpty(orchestrationEvent.FailureInfo)
 						? OrchestrationEventState.Failed
-						: OrchestrationEventState.Succeeded,
+						: OrchestrationEventState.Succeeded;
+
+				var updateDetails = new OrchestrationUpdateDetails()
+				{
+					Event = GetEventTypeAsPlanJobEvent(orchestrationEvent),
+					EventState = eventState,
 					Message = orchestrationEvent.FailureInfo,
 				};
 
-				setStateAction.SendToJobHandler(Engine);
+				PlanApi.Jobs.SetOrchestrationState(jobId, updateDetails);
 			}
 			catch (Exception)
 			{

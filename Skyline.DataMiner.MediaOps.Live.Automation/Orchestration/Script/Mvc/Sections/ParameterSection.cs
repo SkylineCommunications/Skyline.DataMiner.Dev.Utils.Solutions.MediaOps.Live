@@ -1,10 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections
 {
 	using System;
 
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
-	using IParameterDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.IParameterDisplayInfo;
+	using IParameterDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.IParameterDisplayInfo;
 
 	public abstract class ParameterSection : Section
 	{

@@ -1,17 +1,17 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.API
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.API
 {
 	using System;
-
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Plan;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Take;
-	using Skyline.DataMiner.MediaOps.Live.Plan;
-	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Logging;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Plan;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Take;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 
-	public class EngineMediaOpsLiveApi : MediaOpsLiveApi
+	public class EngineMediaOpsLiveApi : MediaOpsLiveApi, IEngineMediaOpsLiveApi
 	{
 		public EngineMediaOpsLiveApi(IEngine engine, IConnection connection) : base(connection)
 		{
@@ -20,6 +20,7 @@
 
 		public EngineMediaOpsLiveApi(IEngine engine) : this(engine, engine.GetUserConnection())
 		{
+			SetLogger(new EngineLogger(engine));
 		}
 
 		public IEngine Engine { get; }
@@ -31,12 +32,12 @@
 
 		public override TakeHelper GetConnectionHandler()
 		{
-			return new EngineTakeHelper(Engine, this);
+			return new EngineTakeHelper(this);
 		}
 
 		internal override MediaOpsPlanHelper GetMediaOpsPlanHelper()
 		{
-			return new EngineMediaOpsPlanHelper(Engine, this);
+			return new EngineMediaOpsPlanHelper(this);
 		}
 	}
 }

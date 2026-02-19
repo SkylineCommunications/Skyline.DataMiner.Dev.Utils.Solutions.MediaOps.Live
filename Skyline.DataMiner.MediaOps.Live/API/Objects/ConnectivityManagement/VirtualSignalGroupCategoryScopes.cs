@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	public static class VirtualSignalGroupCategoryScopes
 	{

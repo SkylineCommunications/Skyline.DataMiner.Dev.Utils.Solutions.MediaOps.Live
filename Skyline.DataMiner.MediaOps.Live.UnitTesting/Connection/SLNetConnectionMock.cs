@@ -1,15 +1,15 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Connection
 {
 	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Async;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.SubscriptionFilters;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation;
 
 	/// <summary>
 	/// A mock implementation of <see cref="IConnection"/> used for testing purposes.

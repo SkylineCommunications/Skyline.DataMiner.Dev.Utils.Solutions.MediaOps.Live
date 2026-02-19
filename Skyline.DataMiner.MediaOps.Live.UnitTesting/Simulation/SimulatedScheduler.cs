@@ -1,11 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 {
 	using System;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
 
 	public class SimulatedScheduler
 	{

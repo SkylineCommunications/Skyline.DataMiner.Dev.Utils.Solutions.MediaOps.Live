@@ -1,9 +1,9 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 {
 	using System.Collections.Generic;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Take;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 
 	internal class VsgConnectionRequestWithMetaData : VsgConnectionRequest
 	{

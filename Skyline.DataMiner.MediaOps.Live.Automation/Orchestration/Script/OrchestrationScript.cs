@@ -1,40 +1,39 @@
-namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-	using System.Threading.Tasks;
 
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Automation;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes;
-	using Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Enums;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Enums;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
 
-	using DropdownParameterDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.DropdownParameterDisplayInfo;
+	using DropdownParameterDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.DropdownParameterDisplayInfo;
 	using GroupPresetOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<Mvc.DisplayTypes.PresetGroupDisplayInfo.PresetInfo>;
-	using NumericParameterDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.NumericParameterDisplayInfo;
+	using NumericParameterDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.NumericParameterDisplayInfo;
 	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
-	using PresetGroupDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.PresetGroupDisplayInfo;
+	using PresetGroupDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.PresetGroupDisplayInfo;
 	using ValueOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<object>;
 
 	public abstract class OrchestrationScript
@@ -48,8 +47,10 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		private List<ParameterInfo> _parameterInfos;
 		private Dictionary<string, string> _metadata = new Dictionary<string, string>();
 		private OrchestrationScriptContext _context = OrchestrationScriptContext.Standalone;
+		private OrchestrationLevel _orchestrationLevel = OrchestrationLevel.Unknown;
 
 		private Lazy<OrchestrationEventConfiguration> _eventConfiguration;
+		private RequestScriptInfoOutput _returnResult;
 
 		private IEngine _engine;
 
@@ -71,8 +72,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		public DmsServiceId GetEventMonitoringService()
 		{
-			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-			OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+			var api = _engine.GetMediaOpsLiveApi();
+			var eventJobInfo = EventConfiguration.GetJobInfo(api);
 
 			if (eventJobInfo == null)
 			{
@@ -98,7 +99,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			}
 			catch (Exception e)
 			{
-				engine.GenerateInformation("Error: " + e.ToString());
 				return new RequestScriptInfoOutput
 				{
 					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputError, e.ToString() } },
@@ -145,7 +145,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		public object GetParameterValue(string paramName)
 		{
-			ParameterInfo param = _parameterInfos.FirstOrDefault(paramInfo => paramInfo.Id == paramName);
+			ParameterInfo param = _parameterInfos.FirstOrDefault(paramInfo => paramInfo.Name == paramName);
 
 			if (param == null)
 			{
@@ -180,7 +180,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		public void OrchestrateNode(NodeConfiguration nodeConfig)
 		{
-			if (_context != OrchestrationScriptContext.Event)
+			if (_context != OrchestrationScriptContext.Event || _orchestrationLevel != OrchestrationLevel.Global)
 			{
 				return;
 			}
@@ -206,29 +206,26 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		/// <param name="timeoutSeconds">Optional argument to override timeout (default 60 seconds).</param>
 		public void OrchestrateAllConnections(int timeoutSeconds = 60)
 		{
-			if (_context != OrchestrationScriptContext.Event)
+			if (_context != OrchestrationScriptContext.Event || _orchestrationLevel != OrchestrationLevel.Global)
 			{
 				return;
 			}
 
-			MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
+			var api = new EngineMediaOpsLiveApi(_engine);
 
-			OrchestrationEventExecutionHelper orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
+			var orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
 
-			string performanceLogFilename = $"ORC-API - {DateTime.UtcNow:yyyy-MM-dd}";
-			PerformanceFileLogger performanceFileLogger = new PerformanceFileLogger("ORC-OrchestrateAllConnections", performanceLogFilename);
+			IPerformanceLogger performanceLogger = PerformanceLoggerFactory.Create("ORC-OrchestrateAllConnections");
 
-			using (PerformanceCollector collector = new PerformanceCollector(performanceFileLogger))
+			using (PerformanceCollector collector = new PerformanceCollector(performanceLogger))
 			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
 			{
-				if (!EventConfiguration.HasConnections())
+				if (!EventConfiguration.HasConnections)
 				{
 					return;
 				}
 
-				var connectionResults = orchestrationEventExecutionHelper.ProcessAndReturnConnectionResults(new List<OrchestrationEventConfiguration> { EventConfiguration }, performanceTracker);
-
-				Task.WaitAll(connectionResults.SelectMany(kv => kv.Value).ToArray());
+				orchestrationEventExecutionHelper.ExecuteConnections(EventConfiguration, performanceTracker);
 			}
 		}
 
@@ -236,7 +233,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
-			ScriptInfo scriptInfo = GetScriptInfo();
+			OrchestrationScriptInfo scriptInfo = GetScriptInfo();
 
 			_parameterInfos = CreateParameterInfos(scriptInfo, new OrchestrationScriptInput());
 
@@ -250,7 +247,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private OrchestrationEventConfiguration LoadEventFromMetaData(IEngine engine)
 		{
-			MediaOpsLiveApi api = engine.GetMediaOpsLiveApi();
+			var api = engine.GetMediaOpsLiveApi();
 
 			if (!TryGetMetadataValue("{Event ID}", out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid) || eventGuid == Guid.Empty)
 			{
@@ -271,8 +268,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 		{
 			string unparsedOrchestrationScriptAction = null;
 			if (metaData is null ||
-			    !metaData.TryGetValue(OrchestrationScriptConstants.OrchestrationScriptActionRequestScriptInfoKey, out unparsedOrchestrationScriptAction) ||
-			    !Enum.TryParse(unparsedOrchestrationScriptAction, out OrchestrationScriptAction orchestrationScriptAction))
+				!metaData.TryGetValue(OrchestrationScriptConstants.OrchestrationScriptActionRequestScriptInfoKey, out unparsedOrchestrationScriptAction) ||
+				!Enum.TryParse(unparsedOrchestrationScriptAction, out OrchestrationScriptAction orchestrationScriptAction))
 			{
 				throw new InvalidOperationException($"No orchestration script action was provided (got {unparsedOrchestrationScriptAction}");
 			}
@@ -280,26 +277,28 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			switch (orchestrationScriptAction)
 			{
 				case OrchestrationScriptAction.OrchestrationScriptInfo:
-				{
-					ScriptInfo scriptInfo = GetScriptInfo();
-					return new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, scriptInfo == null ? null : JsonConvert.SerializeObject(scriptInfo) } };
-				}
+					{
+						OrchestrationScriptInfo scriptInfo = GetScriptInfo();
+						return new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } };
+					}
 
 				case OrchestrationScriptAction.PerformOrchestration:
 				case OrchestrationScriptAction.PerformOrchestrationAskMissingValues:
-				{
-					OrchestrationScriptOutput orchestrationScriptOutput = PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
-					return new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputRequestScriptInfoKey, orchestrationScriptOutput == null ? null : JsonConvert.SerializeObject(orchestrationScriptOutput) } };
-				}
+					{
+						PerformOrchestrationFromEntryPoint(metaData, orchestrationScriptAction == OrchestrationScriptAction.PerformOrchestrationAskMissingValues);
+
+						// Currently there is no valuable output to provide for this flow.
+						return new Dictionary<string, string>();
+					}
 
 				default:
 					throw new NotSupportedException($"No support for orchestration script action {orchestrationScriptAction}");
 			}
 		}
 
-		private ScriptInfo GetScriptInfo()
+		private OrchestrationScriptInfo GetScriptInfo()
 		{
-			ScriptInfo info = new ScriptInfo();
+			OrchestrationScriptInfo info = new OrchestrationScriptInfo();
 			foreach (IOrchestrationParameters orchestrationParameters in GetParameters())
 			{
 				if (orchestrationParameters is OrchestrationProfileDefinition definition)
@@ -310,8 +309,8 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 				foreach (KeyValuePair<string, Parameter> keyValuePair in orchestrationParameters.GetParameterReferences(_engine))
 				{
-					info.ProfileParameterReferences.Add(keyValuePair.Key, keyValuePair.Value);
-					info.ProfileParameters.Add(keyValuePair.Key, keyValuePair.Value.ID);
+					info.ProfileParameterReferences.Add(keyValuePair.Value.ID, keyValuePair.Value);
+					info.ProfileParametersIdByName.Add(keyValuePair.Key, keyValuePair.Value.ID);
 				}
 			}
 
@@ -337,17 +336,18 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			controller.ShowDialog(dialog);
 		}
 
-		private List<ParameterInfo> CreateParameterInfos(ScriptInfo scriptInfo, OrchestrationScriptInput input)
+		private List<ParameterInfo> CreateParameterInfos(OrchestrationScriptInfo scriptInfo, OrchestrationScriptInput input)
 		{
 			List<ParameterInfo> parameterInfos = new List<ParameterInfo>();
 
 			// Create objects for all orchestration parameters.
-			foreach (KeyValuePair<string, Parameter> profileParameter in scriptInfo.ProfileParameterReferences)
+			foreach (KeyValuePair<Guid, Parameter> profileParameter in scriptInfo.ProfileParameterReferences)
 			{
-				ProfileParameterID reference = new ProfileParameterID(profileParameter.Value.ID);
+				ProfileParameterID reference = new ProfileParameterID(profileParameter.Key);
+				var overrideName = scriptInfo.ProfileParametersIdByName.FirstOrDefault(kv => kv.Value == profileParameter.Key).Key;
 				ParameterInfo info = new ParameterInfo
 				{
-					Id = profileParameter.Key,
+					Name = overrideName ?? profileParameter.Value.Name,
 					Reference = reference,
 				};
 
@@ -408,12 +408,19 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			}
 		}
 
-		private static void GetSeparateParams(OrchestrationScriptInput input, List<ParameterInfo> parameterInfos)
+		private void GetSeparateParams(OrchestrationScriptInput input, List<ParameterInfo> parameterInfos)
 		{
 			foreach (KeyValuePair<string, object> parameterValue in input.ProfileParameterValues)
 			{
-				ParameterInfo matchInfo = parameterInfos
-					.FirstOrDefault(x => x.Id == parameterValue.Key);
+				ParameterInfo matchInfo = null;
+				if (Guid.TryParse(parameterValue.Key, out Guid profileParameterId))
+				{
+					matchInfo = parameterInfos.FirstOrDefault(x => x.Reference is ProfileParameterID id && id.Id == profileParameterId);
+				}
+				else
+				{
+					matchInfo = parameterInfos.FirstOrDefault(x => x.Name == parameterValue.Key);
+				}
 
 				if (matchInfo != null)
 				{
@@ -422,13 +429,13 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			}
 		}
 
-		private void LinkParameters(ScriptInfo scriptInfo, List<ParameterInfo> infos)
+		private void LinkParameters(OrchestrationScriptInfo scriptInfo, List<ParameterInfo> infos)
 		{
 			Dictionary<Guid, ParameterInfo> profileParameterInfos = infos
 				.Where(x => x.Reference is ProfileParameterID)
 				.ToDictionary(x => (x.Reference as ProfileParameterID).Id);
 
-			Dictionary<string, Parameter>.ValueCollection profileParameters = scriptInfo.ProfileParameterReferences.Values;
+			Dictionary<Guid, Parameter>.ValueCollection profileParameters = scriptInfo.ProfileParameterReferences.Values;
 
 			foreach (Parameter parameter in profileParameters)
 			{
@@ -479,7 +486,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 							parameterInfo.DisplayInfo = new DropdownParameterDisplayInfo
 							{
-								Label = parameterInfo.Id,
+								Label = parameterInfo.Name,
 								Options = options,
 							};
 						}
@@ -490,7 +497,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 						{
 							parameterInfo.DisplayInfo = new NumericParameterDisplayInfo()
 							{
-								Label = parameterInfo.Id,
+								Label = parameterInfo.Name,
 								Min = parameter.RangeMin,
 								Max = parameter.RangeMax,
 								Step = parameter.Stepsize,
@@ -505,7 +512,7 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 						{
 							parameterInfo.DisplayInfo = new TextParameterDisplayInfo()
 							{
-								Label = parameterInfo.Id,
+								Label = parameterInfo.Name,
 							};
 						}
 
@@ -585,11 +592,9 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 
 		private IEnumerable<ParameterInfo> GetIncompleteInfos(IEnumerable<ParameterInfo> infos) => infos.Where(x => x.Value is null);
 
-		private OrchestrationScriptOutput PerformOrchestrationFromEntryPoint(IReadOnlyDictionary<string, string> metaData, bool askMissingValues)
+		private void PerformOrchestrationFromEntryPoint(IReadOnlyDictionary<string, string> metaData, bool askMissingValues)
 		{
-			OrchestrationScriptOutput orchestrationScriptOutput = new OrchestrationScriptOutput();
-
-			ScriptInfo scriptInfo = GetScriptInfo();
+			OrchestrationScriptInfo scriptInfo = GetScriptInfo();
 
 			OrchestrationScriptInput orchestrationScriptInput = new OrchestrationScriptInput();
 			if (metaData.TryGetValue(OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey, out string serializedScriptInputRequestScriptInfo))
@@ -609,18 +614,20 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				}
 			}
 
+			TryGetMetadataValue("{Orchestration Level}", out string orchestrationLevel);
+			_orchestrationLevel = Enum.TryParse(orchestrationLevel, out OrchestrationLevel parsedLevel) ? parsedLevel : OrchestrationLevel.Unknown;
+
 			Orchestrate(_engine);
 
-			TryGetMetadataValue("{Orchestration Level}", out string orchestrationLevel);
-			if (orchestrationLevel != "Global")
+			if (_orchestrationLevel != OrchestrationLevel.Global)
 			{
-				return orchestrationScriptOutput;
+				return;
 			}
 
 			if (EventConfiguration.IsStartEvent)
 			{
-				MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-				OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+				var api = _engine.GetMediaOpsLiveApi();
+				var eventJobInfo = EventConfiguration.GetJobInfo(api);
 
 				if (eventJobInfo != null)
 				{
@@ -633,12 +640,12 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 			{
 				TearDownService(_engine);
 
-				MediaOpsLiveApi api = _engine.GetMediaOpsLiveApi();
-				OrchestrationJobInfo eventJobInfo = EventConfiguration.GetJobInfo(api);
+				var api = _engine.GetMediaOpsLiveApi();
+				var eventJobInfo = EventConfiguration.GetJobInfo(api);
 
 				if (eventJobInfo == null || eventJobInfo.MonitoringService == default)
 				{
-					return orchestrationScriptOutput;
+					return;
 				}
 
 				IDms dms = _engine.GetDms();
@@ -651,8 +658,6 @@ namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script
 				eventJobInfo.MonitoringService = default;
 				api.Orchestration.JobInfos.Update(eventJobInfo);
 			}
-
-			return orchestrationScriptOutput;
 		}
 	}
 }

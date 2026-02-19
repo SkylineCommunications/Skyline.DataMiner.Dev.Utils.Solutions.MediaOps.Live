@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.ConnectionHandlers
 {
 	public interface IConnectionHandlerInputData
 	{

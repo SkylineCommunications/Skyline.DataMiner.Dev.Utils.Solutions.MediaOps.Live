@@ -1,11 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement
 {
 	using System.Collections.Generic;
-
-	using Skyline.DataMiner.MediaOps.Live.DOM.Interfaces;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel.Settings;
 	using Skyline.DataMiner.Net.Apps.Modules;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Interfaces;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 
 	public class SlcConnectivityManagementDomModule : IDomModuleInfo
 	{

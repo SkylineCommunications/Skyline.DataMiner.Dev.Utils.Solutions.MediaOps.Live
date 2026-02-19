@@ -1,23 +1,23 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element
 {
 	using System;
 	using System.Linq;
 
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.Subscriptions;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Subscriptions;
 
 	public sealed class MediationElementSubscription : IDisposable
 	{
 		private readonly object _lock = new();
 
-		private readonly MediaOpsLiveApi _api;
+		private readonly IMediaOpsLiveApi _api;
 		private readonly MediationElement _mediationElement;
 
 		private bool _isSubscribed;
 		private TableSubscription _subscriptionConnections;
 		private TableSubscription _subscriptionPendingConnectionActions;
 
-		internal MediationElementSubscription(MediaOpsLiveApi api, MediationElement mediationElement)
+		internal MediationElementSubscription(IMediaOpsLiveApi api, MediationElement mediationElement)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 			_mediationElement = mediationElement ?? throw new ArgumentNullException(nameof(mediationElement));

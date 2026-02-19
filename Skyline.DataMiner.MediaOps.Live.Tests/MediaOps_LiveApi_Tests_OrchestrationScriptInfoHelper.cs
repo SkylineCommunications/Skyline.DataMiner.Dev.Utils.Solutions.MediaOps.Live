@@ -1,11 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Tests
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
 	using Newtonsoft.Json;
-
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.ScriptHelper;
-	using Skyline.DataMiner.MediaOps.Live.UnitTesting;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_OrchestrationScriptInfoHelper
@@ -19,7 +18,7 @@
 
 			Assert.AreEqual("OrchestrationScript", info.ScriptName);
 			Assert.HasCount(5, info.Parameters);
-			Assert.HasCount(4, info.Parameters.Where(param => param.FromProfile));
+			Assert.HasCount(4, info.Parameters.Where(param => param.IsFromProfile));
 			Assert.HasCount(1, info.Elements);
 		}
 
@@ -28,7 +27,7 @@
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 
-			List<string> info = api.Orchestration.Scripts.GetOrchestrationScripts();
+			var info = api.Orchestration.Scripts.GetOrchestrationScripts();
 
 			Assert.HasCount(1, info);
 		}
@@ -39,7 +38,7 @@
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 			OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("OrchestrationScript");
 
-			var elements = info.Elements.First().GetApplicableElements(api.Connection);
+			var elements = info.Elements.First().GetApplicableElements(api);
 			Console.WriteLine(JsonConvert.SerializeObject(elements.Select(e => e.Name), Formatting.Indented));
 			Assert.HasCount(2, elements);
 		}
@@ -51,7 +50,7 @@
 
 			OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("OrchestrationScript");
 
-			var instances = info.GetApplicableInstances(new ProfileHelper(api.Connection.HandleMessages));
+			var instances = info.GetApplicableProfileInstances(new ProfileHelper(api.Connection.HandleMessages));
 			Assert.HasCount(1, instances);
 		}
 	}

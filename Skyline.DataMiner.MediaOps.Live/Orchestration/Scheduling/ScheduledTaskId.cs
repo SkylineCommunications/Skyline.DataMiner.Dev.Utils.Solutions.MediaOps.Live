@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling
 {
 	using System;
 

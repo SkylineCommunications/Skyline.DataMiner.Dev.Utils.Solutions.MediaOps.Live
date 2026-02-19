@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects
 {
 	using System;
 	using System.Collections.Generic;
@@ -6,13 +6,13 @@
 
 	using Skyline.DataMiner.Net.Profiles;
 
-	public class ScriptInfo
+	public class OrchestrationScriptInfo
 	{
 		[IgnoreDataMember]
-		public Dictionary<string, Parameter> ProfileParameterReferences { get; } = new Dictionary<string, Parameter>();
+		public Dictionary<Guid, Parameter> ProfileParameterReferences { get; } = new Dictionary<Guid, Parameter>();
 
 		[DataMember]
-		public Dictionary<string, Guid> ProfileParameters { get; } = new Dictionary<string, Guid>();
+		public Dictionary<string, Guid> ProfileParametersIdByName { get; } = new Dictionary<string, Guid>();
 
 		[IgnoreDataMember]
 		public List<ProfileDefinition> ProfileDefinitionReferences { get; } = new List<ProfileDefinition>();

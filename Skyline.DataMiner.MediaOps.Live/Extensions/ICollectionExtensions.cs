@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Extensions
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Extensions
 {
 	using System;
 	using System.Collections.Generic;

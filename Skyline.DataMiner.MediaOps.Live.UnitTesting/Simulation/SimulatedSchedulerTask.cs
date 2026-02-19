@@ -1,16 +1,14 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 {
 	using System;
 	using System.Collections;
 	using System.Collections.Generic;
 	using System.Globalization;
 	using System.Linq;
-
 	using Newtonsoft.Json;
-
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.Advanced;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
 
 	public class SimulatedSchedulerTask
 	{

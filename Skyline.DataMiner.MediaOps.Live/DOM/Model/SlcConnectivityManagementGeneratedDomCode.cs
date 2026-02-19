@@ -4,7 +4,7 @@
 //     Changes to this file will be lost if the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 {
 	using System;
 	using System.ComponentModel;
@@ -140,7 +140,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 //     Changes to this file will be lost if the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;
@@ -756,7 +756,7 @@ namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 //     Changes to this file will be lost if the code is regenerated.
 // </auto-generated>
 //------------------------------------------------------------------------------
-namespace Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;

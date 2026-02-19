@@ -1,8 +1,8 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects
 {
 	using System;
 
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model;
 
 	public abstract class ApiObject<T> : IApiObjectReference, IEquatable<ApiObject<T>>
 		where T : ApiObject<T>
@@ -16,7 +16,7 @@
 
 		public Guid ID => DomInstance.ID.Id;
 
-		public ApiObjectReference<T> Reference => new ApiObjectReference<T>(DomInstance.ID.Id);
+		public ApiObjectReference<T> Reference => new ApiObjectReference<T>(ID);
 
 		public DateTimeOffset CreatedAt => DomInstance.CreatedAt;
 

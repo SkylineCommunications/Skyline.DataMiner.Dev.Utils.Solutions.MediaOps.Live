@@ -1,21 +1,23 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.UnitTesting
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting
 {
 	using System;
 	using System.Collections.Generic;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Profiles;
-	using Skyline.DataMiner.Utils.Categories.API;
-	using Skyline.DataMiner.Utils.Categories.API.Objects;
+	using Skyline.DataMiner.Solutions.Categories.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Extensions;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.TestData;
 
-	using Level = Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
+	using Level = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level;
 
 	public class MediaOpsLiveSimulation
 	{
@@ -27,12 +29,14 @@
 		public MediaOpsLiveSimulation(bool createEndpoints = true, bool createVsgs = true, bool createConnections = false, bool createElements = true)
 		{
 			_dms = new SimulatedDms();
+			_dms.AddApplicationPackage(Constants.AppPackageName, MediaOpsLiveApi.GetVersion());
+
 			_connection = Dms.CreateConnection();
 
 			Api = new MediaOpsLiveApi(_connection);
 			Api.InstallDomModules();
 
-			CategoriesApi = new CategoriesApi(_connection);
+			CategoriesApi = _connection.GetCategoriesApi();
 			CategoriesApi.InstallDomModules();
 
 			InitializeConnectivityManagement(createEndpoints, createVsgs, createConnections, createElements);
@@ -43,7 +47,7 @@
 
 		public MediaOpsLiveApi Api { get; }
 
-		public CategoriesApi CategoriesApi { get; }
+		public ICategoriesApi CategoriesApi { get; }
 
 		public void CreateTestConnection(Endpoint source, Endpoint destination)
 		{
@@ -204,7 +208,7 @@
 					{
 						vsgCounter++;
 
-						var videoSource = new Endpoint(Tools.GuidFromString($"Video Source {vsgCounter}"))
+						var videoSource = new Endpoint($"Video Source {vsgCounter}".HashToGuid())
 						{
 							Role = EndpointRole.Source,
 							Name = $"Video Source {vsgCounter}",
@@ -218,7 +222,7 @@
 								new TransportMetadata(TsoipTransportType.FieldNames.MulticastPort, "5000"),
 							},
 						};
-						var audioSource = new Endpoint(Tools.GuidFromString($"Audio Source {vsgCounter}"))
+						var audioSource = new Endpoint($"Audio Source {vsgCounter}".HashToGuid())
 						{
 							Role = EndpointRole.Source,
 							Name = $"Audio Source {vsgCounter}",
@@ -232,7 +236,7 @@
 								new TransportMetadata(TsoipTransportType.FieldNames.MulticastPort, "5000"),
 							},
 						};
-						var videoDestination = new Endpoint(Tools.GuidFromString($"Video Destination {vsgCounter}"))
+						var videoDestination = new Endpoint($"Video Destination {vsgCounter}".HashToGuid())
 						{
 							Role = EndpointRole.Destination,
 							Name = $"Video Destination {vsgCounter}",
@@ -240,7 +244,7 @@
 							Element = elementId,
 							Identifier = $"Video-{vsgCounter}",
 						};
-						var audioDestination = new Endpoint(Tools.GuidFromString($"Audio Destination {vsgCounter}"))
+						var audioDestination = new Endpoint($"Audio Destination {vsgCounter}".HashToGuid())
 						{
 							Role = EndpointRole.Destination,
 							Name = $"Audio Destination {vsgCounter}",
@@ -252,7 +256,7 @@
 
 						if (createVsgs)
 						{
-							var source1 = new VirtualSignalGroup(Tools.GuidFromString($"Source {vsgCounter}"))
+							var source1 = new VirtualSignalGroup($"Source {vsgCounter}".HashToGuid())
 							{
 								Role = EndpointRole.Source,
 								Name = $"Source {vsgCounter}",
@@ -264,7 +268,7 @@
 								],
 								Categories = [category1Sources],
 							};
-							var destination1 = new VirtualSignalGroup(Tools.GuidFromString($"Destination {vsgCounter}"))
+							var destination1 = new VirtualSignalGroup($"Destination {vsgCounter}".HashToGuid())
 							{
 								Role = EndpointRole.Destination,
 								Name = $"Destination {vsgCounter}",
@@ -363,9 +367,9 @@
 				"OrchestrationScript",
 				new List<string> { "InputParam" },
 				new List<string> { "InputDummy" },
-				new ScriptInfo
+				new OrchestrationScriptInfo
 				{
-					ProfileParameters =
+					ProfileParametersIdByName =
 					{
 						{ "IndividualProfileParam_Int", new Guid("986528dc-78af-4b09-b1c1-11dac21744b1") },
 						{ "IndividualProfileParam_String", new Guid("b0e37ff1-fe56-4bd7-b108-9e8c992eb6d9") },

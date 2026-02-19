@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Mediation.ConnectionHandlers
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Mediation.ConnectionHandlers
 {
 	using System;
 	using System.Collections.Generic;
@@ -8,16 +8,16 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Core.InterAppCalls.Common.CallBulk;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Logging;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.InterApp.Messages;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Logging;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.InterApp.Messages;
 
 	using Automation = Skyline.DataMiner.Automation;
-	using LogType = Skyline.DataMiner.MediaOps.Live.Logging.LogType;
+	using LogType = Skyline.DataMiner.Solutions.MediaOps.Live.Logging.LogType;
 
 	internal class ConnectionHandlerEngine : IConnectionHandlerEngine
 	{
@@ -38,7 +38,7 @@
 
 		public ILogger Logger { get; }
 
-		public MediaOpsLiveApi Api { get; }
+		public IMediaOpsLiveApi Api { get; }
 
 		public void Log(string message, LogType logLevel = LogType.Information)
 		{

@@ -1,31 +1,31 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Objects.Orchestration
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 
 	/// <summary>
 	/// This object groups the orchestration events belonging to the same job.
 	/// </summary>
 	public class OrchestrationJob
 	{
-		private static readonly List<EventType> StartTypes =
+		internal static readonly IReadOnlyList<EventType> StartTypes =
 		[
 			EventType.Start,
 			EventType.PrerollStart,
 		];
 
-		private static readonly List<EventType> StopTypes =
+		internal static readonly IReadOnlyList<EventType> StopTypes =
 		[
 			EventType.Stop,
 			EventType.PostrollStop,
 		];
 
-		private static readonly List<EventType> ExpectedOrderOfTypes =
+		internal static readonly IReadOnlyList<EventType> ExpectedOrderOfTypes =
 		[
 			EventType.Start,
 			EventType.PrerollStart,
@@ -34,6 +34,8 @@
 			EventType.PostrollStop,
 			EventType.Stop,
 		];
+
+		public static readonly EventTypeOrderComparer EventTypeOrderComparer = new(ExpectedOrderOfTypes);
 
 		/// <summary>
 		/// Holds the list of event IDs at the start of this objects creation.
@@ -98,42 +100,67 @@
 
 		private static void ValidateEventTimesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			if (orchestrationEvents.Any(e => e.EventTime < DateTimeOffset.UtcNow && e.EventState == EventState.Confirmed))
+			var now = DateTimeOffset.UtcNow;
+
+			foreach (var e in orchestrationEvents)
 			{
-				throw new InvalidOperationException("Job cannot contain event with 'Confirmed' state in the past.");
+				if (e.EventState != EventState.Confirmed)
+				{
+					continue;
+				}
+
+				var timeUntilStart = e.EventTime - now;
+
+				if (timeUntilStart < TimeSpan.Zero)
+				{
+					throw new InvalidOperationException("Job cannot contain an event with 'Confirmed' state in the past.");
+				}
+
+				if (timeUntilStart < TimeSpan.FromSeconds(5))
+				{
+					throw new InvalidOperationException("Cannot save/update an event with 'Confirmed' state that starts in less than 5 seconds.");
+				}
 			}
 		}
 
 		private static void ValidateEventTypesBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			if (orchestrationEvents.All(e => e.EventType == EventType.Other))
+			var startCount = orchestrationEvents.Count(x => StartTypes.Contains(x.EventType));
+			var stopCount = orchestrationEvents.Count(x => StopTypes.Contains(x.EventType));
+
+			// If all events are "Other", validation is not required
+			if (startCount == 0 && stopCount == 0)
 			{
 				return;
 			}
 
-			OrchestrationEvent startEvent;
-			OrchestrationEvent stopEvent;
-			try
+			if (startCount == 0)
 			{
-				startEvent = orchestrationEvents.SingleOrDefault(e => StartTypes.Contains(e.EventType));
-				stopEvent = orchestrationEvents.SingleOrDefault(e => StopTypes.Contains(e.EventType));
-			}
-			catch (InvalidOperationException)
-			{
-				throw new InvalidOperationException("Job can have only a single starting event (Start, PrerollStart) and a single ending event (Stop, PostrollStop).");
+				throw new InvalidOperationException("Job must have a starting event (Start, PrerollStart).");
 			}
 
-			if (startEvent == null || stopEvent == null)
+			if (startCount > 1)
 			{
-				throw new InvalidOperationException("Job must have a starting event (Start, PrerollStart) and an ending event (Stop, PostrollStop).");
+				throw new InvalidOperationException("Job can have only a single starting event (Start, PrerollStart).");
+			}
+
+			if (stopCount == 0)
+			{
+				throw new InvalidOperationException("Job must have an ending event (Stop, PostrollStop).");
+			}
+
+			if (stopCount > 1)
+			{
+				throw new InvalidOperationException("Job can have only a single ending event (Stop, PostrollStop).");
 			}
 		}
 
 		private static void ValidateEventOrderBeforeSaving(IList<OrchestrationEvent> orchestrationEvents)
 		{
-			var eventWithoutOtherType = orchestrationEvents.Where(e => e.EventType != EventType.Other);
-
-			var orderedByExpectedTypeOrder = eventWithoutOtherType.OrderBy(e => ExpectedOrderOfTypes.IndexOf(e.EventType)).ToList();
+			var orderedByExpectedTypeOrder = orchestrationEvents
+				.Where(e => e.EventType != EventType.Other)
+				.OrderBy(e => e.EventType, EventTypeOrderComparer)
+				.ToList();
 
 			for (int i = 0; i < orderedByExpectedTypeOrder.Count - 1; i++)
 			{
@@ -145,7 +172,7 @@
 
 				if (earlierEventTime > laterEventTime)
 				{
-					throw new InvalidOperationException($"Event of type {laterEvent.EventType.ToString()} can not be scheduled before an event of type {earlierEvent.EventType.ToString()}");
+					throw new InvalidOperationException($"Event of type {laterEvent.EventType} can not be scheduled before an event of type {earlierEvent.EventType}");
 				}
 			}
 		}

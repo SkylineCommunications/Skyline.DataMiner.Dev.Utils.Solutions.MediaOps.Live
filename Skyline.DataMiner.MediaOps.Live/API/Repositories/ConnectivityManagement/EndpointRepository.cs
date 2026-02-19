@@ -1,20 +1,18 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.MediaOps.Live.API.Extensions;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.API.Tools;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
-
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Extensions;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
 	using SLDataGateway.API.Types.Querying;
 
 	public class EndpointRepository : Repository<Endpoint>
@@ -38,7 +36,7 @@
 				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(elementId.Value),
 				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Identifier).Equal(identifier));
 
-			var endpoints = Read(filter).Take(2).ToList();
+			var endpoints = ReadDom(filter).Take(2).ToList();
 
 			if (endpoints.Count > 1)
 			{
@@ -54,7 +52,7 @@
 				DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
 				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Element).Equal(elementId.Value));
 
-			return Read(filter);
+			return ReadDom(filter);
 		}
 
 		public IEnumerable<Endpoint> GetByElementAndIdentifiers(DmsElementId elementId, IEnumerable<string> identifiers)
@@ -78,7 +76,7 @@
 			return FilterQueryExecutor.RetrieveFilteredItems(
 					identifiers,
 					x => CreateFilter(x),
-					x => Read(x));
+					x => ReadDom(x));
 		}
 
 		public IEnumerable<Endpoint> GetByTransportMetadata(params (string fieldName, string value)[] metadataFilters)
@@ -113,7 +111,7 @@
 			}
 
 			var filter = new ANDFilterElement<DomInstance>(filters.ToArray());
-			var endpoints = Read(filter);
+			var endpoints = ReadDom(filter);
 
 			// DOM doesn't support field name/value matching in the same section, so we need to do some post-filtering
 			endpoints = endpoints.WithTransportMetadata(metadataFilters);
@@ -204,7 +202,7 @@
 					DomInstanceExposers.Id.NotEqual(e.ID),
 					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Name).Equal(e.Name));
 
-			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Read).ToList();
+			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom).ToList();
 
 			if (conflicts.Count > 0)
 			{

@@ -1,17 +1,19 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Protocol.API
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Protocol.API
 {
 	using System;
-
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Scripting;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Protocol.Logging;
 
-	public class ProtocolMediaOpsLiveApi : MediaOpsLiveApi
+	public class ProtocolMediaOpsLiveApi : MediaOpsLiveApi, IProtocolMediaOpsLiveApi
 	{
 		public ProtocolMediaOpsLiveApi(SLProtocol protocol, IConnection connection) : base(connection)
 		{
 			Protocol = protocol ?? throw new ArgumentNullException(nameof(protocol));
+
+			SetLogger(new ProtocolLogger(protocol));
 		}
 
 		public ProtocolMediaOpsLiveApi(SLProtocol protocol) : this(protocol, protocol.GetUserConnection())

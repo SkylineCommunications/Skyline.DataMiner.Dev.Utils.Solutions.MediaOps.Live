@@ -1,10 +1,10 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Sections
 {
 	using System;
 
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
-	using NumericParameterDisplayInfo = Skyline.DataMiner.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.NumericParameterDisplayInfo;
+	using NumericParameterDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.NumericParameterDisplayInfo;
 
 	internal class NumericParameterSection : ParameterSection
 	{
@@ -25,19 +25,16 @@
 			if (!Double.IsNaN(info.Step) && info.Step > 0)
 			{
 				Value.StepSize = info.Step;
-			};
-
-			if (!Double.IsNaN(info.Decimals) && info.Decimals >= 0)
-			{
-				Value.Decimals = info.Decimals;
 			}
 
-			if (!Double.IsNaN(info.Step) && info.Min != double.MinValue)
+			Value.Decimals = !Double.IsNaN(info.Decimals) && info.Decimals >= 0 ? info.Decimals : 3;
+
+			if (!Double.IsNaN(info.Min) && info.Min != double.MinValue)
 			{
 				Value.Minimum = info.Min;
 			}
 
-			if (!Double.IsNaN(info.Step) && info.Max != double.MaxValue)
+			if (!Double.IsNaN(info.Max) && info.Max != double.MaxValue)
 			{
 				Value.Maximum = info.Max;
 			}

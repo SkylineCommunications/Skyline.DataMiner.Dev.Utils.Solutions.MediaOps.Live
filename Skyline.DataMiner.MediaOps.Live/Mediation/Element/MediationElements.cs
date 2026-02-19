@@ -1,15 +1,14 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Mediation.Element
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.API.Objects.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Solutions.MediaOps.Live;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
 	public sealed class MediationElements
 	{
@@ -43,7 +42,7 @@
 				throw new ArgumentNullException(nameof(endpoints));
 			}
 
-			var dms = _api.GetDms();
+			var dms = _api.Connection.GetDms();
 
 			var endpointToElement = endpoints
 				.Where(e => e.Element.HasValue)
@@ -96,7 +95,7 @@
 		private IReadOnlyCollection<MediationElement> LoadMediationElements()
 		{
 			var elements = new List<MediationElement>();
-			var dms = _api.GetDms();
+			var dms = _api.Connection.GetDms();
 
 			var request = new GetLiteElementInfo
 			{

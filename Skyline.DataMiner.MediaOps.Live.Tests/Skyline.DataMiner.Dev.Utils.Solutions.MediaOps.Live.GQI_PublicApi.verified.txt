@@ -1,30 +1,34 @@
 ﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.MediaOps.Live")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SLC-AS-MediaOps.LIVE.Tests")]
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.MediaOps.Live.GQI.Tests")]
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.MediaOps.Live.GQI.UnitTesting")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI.UnitTesting")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8", FrameworkDisplayName=".NET Framework 4.8")]
-namespace Skyline.DataMiner.MediaOps.Live.GQI.API
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.GQI.API
 {
-    public class GqiMediaOpsLiveApi : Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi
+    public class GqiMediaOpsLiveApi : Skyline.DataMiner.Solutions.MediaOps.Live.API.MediaOpsLiveApi, Skyline.DataMiner.Solutions.MediaOps.Live.API.IMediaOpsLiveApi, Skyline.DataMiner.Solutions.MediaOps.Live.GQI.API.IGqiMediaOpsLiveApi
     {
         public GqiMediaOpsLiveApi(Skyline.DataMiner.Analytics.GenericInterface.GQIDMS gqiDms) { }
         public GqiMediaOpsLiveApi(Skyline.DataMiner.Analytics.GenericInterface.GQIDMS gqiDms, Skyline.DataMiner.Net.IConnection connection) { }
         public Skyline.DataMiner.Analytics.GenericInterface.GQIDMS GqiDms { get; }
-        public override Skyline.DataMiner.MediaOps.Live.API.Caching.MediaOpsLiveCache GetCache() { }
+        public override Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching.MediaOpsLiveCache GetCache() { }
+    }
+    public interface IGqiMediaOpsLiveApi : Skyline.DataMiner.Solutions.MediaOps.Live.API.IMediaOpsLiveApi
+    {
+        Skyline.DataMiner.Analytics.GenericInterface.GQIDMS GqiDms { get; }
     }
 }
-namespace Skyline.DataMiner.MediaOps.Live.GQI
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.GQI
 {
     public static class Extensions
     {
-        public static Skyline.DataMiner.MediaOps.Live.API.MediaOpsLiveApi GetMediaOpsLiveApi(this Skyline.DataMiner.Analytics.GenericInterface.GQIDMS gqiDms) { }
-        public static Skyline.DataMiner.MediaOps.Live.API.Caching.MediaOpsLiveCache GetMediaOpsLiveCache(this Skyline.DataMiner.Analytics.GenericInterface.GQIDMS gqiDms) { }
+        public static Skyline.DataMiner.Solutions.MediaOps.Live.GQI.API.IGqiMediaOpsLiveApi GetMediaOpsLiveApi(this Skyline.DataMiner.Analytics.GenericInterface.GQIDMS gqiDms) { }
+        public static Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching.MediaOpsLiveCache GetMediaOpsLiveCache(this Skyline.DataMiner.Analytics.GenericInterface.GQIDMS gqiDms) { }
     }
     public abstract class GQIDataSourceBase : Skyline.DataMiner.Analytics.GenericInterface.IGQIDataSource, Skyline.DataMiner.Analytics.GenericInterface.IGQIOnDestroy, Skyline.DataMiner.Analytics.GenericInterface.IGQIOnInit
     {
         protected GQIDataSourceBase() { }
         public Skyline.DataMiner.Net.IConnection Connection { get; }
-        public Skyline.DataMiner.MediaOps.Live.GQI.Metrics.ConnectionMetrics ConnectionMetrics { get; }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.GQI.Metrics.ConnectionMetrics ConnectionMetrics { get; }
         public Skyline.DataMiner.Analytics.GenericInterface.GQIDMS Dms { get; }
         public Skyline.DataMiner.Analytics.GenericInterface.IGQILogger Logger { get; }
         public virtual Skyline.DataMiner.Analytics.GenericInterface.GQIColumn[] GetColumns() { }
@@ -48,7 +52,7 @@ namespace Skyline.DataMiner.MediaOps.Live.GQI
         protected virtual void Dispose(bool disposing) { }
         public Skyline.DataMiner.Analytics.GenericInterface.GQIPage GetNextPage(int pageSize) { }
     }
-    public abstract class GQIUpdateableDataSource : Skyline.DataMiner.MediaOps.Live.GQI.GQIDataSourceBase, Skyline.DataMiner.Analytics.GenericInterface.IGQIUpdateable
+    public abstract class GQIUpdateableDataSource : Skyline.DataMiner.Solutions.MediaOps.Live.GQI.GQIDataSourceBase, Skyline.DataMiner.Analytics.GenericInterface.IGQIUpdateable
     {
         protected GQIUpdateableDataSource() { }
         public void AddOrUpdateRow(Skyline.DataMiner.Analytics.GenericInterface.GQIRow row) { }
@@ -60,7 +64,7 @@ namespace Skyline.DataMiner.MediaOps.Live.GQI
         public void UpdateRow(Skyline.DataMiner.Analytics.GenericInterface.GQIRow row) { }
     }
 }
-namespace Skyline.DataMiner.MediaOps.Live.GQI.Metrics
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.GQI.Metrics
 {
     public class ConnectionInterceptor : Skyline.DataMiner.Net.IConnection, System.IDisposable
     {
@@ -71,7 +75,7 @@ namespace Skyline.DataMiner.MediaOps.Live.GQI.Metrics
         public bool IsShuttingDown { get; }
         public Skyline.DataMiner.Net.ServerDetails ServerDetails { get; }
         public string UserDomainName { get; }
-        public event System.EventHandler<Skyline.DataMiner.MediaOps.Live.GQI.Metrics.ProcessedMessages> MessagesProcessed;
+        public event System.EventHandler<Skyline.DataMiner.Solutions.MediaOps.Live.GQI.Metrics.ProcessedMessages> MessagesProcessed;
         public event Skyline.DataMiner.Net.AbnormalCloseEventHandler OnAbnormalClose;
         public event Skyline.DataMiner.Net.AuthenticationChallengeEventHandler OnAuthenticationChallenge;
         public event Skyline.DataMiner.Net.ConnectionClosedHandler OnClose;
@@ -105,7 +109,7 @@ namespace Skyline.DataMiner.MediaOps.Live.GQI.Metrics
     }
     public class ConnectionMetrics : System.IDisposable
     {
-        public ConnectionMetrics(Skyline.DataMiner.MediaOps.Live.GQI.Metrics.ConnectionInterceptor connection) { }
+        public ConnectionMetrics(Skyline.DataMiner.Solutions.MediaOps.Live.GQI.Metrics.ConnectionInterceptor connection) { }
         public System.TimeSpan AvgRequestDuration { get; }
         public System.TimeSpan MaxRequestDuration { get; }
         public ulong NumberOfDomInstancesRetrieved { get; }

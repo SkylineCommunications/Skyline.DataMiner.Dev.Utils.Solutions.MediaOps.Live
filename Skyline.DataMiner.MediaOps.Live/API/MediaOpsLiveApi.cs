@@ -1,30 +1,28 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API
 {
 	using System;
 	using System.Linq;
 
-	using Skyline.DataMiner.Core.DataMinerSystem.Common;
-	using Skyline.DataMiner.MediaOps.Live.API.Caching;
-	using Skyline.DataMiner.MediaOps.Live.API.Connectivity;
-	using Skyline.DataMiner.MediaOps.Live.API.Repositories.ConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Definitions.SlcOrchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Helpers;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Model.SlcOrchestration;
-	using Skyline.DataMiner.MediaOps.Live.DOM.Tools;
-	using Skyline.DataMiner.MediaOps.Live.Logging;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.Element;
-	using Skyline.DataMiner.MediaOps.Live.Orchestration;
-	using Skyline.DataMiner.MediaOps.Live.Plan;
-	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net;
-	using Skyline.DataMiner.Net.Apps.Modules;
-	using Skyline.DataMiner.Net.ManagerStore;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.SDM.Registration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Definitions.SlcConnectivityManagement;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Definitions.SlcOrchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Helpers;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Logging;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 
-	public class MediaOpsLiveApi
+	public class MediaOpsLiveApi : IMediaOpsLiveApi
 	{
+		private const string CatalogItemId = "213031b9-af0b-488c-be20-934912b967c0";
+
 		public MediaOpsLiveApi(IConnection connection)
 		{
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -43,13 +41,7 @@
 			Orchestration = new OrchestrationHelper(SlcOrchestrationHelper, this);
 		}
 
-		protected internal IConnection Connection { get; }
-
-		protected internal ILogger Logger { get; private set; }
-
-		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
-
-		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+		public IConnection Connection { get; }
 
 		public MediationElements MediationElements { get; }
 
@@ -65,14 +57,15 @@
 
 		public OrchestrationHelper Orchestration { get; }
 
+		internal SlcConnectivityManagementHelper SlcConnectivityManagementHelper { get; }
+
+		internal SlcOrchestrationHelper SlcOrchestrationHelper { get; }
+
+		internal ILogger Logger { get; private set; }
+
 		public void SetLogger(ILogger logger)
 		{
 			Logger = logger ?? throw new ArgumentNullException(nameof(logger));
-		}
-
-		public IDms GetDms()
-		{
-			return Connection.GetDms();
 		}
 
 		public virtual MediaOpsLiveCache GetCache()
@@ -103,45 +96,50 @@
 		/// <summary>
 		/// Installs the required DOM modules for the MediaOps.LIVE API.
 		/// </summary>
-		/// <param name="logAction">Optional action to log progress or messages during installation. If null, logging is suppressed.</param>
-		public void InstallDomModules(Action<string> logAction = null)
+		public void InstallDomModules()
 		{
-			// When no logging action is provided, use a no-op.
-			logAction ??= x => { };
+			Action<string> logAction = x => Logger?.Information(x);
 
 			DomModuleInstaller.Install(Connection.HandleMessages, new SlcConnectivityManagementDomModule(), logAction);
 			DomModuleInstaller.Install(Connection.HandleMessages, new SlcOrchestrationDomModule(), logAction);
 		}
 
-		public bool IsInstalled()
+		/// <summary>
+		/// Determines whether the MediaOps.LIVE application is installed on the DataMiner System.
+		/// </summary>
+		/// <param name="version">
+		/// When this method returns <c>true</c>, contains the version of the installed application;
+		/// otherwise, <c>null</c>.
+		/// </param>
+		/// <returns>
+		/// <c>true</c> if the application is installed; otherwise, <c>false</c>.
+		/// </returns>
+		public bool IsInstalled(out string version)
 		{
-			var moduleSettingsHelper = new ModuleSettingsHelper(Connection.HandleMessages);
-
-			var filter = new ORFilterElement<ModuleSettings>(
-				ModuleSettingsExposers.ModuleId.Equal(SlcConnectivityManagementIds.ModuleId),
-				ModuleSettingsExposers.ModuleId.Equal(SlcOrchestrationIds.ModuleId));
-
-			var count = moduleSettingsHelper.ModuleSettings.Count(filter);
-
-			if (count == 0)
+			var registrar = Connection.GetSdmRegistrar();
+			var mediaOpsLiveRegistration = registrar.Solutions.Read(SolutionRegistrationExposers.ID.Equal(CatalogItemId)).FirstOrDefault();
+			if (mediaOpsLiveRegistration == null)
 			{
+				version = null;
 				return false;
 			}
 
-			var connectivityManagementDefinitions = SlcConnectivityManagementHelper.DomHelper.DomDefinitions.ReadAll()
-				.Select(x => x.ID)
-				.ToList();
-
-			var orchestrationDefinitions = SlcOrchestrationHelper.DomHelper.DomDefinitions.ReadAll()
-				.Select(x => x.ID)
-				.ToList();
-
-			return connectivityManagementDefinitions.Contains(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup) &&
-				   connectivityManagementDefinitions.Contains(SlcConnectivityManagementIds.Definitions.Endpoint) &&
-				   orchestrationDefinitions.Contains(SlcOrchestrationIds.Definitions.OrchestrationEvent);
+			version = mediaOpsLiveRegistration.Version;
+			return true;
 		}
 
-		public string GetVersion()
+		/// <summary>
+		/// Determines whether the MediaOps.LIVE application is installed on the DataMiner System.
+		/// </summary>
+		/// <returns>
+		/// <c>true</c> if the application is installed; otherwise, <c>false</c>.
+		/// </returns>
+		public bool IsInstalled()
+		{
+			return IsInstalled(out _);
+		}
+
+		public static string GetVersion()
 		{
 #pragma warning disable CS0618 // Type or member is obsolete
 			if (!String.IsNullOrWhiteSpace(ThisAssembly.Git.Tag))

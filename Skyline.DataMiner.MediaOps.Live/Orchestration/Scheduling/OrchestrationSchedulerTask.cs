@@ -1,14 +1,11 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Orchestration.Scheduling
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Newtonsoft.Json;
-
-	using Skyline.DataMiner.MediaOps.Live;
-
 	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Solutions.MediaOps.Live;
 
 	/// <summary>
 	/// Contains information about scheduler orchestration tasks.

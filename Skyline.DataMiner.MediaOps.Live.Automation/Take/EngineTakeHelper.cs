@@ -1,21 +1,24 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.Automation.Take
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Take
 {
 	using System;
-
 	using Newtonsoft.Json;
-
 	using Skyline.DataMiner.Automation;
-	using Skyline.DataMiner.MediaOps.Live.API;
-	using Skyline.DataMiner.MediaOps.Live.Mediation.ConnectionHandlers;
-	using Skyline.DataMiner.MediaOps.Live.Take;
 	using Skyline.DataMiner.Net.Exceptions;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.ConnectionHandlers;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 
 	public class EngineTakeHelper : TakeHelper
 	{
-		internal EngineTakeHelper(IEngine engine, MediaOpsLiveApi api) : base(api)
+		internal EngineTakeHelper(EngineMediaOpsLiveApi api) : base(api)
 		{
-			Engine = engine ?? throw new ArgumentNullException(nameof(engine));
+			if (api is null)
+			{
+				throw new ArgumentNullException(nameof(api));
+			}
+
+			Engine = api.Engine;
 		}
 
 		public IEngine Engine { get; }

@@ -1,6 +1,5 @@
-﻿namespace Skyline.DataMiner.MediaOps.Live.API.Connectivity
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity
 {
-	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 
