@@ -26,6 +26,20 @@
 		}
 
 		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_TransportTypes_CheckDuplicates_WithinBatch()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			// two transport types with the same name in the same batch throws
+			var ex = Assert.Throws<InvalidOperationException>(
+				() => api.TransportTypes.CreateOrUpdate([
+					new TransportType { Name = "IP2" },
+					new TransportType { Name = "IP2" },
+				]));
+			Assert.AreEqual("Cannot save transport types. The following names are already in use: IP2", ex.Message);
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Validation_TransportTypes_CheckStillInUse()
 		{
 			var api = new MediaOpsLiveApiMock();
@@ -57,6 +71,30 @@
 			var ex = Assert.Throws<InvalidOperationException>(
 				() => { api.Levels.Create(new Level { Name = "L2", Number = 102, TransportType = transportType }); });
 			Assert.AreEqual("Cannot save levels. The following names are already in use: L2", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_Levels_CheckDuplicates_WithinBatch()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var transportType = api.TransportTypes.Query().First(x => x.Name == "TSoIP");
+
+			// two levels with the same name in the same batch throws
+			var nameEx = Assert.Throws<InvalidOperationException>(
+				() => api.Levels.CreateOrUpdate([
+					new Level { Name = "L1", Number = 101, TransportType = transportType },
+					new Level { Name = "L1", Number = 102, TransportType = transportType },
+				]));
+			Assert.AreEqual("Cannot save levels. The following names are already in use: L1", nameEx.Message);
+
+			// two levels with the same number in the same batch throws
+			var numberEx = Assert.Throws<InvalidOperationException>(
+				() => api.Levels.CreateOrUpdate([
+					new Level { Name = "L1", Number = 101, TransportType = transportType },
+					new Level { Name = "L2", Number = 101, TransportType = transportType },
+				]));
+			Assert.AreEqual("Cannot save levels. The following numbers are already in use: 101", numberEx.Message);
 		}
 
 		[TestMethod]
@@ -98,10 +136,51 @@
 			endpoint.Name = "E2";
 			api.Endpoints.Update(endpoint);
 
-			// create item with same name
+			// create item with same name and same role throws
 			var ex = Assert.Throws<InvalidOperationException>(
-				() => { api.Endpoints.Create(new Endpoint { Name = "E2", Role = EndpointRole.Destination, TransportType = transportType }); });
+				() => { api.Endpoints.Create(new Endpoint { Name = "E2", Role = EndpointRole.Source, TransportType = transportType }); });
 			Assert.AreEqual("Cannot save endpoints. The following names are already in use: E2", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_Endpoints_CheckDuplicates_DifferentRoleAllowed()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var transportType = api.TransportTypes.Query().First(x => x.Name == "TSoIP");
+
+			// create a source endpoint
+			api.Endpoints.Create(new Endpoint { Name = "E1", Role = EndpointRole.Source, TransportType = transportType });
+
+			// a destination endpoint with the same name is allowed
+			api.Endpoints.Create(new Endpoint { Name = "E1", Role = EndpointRole.Destination, TransportType = transportType });
+
+			// a second source endpoint with the same name is not allowed
+			var ex = Assert.Throws<InvalidOperationException>(
+				() => { api.Endpoints.Create(new Endpoint { Name = "E1", Role = EndpointRole.Source, TransportType = transportType }); });
+			Assert.AreEqual("Cannot save endpoints. The following names are already in use: E1", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_Endpoints_CheckDuplicates_WithinBatch()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var transportType = api.TransportTypes.Query().First(x => x.Name == "TSoIP");
+
+			// two endpoints with the same name and same role in the same batch throws
+			var ex = Assert.Throws<InvalidOperationException>(
+				() => api.Endpoints.CreateOrUpdate([
+					new Endpoint { Name = "E1", Role = EndpointRole.Source, TransportType = transportType },
+					new Endpoint { Name = "E1", Role = EndpointRole.Source, TransportType = transportType },
+				]));
+			Assert.AreEqual("Cannot save endpoints. The following names are already in use: E1", ex.Message);
+
+			// two endpoints with the same name but different roles in the same batch is allowed
+			api.Endpoints.CreateOrUpdate([
+				new Endpoint { Name = "E2", Role = EndpointRole.Source, TransportType = transportType },
+				new Endpoint { Name = "E2", Role = EndpointRole.Destination, TransportType = transportType },
+			]);
 		}
 
 		[TestMethod]
@@ -141,10 +220,47 @@
 			c.Name = "VSG2";
 			api.VirtualSignalGroups.Update(c);
 
-			// create item with same name
+			// create item with same name and same role throws
 			var ex = Assert.Throws<InvalidOperationException>(
-				() => { api.VirtualSignalGroups.Create(new VirtualSignalGroup { Name = "VSG2", Role = EndpointRole.Destination }); });
+				() => { api.VirtualSignalGroups.Create(new VirtualSignalGroup { Name = "VSG2", Role = EndpointRole.Source }); });
 			Assert.AreEqual("Cannot save VSGs. The following names are already in use: VSG2", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_VirtualSignalGroups_CheckDuplicates_DifferentRoleAllowed()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			// create a source VSG
+			api.VirtualSignalGroups.Create(new VirtualSignalGroup { Name = "VSG1", Role = EndpointRole.Source });
+
+			// a destination VSG with the same name is allowed
+			api.VirtualSignalGroups.Create(new VirtualSignalGroup { Name = "VSG1", Role = EndpointRole.Destination });
+
+			// a second source VSG with the same name is not allowed
+			var ex = Assert.Throws<InvalidOperationException>(
+				() => { api.VirtualSignalGroups.Create(new VirtualSignalGroup { Name = "VSG1", Role = EndpointRole.Source }); });
+			Assert.AreEqual("Cannot save VSGs. The following names are already in use: VSG1", ex.Message);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Validation_VirtualSignalGroups_CheckDuplicates_WithinBatch()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			// two VSGs with the same name and same role in the same batch throws
+			var ex = Assert.Throws<InvalidOperationException>(
+				() => api.VirtualSignalGroups.CreateOrUpdate([
+					new VirtualSignalGroup { Name = "VSG1", Role = EndpointRole.Source },
+					new VirtualSignalGroup { Name = "VSG1", Role = EndpointRole.Source },
+				]));
+			Assert.AreEqual("Cannot save VSGs. The following names are already in use: VSG1", ex.Message);
+
+			// two VSGs with the same name but different roles in the same batch is allowed
+			api.VirtualSignalGroups.CreateOrUpdate([
+				new VirtualSignalGroup { Name = "VSG2", Role = EndpointRole.Source },
+				new VirtualSignalGroup { Name = "VSG2", Role = EndpointRole.Destination },
+			]);
 		}
 	}
 }
