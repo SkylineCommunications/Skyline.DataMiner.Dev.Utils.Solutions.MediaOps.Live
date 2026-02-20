@@ -16,10 +16,10 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var audioSource2 = api.Endpoints.ReadSingle("Audio Source 2");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.ReadSingle("Audio Destination 2");
 
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
 
@@ -38,10 +38,10 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var audioSource2 = api.Endpoints.ReadSingle("Audio Source 2");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.ReadSingle("Audio Destination 2");
 
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
 
@@ -59,9 +59,9 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var audioSource2 = api.Endpoints.ReadSingle("Audio Source 2");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
 
 			using var connectivity = new LiteConnectivityInfoProvider(api, subscribe: true);
 
@@ -117,8 +117,8 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
 
 			var mediationElement = api.MediationElements.GetElementForEndpoint(audioDestination1);
 			var simulatedMediationElement = simulation.Dms.Agents[mediationElement.DmaId].Elements[mediationElement.ElementId];

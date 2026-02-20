@@ -103,21 +103,21 @@
 
 			var category = new Categories.Category { Name = "Category 1" };
 
-			var vsg = api.VirtualSignalGroups.Read("Source 1");
+			var vsg = api.VirtualSignalGroups.ReadSingle("Source 1");
 			Assert.IsFalse(vsg.IsAssignedToCategory(category));
 
 			// Assign
 			vsg.AssignToCategory(category);
 			api.VirtualSignalGroups.Update(vsg);
 
-			vsg = api.VirtualSignalGroups.Read("Source 1");
+			vsg = api.VirtualSignalGroups.ReadSingle("Source 1");
 			Assert.IsTrue(vsg.IsAssignedToCategory(category));
 			Assert.ContainsSingle(api.VirtualSignalGroups.GetByCategory(category));
 
 			// Unassign
 			vsg.UnassignFromCategory(category);
 			api.VirtualSignalGroups.Update(vsg);
-			vsg = api.VirtualSignalGroups.Read("Source 1");
+			vsg = api.VirtualSignalGroups.ReadSingle("Source 1");
 
 			Assert.IsFalse(vsg.IsAssignedToCategory(category));
 			Assert.IsEmpty(api.VirtualSignalGroups.GetByCategory(category));
@@ -135,8 +135,8 @@
 			var category3 = new Category { Name = "Category 3" };
 
 			// Test 1: Assign categories to VSGs and verify sync creates category items
-			var vsg1 = api.VirtualSignalGroups.Read("Source 1");
-			var vsg2 = api.VirtualSignalGroups.Read("Source 2");
+			var vsg1 = api.VirtualSignalGroups.ReadSingle("Source 1");
+			var vsg2 = api.VirtualSignalGroups.ReadSingle("Source 2");
 
 			// Clear any pre-existing categories from the simulation
 			vsg1.Categories.Clear();
@@ -177,13 +177,13 @@
 			Assert.AreEqual("Source 1", vsgsInCategory2[0].Name);
 
 			// Test 2: Update categories (remove one, add another)
-			vsg1 = api.VirtualSignalGroups.Read("Source 1");
+			vsg1 = api.VirtualSignalGroups.ReadSingle("Source 1");
 			vsg1.UnassignFromCategory(category1);
 			vsg1.AssignToCategory(category3);
 			api.VirtualSignalGroups.Update(vsg1);
 
 			// Verify the update was persisted - re-read vsg1
-			vsg1 = api.VirtualSignalGroups.Read("Source 1");
+			vsg1 = api.VirtualSignalGroups.ReadSingle("Source 1");
 			Assert.HasCount(2, vsg1.Categories, "vsg1 should have exactly 2 categories after Test 2");
 			Assert.IsFalse(vsg1.IsAssignedToCategory(category1), "vsg1 should not have category1 after Test 2");
 			Assert.IsTrue(vsg1.IsAssignedToCategory(category2), "vsg1 should still have category2 after Test 2");
@@ -205,7 +205,7 @@
 			Assert.AreEqual("Source 2", vsgsInCategory1[0].Name);
 
 			// Test 3: Remove all categories from a VSG
-			vsg1 = api.VirtualSignalGroups.Read("Source 1");
+			vsg1 = api.VirtualSignalGroups.ReadSingle("Source 1");
 
 			// Verify the state before removing - should have category2 and category3
 			Assert.IsTrue(vsg1.IsAssignedToCategory(category2), "vsg1 should be assigned to category2 before removal");
@@ -227,13 +227,13 @@
 			Assert.IsEmpty(allCategoryItemsForVsg1, "All category items for vsg1 should be removed");
 
 			// Verify vsg1 is not in any categories
-			vsg1 = api.VirtualSignalGroups.Read("Source 1");
+			vsg1 = api.VirtualSignalGroups.ReadSingle("Source 1");
 			Assert.IsFalse(vsg1.IsAssignedToCategory(category1));
 			Assert.IsFalse(vsg1.IsAssignedToCategory(category2));
 			Assert.IsFalse(vsg1.IsAssignedToCategory(category3));
 
 			// Test 4: Delete VSG and verify category items are removed
-			vsg2 = api.VirtualSignalGroups.Read("Source 2");
+			vsg2 = api.VirtualSignalGroups.ReadSingle("Source 2");
 			Assert.IsTrue(vsg2.IsAssignedToCategory(category1));
 			api.VirtualSignalGroups.Delete(vsg2);
 
@@ -248,8 +248,8 @@
 			Assert.IsEmpty(vsgsInCategory1);
 
 			// Test 5: Bulk CreateOrUpdate with categories
-			var vsg3 = api.VirtualSignalGroups.Read("Source 3");
-			var vsg4 = api.VirtualSignalGroups.Read("Source 4");
+			var vsg3 = api.VirtualSignalGroups.ReadSingle("Source 3");
+			var vsg4 = api.VirtualSignalGroups.ReadSingle("Source 4");
 
 			// Clear pre-existing categories
 			vsg3.Categories.Clear();
