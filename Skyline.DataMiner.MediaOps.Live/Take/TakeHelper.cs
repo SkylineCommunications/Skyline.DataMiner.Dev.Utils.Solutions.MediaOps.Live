@@ -32,6 +32,22 @@
 
 		public ICollection<EndpointConnectionResult> Take(ICollection<EndpointConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
 		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				return TakeAsync(connectionRequests, performanceTracker, options).GetAwaiter().GetResult();
+			}
+		}
+
+		public ICollection<VsgConnectionResult> Take(ICollection<VsgConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				return TakeAsync(connectionRequests, performanceTracker, options).GetAwaiter().GetResult();
+			}
+		}
+
+		public async Task<ICollection<EndpointConnectionResult>> TakeAsync(ICollection<EndpointConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
+		{
 			if (connectionRequests == null)
 			{
 				throw new ArgumentNullException(nameof(connectionRequests));
@@ -49,7 +65,7 @@
 				Api.Logger?.Information($"Start connecting with {connectionRequests.Count} requests:\n" +
 					$"{FormatConnectionRequests(connectionRequests)}");
 
-				using (performanceTracker = new PerformanceTracker(performanceTracker))
+				using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(TakeHelper), nameof(TakeAsync)))
 				{
 					var takeContexts = connectionRequests.Select(x => new EndpointConnectOperationContext(x)).ToList();
 
@@ -57,7 +73,7 @@
 					PrepareData(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
-					WaitUntilAllConnected(takeContexts, performanceTracker, options);
+					await WaitUntilAllConnectedAsync(takeContexts, performanceTracker, options);
 
 					Api.Logger?.Information("Take finished successfully.");
 
@@ -73,7 +89,7 @@
 			}
 		}
 
-		public ICollection<VsgConnectionResult> Take(ICollection<VsgConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
+		public async Task<ICollection<VsgConnectionResult>> TakeAsync(ICollection<VsgConnectionRequest> connectionRequests, PerformanceTracker performanceTracker, TakeOptions options = null)
 		{
 			if (connectionRequests == null)
 			{
@@ -92,7 +108,7 @@
 				Api.Logger?.Information($"Start connecting with {connectionRequests.Count} requests:\n" +
 					$"{FormatConnectionRequests(connectionRequests)}");
 
-				using (performanceTracker = new PerformanceTracker(performanceTracker))
+				using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(TakeHelper), nameof(TakeAsync)))
 				{
 					var destinationVsgs = connectionRequests.Select(x => x.Destination).Distinct().ToList();
 					CheckDestinationLocks(destinationVsgs, options, performanceTracker);
@@ -103,7 +119,7 @@
 					PrepareData(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Connect, takeContexts, performanceTracker);
-					WaitUntilAllConnected(takeContexts, performanceTracker, options);
+					await WaitUntilAllConnectedAsync(takeContexts, performanceTracker, options);
 
 					Api.Logger?.Information("Take finished successfully.");
 
@@ -120,6 +136,22 @@
 		}
 
 		public ICollection<EndpointDisconnectResult> Disconnect(ICollection<EndpointDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, DisconnectOptions options = null)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				return DisconnectAsync(disconnectRequests, performanceTracker, options).GetAwaiter().GetResult();
+			}
+		}
+
+		public ICollection<VsgDisconnectResult> Disconnect(ICollection<VsgDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, DisconnectOptions options = null)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				return DisconnectAsync(disconnectRequests, performanceTracker, options).GetAwaiter().GetResult();
+			}
+		}
+
+		public async Task<ICollection<EndpointDisconnectResult>> DisconnectAsync(ICollection<EndpointDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, DisconnectOptions options = null)
 		{
 			if (disconnectRequests == null)
 			{
@@ -138,14 +170,14 @@
 				Api.Logger?.Information($"Start disconnecting with {disconnectRequests.Count} requests:\n" +
 					$"{FormatDisconnectRequests(disconnectRequests)}");
 
-				using (performanceTracker = new PerformanceTracker(performanceTracker))
+				using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(TakeHelper), nameof(DisconnectAsync)))
 				{
 					var takeContexts = disconnectRequests.Select(x => new EndpointDisconnectOperationContext(x)).ToList();
 
 					PrepareData(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
-					WaitUntilAllDisconnected(takeContexts, performanceTracker, options);
+					await WaitUntilAllDisconnectedAsync(takeContexts, performanceTracker, options);
 
 					results = GenerateResults(takeContexts);
 				}
@@ -160,7 +192,7 @@
 			}
 		}
 
-		public ICollection<VsgDisconnectResult> Disconnect(ICollection<VsgDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, DisconnectOptions options = null)
+		public async Task<ICollection<VsgDisconnectResult>> DisconnectAsync(ICollection<VsgDisconnectRequest> disconnectRequests, PerformanceTracker performanceTracker, DisconnectOptions options = null)
 		{
 			if (disconnectRequests == null)
 			{
@@ -179,7 +211,7 @@
 				Api.Logger?.Information($"Start disconnecting with {disconnectRequests.Count} requests:\n" +
 					$"{FormatDisconnectRequests(disconnectRequests)}");
 
-				using (performanceTracker = new PerformanceTracker(performanceTracker))
+				using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(TakeHelper), nameof(DisconnectAsync)))
 				{
 					var destinationVsgs = disconnectRequests.Select(x => x.Destination).Distinct().ToList();
 					CheckDestinationLocks(destinationVsgs, options, performanceTracker);
@@ -188,7 +220,7 @@
 					PrepareData(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					NotifyPendingConnectionActions(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
 					ExecuteConnectionHandlerScripts(ConnectionHandlerScriptAction.Disconnect, takeContexts, performanceTracker);
-					WaitUntilAllDisconnected(takeContexts, performanceTracker, options);
+					await WaitUntilAllDisconnectedAsync(takeContexts, performanceTracker, options);
 
 					results = GenerateResults(takeContexts);
 				}
@@ -421,7 +453,9 @@
 			{
 				var allMediationElements = Api.MediationElements.GetAllElementsCached();
 
-				foreach (var group in takeContexts.GroupBy(x => x.DestinationElement.Host))
+				foreach (var group in takeContexts
+					.Where(x => x.DestinationElement != null)
+					.GroupBy(x => x.DestinationElement.Host))
 				{
 					var hostingAgentId = group.Key.Id;
 
@@ -655,11 +689,11 @@
 			}
 		}
 
-		private void WaitUntilAllConnected(IEnumerable<ConnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
+		private async Task WaitUntilAllConnectedAsync(IEnumerable<ConnectOperationContext> takeContexts, PerformanceTracker performanceTracker, TakeOptions options)
 		{
 			Api.Logger?.Information($"Waiting for all connections to be established...");
 
-			using (new PerformanceTracker(performanceTracker))
+			using (new PerformanceTracker(performanceTracker, nameof(TakeHelper), nameof(WaitUntilAllConnectedAsync)))
 			{
 				var connectionMonitor = options?.ConnectionMonitor ?? Api.GetCache().ConnectionMonitor;
 
@@ -669,7 +703,7 @@
 
 				if (options?.WaitForCompletion == true)
 				{
-					Task.WaitAll(tasks);
+					await Task.WhenAll(tasks);
 
 					var failedRequests = takeContexts.Where(x => !x.IsSuccessful).Select(x => x.ConnectionRequest).ToList();
 
@@ -705,11 +739,11 @@
 			return result;
 		}
 
-		private void WaitUntilAllDisconnected(IEnumerable<DisconnectOperationContext> takeContexts, PerformanceTracker performanceTracker, DisconnectOptions options)
+		private async Task WaitUntilAllDisconnectedAsync(IEnumerable<DisconnectOperationContext> takeContexts, PerformanceTracker performanceTracker, DisconnectOptions options)
 		{
 			Api.Logger?.Information($"Waiting for all disconnections to complete...");
 
-			using (new PerformanceTracker(performanceTracker))
+			using (new PerformanceTracker(performanceTracker, nameof(TakeHelper), nameof(WaitUntilAllDisconnectedAsync)))
 			{
 				var connectionMonitor = options?.ConnectionMonitor ?? Api.GetCache().ConnectionMonitor;
 
@@ -719,7 +753,7 @@
 
 				if (options?.WaitForCompletion == true)
 				{
-					Task.WaitAll(tasks);
+					await Task.WhenAll(tasks);
 
 					var failedRequests = takeContexts.Where(x => !x.IsSuccessful).Select(x => x.DisconnectRequest).ToList();
 

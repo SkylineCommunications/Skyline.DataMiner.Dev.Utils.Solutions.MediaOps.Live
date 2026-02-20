@@ -247,9 +247,7 @@
 
 					if (orchestrationEvent.IsConnectEvent)
 					{
-						var results = ExecuteConnectionsAndReturnResults(orchestrationEvent, connections, performanceTracker);
-
-						await Task.WhenAll(results.Select(r => r.CompletionTask));
+						var results = await ExecuteConnectionsAndReturnResultsAsync(orchestrationEvent, connections, performanceTracker);
 
 						foreach (var result in results.Where(r => !r.IsSuccessful))
 						{
@@ -263,9 +261,7 @@
 
 					if (orchestrationEvent.IsDisconnectEvent)
 					{
-						var results = ExecuteDisconnectionsAndReturnResults(orchestrationEvent, connections, performanceTracker);
-
-						await Task.WhenAll(results.Select(r => r.CompletionTask));
+						var results = await ExecuteDisconnectionsAndReturnResultsAsync(orchestrationEvent, connections, performanceTracker);
 
 						foreach (var result in results.Where(r => !r.IsSuccessful))
 						{
@@ -284,14 +280,14 @@
 			}
 		}
 
-		private ICollection<VsgDisconnectResult> ExecuteDisconnectionsAndReturnResults(OrchestrationEventConfiguration orchestrationEvent, IList<Connection> disconnects, PerformanceTracker performanceTracker)
+		private async Task<ICollection<VsgDisconnectResult>> ExecuteDisconnectionsAndReturnResultsAsync(OrchestrationEventConfiguration orchestrationEvent, IList<Connection> disconnects, PerformanceTracker performanceTracker)
 		{
 			if (disconnects.Count == 0)
 			{
 				return [];
 			}
 
-			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteDisconnectionsAndReturnResultsAsync)))
 			{
 				List<VsgDisconnectRequest> requests = [];
 				List<VirtualSignalGroup> virtualSignalGroupsToUnlock = [];
@@ -350,7 +346,7 @@
 				// Perform disconnects
 				var takeHelper = _api.GetConnectionHandler();
 
-				var results = takeHelper.Disconnect(
+				var results = await takeHelper.DisconnectAsync(
 					requests,
 					performanceTracker,
 					new() { WaitForCompletion = true, BypassLockValidation = true });
@@ -363,14 +359,14 @@
 			}
 		}
 
-		private ICollection<VsgConnectionResult> ExecuteConnectionsAndReturnResults(OrchestrationEventConfiguration orchestrationEvent, IList<Connection> connections, PerformanceTracker performanceTracker)
+		private async Task<ICollection<VsgConnectionResult>> ExecuteConnectionsAndReturnResultsAsync(OrchestrationEventConfiguration orchestrationEvent, IList<Connection> connections, PerformanceTracker performanceTracker)
 		{
 			if (connections.Count == 0)
 			{
 				return [];
 			}
 
-			using (new PerformanceTracker(performanceTracker))
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteConnectionsAndReturnResultsAsync)))
 			{
 				List<VsgConnectionRequest> requests = [];
 				List<VirtualSignalGroupLockRequest> lockRequests = [];
@@ -455,7 +451,7 @@
 				// Perform connections
 				var takeHelper = _api.GetConnectionHandler();
 
-				var results = takeHelper.Take(
+				var results = await takeHelper.TakeAsync(
 					requests,
 					performanceTracker,
 					new() { WaitForCompletion = true, BypassLockValidation = true });
