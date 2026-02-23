@@ -64,19 +64,29 @@
 
 		private void CheckDuplicatesBeforeSave(ICollection<TransportType> instances)
 		{
-			FilterElement<DomInstance> CreateFilter(TransportType tt) =>
-				new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.Id.NotEqual(tt.ID),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name).Equal(tt.Name));
+			// Fetch existing DB records that share a name with any instance in the batch.
+			static FilterElement<DomInstance> CreateFilter(TransportType tt) =>
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.TransportTypeInfo.Name).Equal(tt.Name);
 
-			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom).ToList();
+			var existingWithSameName = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom);
 
-			if (conflicts.Count > 0)
+			// Build a projected view keyed by ID: DB records as base, overridden by batch entries.
+			var transportTypesAfterSave = existingWithSameName.ToDictionary(x => x.ID);
+
+			foreach (var instance in instances)
 			{
-				var names = String.Join(", ", conflicts
-					.Select(x => x.Name)
-					.OrderBy(x => x, new NaturalSortComparer()));
+				transportTypesAfterSave[instance.ID] = instance;
+			}
 
+			var duplicates = transportTypesAfterSave.Values
+				.GroupBy(x => x.Name)
+				.Where(g => g.Count() > 1)
+				.Select(g => g.Key)
+				.ToList();
+
+			if (duplicates.Count > 0)
+			{
+				var names = String.Join(", ", duplicates.OrderBy(x => x, new NaturalSortComparer()));
 				throw new InvalidOperationException($"Cannot save transport types. The following names are already in use: {names}");
 			}
 		}

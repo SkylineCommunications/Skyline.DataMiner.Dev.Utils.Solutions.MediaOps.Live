@@ -14,8 +14,8 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var videoSource1 = api.Endpoints.Read("Video Source 1");
-			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
 
 			using var monitor = new ConnectionMonitor(api);
 
@@ -39,8 +39,8 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var videoSource1 = api.Endpoints.Read("Video Source 1");
-			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
 
 			using var monitor = new ConnectionMonitor(api);
 
@@ -64,8 +64,8 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var videoSource1 = api.Endpoints.Read("Video Source 1");
-			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
 
 			var timeout = TimeSpan.FromMilliseconds(1000);
 
@@ -89,8 +89,8 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var videoSource1 = api.Endpoints.Read("Video Source 1");
-			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 
@@ -116,8 +116,8 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var videoSource1 = api.Endpoints.Read("Video Source 1");
-			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 
@@ -143,8 +143,8 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var videoSource1 = api.Endpoints.Read("Video Source 1");
-			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 

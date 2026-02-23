@@ -21,8 +21,8 @@
 
 			var api = new MediaOpsLiveApi(interceptedConnection);
 
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
 
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
 
@@ -44,16 +44,16 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var videoSource1 = api.Endpoints.Read("Video Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
-			var videoSource2 = api.Endpoints.Read("Video Source 2");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var audioSource2 = api.Endpoints.ReadSingle("Audio Source 2");
+			var videoSource2 = api.Endpoints.ReadSingle("Video Source 2");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
 
-			var source1 = api.VirtualSignalGroups.Read("Source 1");
-			var source2 = api.VirtualSignalGroups.Read("Source 2");
-			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+			var source1 = api.VirtualSignalGroups.ReadSingle("Source 1");
+			var source2 = api.VirtualSignalGroups.ReadSingle("Source 2");
+			var destination1 = api.VirtualSignalGroups.ReadSingle("Destination 1");
 
 			using var connectivity = new ConnectivityInfoProvider(api, subscribe: true);
 
@@ -134,10 +134,10 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var audioSource2 = api.Endpoints.ReadSingle("Audio Source 2");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.ReadSingle("Audio Destination 2");
 
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
 
@@ -159,10 +159,10 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var audioSource2 = api.Endpoints.ReadSingle("Audio Source 2");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.ReadSingle("Audio Destination 2");
 
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
 
@@ -185,19 +185,19 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
-			var audioSource3 = api.Endpoints.Read("Audio Source 3");
-			var audioSource4 = api.Endpoints.Read("Audio Source 4");
-			var audioSource5 = api.Endpoints.Read("Audio Source 5");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
-			var audioDestination3 = api.Endpoints.Read("Audio Destination 3");
-			var audioDestination4 = api.Endpoints.Read("Audio Destination 4");
-			var audioDestination5 = api.Endpoints.Read("Audio Destination 5");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var audioSource2 = api.Endpoints.ReadSingle("Audio Source 2");
+			var audioSource3 = api.Endpoints.ReadSingle("Audio Source 3");
+			var audioSource4 = api.Endpoints.ReadSingle("Audio Source 4");
+			var audioSource5 = api.Endpoints.ReadSingle("Audio Source 5");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.ReadSingle("Audio Destination 2");
+			var audioDestination3 = api.Endpoints.ReadSingle("Audio Destination 3");
+			var audioDestination4 = api.Endpoints.ReadSingle("Audio Destination 4");
+			var audioDestination5 = api.Endpoints.ReadSingle("Audio Destination 5");
 
-			var source1 = api.VirtualSignalGroups.Read("Source 1");
-			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
+			var source1 = api.VirtualSignalGroups.ReadSingle("Source 1");
+			var destination1 = api.VirtualSignalGroups.ReadSingle("Destination 1");
 
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
 			simulation.CreateTestPendingConnectionAction(audioSource1, audioDestination1); // should be ignored
@@ -289,12 +289,12 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
-			var audioSource3 = api.Endpoints.Read("Audio Source 3");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
-			var audioDestination3 = api.Endpoints.Read("Audio Destination 3");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var audioSource2 = api.Endpoints.ReadSingle("Audio Source 2");
+			var audioSource3 = api.Endpoints.ReadSingle("Audio Source 3");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.ReadSingle("Audio Destination 2");
+			var audioDestination3 = api.Endpoints.ReadSingle("Audio Destination 3");
 
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
 			simulation.CreateTestPendingConnectionAction(audioSource2, audioDestination2);
@@ -328,19 +328,19 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var videoSource1 = api.Endpoints.Read("Video Source 1");
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
-			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var audioSource2 = api.Endpoints.ReadSingle("Audio Source 2");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.ReadSingle("Audio Destination 2");
 
-			var source1 = api.VirtualSignalGroups.Read("Source 1");
-			var source2 = api.VirtualSignalGroups.Read("Source 2");
-			var source3 = api.VirtualSignalGroups.Read("Source 3");
-			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
-			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
-			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
+			var source1 = api.VirtualSignalGroups.ReadSingle("Source 1");
+			var source2 = api.VirtualSignalGroups.ReadSingle("Source 2");
+			var source3 = api.VirtualSignalGroups.ReadSingle("Source 3");
+			var destination1 = api.VirtualSignalGroups.ReadSingle("Destination 1");
+			var destination2 = api.VirtualSignalGroups.ReadSingle("Destination 2");
+			var destination3 = api.VirtualSignalGroups.ReadSingle("Destination 3");
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
@@ -364,19 +364,19 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var videoSource1 = api.Endpoints.Read("Video Source 1");
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var audioSource2 = api.Endpoints.Read("Audio Source 2");
-			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var audioSource2 = api.Endpoints.ReadSingle("Audio Source 2");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+			var audioDestination2 = api.Endpoints.ReadSingle("Audio Destination 2");
 
-			var source1 = api.VirtualSignalGroups.Read("Source 1");
-			var source2 = api.VirtualSignalGroups.Read("Source 2");
-			var source3 = api.VirtualSignalGroups.Read("Source 3");
-			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
-			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
-			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
+			var source1 = api.VirtualSignalGroups.ReadSingle("Source 1");
+			var source2 = api.VirtualSignalGroups.ReadSingle("Source 2");
+			var source3 = api.VirtualSignalGroups.ReadSingle("Source 3");
+			var destination1 = api.VirtualSignalGroups.ReadSingle("Destination 1");
+			var destination2 = api.VirtualSignalGroups.ReadSingle("Destination 2");
+			var destination3 = api.VirtualSignalGroups.ReadSingle("Destination 3");
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			simulation.CreateTestConnection(audioSource1, audioDestination1);
@@ -403,33 +403,33 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var videoLevel = api.Levels.Read("Video");
-			var audioLevel = api.Levels.Read("Audio");
+			var videoLevel = api.Levels.ReadSingle("Video");
+			var audioLevel = api.Levels.ReadSingle("Audio");
 
-			var videoSource1 = api.Endpoints.Read("Video Source 1");
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var videoSource2 = api.Endpoints.Read("Video Source 2");
-			var videoSource3 = api.Endpoints.Read("Video Source 3");
-			var audioSource3 = api.Endpoints.Read("Audio Source 3");
-			var videoSource4 = api.Endpoints.Read("Video Source 4");
-			var videoSource5 = api.Endpoints.Read("Video Source 5");
-			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var videoDestination2 = api.Endpoints.Read("Video Destination 2");
-			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
-			var videoDestination4 = api.Endpoints.Read("Video Destination 4");
-			var videoDestination5 = api.Endpoints.Read("Video Destination 5");
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var videoSource2 = api.Endpoints.ReadSingle("Video Source 2");
+			var videoSource3 = api.Endpoints.ReadSingle("Video Source 3");
+			var audioSource3 = api.Endpoints.ReadSingle("Audio Source 3");
+			var videoSource4 = api.Endpoints.ReadSingle("Video Source 4");
+			var videoSource5 = api.Endpoints.ReadSingle("Video Source 5");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+			var videoDestination2 = api.Endpoints.ReadSingle("Video Destination 2");
+			var audioDestination2 = api.Endpoints.ReadSingle("Audio Destination 2");
+			var videoDestination4 = api.Endpoints.ReadSingle("Video Destination 4");
+			var videoDestination5 = api.Endpoints.ReadSingle("Video Destination 5");
 
-			var source1 = api.VirtualSignalGroups.Read("Source 1");
-			var source2 = api.VirtualSignalGroups.Read("Source 2");
-			var source3 = api.VirtualSignalGroups.Read("Source 3");
-			var source4 = api.VirtualSignalGroups.Read("Source 4");
-			var source5 = api.VirtualSignalGroups.Read("Source 5");
-			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
-			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
-			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
-			var destination4 = api.VirtualSignalGroups.Read("Destination 4");
-			var destination5 = api.VirtualSignalGroups.Read("Destination 5");
+			var source1 = api.VirtualSignalGroups.ReadSingle("Source 1");
+			var source2 = api.VirtualSignalGroups.ReadSingle("Source 2");
+			var source3 = api.VirtualSignalGroups.ReadSingle("Source 3");
+			var source4 = api.VirtualSignalGroups.ReadSingle("Source 4");
+			var source5 = api.VirtualSignalGroups.ReadSingle("Source 5");
+			var destination1 = api.VirtualSignalGroups.ReadSingle("Destination 1");
+			var destination2 = api.VirtualSignalGroups.ReadSingle("Destination 2");
+			var destination3 = api.VirtualSignalGroups.ReadSingle("Destination 3");
+			var destination4 = api.VirtualSignalGroups.ReadSingle("Destination 4");
+			var destination5 = api.VirtualSignalGroups.ReadSingle("Destination 5");
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			simulation.CreateTestConnection(audioSource1, audioDestination2);
@@ -531,25 +531,25 @@
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 
-			var videoLevel = api.Levels.Read("Video");
-			var audioLevel = api.Levels.Read("Audio");
+			var videoLevel = api.Levels.ReadSingle("Video");
+			var audioLevel = api.Levels.ReadSingle("Audio");
 
-			var videoSource1 = api.Endpoints.Read("Video Source 1");
-			var audioSource1 = api.Endpoints.Read("Audio Source 1");
-			var videoSource2 = api.Endpoints.Read("Video Source 2");
-			var videoSource3 = api.Endpoints.Read("Video Source 3");
-			var audioSource3 = api.Endpoints.Read("Audio Source 3");
-			var videoDestination1 = api.Endpoints.Read("Video Destination 1");
-			var audioDestination1 = api.Endpoints.Read("Audio Destination 1");
-			var videoDestination2 = api.Endpoints.Read("Video Destination 2");
-			var audioDestination2 = api.Endpoints.Read("Audio Destination 2");
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var videoSource2 = api.Endpoints.ReadSingle("Video Source 2");
+			var videoSource3 = api.Endpoints.ReadSingle("Video Source 3");
+			var audioSource3 = api.Endpoints.ReadSingle("Audio Source 3");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+			var videoDestination2 = api.Endpoints.ReadSingle("Video Destination 2");
+			var audioDestination2 = api.Endpoints.ReadSingle("Audio Destination 2");
 
-			var source1 = api.VirtualSignalGroups.Read("Source 1");
-			var source2 = api.VirtualSignalGroups.Read("Source 2");
-			var source3 = api.VirtualSignalGroups.Read("Source 3");
-			var destination1 = api.VirtualSignalGroups.Read("Destination 1");
-			var destination2 = api.VirtualSignalGroups.Read("Destination 2");
-			var destination3 = api.VirtualSignalGroups.Read("Destination 3");
+			var source1 = api.VirtualSignalGroups.ReadSingle("Source 1");
+			var source2 = api.VirtualSignalGroups.ReadSingle("Source 2");
+			var source3 = api.VirtualSignalGroups.ReadSingle("Source 3");
+			var destination1 = api.VirtualSignalGroups.ReadSingle("Destination 1");
+			var destination2 = api.VirtualSignalGroups.ReadSingle("Destination 2");
+			var destination3 = api.VirtualSignalGroups.ReadSingle("Destination 3");
 
 			simulation.CreateTestConnection(videoSource1, videoDestination1);
 			simulation.CreateTestConnection(audioSource1, audioDestination2);

@@ -288,19 +288,30 @@
 
 		private void CheckDuplicatesBeforeSave(ICollection<VirtualSignalGroup> instances)
 		{
-			FilterElement<DomInstance> CreateFilter(VirtualSignalGroup vsg) =>
-				new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.Id.NotEqual(vsg.ID),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Name).Equal(vsg.Name));
+			// Fetch existing DB records that share a name with any instance in the batch.
+			static FilterElement<DomInstance> CreateFilter(VirtualSignalGroup vsg) =>
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupInfo.Name).Equal(vsg.Name);
 
-			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom).ToList();
+			var existingWithSameName = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom);
 
-			if (conflicts.Count > 0)
+			// Simulate post-save state
+			var vsgsAfterSave = existingWithSameName.ToDictionary(x => x.ID);
+
+			foreach (var instance in instances)
 			{
-				var names = String.Join(", ", conflicts
-					.Select(x => x.Name)
-					.OrderBy(x => x, new NaturalSortComparer()));
+				vsgsAfterSave[instance.ID] = instance;
+			}
 
+			// Check for duplicate names in the projected view.
+			var duplicates = vsgsAfterSave.Values
+				.GroupBy(x => (x.Role, x.Name))
+				.Where(g => g.Count() > 1)
+				.Select(g => g.Key.Name)
+				.ToList();
+
+			if (duplicates.Count > 0)
+			{
+				var names = String.Join(", ", duplicates.OrderBy(x => x, new NaturalSortComparer()));
 				throw new InvalidOperationException($"Cannot save VSGs. The following names are already in use: {names}");
 			}
 		}

@@ -220,7 +220,7 @@
 			return ReadDom(filter).SingleOrDefault();
 		}
 
-		public virtual T Read(string name)
+		public virtual IEnumerable<T> Read(string name)
 		{
 			if (name == null)
 			{
@@ -230,7 +230,12 @@
 			var filter = _domDefinitionFilter
 				.AND(DomInstanceExposers.Name.Equal(name));
 
-			return ReadDom(filter).SingleOrDefault();
+			return ReadDom(filter);
+		}
+
+		public virtual T ReadSingle(string name)
+		{
+			return Read(name).SingleOrDefault();
 		}
 
 		public virtual IDictionary<Guid, T> Read(IEnumerable<Guid> ids)

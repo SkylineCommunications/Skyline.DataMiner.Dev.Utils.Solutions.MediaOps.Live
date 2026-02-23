@@ -197,19 +197,29 @@
 
 		private void CheckDuplicatesBeforeSave(ICollection<Endpoint> instances)
 		{
-			FilterElement<DomInstance> CreateFilter(Endpoint e) =>
-				new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.Id.NotEqual(e.ID),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Name).Equal(e.Name));
+			// Fetch existing DB records that share a name with any instance in the batch.
+			static FilterElement<DomInstance> CreateFilter(Endpoint e) =>
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.Name).Equal(e.Name);
 
-			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom).ToList();
+			var existingWithSameName = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom);
 
-			if (conflicts.Count > 0)
+			// Build a projected view keyed by ID: DB records as base, overridden by batch entries.
+			var endpointsAfterSave = existingWithSameName.ToDictionary(x => x.ID);
+
+			foreach (var instance in instances)
 			{
-				var names = String.Join(", ", conflicts
-					.Select(x => x.Name)
-					.OrderBy(x => x, new NaturalSortComparer()));
+				endpointsAfterSave[instance.ID] = instance;
+			}
 
+			var duplicates = endpointsAfterSave.Values
+				.GroupBy(x => (x.Role, x.Name))
+				.Where(g => g.Count() > 1)
+				.Select(g => g.Key.Name)
+				.ToList();
+
+			if (duplicates.Count > 0)
+			{
+				var names = String.Join(", ", duplicates.OrderBy(x => x, new NaturalSortComparer()));
 				throw new InvalidOperationException($"Cannot save endpoints. The following names are already in use: {names}");
 			}
 		}

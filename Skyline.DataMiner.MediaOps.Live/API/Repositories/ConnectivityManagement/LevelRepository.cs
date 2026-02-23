@@ -73,38 +73,58 @@
 
 		private void CheckDuplicateNamesBeforeSave(ICollection<Level> instances)
 		{
-			FilterElement<DomInstance> CreateFilter(Level l) =>
-				new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.Id.NotEqual(l.ID),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Name).Equal(l.Name));
+			// Fetch existing DB records that share a name with any instance in the batch.
+			static FilterElement<DomInstance> CreateFilter(Level l) =>
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Name).Equal(l.Name);
 
-			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom).ToList();
+			var existingWithSameName = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom);
 
-			if (conflicts.Count > 0)
+			// Build a projected view keyed by ID: DB records as base, overridden by batch entries.
+			var levelsAfterSave = existingWithSameName.ToDictionary(x => x.ID);
+
+			foreach (var instance in instances)
 			{
-				var names = String.Join(", ", conflicts
-					.Select(x => x.Name)
-					.OrderBy(x => x, new NaturalSortComparer()));
+				levelsAfterSave[instance.ID] = instance;
+			}
 
+			var duplicates = levelsAfterSave.Values
+				.GroupBy(x => x.Name)
+				.Where(g => g.Count() > 1)
+				.Select(g => g.Key)
+				.ToList();
+
+			if (duplicates.Count > 0)
+			{
+				var names = String.Join(", ", duplicates.OrderBy(x => x, new NaturalSortComparer()));
 				throw new InvalidOperationException($"Cannot save levels. The following names are already in use: {names}");
 			}
 		}
 
 		private void CheckDuplicateNumbersBeforeSave(ICollection<Level> instances)
 		{
-			FilterElement<DomInstance> CreateFilter(Level l) =>
-				new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.Id.NotEqual(l.ID),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number).Equal(l.Number));
+			// Fetch existing DB records that share a number with any instance in the batch.
+			static FilterElement<DomInstance> CreateFilter(Level l) =>
+				DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.Number).Equal(l.Number);
 
-			var conflicts = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom).ToList();
+			var existingWithSameNumber = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, ReadDom);
 
-			if (conflicts.Count > 0)
+			// Build a projected view keyed by ID: DB records as base, overridden by batch entries.
+			var levelsAfterSave = existingWithSameNumber.ToDictionary(x => x.ID);
+
+			foreach (var instance in instances)
 			{
-				var numbers = String.Join(", ", conflicts
-					.Select(x => x.Number)
-					.OrderBy(x => x));
+				levelsAfterSave[instance.ID] = instance;
+			}
 
+			var duplicates = levelsAfterSave.Values
+				.GroupBy(x => x.Number)
+				.Where(g => g.Count() > 1)
+				.Select(g => g.Key)
+				.ToList();
+
+			if (duplicates.Count > 0)
+			{
+				var numbers = String.Join(", ", duplicates.OrderBy(x => x));
 				throw new InvalidOperationException($"Cannot save levels. The following numbers are already in use: {numbers}");
 			}
 		}
