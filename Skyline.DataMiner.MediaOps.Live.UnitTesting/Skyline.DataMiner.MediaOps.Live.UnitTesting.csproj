@@ -22,7 +22,7 @@
 		<Company>Skyline Communications</Company>
 		<Description>Provides an API and helper classes for MediaOps Live.</Description>
 		<RepositoryType>git</RepositoryType>
-		<RepositoryUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.MediaOps.Live</RepositoryUrl>
+		<RepositoryUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live</RepositoryUrl>
 		<GitVersion>false</GitVersion>
 	</PropertyGroup>
 
@@ -31,7 +31,7 @@
 		<None Include="..\LICENSE" Pack="true" PackagePath="" />
 		<None Include="..\nuget\Icon.png" Pack="true" PackagePath="" />
 	</ItemGroup>
-	
+
 	<ItemGroup>
 		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live\Skyline.DataMiner.MediaOps.Live.csproj" />
 		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live.Automation\Skyline.DataMiner.MediaOps.Live.Automation.csproj" />
