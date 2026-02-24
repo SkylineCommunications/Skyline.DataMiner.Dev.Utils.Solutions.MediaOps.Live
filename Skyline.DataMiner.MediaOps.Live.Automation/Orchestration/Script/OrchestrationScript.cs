@@ -197,7 +197,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
 
-			OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(_engine.GetUserConnection(), nodeConfig.OrchestrationScriptName, nodeConfig.OrchestrationScriptArguments.Union(addedInputParams), nodeConfig.Profile);
+			OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(
+				_engine.GetUserConnection(),
+				nodeConfig.OrchestrationScriptName,
+				nodeConfig.OrchestrationScriptArguments.Union(addedInputParams).ToList(),
+				nodeConfig.Profile);
 		}
 
 		/// <summary>

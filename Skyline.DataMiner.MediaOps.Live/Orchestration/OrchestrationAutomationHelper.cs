@@ -2,7 +2,9 @@
 {
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
@@ -16,58 +18,61 @@
 	{
 		public static ExecuteScriptResponseMessage ExecuteGetOrchestrationScriptInfo(IConnection connection, string scriptName)
 		{
-			ExecuteScriptMessageBuilder messageBuilder = new(scriptName);
+			var metaData = new Dictionary<string, string>
+			{
+				[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.OrchestrationScriptInfo),
+			};
+
+			var messageBuilder = new ExecuteScriptMessageBuilder(scriptName);
 			messageBuilder.SetCheckSets(false);
 			messageBuilder.SetInformationEvent(false);
 			messageBuilder.SetSynchronous(true);
-
-			var metaData = new Dictionary<string, string>();
-			metaData[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.OrchestrationScriptInfo);
+			messageBuilder.SetExtendedErrorInfo(true);
 			messageBuilder.SetEntryPoint(new AutomationEntryPoint
 			{
 				EntryPointType = AutomationEntryPoint.Types.OnRequestScriptInfo,
-				Parameters = new List<object> { new RequestScriptInfoInput { Data = metaData } },
+				Parameters = [new RequestScriptInfoInput { Data = metaData }],
 			});
+
 			return AutomationHelper.ExecuteAutomationScript(connection, messageBuilder.Build());
 		}
 
-		public static ExecuteScriptResponseMessage TryExecuteOrchestrationScript(
+		public static ExecuteScriptResponseMessage ExecuteOrchestrationScript(
 			IConnection connection,
 			string scriptName,
 			List<DmsAutomationScriptParamValue> scriptParams,
 			List<DmsAutomationScriptDummyValue> scriptDummies,
-			OrchestrationScriptInput input,
-			out string[] errorMessages)
+			OrchestrationScriptInput input)
 		{
-			ExecuteScriptMessageBuilder messageBuilder = new(scriptName);
+			var metaData = new Dictionary<string, string>
+			{
+				[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.PerformOrchestration),
+				[OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey] = JsonConvert.SerializeObject(input),
+			};
+
+			var messageBuilder = new ExecuteScriptMessageBuilder(scriptName);
 			messageBuilder.SetCheckSets(false);
 			messageBuilder.SetInformationEvent(false);
 			messageBuilder.SetSynchronous(true);
 			messageBuilder.SetExtendedErrorInfo(true);
 			messageBuilder.SetParameters(scriptParams.ToDictionary(param => param.Description, param => param.Value));
 			messageBuilder.SetDummies(scriptDummies.ToDictionary(dummy => dummy.Description, dummy => dummy.Value));
-
-			var metaData = new Dictionary<string, string>();
-			metaData[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.PerformOrchestration);
-			metaData[OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey] = JsonConvert.SerializeObject(input);
-
 			messageBuilder.SetEntryPoint(new AutomationEntryPoint
 			{
 				EntryPointType = AutomationEntryPoint.Types.OnRequestScriptInfo,
-				Parameters = new List<object> { new RequestScriptInfoInput { Data = metaData } },
+				Parameters = [new RequestScriptInfoInput { Data = metaData }],
 			});
 
-			return AutomationHelper.ExecuteAutomationScript(connection, messageBuilder.Build(), out errorMessages);
+			return AutomationHelper.ExecuteAutomationScript(connection, messageBuilder.Build());
 		}
 
-		public static ExecuteScriptResponseMessage TryExecuteScript(
+		public static ExecuteScriptResponseMessage ExecuteScript(
 			IConnection connection,
 			string scriptName,
 			List<DmsAutomationScriptParamValue> scriptParams,
-			List<DmsAutomationScriptDummyValue> scriptDummies,
-			out string[] errorMessages)
+			List<DmsAutomationScriptDummyValue> scriptDummies)
 		{
-			ExecuteScriptMessageBuilder messageBuilder = new(scriptName);
+			var messageBuilder = new ExecuteScriptMessageBuilder(scriptName);
 			messageBuilder.SetCheckSets(false);
 			messageBuilder.SetInformationEvent(false);
 			messageBuilder.SetSynchronous(true);
@@ -75,7 +80,7 @@
 			messageBuilder.SetParameters(scriptParams.ToDictionary(param => param.Description, param => param.Value));
 			messageBuilder.SetDummies(scriptDummies.ToDictionary(dummy => dummy.Description, dummy => dummy.Value));
 
-			return AutomationHelper.ExecuteAutomationScript(connection, messageBuilder.Build(), out errorMessages);
+			return AutomationHelper.ExecuteAutomationScript(connection, messageBuilder.Build());
 		}
 	}
 }
