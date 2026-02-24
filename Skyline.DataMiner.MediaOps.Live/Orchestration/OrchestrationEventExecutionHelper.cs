@@ -10,13 +10,13 @@
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
-	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
@@ -556,7 +556,7 @@
 
 					result = OrchestrationAutomationHelper.ExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input);
 				}
-				catch (DataMinerException ex) when (Regex.IsMatch(ex.Message, @"No method found in assembly (.+?) matching the specified entrypoint"))
+				catch (ScriptExecutionFailedException ex) when (Regex.IsMatch(ex.Message, @"No method found in assembly (.+?) matching the specified entrypoint"))
 				{
 					// If the script does not contain the expected entry point, try executing without it for backward compatibility with older scripts.
 					result = OrchestrationAutomationHelper.ExecuteScript(connection, scriptName, scriptParams, scriptDummies);
