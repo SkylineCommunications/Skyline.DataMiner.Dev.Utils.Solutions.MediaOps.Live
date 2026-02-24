@@ -6,7 +6,6 @@
 	{
 		internal virtual void UpdateJobState(OrchestrationEvent orchestrationEvent)
 		{
-			// TODO: Exception
 		}
 	}
 }

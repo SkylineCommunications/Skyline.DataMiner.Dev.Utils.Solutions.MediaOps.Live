@@ -438,7 +438,7 @@
 							.ToList();
 					}
 
-					requests.Add(new VsgConnectionRequestWithMetaData(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings)
+					requests.Add(new VsgConnectionRequestWithMetadata(srcVirtualSignalGroup, dstVirtualSignalGroup, levelMappings)
 					{
 						MetaData = orchestrationEvent,
 						Timeout = _settings.Timeout,

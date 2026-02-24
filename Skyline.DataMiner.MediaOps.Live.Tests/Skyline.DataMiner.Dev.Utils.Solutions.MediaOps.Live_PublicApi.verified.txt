@@ -1,4 +1,4 @@
-﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.MediaOps.Live")]
+﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SLC-AS-MediaOps.LIVE.Tests")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Automation")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI")]
@@ -313,6 +313,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
 {
+    [System.Serializable]
     public class ConnectFailedException : System.Exception
     {
         public ConnectFailedException() { }
@@ -321,12 +322,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
         public ConnectFailedException(string message, System.Exception innerException) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest> FailedRequests { get; }
     }
+    [System.Serializable]
     public class ConnectionHandlerScriptExecutionFailedException : System.Exception
     {
         public ConnectionHandlerScriptExecutionFailedException() { }
         public ConnectionHandlerScriptExecutionFailedException(string message) { }
         public ConnectionHandlerScriptExecutionFailedException(string message, System.Exception innerException) { }
     }
+    [System.Serializable]
     public class DestinationLockedException : System.Exception
     {
         public DestinationLockedException() { }
@@ -339,6 +342,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup VirtualSignalGroup { get; }
         public override string ToString() { }
     }
+    [System.Serializable]
     public class DestinationProtectedException : System.Exception
     {
         public DestinationProtectedException() { }
@@ -351,6 +355,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup VirtualSignalGroup { get; }
         public override string ToString() { }
     }
+    [System.Serializable]
     public class DisconnectFailedException : System.Exception
     {
         public DisconnectFailedException() { }
@@ -359,6 +364,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
         public DisconnectFailedException(string message, System.Exception innerException) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest> FailedRequests { get; }
     }
+    [System.Serializable]
     public class ScriptExecutionFailedException : System.Exception
     {
         public ScriptExecutionFailedException() { }

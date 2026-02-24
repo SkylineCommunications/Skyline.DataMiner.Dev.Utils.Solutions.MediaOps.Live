@@ -4,6 +4,7 @@
 
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
+	[Serializable]
 	public class DestinationLockedException : Exception
 	{
 		public DestinationLockedException()

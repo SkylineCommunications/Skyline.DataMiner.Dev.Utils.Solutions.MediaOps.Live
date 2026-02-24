@@ -5,6 +5,7 @@
 
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 
+	[Serializable]
 	public class DisconnectFailedException : Exception
 	{
 		public DisconnectFailedException()

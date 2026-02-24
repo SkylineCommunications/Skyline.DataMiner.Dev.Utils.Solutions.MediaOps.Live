@@ -4,6 +4,7 @@
 
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
+	[Serializable]
 	public class DestinationProtectedException : Exception
 	{
 		public DestinationProtectedException()

@@ -136,7 +136,7 @@
 			var errorMessage = $"Validation failed:{Environment.NewLine}" +
 				$"{String.Join(Environment.NewLine, Errors.Select(e => $"- {e.Message}"))}";
 
-			throw new Exception(errorMessage);
+			throw new InvalidOperationException(errorMessage);
 		}
 
 		private static string GetPropertyName<T>(Expression<Func<T, object>> expression)

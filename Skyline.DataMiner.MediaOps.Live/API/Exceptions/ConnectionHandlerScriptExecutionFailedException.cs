@@ -2,6 +2,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
 {
 	using System;
 
+	[Serializable]
 	public class ConnectionHandlerScriptExecutionFailedException : Exception
 	{
 		public ConnectionHandlerScriptExecutionFailedException()

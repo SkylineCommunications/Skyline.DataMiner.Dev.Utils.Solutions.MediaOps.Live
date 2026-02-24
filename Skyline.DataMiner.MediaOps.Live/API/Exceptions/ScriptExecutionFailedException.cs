@@ -5,6 +5,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
 
 	using Skyline.DataMiner.Net.Messages;
 
+	[Serializable]
 	public class ScriptExecutionFailedException : Exception
 	{
 		public ScriptExecutionFailedException()
