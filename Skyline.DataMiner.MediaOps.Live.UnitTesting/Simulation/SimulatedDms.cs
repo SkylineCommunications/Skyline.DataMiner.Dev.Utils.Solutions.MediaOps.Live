@@ -54,18 +54,14 @@
 				id => new SimulatedDma(this, id));
 		}
 
-		public void AddScript(string name, ICollection<string> parameters = null, ICollection<string> dummies = null, OrchestrationScriptInfo orchestrationScriptInfo = null)
+		public void AddScript(string name, ICollection<string> parameters = null, ICollection<string> dummies = null, string folder = null, OrchestrationScriptInfo orchestrationScriptInfo = null)
 		{
 			parameters ??= [];
 			dummies ??= [];
+			folder ??= String.Empty;
+			orchestrationScriptInfo ??= new OrchestrationScriptInfo();
 
-			if (orchestrationScriptInfo == null)
-			{
-				_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, new OrchestrationScriptInfo()));
-				return;
-			}
-
-			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, orchestrationScriptInfo) { Folder = "MediaOps/OrchestrationScripts" });
+			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, orchestrationScriptInfo) { Folder = folder });
 		}
 
 		public void AddProfileParameter(string parameterName, Guid parameterId, Parameter.ParameterType type)

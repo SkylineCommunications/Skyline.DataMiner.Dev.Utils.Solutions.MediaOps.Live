@@ -361,12 +361,13 @@
 					{ new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f"), "Hello"},
 				});
 
-			Dms.AddScript("Script_Success", new List<string>(), new List<string>());
-			Dms.AddScript("Script_Fail", new List<string>(), new List<string>());
+			Dms.AddScript("Script_Success", new List<string>(), new List<string>(), "MediaOps/OrchestrationScripts");
+			Dms.AddScript("Script_Fail", new List<string>(), new List<string>(), "MediaOps/OrchestrationScripts");
 			Dms.AddScript(
 				"OrchestrationScript",
 				new List<string> { "InputParam" },
 				new List<string> { "InputDummy" },
+				"MediaOps/OrchestrationScripts",
 				new OrchestrationScriptInfo
 				{
 					ProfileParametersIdByName =
