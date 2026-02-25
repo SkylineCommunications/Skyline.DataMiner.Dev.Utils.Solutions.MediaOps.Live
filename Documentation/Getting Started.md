@@ -7,7 +7,7 @@ This documentation describes how to use the public API exposed by `Skyline.DataM
 Add the NuGet package to your solution:
 
 ```bash
-dotnet add package Skyline.DataMiner.Solutions.MediaOps.Live
+dotnet add package Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live
 ```
 
 Depending on your project type, one of the following additional packages is also required:
