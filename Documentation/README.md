@@ -13,4 +13,4 @@ Welcome to the MediaOps Live API documentation.
 
 ## External Resources
 
-- [DataMiner Docs](https://docs.dataminer.services/) - Official DataMiner documentation
+- [DataMiner Docs - MediaOps Live](https://docs.dataminer.services/solutions/standard_solutions/MediaOps%20Live/MediaOps.Live.html) - Official DataMiner documentation for MediaOps Live

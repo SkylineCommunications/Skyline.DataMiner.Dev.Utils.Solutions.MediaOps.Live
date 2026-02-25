@@ -24,6 +24,9 @@ Orchestration events are the core of the Orchestration module. Each event repres
 ### Create an event
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
 OrchestrationEvent orchestrationEvent = new OrchestrationEvent
 {
     Name = "Event Name",
@@ -40,6 +43,9 @@ Events are always part of a job. This job provides context and allows grouping m
 ### Create/Find a job
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
 MediaOpsLiveApi api = engine.GetMediaOpsLiveApi();
 OrchestrationJob orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob("MyJobReference");
 ```
@@ -79,13 +85,26 @@ To provide any actual orchestration information, the orchestration event configu
 ### Create an orchestration event with configuration
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
 OrchestrationEventConfiguration orchestrationEventConfiguration = new OrchestrationEventConfiguration
 {
     Name = "Event Name",
     EventType = SlcOrchestrationIds.Enums.EventType.Other,
     EventState = SlcOrchestrationIds.Enums.EventState.Draft,
     EventTime = DateTimeOffset.Now + TimeSpan.FromHours(1),
-}
+    Configuration =
+    {
+        NodeConfigurations =
+        {
+            new NodeConfiguration
+            {
+                NodeId = "1",
+                NodeLabel = "Node Label",
+            },
+        },
+    },
+};
 ```
 
 ## Orchestration Job Configurations
@@ -95,6 +114,9 @@ Events are always part of a job. This job provides context and allows grouping m
 ### Create/Find a job configuration
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
 MediaOpsLiveApi api = engine.GetMediaOpsLiveApi();
 OrchestrationJobConfiguration orchestrationJobConfiguration = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration("MyJobReference");
 ```
@@ -124,10 +146,14 @@ If needed, an event can also be executed immediately, regardless of its schedule
 If the executed event was already scheduled in the future, the scheduled instance will be removed.
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
 api.Orchestration.ExecuteEventsNow(new List<OrchestrationEvent> { orchestrationEvent });
 ```
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
 api.Orchestration.ExecuteEventsNow(new List<OrchestrationEventConfiguration> { orchestrationEventConfiguration });
 ```
 
@@ -141,6 +167,8 @@ api.Orchestration.ExecuteEventsNow(new List<OrchestrationEventConfiguration> { o
 To specify a collection of resources that require orchestration actions, nodes can be added to an event configuration.
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
 OrchestrationEventConfiguration orchestrationEventConfiguration = new OrchestrationEventConfiguration
 {
     Name = "Event Name",
@@ -167,32 +195,35 @@ When multiple nodes are added to an event configuration, connections between the
 A reference to the Virtual Signal Groups gives meaning to the connection and will be used during execution to connect/disconnect the actual signals.
 
 ```csharp
-    Configuration =
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+
+Configuration =
+{
+    NodeConfigurations =
     {
-        NodeConfigurations =
+        new NodeConfiguration
         {
-            new NodeConfiguration
-            {
-                NodeId = "1",
-                NodeLabel = "Node Label 1",
-            },
-            new NodeConfiguration
-            {
-                NodeId = "2",
-                NodeLabel = "Node Label 2",
-            },
+            NodeId = "1",
+            NodeLabel = "Node Label 1",
         },
-        Connections =
+        new NodeConfiguration
         {
-            new Connection
-            {
-                SourceNodeId = "1",
-                DestinationNodeId = "2",
-                SourceVsg = Guid.NewGuid(), // Instance ID of the VSG
-                DestinationVsg = Guid.NewGuid(), // Instance ID of the VSG
-            },
+            NodeId = "2",
+            NodeLabel = "Node Label 2",
         },
     },
+    Connections =
+    {
+        new Connection
+        {
+            SourceNodeId = "1",
+            DestinationNodeId = "2",
+            SourceVsg = Guid.NewGuid(), // Instance ID of the VSG
+            DestinationVsg = Guid.NewGuid(), // Instance ID of the VSG
+        },
+    },
+},
 ```
 
 Without additional configuration, the above connection will fully connect all available signals on the source and destination VSG.
@@ -201,22 +232,25 @@ In case a more refined connection is needed, level mapping can be added.
 In the example below, we only want to connect audio and video signals between the two nodes. Additionally, the audio channels are shuffled. Any other signals will not be connected.
 
 ```csharp
-        Connections =
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+
+Connections =
+{
+    new Connection
+    {
+        SourceNodeId = "1",
+        DestinationNodeId = "2",
+        SourceVsg = Guid.NewGuid(), // Instance ID of the VSG
+        DestinationVsg = Guid.NewGuid(), // Instance ID of the VSG
+        LevelMappings =
         {
-            new Connection
-            {
-                SourceNodeId = "1",
-                DestinationNodeId = "2",
-                SourceVsg = Guid.NewGuid(), // Instance ID of the VSG
-                DestinationVsg = Guid.NewGuid(), // Instance ID of the VSG
-                LevelMappings =
-                {
-                    new LevelMapping(new Level("Audio1", 1), new Level("Audio2", 2)),
-                    new LevelMapping(new Level("Audio2", 2), new Level("Audio1", 1)),
-                    new LevelMapping(new Level("Video", 3), new Level("Video", 3)),
-                },
-            },
+            new LevelMapping(new Level("Audio1", 1), new Level("Audio2", 2)),
+            new LevelMapping(new Level("Audio2", 2), new Level("Audio1", 1)),
+            new LevelMapping(new Level("Video", 3), new Level("Video", 3)),
         },
+    },
+},
 ```
 
 > [!IMPORTANT]
@@ -229,6 +263,8 @@ For more custom actions, scripts can be added to an event configuration. Further
 When executing an event, the orchestration will only consider the global script or the scripts of the nodes. When both global and node scripts are required, the node scripts can be orchestrated from the global script.
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
 OrchestrationEventConfiguration orchestrationEventConfiguration = new OrchestrationEventConfiguration
 {
     Name = "Event Name",
@@ -244,29 +280,35 @@ OrchestrationEventConfiguration orchestrationEventConfiguration = new Orchestrat
 When the orchestration script requires input parameters these can be provided via the OrchestrationScriptArguments property.
 
 ```csharp
-    GlobalOrchestrationScriptArguments =
-    {
-        new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "ScriptParameter1Name", "ScriptParameter1Value"),
-        new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "ScriptParameter2Name", "ScriptParameter2Value"),
-    },
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
+GlobalOrchestrationScriptArguments =
+{
+    new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "ScriptParameter1Name", "ScriptParameter1Value"),
+    new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "ScriptParameter2Name", "ScriptParameter2Value"),
+},
 ```
 
 To add script dummies, the OrchestrationScriptArgumentType.Element type can be used. As value, either the name or the ID of the dummy element can be used (AgentId/ElementId).
 
 ```csharp
-    GlobalOrchestrationScriptArguments =
-    {
-        new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Element, "ScriptDummyName", "ElementNameOrId"),
-    }
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
+GlobalOrchestrationScriptArguments =
+{
+    new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Element, "ScriptDummyName", "ElementNameOrId"),
+}
 ```
 
 Lastly, custom metadata information can be forwarded to the script. This information is not critical for the script to start, but can provide additional information to be used inside of the script.
 
 ```csharp
-    GlobalOrchestrationScriptArguments =
-    {
-        new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Metadata, "MetadataParameterName", "MetadataParameterValue"),
-    }
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
+GlobalOrchestrationScriptArguments =
+{
+    new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Metadata, "MetadataParameterName", "MetadataParameterValue"),
+}
 ```
 
 ### Use a profile as input to an orchestration script
@@ -277,40 +319,42 @@ Additionally, profiles can also be used to provide values for script input param
 Profile information can be provided as a whole profile instance:
 
 ```csharp
-    Profile = 
-    {
-        Definition = "NameOfProfileDefinition",
-        Instance = "NameOfProfileInstance",
-    }
+Profile = 
+{
+    Definition = "NameOfProfileDefinition",
+    Instance = "NameOfProfileInstance",
+}
 ```
 
 or as a list of profile parameters. In this case, the profile definition and instance are not required:
 
 ```csharp
-    Profile =
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
+Profile =
+{
+    Values =
     {
-        Values =
+        new OrchestrationProfileValue
         {
-            new OrchestrationProfileValue
+            Name = "Integer Parameter Name",
+            Value = new ParameterValue
             {
-                Name = "Integer Parameter Name",
-                Value = new ParameterValue
-                {
-                    DoubleValue = 123,
-                    Type = ParameterValue.ValueType.Double,
-                },
+                DoubleValue = 123,
+                Type = ParameterValue.ValueType.Double,
             },
-            new OrchestrationProfileValue
+        },
+        new OrchestrationProfileValue
+        {
+            Name = "String Parameter Name",
+            Value = new ParameterValue
             {
-                Name = "String Parameter Name",
-                Value = new ParameterValue
-                {
-                    StringValue = "StringValue",
-                    Type = ParameterValue.ValueType.String,
-                },
+                StringValue = "StringValue",
+                Type = ParameterValue.ValueType.String,
             },
         },
     },
+},
 ```
 
 Both options can also be combined, in which case additional parameters can be provided next to the profile instance.
@@ -340,6 +384,8 @@ This will return the following information:
 - Elements: A list of script dummies that are required by the script. The required protocol and version is also provided.
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
 OrchestrationScriptInputInfo scriptInputInformation = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("NameOfOrchestrationScript");
 
 Guid definition = scriptInputInformation.ProfileDefinition;
@@ -352,6 +398,8 @@ List<OrchestrationScriptInputElement> elements = scriptInputInformation.Elements
 From the requested script input information, all available profile instances can be retrieved. A profile helper is required to perform this action.
 
 ```csharp
+using Skyline.DataMiner.Net.Profiles;
+
 ProfileHelper profileHelper = new ProfileHelper(engine.SendSLNetMessages);
 List<ProfileInstance> availableInstances = scriptInputInformation.GetApplicableInstances(profileHelper);
 ```
@@ -361,6 +409,8 @@ List<ProfileInstance> availableInstances = scriptInputInformation.GetApplicableI
 Although the script input information provides all the element requirements, it is also possible to immediately retrieve a list of valid elements.
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+
 OrchestrationScriptInputElement orchestrationScriptInputElement = elements.First();
 orchestrationScriptInputElement.GetApplicableElements(engine.GetUserConnection());
 ```

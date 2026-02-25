@@ -24,6 +24,8 @@ var cache = api.GetCache();
 The `MediaOpsLiveCache` provides several specialized caches:
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+
 // Virtual Signal Groups and Endpoints cache
 var vsgCache = cache.VirtualSignalGroupEndpointsCache;
 
@@ -39,6 +41,8 @@ var transportTypesCache = cache.TransportTypesCache;
 The cache also provides pre-configured connectivity info providers that use cached data:
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
+
 // Lite connectivity provider (uses cached data)
 var liteProvider = cache.LiteConnectivityInfoProvider;
 
@@ -61,6 +65,7 @@ Subscriptions allow you to receive real-time notifications when objects are crea
 Subscribe to changes in a repository:
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions;
 
 var api = engine.GetMediaOpsLiveApi();
@@ -115,6 +120,7 @@ The API supports custom logging through the `ILogger` interface.
 ### Setting a Logger
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 using Skyline.DataMiner.Solutions.MediaOps.Live.Logging;
 
 var api = engine.GetMediaOpsLiveApi();
@@ -128,6 +134,8 @@ api.SetLogger(myLogger);
 Create your own logger by implementing `ILogger`:
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.Logging;
+
 public class MyCustomLogger : ILogger
 {
     public void Log(LogType logType, string message)
@@ -158,6 +166,8 @@ public class MyCustomLogger : ILogger
 Verify that the MediaOps.LIVE DOM modules are installed:
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+
 var api = engine.GetMediaOpsLiveApi();
 
 if (!api.IsInstalled())
@@ -172,6 +182,8 @@ if (!api.IsInstalled())
 Retrieve the current API version:
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+
 var api = engine.GetMediaOpsLiveApi();
 var version = api.GetVersion();
 Console.WriteLine($"MediaOps.LIVE API Version: {version}");

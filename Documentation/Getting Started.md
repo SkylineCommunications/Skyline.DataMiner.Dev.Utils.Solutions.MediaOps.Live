@@ -1,6 +1,6 @@
 # Getting Started
 
-This documentation describes how to use the public API exposed by `Skyline.DataMiner.Solutions.MediaOps.Live`.
+This documentation describes how to use the public API exposed by `Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live`.
 
 ## Installation
 
@@ -12,9 +12,9 @@ dotnet add package Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live
 
 Depending on your project type, one of the following additional packages is also required:
 
-- Automation scripts: `Skyline.DataMiner.Solutions.MediaOps.Live.Automation`
-- Protocols: `Skyline.DataMiner.Solutions.MediaOps.Live.Protocol`
-- GQI Ad-hoc Data Sources and custom operators: `Skyline.DataMiner.Solutions.MediaOps.Live.GQI`
+- Automation scripts: `Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Automation`
+- Protocols: `Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Protocol`
+- GQI Ad-hoc Data Sources and custom operators: `Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI`
 
 > [!NOTE]
 > This library targets `.NET Framework 4.8`.
@@ -37,7 +37,6 @@ This extension method is available for automation scripts, connectors, GQI ad-ho
 
 ```csharp
 using Skyline.DataMiner.Solutions.MediaOps.Live.API;
-using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
 // Automation scripts
 var api = engine.GetMediaOpsLiveApi();
@@ -52,6 +51,8 @@ var api = gqiDms.GetMediaOpsLiveApi();
 On other places the instance can also be created starting from an `IConnection` object:
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+
 IConnection connection;
 var api = connection.GetMediaOpsLiveApi();
 
@@ -66,6 +67,8 @@ var api = new MediaOpsLiveApi(connection);
 Transport Types define the physical or logical transport mechanism (e.g., SDI, IP, ...).
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+
 var sdi = api.TransportTypes.Create(new TransportType
 {
     Name = "SDI",
@@ -77,6 +80,8 @@ var sdi = api.TransportTypes.Create(new TransportType
 Levels represent signal layers within a transport type (e.g., Video, Audio 1, Audio 2, Data).
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+
 var videoLevel = api.Levels.Create(new Level
 {
     Name = "Video",
@@ -97,6 +102,8 @@ var audio1Level = api.Levels.Create(new Level
 Endpoints represent physical or virtual connection points on devices. Each endpoint has a role (Source or Destination) and is linked to a DataMiner element.
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+
 var videoSource = api.Endpoints.Create(new Endpoint
 {
     Name = "Video Source 1",
@@ -112,6 +119,8 @@ var videoSource = api.Endpoints.Create(new Endpoint
 Virtual Signal Groups aggregate multiple endpoints across different levels into a logical signal bundle.
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+
 var vsg = new VirtualSignalGroup
 {
     Name = "Source VSG 1",
@@ -132,6 +141,8 @@ Once you have an instance of the `MediaOpsLiveApi` class, you can start using it
 ### Creating objects
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+
 // Create the SDI transport type
 var sdi = api.TransportTypes.Create(new TransportType
 {
@@ -186,6 +197,8 @@ sourceVsg = api.VirtualSignalGroups.Create(sourceVsg);
 ### Reading Objects
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+
 // Read all existing virtual signal groups
 var virtualSignalGroups = api.VirtualSignalGroups.ReadAll().ToList();
 
@@ -205,6 +218,8 @@ var sources = api.VirtualSignalGroups
 ### Making Connections
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+
 var connectionHandler = api.GetConnectionHandler();
 
 // Connect source VSG to destination VSG
@@ -223,6 +238,8 @@ connectionHandler.Take(
 ### Checking Connectivity
 
 ```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
+
 var connectivityProvider = api.GetConnectivityInfoProvider();
 
 // Check if connected
