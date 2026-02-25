@@ -336,7 +336,7 @@ This will return the following information:
 
 - ProfileDefinition: The GUID of the profile definition that is required for the script.
 - Parameters: A list of input parameters that are required by the script.
-    This is a combination of profile parameters that are not part of the profile definition and script parameters and the script parameters.
+    This is a combination of profile parameters that are not part of the profile definition and script parameters.
 - Elements: A list of script dummies that are required by the script. The required protocol and version is also provided.
 
 ```csharp
