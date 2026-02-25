@@ -476,15 +476,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 							List<ValueOption> options = new List<ValueOption>();
 							foreach (string discreet in parameter.Discretes)
 							{
-								if (discreet.GetType() != parameterInfo.ValueType)
-								{
-									// Tip: warn or fail when this happens
-									continue;
-								}
-
 								string display = queue.Dequeue();
-
-								// Tip: make sure the display value is unique
 								options.Add(new ValueOption(display, discreet));
 							}
 
