@@ -220,7 +220,7 @@ In the example below, we only want to connect audio and video signals between th
 ```
 
 > [!IMPORTANT]
-> The 'Connections' property is used both to define connections, as well as disconnections. Currently there is no customization available to define which action need to be performed.
+> The 'Connections' property is used both to define connections, as well as disconnections. Currently there is no customization available to define which action needs to be performed.
 > By default, if the event type is 'Start' or 'PrerollStart', connections will be made. If the event type is 'Stop' or 'PostrollStop', disconnections will be made.
 
 ### Add orchestration scripts to an event
