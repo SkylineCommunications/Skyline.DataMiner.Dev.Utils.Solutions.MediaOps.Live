@@ -149,7 +149,7 @@ OrchestrationEventConfiguration orchestrationEventConfiguration = new Orchestrat
     EventTime = DateTimeOffset.Now + TimeSpan.FromHours(1),
     Configuration =
     {
-    NodeConfigurations =
+        NodeConfigurations =
         {
             new NodeConfiguration
             {
