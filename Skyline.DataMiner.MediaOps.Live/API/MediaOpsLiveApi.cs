@@ -90,7 +90,7 @@
 
 		internal virtual MediaOpsPlanHelper GetMediaOpsPlanHelper()
 		{
-			return new MediaOpsPlanHelper();
+			return new MediaOpsPlanHelper(this);
 		}
 
 		/// <summary>
