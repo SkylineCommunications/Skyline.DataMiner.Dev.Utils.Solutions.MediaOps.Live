@@ -21,7 +21,7 @@
 
 		internal IMediaOpsPlanApi PlanApi { get; }
 
-		internal virtual void UpdateJobState(OrchestrationEvent orchestrationEvent)
+		internal void UpdateJobState(OrchestrationEvent orchestrationEvent)
 		{
 			if (orchestrationEvent is null)
 			{
