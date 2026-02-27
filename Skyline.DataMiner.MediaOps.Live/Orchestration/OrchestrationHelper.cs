@@ -613,9 +613,14 @@ public class OrchestrationHelper
 
 	internal IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsById(IEnumerable<Guid> eventIds)
 	{
+		if (eventIds is null)
+		{
+			throw new ArgumentNullException(nameof(eventIds));
+		}
+
 		List<Guid> instanceIds = eventIds.ToList();
 
-		if (instanceIds == null || instanceIds.Any(guid => guid == Guid.Empty))
+		if (instanceIds.Any(guid => guid == Guid.Empty))
 		{
 			throw new ArgumentException($"'{nameof(eventIds)}' cannot contain empty Guids.", nameof(eventIds));
 		}
@@ -624,5 +629,4 @@ public class OrchestrationHelper
 
 		return GetEventsAsEventConfigurations(orchestrationEvents).Values;
 	}
-
 }
