@@ -46,6 +46,7 @@
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live\Skyline.DataMiner.MediaOps.Live.csproj" />
+		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live.Plan\Skyline.DataMiner.MediaOps.Live.Plan.csproj" />
 	</ItemGroup>
 
 	<Target Name="CopyNuGetPackage" AfterTargets="Pack" Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
