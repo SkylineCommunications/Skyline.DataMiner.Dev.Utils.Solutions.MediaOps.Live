@@ -14,6 +14,7 @@ using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
 using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
 using Skyline.DataMiner.Net.Messages.SLDataGateway;
 using Skyline.DataMiner.Utils.PerformanceAnalyzer;
+using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 
 /// <summary>
 /// Exposes API methods to interact with and orchestrate MediaOps Live Orchestration events.
@@ -350,9 +351,20 @@ public class OrchestrationHelper
 	///     Start execution for an event, based on ID.
 	/// </summary>
 	/// <param name="orchestrationIds">The IDs of the events to execute.</param>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
 	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
-	public void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds, OrchestrationSettings settings = null)
+	public void ExecuteEventsNow(IEnumerable<Guid> orchestrationIds, IMediaOpsPlanHelper mediaOpsPlanHelper, OrchestrationSettings settings = null)
 	{
+		if (orchestrationIds is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationIds));
+		}
+
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
 		List<Guid> eventIds = orchestrationIds.ToList();
 		if (!eventIds.Any())
 		{
@@ -360,34 +372,31 @@ public class OrchestrationHelper
 		}
 
 		List<OrchestrationEventConfiguration> orchestrationEvents = GetEventConfigurationsById(eventIds).ToList();
-		ExecuteEventsNow(orchestrationEvents, settings);
-	}
-
-	internal IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsById(IEnumerable<Guid> eventIds)
-	{
-		List<Guid> instanceIds = eventIds.ToList();
-
-		if (instanceIds == null || instanceIds.Any(guid => guid == Guid.Empty))
-		{
-			throw new ArgumentException($"'{nameof(eventIds)}' cannot contain empty Guids.", nameof(eventIds));
-		}
-
-		IEnumerable<OrchestrationEvent> orchestrationEvents = _orchestrationEventRepository.GetEventsById(instanceIds);
-
-		return GetEventsAsEventConfigurations(orchestrationEvents).Values;
+		ExecuteEventsNow(orchestrationEvents, mediaOpsPlanHelper, settings);
 	}
 
 	/// <summary>
 	///     Start execution for a set of events.
 	/// </summary>
 	/// <param name="orchestrationEvents">The events to execute.</param>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
 	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
-	public void ExecuteEventsNow(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents, OrchestrationSettings settings = null)
+	public void ExecuteEventsNow(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents, IMediaOpsPlanHelper mediaOpsPlanHelper, OrchestrationSettings settings = null)
 	{
+		if (orchestrationEvents is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationEvents));
+		}
+
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
 		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-ExecuteEventsNow")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
-			OrchestrationEventExecutionHelper eventExecutionHelper = new(_api, settings);
+			var eventExecutionHelper = new OrchestrationEventExecutionHelper(_api, mediaOpsPlanHelper, settings);
 
 			IEnumerable<OrchestrationEventConfiguration> events = orchestrationEvents.ToList();
 			if (!events.Any())
@@ -406,10 +415,21 @@ public class OrchestrationHelper
 	///     Start execution for a set of events.
 	/// </summary>
 	/// <param name="orchestrationEvents">The events to execute.</param>
-	public void ExecuteEventsNow(IEnumerable<OrchestrationEvent> orchestrationEvents)
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	public void ExecuteEventsNow(IEnumerable<OrchestrationEvent> orchestrationEvents, IMediaOpsPlanHelper mediaOpsPlanHelper)
 	{
+		if (orchestrationEvents is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationEvents));
+		}
+
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
 		Dictionary<Guid, OrchestrationEventConfiguration> eventConfigs = GetEventsAsEventConfigurations(orchestrationEvents);
-		ExecuteEventsNow(eventConfigs.Values);
+		ExecuteEventsNow(eventConfigs.Values, mediaOpsPlanHelper);
 	}
 
 	/// <summary>
@@ -590,4 +610,19 @@ public class OrchestrationHelper
 			_orchestrationEventRepository.CreateOrUpdate(events);
 		}
 	}
+
+	internal IEnumerable<OrchestrationEventConfiguration> GetEventConfigurationsById(IEnumerable<Guid> eventIds)
+	{
+		List<Guid> instanceIds = eventIds.ToList();
+
+		if (instanceIds == null || instanceIds.Any(guid => guid == Guid.Empty))
+		{
+			throw new ArgumentException($"'{nameof(eventIds)}' cannot contain empty Guids.", nameof(eventIds));
+		}
+
+		IEnumerable<OrchestrationEvent> orchestrationEvents = _orchestrationEventRepository.GetEventsById(instanceIds);
+
+		return GetEventsAsEventConfigurations(orchestrationEvents).Values;
+	}
+
 }

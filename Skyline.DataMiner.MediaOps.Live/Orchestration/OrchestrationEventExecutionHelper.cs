@@ -26,6 +26,7 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
@@ -38,11 +39,13 @@
 	internal class OrchestrationEventExecutionHelper
 	{
 		private readonly MediaOpsLiveApi _api;
+		private readonly IMediaOpsPlanHelper _planHelper;
 		private readonly OrchestrationSettings _settings;
 
-		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, OrchestrationSettings settings)
+		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, IMediaOpsPlanHelper planHelper, OrchestrationSettings settings)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
+			_planHelper = planHelper ?? throw new ArgumentNullException(nameof(planHelper));
 			_settings = settings ?? new OrchestrationSettings();
 		}
 
@@ -223,7 +226,7 @@
 					orchestrationEventConfiguration.InternalSetState(EventState.Completed);
 				}
 
-				orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
+				orchestrationEventConfiguration.SendPlanJobStateUpdate(_planHelper);
 
 				writeBuffer.Enqueue(orchestrationEventConfiguration);
 			}

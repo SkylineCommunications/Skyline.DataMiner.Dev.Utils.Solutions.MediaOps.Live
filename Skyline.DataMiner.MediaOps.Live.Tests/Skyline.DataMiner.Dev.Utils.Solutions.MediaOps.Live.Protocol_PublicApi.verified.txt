@@ -1,8 +1,8 @@
 ﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.Dev.Utils.Solutions.Me" +
     "diaOps.Live")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SLC-AS-MediaOps.LIVE.Tests")]
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Protocol.Tests")]
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Protocol.UnitTesting")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8", FrameworkDisplayName=".NET Framework 4.8")]
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Protocol.API
 {

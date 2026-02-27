@@ -9,6 +9,7 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 
 	/// <summary>
 	/// Information about an orchestration event.
@@ -312,14 +313,19 @@
 			}
 		}
 
-		internal void SendPlanJobStateUpdate(MediaOpsLiveApi api)
+		internal void SendPlanJobStateUpdate(IMediaOpsPlanHelper planHelper)
 		{
+			if (planHelper is null)
+			{
+				throw new ArgumentNullException(nameof(planHelper));
+			}
+
 			if (EventType == EventType.Other)
 			{
 				return;
 			}
 
-			api.GetMediaOpsPlanHelper().UpdateJobState(this);
+			planHelper.UpdateJobState(this);
 		}
 
 		private void PublicSetState(EventState state)

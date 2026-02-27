@@ -1,8 +1,8 @@
 ﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.Dev.Utils.Solutions.Me" +
     "diaOps.Live")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SLC-AS-MediaOps.LIVE.Tests")]
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Automation.Tests")]
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Automation.UnitTesting")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Tests")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting")]
 [assembly: System.Runtime.Versioning.TargetFramework(".NETFramework,Version=v4.8", FrameworkDisplayName=".NET Framework 4.8")]
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.API
 {
@@ -229,7 +229,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
         [Skyline.DataMiner.Automation.AutomationEntryPoint(Skyline.DataMiner.Automation.AutomationEntryPointType.Types.OnRequestScriptInfo)]
         public Skyline.DataMiner.Net.Automation.RequestScriptInfoOutput OnRequestScriptInfoRequest(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Net.Automation.RequestScriptInfoInput inputData) { }
         public abstract void Orchestrate(Skyline.DataMiner.Automation.IEngine engine);
-        public void OrchestrateAllConnections(int timeoutSeconds = 60) { }
+        public void OrchestrateAllConnections(Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper, int timeoutSeconds = 60) { }
         public void OrchestrateNode(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfig) { }
         public void Run(Skyline.DataMiner.Automation.IEngine engine) { }
         public virtual Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId SetupService(Skyline.DataMiner.Automation.IEngine engine) { }

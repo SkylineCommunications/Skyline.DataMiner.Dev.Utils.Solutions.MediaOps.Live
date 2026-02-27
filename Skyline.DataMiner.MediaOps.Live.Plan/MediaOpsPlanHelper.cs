@@ -4,24 +4,25 @@
 
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Plan.API;
 
 	using OrchestrationEvent = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent;
 
-	internal class MediaOpsPlanHelper
+	public class MediaOpsPlanHelper : IMediaOpsPlanHelper
 	{
-		public MediaOpsPlanHelper(MediaOpsLiveApi api)
+		public MediaOpsPlanHelper(IMediaOpsLiveApi liveApi)
 		{
-			Api = api ?? throw new ArgumentNullException(nameof(api));
+			LiveApi = liveApi ?? throw new ArgumentNullException(nameof(liveApi));
 
-			PlanApi = new MediaOpsPlanApi(api.Connection);
+			PlanApi = liveApi.Connection.GetMediaOpsPlanApi();
 		}
 
-		internal IMediaOpsLiveApi Api { get; }
+		internal IMediaOpsLiveApi LiveApi { get; }
 
 		internal IMediaOpsPlanApi PlanApi { get; }
 
-		internal void UpdateJobState(OrchestrationEvent orchestrationEvent)
+		public void UpdateJobState(OrchestrationEvent orchestrationEvent)
 		{
 			if (orchestrationEvent is null)
 			{
@@ -35,17 +36,18 @@
 
 			try
 			{
-				var jobInfo = orchestrationEvent.GetJobInfo(Api)
+				var jobInfo = orchestrationEvent.GetJobInfo(LiveApi)
 					?? throw new InvalidOperationException("Orchestration event does not have associated job info.");
 
 				var jobId = Guid.Parse(jobInfo.JobReference);
-				var eventState = orchestrationEvent.EventState == EventState.Failed || !String.IsNullOrEmpty(orchestrationEvent.FailureInfo)
-						? OrchestrationEventState.Failed
-						: OrchestrationEventState.Succeeded;
+
+				OrchestrationEventState eventState = orchestrationEvent.EventState == EventState.Failed || !String.IsNullOrEmpty(orchestrationEvent.FailureInfo)
+					? OrchestrationEventState.Failed
+					: OrchestrationEventState.Succeeded;
 
 				var updateDetails = new OrchestrationUpdateDetails()
 				{
-					Event = GetEventTypeAsPlanJobEvent(orchestrationEvent),
+					Event = ConvertEventType(orchestrationEvent.EventType),
 					EventState = eventState,
 					Message = orchestrationEvent.FailureInfo,
 				};
@@ -58,9 +60,9 @@
 			}
 		}
 
-		private OrchestrationEventType GetEventTypeAsPlanJobEvent(OrchestrationEvent orchestrationEvent)
+		private OrchestrationEventType ConvertEventType(EventType eventType)
 		{
-			switch (orchestrationEvent.EventType)
+			switch (eventType)
 			{
 				case EventType.PostrollStart:
 				case EventType.Stop:

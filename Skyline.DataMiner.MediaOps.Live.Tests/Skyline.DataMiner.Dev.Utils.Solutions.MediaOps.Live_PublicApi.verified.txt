@@ -3,6 +3,7 @@
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SLC-AS-MediaOps.LIVE.Tests")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Automation")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI")]
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Plan")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Protocol")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Tests")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting")]
@@ -1489,9 +1490,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
         public void DeleteJobConfiguration(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobConfiguration job) { }
         public void DeleteJobConfigurations(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobConfiguration> jobs) { }
         public void DeleteJobs(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJob> jobs) { }
-        public void ExecuteEventsNow(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> orchestrationEvents) { }
-        public void ExecuteEventsNow(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventConfiguration> orchestrationEvents, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationSettings settings = null) { }
-        public void ExecuteEventsNow(System.Collections.Generic.IEnumerable<System.Guid> orchestrationIds, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationSettings settings = null) { }
+        public void ExecuteEventsNow(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> orchestrationEvents, Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper) { }
+        public void ExecuteEventsNow(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventConfiguration> orchestrationEvents, Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationSettings settings = null) { }
+        public void ExecuteEventsNow(System.Collections.Generic.IEnumerable<System.Guid> orchestrationIds, Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationSettings settings = null) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobConfiguration> GetAllJobConfigurations() { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJob> GetAllJobs() { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> GetAllOrchestrationEventsInTimeRange(System.DateTime start, System.DateTime end) { }
@@ -1576,6 +1577,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper
         public Skyline.DataMiner.Net.Profiles.Parameter LinkedProfileParameter { get; }
         public string Name { get; }
         public System.Guid ProfileParameterId { get; }
+    }
+}
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.Plan
+{
+    public interface IMediaOpsPlanHelper
+    {
+        void UpdateJobState(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent orchestrationEvent);
     }
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take

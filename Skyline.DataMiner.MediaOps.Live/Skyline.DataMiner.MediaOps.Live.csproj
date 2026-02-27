@@ -32,6 +32,7 @@
 		<None Include="..\nuget\Icon.png" Pack="true" PackagePath="" />
 	</ItemGroup>
 	<ItemGroup>
+		<InternalsVisibleTo Include="$(AssemblyName).Plan" />
 		<InternalsVisibleTo Include="$(AssemblyName).UnitTesting" />
 		<InternalsVisibleTo Include="$(AssemblyName).Automation" />
 		<InternalsVisibleTo Include="$(AssemblyName).Protocol" />
@@ -45,7 +46,6 @@
 		<PackageReference Include="Skyline.DataMiner.Dev.Common" Version="10.5.11.1" />
 		<PackageReference Include="Skyline.DataMiner.Dev.Utils.SDM.Abstractions" Version="1.0.1" />
 		<PackageReference Include="Skyline.DataMiner.Dev.Utils.Solutions.Categories" Version="1.1.0" />
-		<PackageReference Include="Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Plan" Version="0.1.0-alpha041" />
 		<PackageReference Include="Skyline.DataMiner.SDM.Registration.Common" Version="2.0.0" />
 		<PackageReference Include="Skyline.DataMiner.Utils.DOM" Version="10.5.2.5" />
 		<PackageReference Include="Skyline.DataMiner.Utils.PerformanceAnalyzer" Version="3.0.2" />

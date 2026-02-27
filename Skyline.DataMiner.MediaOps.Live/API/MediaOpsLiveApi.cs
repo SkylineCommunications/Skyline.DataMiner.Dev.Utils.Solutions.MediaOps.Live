@@ -16,7 +16,6 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Logging;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
-	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 
 	public class MediaOpsLiveApi : IMediaOpsLiveApi
@@ -86,11 +85,6 @@
 		public virtual ConnectivityInfoProvider GetConnectivityInfoProvider()
 		{
 			return new ConnectivityInfoProvider(this);
-		}
-
-		internal virtual MediaOpsPlanHelper GetMediaOpsPlanHelper()
-		{
-			return new MediaOpsPlanHelper(this);
 		}
 
 		/// <summary>
