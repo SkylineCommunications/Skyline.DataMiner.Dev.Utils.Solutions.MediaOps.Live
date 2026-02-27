@@ -32,8 +32,8 @@
 		<None Include="..\nuget\Icon.png" Pack="true" PackagePath="" />
 	</ItemGroup>
 	<ItemGroup>
-		<InternalsVisibleTo Include="$(AssemblyName).UnitTesting" />
-		<InternalsVisibleTo Include="$(AssemblyName).Tests" />
+		<InternalsVisibleTo Include="Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting" />
+		<InternalsVisibleTo Include="Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Tests" />
 		<InternalsVisibleTo Include="SLC-AS-MediaOps.LIVE.Tests" />
 	</ItemGroup>
 	<ItemGroup>

@@ -6,9 +6,7 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Logging;
-	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Take;
-	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 
 	public class EngineMediaOpsLiveApi : MediaOpsLiveApi, IEngineMediaOpsLiveApi
@@ -33,11 +31,6 @@
 		public override TakeHelper GetConnectionHandler()
 		{
 			return new EngineTakeHelper(this);
-		}
-
-		internal override MediaOpsPlanHelper GetMediaOpsPlanHelper()
-		{
-			return new EngineMediaOpsPlanHelper(this);
 		}
 	}
 }

@@ -25,6 +25,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
@@ -207,9 +208,15 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		/// <summary>
 		/// Orchestrates all connections for the event. Based on event type, this will be a connect or disconnect operation.
 		/// </summary>
+		/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
 		/// <param name="timeoutSeconds">Optional argument to override timeout (default 60 seconds).</param>
-		public void OrchestrateAllConnections(int timeoutSeconds = 60)
+		public void OrchestrateAllConnections(IMediaOpsPlanHelper mediaOpsPlanHelper, int timeoutSeconds = 60)
 		{
+			if (mediaOpsPlanHelper is null)
+			{
+				throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+			}
+
 			if (_context != OrchestrationScriptContext.Event || _orchestrationLevel != OrchestrationLevel.Global)
 			{
 				return;
@@ -217,7 +224,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			var api = new EngineMediaOpsLiveApi(_engine);
 
-			var orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
+			var orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, mediaOpsPlanHelper, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
 
 			IPerformanceLogger performanceLogger = PerformanceLoggerFactory.Create("ORC-OrchestrateAllConnections");
 

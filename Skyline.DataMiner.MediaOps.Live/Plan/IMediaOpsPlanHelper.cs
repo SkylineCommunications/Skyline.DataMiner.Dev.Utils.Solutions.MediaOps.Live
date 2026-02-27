@@ -2,11 +2,8 @@
 {
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 
-	internal class MediaOpsPlanHelper
+	public interface IMediaOpsPlanHelper
 	{
-		internal virtual void UpdateJobState(OrchestrationEvent orchestrationEvent)
-		{
-			// TODO: Exception
-		}
+		void UpdateJobState(OrchestrationEvent orchestrationEvent);
 	}
 }

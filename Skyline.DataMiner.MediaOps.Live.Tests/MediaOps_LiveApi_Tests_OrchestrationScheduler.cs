@@ -2,6 +2,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation;
 
@@ -146,7 +147,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 
-			api.Orchestration.ExecuteEventsNow(new List<OrchestrationEvent> { ev });
+			var planHelper = api.GetMediaOpsPlanHelper();
+			api.Orchestration.ExecuteEventsNow([ev], planHelper);
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 			Assert.AreEqual(EventState.Completed, ev.EventState);
@@ -173,7 +175,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 
-			api.Orchestration.ExecuteEventsNow(new List<OrchestrationEvent> { ev });
+			var planHelper = api.GetMediaOpsPlanHelper();
+			api.Orchestration.ExecuteEventsNow([ev], planHelper);
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 			Assert.AreEqual(EventState.Completed, ev.EventState);
@@ -200,7 +203,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 
-			api.Orchestration.ExecuteEventsNow(new List<OrchestrationEvent> { ev });
+			var planHelper = api.GetMediaOpsPlanHelper();
+			api.Orchestration.ExecuteEventsNow([ev], planHelper);
 
 			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
 			Assert.AreEqual(EventState.Failed, ev.EventState);

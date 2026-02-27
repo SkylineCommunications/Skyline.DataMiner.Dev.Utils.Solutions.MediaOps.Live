@@ -22,6 +22,17 @@
 		}
 
 		[TestMethod]
+		public Task MediaOps_LiveApi_Tests_Api_NoPublicApiChanges_Plan()
+		{
+			var assemblyName = $"{RootAssemblyName}.Plan";
+			var publicApi = Assembly.Load(assemblyName).GeneratePublicApi();
+
+			return Verifier.Verify(publicApi)
+				.UseFileName($"{assemblyName}_PublicApi")
+				.AutoVerify(includeBuildServer: false);
+		}
+
+		[TestMethod]
 		public Task MediaOps_LiveApi_Tests_Api_NoPublicApiChanges_Automation()
 		{
 			var assemblyName = $"{RootAssemblyName}.Automation";
