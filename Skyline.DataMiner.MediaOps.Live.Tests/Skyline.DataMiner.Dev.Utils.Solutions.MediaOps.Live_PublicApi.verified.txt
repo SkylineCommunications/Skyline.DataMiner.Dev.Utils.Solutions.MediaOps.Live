@@ -550,6 +550,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityMana
     public class Level : Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level>
     {
         public Level() { }
+        public Level(System.Guid id) { }
         public string Name { get; set; }
         public long Number { get; set; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> TransportType { get; set; }
