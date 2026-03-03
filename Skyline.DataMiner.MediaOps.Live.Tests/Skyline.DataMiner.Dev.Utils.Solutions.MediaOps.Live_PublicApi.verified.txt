@@ -1,4 +1,5 @@
-﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live")]
+﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.Dev.Utils.Solutions.Me" +
+    "diaOps.Live")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SLC-AS-MediaOps.LIVE.Tests")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Automation")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI")]
@@ -319,6 +320,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
     {
         public ConnectFailedException() { }
         public ConnectFailedException(string message) { }
+        protected ConnectFailedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public ConnectFailedException(string message, System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest> failedRequests) { }
         public ConnectFailedException(string message, System.Exception innerException) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest> FailedRequests { get; }
@@ -328,6 +330,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
     {
         public ConnectionHandlerScriptExecutionFailedException() { }
         public ConnectionHandlerScriptExecutionFailedException(string message) { }
+        protected ConnectionHandlerScriptExecutionFailedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public ConnectionHandlerScriptExecutionFailedException(string message, System.Exception innerException) { }
     }
     [System.Serializable]
@@ -335,6 +338,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
     {
         public DestinationLockedException() { }
         public DestinationLockedException(string message) { }
+        protected DestinationLockedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public DestinationLockedException(string message, System.Exception innerException) { }
         public DestinationLockedException(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, System.DateTimeOffset lockTime, string lockedBy, string lockReason) { }
         public string LockReason { get; }
@@ -348,6 +352,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
     {
         public DestinationProtectedException() { }
         public DestinationProtectedException(string message) { }
+        protected DestinationProtectedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public DestinationProtectedException(string message, System.Exception innerException) { }
         public DestinationProtectedException(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, System.DateTimeOffset lockTime, string lockedBy, string lockReason) { }
         public string LockReason { get; }
@@ -361,6 +366,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
     {
         public DisconnectFailedException() { }
         public DisconnectFailedException(string message) { }
+        protected DisconnectFailedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public DisconnectFailedException(string message, System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest> failedRequests) { }
         public DisconnectFailedException(string message, System.Exception innerException) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest> FailedRequests { get; }
@@ -370,6 +376,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
     {
         public ScriptExecutionFailedException() { }
         public ScriptExecutionFailedException(string message) { }
+        protected ScriptExecutionFailedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public ScriptExecutionFailedException(string message, System.Exception innerException) { }
         public ScriptExecutionFailedException(string scriptName, Skyline.DataMiner.Net.Messages.ExecuteScriptResponseMessage response) { }
         public int ErrorCode { get; }

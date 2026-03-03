@@ -1,4 +1,5 @@
-﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live")]
+﻿[assembly: System.Reflection.AssemblyMetadata("RepositoryUrl", "https://github.com/SkylineCommunications/Skyline.DataMiner.Dev.Utils.Solutions.Me" +
+    "diaOps.Live")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("SLC-AS-MediaOps.LIVE.Tests")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Tests")]
 [assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting")]
