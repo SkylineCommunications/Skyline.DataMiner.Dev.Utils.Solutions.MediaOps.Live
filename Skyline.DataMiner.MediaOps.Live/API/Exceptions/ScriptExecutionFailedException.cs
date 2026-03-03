@@ -2,12 +2,17 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Runtime.Serialization;
 
 	using Skyline.DataMiner.Net.Messages;
 
 	[Serializable]
 	public class ScriptExecutionFailedException : Exception
 	{
+		protected ScriptExecutionFailedException(SerializationInfo info, StreamingContext context) : base(info, context)
+		{
+		}
+
 		public ScriptExecutionFailedException()
 		{
 		}
