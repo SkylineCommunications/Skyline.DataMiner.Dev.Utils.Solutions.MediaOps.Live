@@ -43,35 +43,6 @@
 			return response;
 		}
 
-		public static ExecuteScriptResponseMessage ExecuteAutomationScript(IConnection connection, ExecuteScriptMessage message, out string[] errorMessages)
-		{
-			List<string> errorMessagesList = [];
-
-			var progress = connection.Async.Launch(message);
-
-			var result = progress.WaitForAsyncResponse(timeout: 5 * 60);
-
-			if (result == null)
-			{
-				throw new DataMinerException("No response received");
-			}
-
-			if (result.Failure != null)
-			{
-				throw result.Failure;
-			}
-
-			var response = (ExecuteScriptResponseMessage)result.Messages.Single();
-
-			if (response.HadError)
-			{
-				errorMessagesList.AddRange(response.ErrorMessages);
-			}
-
-			errorMessages = errorMessagesList.ToArray();
-			return response;
-		}
-
 		private static ExecuteScriptMessage BuildExecuteScriptMessage(string scriptName, Dictionary<string, string> parameters, bool checkSets, bool extendedErrorInfo, bool interactive, bool synchronous, bool informationEvent)
 		{
 			var options = new List<string>

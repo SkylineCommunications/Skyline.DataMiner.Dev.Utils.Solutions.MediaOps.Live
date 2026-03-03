@@ -1,29 +1,28 @@
-﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Plan
+﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Plan
 {
 	using System;
 
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
-	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.API;
-	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Plan.API;
-	using Skyline.DataMiner.Solutions.MediaOps.Plan.Automation;
 
 	using OrchestrationEvent = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent;
 
-	internal class EngineMediaOpsPlanHelper : MediaOpsPlanHelper
+	public class MediaOpsPlanHelper : IMediaOpsPlanHelper
 	{
-		internal EngineMediaOpsPlanHelper(EngineMediaOpsLiveApi api)
+		public MediaOpsPlanHelper(IMediaOpsLiveApi liveApi)
 		{
-			Api = api ?? throw new ArgumentNullException(nameof(api));
+			LiveApi = liveApi ?? throw new ArgumentNullException(nameof(liveApi));
 
-			PlanApi = api.Engine.GetMediaOpsPlanApi();
+			PlanApi = liveApi.Connection.GetMediaOpsPlanApi();
 		}
 
-		internal EngineMediaOpsLiveApi Api { get; }
+		internal IMediaOpsLiveApi LiveApi { get; }
 
 		internal IMediaOpsPlanApi PlanApi { get; }
 
-		internal override void UpdateJobState(OrchestrationEvent orchestrationEvent)
+		public void UpdateJobState(OrchestrationEvent orchestrationEvent)
 		{
 			if (orchestrationEvent is null)
 			{
@@ -37,17 +36,18 @@
 
 			try
 			{
-				var jobInfo = orchestrationEvent.GetJobInfo(Api)
+				var jobInfo = orchestrationEvent.GetJobInfo(LiveApi)
 					?? throw new InvalidOperationException("Orchestration event does not have associated job info.");
 
 				var jobId = Guid.Parse(jobInfo.JobReference);
-				var eventState = orchestrationEvent.EventState == EventState.Failed || !String.IsNullOrEmpty(orchestrationEvent.FailureInfo)
-						? OrchestrationEventState.Failed
-						: OrchestrationEventState.Succeeded;
+
+				OrchestrationEventState eventState = orchestrationEvent.EventState == EventState.Failed || !String.IsNullOrEmpty(orchestrationEvent.FailureInfo)
+					? OrchestrationEventState.Failed
+					: OrchestrationEventState.Succeeded;
 
 				var updateDetails = new OrchestrationUpdateDetails()
 				{
-					Event = GetEventTypeAsPlanJobEvent(orchestrationEvent),
+					Event = ConvertEventType(orchestrationEvent.EventType),
 					EventState = eventState,
 					Message = orchestrationEvent.FailureInfo,
 				};
@@ -60,9 +60,9 @@
 			}
 		}
 
-		private OrchestrationEventType GetEventTypeAsPlanJobEvent(OrchestrationEvent orchestrationEvent)
+		private OrchestrationEventType ConvertEventType(EventType eventType)
 		{
-			switch (orchestrationEvent.EventType)
+			switch (eventType)
 			{
 				case EventType.PostrollStart:
 				case EventType.Stop:

@@ -29,7 +29,7 @@
 
 			var info = api.Orchestration.Scripts.GetOrchestrationScripts();
 
-			Assert.HasCount(1, info);
+			Assert.HasCount(3, info);
 		}
 
 		[TestMethod]

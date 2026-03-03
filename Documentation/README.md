@@ -1,3 +1,16 @@
 # Documentation
 
-Documentation can be found [here](https://github.com/SkylineCommunications/SLC-AS-MediaOps.LIVE/tree/main/Documentation).
+Welcome to the MediaOps Live API documentation.
+
+## Contents
+
+| Document | Description |
+| -------- | ----------- |
+| [Getting Started](Getting%20Started.md) | Installation, prerequisites, and basic usage |
+| [Quick Reference](Quick%20Reference.md) | Common code snippets for repositories, querying, and connectivity |
+| [Advanced Topics](Advanced%20Topics.md) | Caching, subscriptions, validation, logging, and error handling |
+| [Orchestration](Orchestration.md) | Automated scheduling and execution of orchestration events |
+
+## External Resources
+
+- [DataMiner Docs - MediaOps Live](https://docs.dataminer.services/solutions/standard_solutions/MediaOps%20Live/MediaOps.Live.html) - Official DataMiner documentation for MediaOps Live

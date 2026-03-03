@@ -32,22 +32,21 @@
 		<None Include="..\nuget\Icon.png" Pack="true" PackagePath="" />
 	</ItemGroup>
 	<ItemGroup>
-		<InternalsVisibleTo Include="$(AssemblyName).UnitTesting" />
-		<InternalsVisibleTo Include="$(AssemblyName).Tests" />
+		<InternalsVisibleTo Include="Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.UnitTesting" />
+		<InternalsVisibleTo Include="Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Tests" />
 		<InternalsVisibleTo Include="SLC-AS-MediaOps.LIVE.Tests" />
 	</ItemGroup>
 	<ItemGroup>
 		<PackageReference Include="Skyline.DataMiner.Core.DataMinerSystem.Automation" Version="1.1.3.7" />
 		<PackageReference Include="Skyline.DataMiner.Core.InterAppCalls.Common" Version="1.1.1.1" />
 		<PackageReference Include="Skyline.DataMiner.Dev.Automation" Version="10.5.11.1" />
-		<PackageReference Include="Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Plan" Version="0.1.0-alpha041" />
-		<PackageReference Include="Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Plan.Automation" Version="0.1.0-alpha041" />
 		<PackageReference Include="Skyline.DataMiner.Utils.DOM" Version="10.5.2.5" />
 		<PackageReference Include="Skyline.DataMiner.Utils.InteractiveAutomationScriptToolkit" Version="10.5.8.1" />
 		<PackageReference Include="Skyline.DataMiner.Utils.PerformanceAnalyzer" Version="3.0.2" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live\Skyline.DataMiner.MediaOps.Live.csproj" />
+		<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live.Plan\Skyline.DataMiner.MediaOps.Live.Plan.csproj" />
 	</ItemGroup>
 
 	<Target Name="CopyNuGetPackage" AfterTargets="Pack" Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

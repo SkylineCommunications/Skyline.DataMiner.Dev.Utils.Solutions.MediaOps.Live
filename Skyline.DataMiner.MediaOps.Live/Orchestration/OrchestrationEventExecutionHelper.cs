@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
 
@@ -15,6 +16,7 @@
 	using Skyline.DataMiner.Net.ToolsSpace.Collections;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
@@ -24,6 +26,7 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
@@ -36,11 +39,13 @@
 	internal class OrchestrationEventExecutionHelper
 	{
 		private readonly MediaOpsLiveApi _api;
+		private readonly IMediaOpsPlanHelper _planHelper;
 		private readonly OrchestrationSettings _settings;
 
-		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, OrchestrationSettings settings)
+		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, IMediaOpsPlanHelper planHelper, OrchestrationSettings settings)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
+			_planHelper = planHelper ?? throw new ArgumentNullException(nameof(planHelper));
 			_settings = settings ?? new OrchestrationSettings();
 		}
 
@@ -160,7 +165,7 @@
 
 				OrchestrationScriptResult globalScriptResult = ExecuteOrchestrationScript(
 					orchestrationEventConfiguration.GlobalOrchestrationScript,
-					orchestrationEventConfiguration.GlobalOrchestrationScriptArguments.Union(addedInputParams),
+					orchestrationEventConfiguration.GlobalOrchestrationScriptArguments.Union(addedInputParams).ToList(),
 					orchestrationEventConfiguration.Profile,
 					performanceTracker);
 
@@ -221,7 +226,7 @@
 					orchestrationEventConfiguration.InternalSetState(EventState.Completed);
 				}
 
-				orchestrationEventConfiguration.SendPlanJobStateUpdate(_api);
+				orchestrationEventConfiguration.SendPlanJobStateUpdate(_planHelper);
 
 				writeBuffer.Enqueue(orchestrationEventConfiguration);
 			}
@@ -485,7 +490,7 @@
 
 								OrchestrationScriptResult nodeScriptResult = ExecuteOrchestrationScript(
 									nodeConfiguration.OrchestrationScriptName,
-									nodeConfiguration.OrchestrationScriptArguments.Union(addedInputParams),
+									nodeConfiguration.OrchestrationScriptArguments.Union(addedInputParams).ToList(),
 									nodeConfiguration.Profile,
 									performanceTracker);
 
@@ -515,7 +520,7 @@
 			}
 		}
 
-		private OrchestrationScriptResult ExecuteOrchestrationScript(string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, PerformanceTracker performanceTracker)
+		private OrchestrationScriptResult ExecuteOrchestrationScript(string scriptName, ICollection<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, PerformanceTracker performanceTracker)
 		{
 			using (new PerformanceTracker(performanceTracker))
 			{
@@ -523,51 +528,53 @@
 			}
 		}
 
-		internal static OrchestrationScriptResult ExecuteOrchestrationScript(IConnection connection, string scriptName, IEnumerable<OrchestrationScriptArgument> arguments, OrchestrationProfile profile)
+		internal static OrchestrationScriptResult ExecuteOrchestrationScript(IConnection connection, string scriptName, ICollection<OrchestrationScriptArgument> arguments, OrchestrationProfile profile)
 		{
-			IDms dms = connection.GetDms();
-			IDmsAutomationScript script = dms.GetScript(scriptName);
-			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments = arguments.ToList();
-
-			List<DmsAutomationScriptParamValue> scriptParams = [];
-			OrchestrationScriptResult scriptParamResult = PrepareScriptParams(dms, script, orchestrationScriptArguments, scriptParams, profile);
-			if (scriptParamResult.HadError)
+			try
 			{
-				return scriptParamResult;
-			}
+				IDms dms = connection.GetDms();
+				IDmsAutomationScript script = dms.GetScript(scriptName);
 
-			List<DmsAutomationScriptDummyValue> scriptDummies = [];
-			OrchestrationScriptResult scriptDummyResult = PrepareScriptDummies(dms, script, orchestrationScriptArguments, scriptDummies);
-			if (scriptDummyResult.HadError)
-			{
-				return scriptDummyResult;
-			}
-
-			ExecuteScriptResponseMessage result;
-
-			if (OrchestrationScriptInfoHelper.IsValidOrchestrationScript(script))
-			{
-				OrchestrationScriptInput input = new(
-					profile.Values.ToDictionary(value => value.Name, value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
-					profile.Instance);
-
-				foreach (OrchestrationScriptArgument orchestrationScriptArgument in orchestrationScriptArguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata))
+				if (!OrchestrationScriptInfoHelper.IsValidOrchestrationScript(script))
 				{
-					input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
+					throw new InvalidOperationException($"The script '{scriptName}' is not a valid orchestration script.");
 				}
 
-				result = OrchestrationAutomationHelper.TryExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input, out string[] _);
+				var scriptParams = PrepareScriptParams(dms, script, arguments, profile);
+				var scriptDummies = PrepareScriptDummies(dms, script, arguments);
+
+				ExecuteScriptResponseMessage result;
+
+				try
+				{
+					// First try to execute with the entry point
+					var input = new OrchestrationScriptInput(
+						profile.Values.ToDictionary(value => value.Name, value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
+						profile.Instance);
+
+					foreach (OrchestrationScriptArgument orchestrationScriptArgument in arguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata))
+					{
+						input.Metadata.Add(orchestrationScriptArgument.Name, orchestrationScriptArgument.Value);
+					}
+
+					result = OrchestrationAutomationHelper.ExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input);
+				}
+				catch (ScriptExecutionFailedException ex) when (Regex.IsMatch(ex.Message, @"No method found in assembly (.+?) matching the specified entrypoint"))
+				{
+					// If the script does not contain the expected entry point, try executing without it for backward compatibility with older scripts.
+					result = OrchestrationAutomationHelper.ExecuteScript(connection, scriptName, scriptParams, scriptDummies);
+				}
 
 				return ProcessOrchestrationScriptResult(result);
 			}
-
-			result = OrchestrationAutomationHelper.TryExecuteScript(connection, scriptName, scriptParams, scriptDummies, out string[] _);
-
-			return new OrchestrationScriptResult
+			catch (Exception ex)
 			{
-				ErrorMessages = result.ErrorMessages,
-				HadError = result.HadError || result.ErrorMessages.Any(),
-			};
+				return new OrchestrationScriptResult
+				{
+					ErrorMessages = [ex.Message],
+					HadError = true,
+				};
+			}
 		}
 
 		private static OrchestrationScriptResult ProcessOrchestrationScriptResult(ExecuteScriptResponseMessage result)
@@ -589,11 +596,10 @@
 			};
 		}
 
-		private static OrchestrationScriptResult PrepareScriptParams(
+		private static List<DmsAutomationScriptParamValue> PrepareScriptParams(
 			IDms dms,
 			IDmsAutomationScript script,
 			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments,
-			List<DmsAutomationScriptParamValue> scriptParams,
 			OrchestrationProfile profile)
 		{
 			ProfileHelper profileHelper = new ProfileHelper(dms.Communication.SendMessages);
@@ -608,6 +614,8 @@
 
 				return instance;
 			});
+
+			List<DmsAutomationScriptParamValue> scriptParams = [];
 
 			foreach (IDmsAutomationScriptParameter requiredParameter in script.Parameters)
 			{
@@ -632,17 +640,10 @@
 					continue;
 				}
 
-				return new OrchestrationScriptResult
-				{
-					ErrorMessages = [$"Missing required script parameter: {requiredParameter.Description}"],
-					HadError = true,
-				};
+				throw new InvalidOperationException($"Missing required script parameter: {requiredParameter.Description}");
 			}
 
-			return new OrchestrationScriptResult
-			{
-				HadError = false,
-			};
+			return scriptParams;
 		}
 
 		private static object GetProfileParameterValue(ParameterValue value)
@@ -657,23 +658,20 @@
 			}
 		}
 
-		private static OrchestrationScriptResult PrepareScriptDummies(
+		private static List<DmsAutomationScriptDummyValue> PrepareScriptDummies(
 			IDms dms,
 			IDmsAutomationScript script,
-			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments,
-			List<DmsAutomationScriptDummyValue> scriptDummies)
+			IEnumerable<OrchestrationScriptArgument> orchestrationScriptArguments)
 		{
+			List<DmsAutomationScriptDummyValue> scriptDummies = [];
+
 			foreach (IDmsAutomationScriptDummy requiredDummy in script.Dummies)
 			{
 				OrchestrationScriptArgument matchingArgument = orchestrationScriptArguments.FirstOrDefault(arg => arg.Name == requiredDummy.Description && arg.Type == OrchestrationScriptArgumentType.Element);
 
 				if (matchingArgument == null)
 				{
-					return new OrchestrationScriptResult
-					{
-						ErrorMessages = [$"Missing required script dummy: {requiredDummy.Description}"],
-						HadError = true,
-					};
+					throw new InvalidOperationException($"Missing required script dummy: {requiredDummy.Description}");
 				}
 
 				if (matchingArgument.Value.Contains("/")) // By ID
@@ -690,10 +688,7 @@
 				}
 			}
 
-			return new OrchestrationScriptResult
-			{
-				HadError = false,
-			};
+			return scriptDummies;
 		}
 	}
 }

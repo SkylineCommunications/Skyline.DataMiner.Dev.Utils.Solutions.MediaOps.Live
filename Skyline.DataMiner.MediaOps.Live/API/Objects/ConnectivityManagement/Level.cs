@@ -1,6 +1,7 @@
 ﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement
 {
 	using System;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
@@ -13,6 +14,10 @@
 		private readonly LevelInstance _domInstance;
 
 		public Level() : this(new LevelInstance())
+		{
+		}
+
+		public Level(Guid id) : this(new LevelInstance(id))
 		{
 		}
 

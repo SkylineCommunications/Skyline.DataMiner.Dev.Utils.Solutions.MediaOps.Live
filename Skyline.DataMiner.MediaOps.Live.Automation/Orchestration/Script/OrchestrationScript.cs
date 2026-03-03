@@ -19,6 +19,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
@@ -197,7 +198,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
 
-			OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(_engine.GetUserConnection(), nodeConfig.OrchestrationScriptName, nodeConfig.OrchestrationScriptArguments.Union(addedInputParams), nodeConfig.Profile);
+			OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(
+				_engine.GetUserConnection(),
+				nodeConfig.OrchestrationScriptName,
+				nodeConfig.OrchestrationScriptArguments.Union(addedInputParams).ToList(),
+				nodeConfig.Profile);
 		}
 
 		/// <summary>
@@ -212,8 +217,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			}
 
 			var api = new EngineMediaOpsLiveApi(_engine);
+			var planHelper = api.GetMediaOpsPlanHelper();
 
-			var orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
+			var orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, planHelper, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
 
 			IPerformanceLogger performanceLogger = PerformanceLoggerFactory.Create("ORC-OrchestrateAllConnections");
 
@@ -472,15 +478,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 							List<ValueOption> options = new List<ValueOption>();
 							foreach (string discreet in parameter.Discretes)
 							{
-								if (discreet.GetType() != parameterInfo.ValueType)
-								{
-									// Tip: warn or fail when this happens
-									continue;
-								}
-
 								string display = queue.Dequeue();
-
-								// Tip: make sure the display value is unique
 								options.Add(new ValueOption(display, discreet));
 							}
 
