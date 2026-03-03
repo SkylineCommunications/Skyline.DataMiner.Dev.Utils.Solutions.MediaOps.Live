@@ -315,24 +315,30 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
 {
+    [System.Serializable]
     public class ConnectFailedException : System.Exception
     {
         public ConnectFailedException() { }
         public ConnectFailedException(string message) { }
+        protected ConnectFailedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public ConnectFailedException(string message, System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest> failedRequests) { }
         public ConnectFailedException(string message, System.Exception innerException) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.ConnectionRequest> FailedRequests { get; }
     }
+    [System.Serializable]
     public class ConnectionHandlerScriptExecutionFailedException : System.Exception
     {
         public ConnectionHandlerScriptExecutionFailedException() { }
         public ConnectionHandlerScriptExecutionFailedException(string message) { }
+        protected ConnectionHandlerScriptExecutionFailedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public ConnectionHandlerScriptExecutionFailedException(string message, System.Exception innerException) { }
     }
+    [System.Serializable]
     public class DestinationLockedException : System.Exception
     {
         public DestinationLockedException() { }
         public DestinationLockedException(string message) { }
+        protected DestinationLockedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public DestinationLockedException(string message, System.Exception innerException) { }
         public DestinationLockedException(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, System.DateTimeOffset lockTime, string lockedBy, string lockReason) { }
         public string LockReason { get; }
@@ -341,10 +347,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup VirtualSignalGroup { get; }
         public override string ToString() { }
     }
+    [System.Serializable]
     public class DestinationProtectedException : System.Exception
     {
         public DestinationProtectedException() { }
         public DestinationProtectedException(string message) { }
+        protected DestinationProtectedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public DestinationProtectedException(string message, System.Exception innerException) { }
         public DestinationProtectedException(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, System.DateTimeOffset lockTime, string lockedBy, string lockReason) { }
         public string LockReason { get; }
@@ -353,18 +361,22 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup VirtualSignalGroup { get; }
         public override string ToString() { }
     }
+    [System.Serializable]
     public class DisconnectFailedException : System.Exception
     {
         public DisconnectFailedException() { }
         public DisconnectFailedException(string message) { }
+        protected DisconnectFailedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public DisconnectFailedException(string message, System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest> failedRequests) { }
         public DisconnectFailedException(string message, System.Exception innerException) { }
         public System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest> FailedRequests { get; }
     }
+    [System.Serializable]
     public class ScriptExecutionFailedException : System.Exception
     {
         public ScriptExecutionFailedException() { }
         public ScriptExecutionFailedException(string message) { }
+        protected ScriptExecutionFailedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
         public ScriptExecutionFailedException(string message, System.Exception innerException) { }
         public ScriptExecutionFailedException(string scriptName, Skyline.DataMiner.Net.Messages.ExecuteScriptResponseMessage response) { }
         public int ErrorCode { get; }

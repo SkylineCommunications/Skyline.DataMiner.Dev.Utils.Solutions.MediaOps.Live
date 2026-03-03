@@ -2,11 +2,17 @@
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Runtime.Serialization;
 
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Take;
 
+	[Serializable]
 	public class ConnectFailedException : Exception
 	{
+		protected ConnectFailedException(SerializationInfo info, StreamingContext context) : base(info, context)
+		{
+		}
+
 		public ConnectFailedException()
 		{
 		}

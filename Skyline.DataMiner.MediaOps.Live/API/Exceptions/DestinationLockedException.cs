@@ -1,11 +1,17 @@
 ﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
 {
 	using System;
+	using System.Runtime.Serialization;
 
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
+	[Serializable]
 	public class DestinationLockedException : Exception
 	{
+		protected DestinationLockedException(SerializationInfo info, StreamingContext context) : base(info, context)
+		{
+		}
+
 		public DestinationLockedException()
 		{
 		}
