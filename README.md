@@ -8,7 +8,7 @@ The API is intended to be used when developing custom solutions based on the Med
 Add the NuGet package to your solution:
 
 ```bash
-dotnet add package Skyline.DataMiner.Solutions.MediaOps.Live
+dotnet add package Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live
 ```
 
 Depending on your project type, one of the following additional packages is also required:
