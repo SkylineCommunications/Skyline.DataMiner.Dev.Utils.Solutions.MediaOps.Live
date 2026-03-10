@@ -2,6 +2,7 @@
 {
 	using System;
 	using System.Threading;
+
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity;
@@ -11,7 +12,7 @@
 	public sealed class MediaOpsLiveCache : IDisposable
 	{
 		private static readonly object _lock = new();
-		private static volatile MediaOpsLiveCache _instance;
+		private static MediaOpsLiveCache _instance;
 
 		private readonly Lazy<VirtualSignalGroupEndpointsObserver> _lazyVirtualSignalGroupsObserver;
 		private readonly Lazy<LevelsObserver> _lazyLevelsObserver;
@@ -67,19 +68,18 @@
 				throw new ArgumentNullException(nameof(connectionFactory));
 			}
 
-			if (_instance == null)
+			lock (_lock)
 			{
-				lock (_lock)
-				{
-					if (_instance == null)
-					{
-						var connection = connectionFactory();
-						_instance = GetOrCreate(connection);
-					}
-				}
-			}
+				InvalidateIfConnectionDestroyed();
 
-			return _instance;
+				if (_instance == null)
+				{
+					var connection = connectionFactory();
+					_instance = GetOrCreate(connection);
+				}
+
+				return _instance;
+			}
 		}
 
 		public static MediaOpsLiveCache GetOrCreate(IConnection baseConnection)
@@ -89,22 +89,21 @@
 				throw new ArgumentNullException(nameof(baseConnection));
 			}
 
-			if (_instance == null)
+			lock (_lock)
 			{
-				lock (_lock)
+				InvalidateIfConnectionDestroyed();
+
+				if (_instance == null)
 				{
-					if (_instance == null)
-					{
-						// Always clone the connection to ensure that the MediaOpsLiveCache has its own dedicated connection.
-						// This prevents potential conflicts when the base connection would be closed or unsubscribed elsewhere.
-						var connection = CloneConnection(baseConnection);
+					// Always clone the connection to ensure that the MediaOpsLiveCache has its own dedicated connection.
+					// This prevents potential conflicts when the base connection would be closed or unsubscribed elsewhere.
+					var connection = CloneConnection(baseConnection);
 
-						_instance = new MediaOpsLiveCache(connection);
-					}
+					_instance = new MediaOpsLiveCache(connection);
 				}
-			}
 
-			return _instance;
+				return _instance;
+			}
 		}
 
 		public static MediaOpsLiveCache Get()
@@ -227,6 +226,29 @@
 			}
 
 			throw new InvalidOperationException("Failed to clone the provided connection.", exception);
+		}
+
+		/// <summary>
+		/// Disposes and clears the singleton instance if its underlying connection has been destroyed.
+		/// </summary>
+		private static void InvalidateIfConnectionDestroyed()
+		{
+			if (_instance == null || !_instance.Connection.IsShuttingDown)
+			{
+				return;
+			}
+
+			// The connection is shutting down or already destroyed and can no longer be used.
+			try
+			{
+				_instance.Dispose();
+			}
+			catch (Exception)
+			{
+				// ignore
+			}
+
+			_instance = null;
 		}
 	}
 }
