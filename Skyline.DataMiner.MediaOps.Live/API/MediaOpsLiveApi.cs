@@ -25,6 +25,7 @@
 		public MediaOpsLiveApi(IConnection connection)
 		{
 			Connection = connection ?? throw new ArgumentNullException(nameof(connection));
+			ValidateConnection(connection);
 
 			SlcConnectivityManagementHelper = new SlcConnectivityManagementHelper(connection);
 			SlcOrchestrationHelper = new SlcOrchestrationHelper(connection);
@@ -143,6 +144,19 @@
 
 			return $"{ThisAssembly.Git.SemVer.Major}.{ThisAssembly.Git.SemVer.Minor}.{ThisAssembly.Git.SemVer.Patch}{ThisAssembly.Git.SemVer.DashLabel}";
 #pragma warning restore CS0618 // Type or member is obsolete
+		}
+
+		private void ValidateConnection(IConnection connection)
+		{
+			if (connection is null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			if (connection.IsShuttingDown)
+			{
+				throw new InvalidOperationException("The the provided connection is shutting down.");
+			}
 		}
 	}
 }
