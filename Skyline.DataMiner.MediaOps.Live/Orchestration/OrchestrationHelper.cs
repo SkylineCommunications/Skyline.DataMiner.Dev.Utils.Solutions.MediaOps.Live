@@ -119,6 +119,58 @@ public class OrchestrationHelper
 	}
 
 	/// <summary>
+	///     Gets the <see cref="OrchestrationJob" /> object with all events for the given job reference,
+	///     or <see langword="null" /> if no existing job is found.
+	/// </summary>
+	/// <param name="jobReference">The ID of the job to retrieve.</param>
+	/// <returns>
+	///     A <see cref="OrchestrationJob" /> object with all events found for the given job reference,
+	///     or <see langword="null" /> if no job exists for the given reference.
+	/// </returns>
+	public OrchestrationJob GetOrchestrationJob(string jobReference)
+	{
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-GetJob")))
+		using (PerformanceTracker performanceTracker = new(collector))
+		{
+			OrchestrationJobInfo jobInfo = _jobInfoRepository.GetJobInfoByJobReference(jobReference);
+
+			if (jobInfo == null)
+			{
+				return null;
+			}
+
+			IEnumerable<OrchestrationEvent> events = _orchestrationEventRepository.GetEventsByJobInfoReference(jobInfo, performanceTracker);
+			return new OrchestrationJob(jobInfo, events);
+		}
+	}
+
+	/// <summary>
+	///     Gets the <see cref="OrchestrationJobConfiguration" /> object with all event configurations for the given job
+	///     reference, or <see langword="null" /> if no existing job is found.
+	/// </summary>
+	/// <param name="jobReference">The ID of the job to retrieve.</param>
+	/// <returns>
+	///     A <see cref="OrchestrationJobConfiguration" /> object with all event configurations found for the given job
+	///     reference, or <see langword="null" /> if no job exists for the given reference.
+	/// </returns>
+	public OrchestrationJobConfiguration GetOrchestrationJobConfiguration(string jobReference)
+	{
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-GetJobConfiguration")))
+		using (PerformanceTracker performanceTracker = new(collector))
+		{
+			OrchestrationJobInfo jobInfo = _jobInfoRepository.GetJobInfoByJobReference(jobReference);
+
+			if (jobInfo == null)
+			{
+				return null;
+			}
+
+			IEnumerable<OrchestrationEventConfiguration> events = GetEventConfigurationsByJobInfoReference(jobInfo, performanceTracker);
+			return new OrchestrationJobConfiguration(jobInfo, events);
+		}
+	}
+
+	/// <summary>
 	///     Creates a dictionary with <see cref="OrchestrationJob" /> objects with all events for the given jobs
 	///     reference.
 	/// </summary>

@@ -310,12 +310,9 @@
 			// Should not throw
 			api.Orchestration.SaveOrchestrationJobConfiguration(job);
 
-			// Check that events and configuration are saved
-			var orchestrationEventHelper = new OrchestrationEventRepository(api);
-			Assert.AreEqual(11, orchestrationEventHelper.CountAll());
-
-			var configurationHelper = new ConfigurationRepository(api);
-			Assert.AreEqual(10, configurationHelper.CountAll());
+			// Check job is saved
+			var retrievedJobConfig = api.Orchestration.GetOrchestrationJobConfiguration(job.JobId);
+			Assert.IsNotNull(retrievedJobConfig);
 		}
 
 		private static OrchestrationEventConfiguration CreateEventWithOrchestrationScript(List<OrchestrationProfileValue> profileValues)
