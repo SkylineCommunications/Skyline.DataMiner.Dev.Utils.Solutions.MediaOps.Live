@@ -257,7 +257,7 @@ public class OrchestrationHelper
 		{
 			DeleteOrchestrationEvents(job.RemovedIds, performanceTracker);
 
-			job.ValidateEventsBeforeSaving(_api.Connection);
+			job.ValidateEventsBeforeSaving(_api);
 
 			_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
 
@@ -277,7 +277,7 @@ public class OrchestrationHelper
 		{
 			DeleteOrchestrationEvents(job.RemovedIds, performanceTracker);
 
-			job.ValidateEventsBeforeSaving(_api.Connection);
+			job.ValidateEventsBeforeSaving(_api);
 			_slidingWindowScheduler.ScheduleEvents(job.OrchestrationEvents);
 
 			_jobInfoRepository.CreateOrUpdate(job.JobInfo);

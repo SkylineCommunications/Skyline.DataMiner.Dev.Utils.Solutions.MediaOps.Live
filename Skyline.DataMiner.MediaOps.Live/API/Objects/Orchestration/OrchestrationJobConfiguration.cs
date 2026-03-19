@@ -78,16 +78,16 @@
 			// To be implemented
 		}
 
-		internal void ValidateEventsBeforeSaving(IConnection connection)
+		internal void ValidateEventsBeforeSaving(MediaOpsLiveApi api)
 		{
 			AssignJobReferencesBeforeSaving(JobInfo.ID, OrchestrationEvents.ToList());
 			IEnumerable<OrchestrationEvent> events = OrchestrationEvents.ToList();
 			OrchestrationJob.ValidateEventInfo(events.ToList());
 			ValidateConfigurationsBeforeSaving(OrchestrationEvents);
-			ValidateOrchestrationScriptInformation(connection, OrchestrationEvents);
+			ValidateOrchestrationScriptInformation(api, OrchestrationEvents);
 		}
 
-		internal virtual void ValidateOrchestrationScriptInformation(IConnection connection, List<OrchestrationEventConfiguration> orchestrationEvents)
+		internal virtual void ValidateOrchestrationScriptInformation(MediaOpsLiveApi api, List<OrchestrationEventConfiguration> orchestrationEvents)
 		{
 			foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
 			{
@@ -97,7 +97,7 @@
 				}
 
 				OrchestrationJob.ValidateOrchestrationScriptInput(
-					connection,
+					api,
 					orchestrationEvent.GlobalOrchestrationScript,
 					orchestrationEvent.GlobalOrchestrationScriptArguments.ToList(),
 					orchestrationEvent.Profile.Values.ToList());
@@ -105,7 +105,7 @@
 				foreach (NodeConfiguration configurationNodeConfiguration in orchestrationEvent.Configuration.NodeConfigurations)
 				{
 					OrchestrationJob.ValidateOrchestrationScriptInput(
-						connection,
+						api,
 						configurationNodeConfiguration.OrchestrationScriptName,
 						configurationNodeConfiguration.OrchestrationScriptArguments.ToList(),
 						configurationNodeConfiguration.Profile.Values.ToList());

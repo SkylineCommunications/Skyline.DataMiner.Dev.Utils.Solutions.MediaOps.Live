@@ -4,8 +4,6 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
-	using Skyline.DataMiner.Net;
-	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 
 	/// <summary>
@@ -177,21 +175,21 @@
 			}
 		}
 
-		internal void ValidateEventsBeforeSaving(IConnection connection)
+		internal void ValidateEventsBeforeSaving(MediaOpsLiveApi api)
 		{
 			AssignJobReferencesBeforeSaving(JobInfo.ID, OrchestrationEvents);
 			ValidateEventInfo(OrchestrationEvents);
-			ValidateOrchestrationScriptInformation(connection, OrchestrationEvents);
+			ValidateOrchestrationScriptInformation(api, OrchestrationEvents);
 		}
 
-		internal void ValidateOrchestrationScriptInformation(IConnection connection, List<OrchestrationEvent> orchestrationEvents)
+		internal void ValidateOrchestrationScriptInformation(MediaOpsLiveApi api, List<OrchestrationEvent> orchestrationEvents)
 		{
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
 				if (orchestrationEvent.EventState == EventState.Confirmed)
 				{
 					ValidateOrchestrationScriptInput(
-						connection,
+						api,
 						orchestrationEvent.GlobalOrchestrationScript,
 						orchestrationEvent.GlobalOrchestrationScriptArguments.ToList(),
 						orchestrationEvent.Profile.Values.ToList());
@@ -199,48 +197,43 @@
 			}
 		}
 
-		internal static void ValidateOrchestrationScriptInput(IConnection connection, string scriptName, List<OrchestrationScriptArgument> arguments, List<OrchestrationProfileValue> profileValues)
+		internal static void ValidateOrchestrationScriptInput(MediaOpsLiveApi api, string scriptName, List<OrchestrationScriptArgument> arguments, List<OrchestrationProfileValue> profileValues)
 		{
 			if (String.IsNullOrEmpty(scriptName))
 			{
 				return;
 			}
 
-			GetScriptInfoResponseMessage scriptInfoResponse = (GetScriptInfoResponseMessage)connection.HandleSingleResponseMessage(new GetScriptInfoMessage(scriptName));
+			var scriptInfo = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo(scriptName);
 
-			if (scriptInfoResponse == null)
+			foreach (var scriptInputParam in scriptInfo.Parameters)
 			{
-				return;
+				if (arguments.Any(arg => arg.Name == scriptInputParam.Name && arg.Type == OrchestrationScriptArgumentType.Parameter))
+				{
+					continue;
+				}
+
+				if (profileValues.Any(value => value.Name == scriptInputParam.Name))
+				{
+					continue;
+				}
+
+				throw new InvalidOperationException($"Script input parameter missing for confirmed event. Script: {scriptName}. Parameter: {scriptInputParam.Name}");
 			}
 
-			foreach (string scriptInputParamName in scriptInfoResponse.Parameters.Select(param => param.Description))
+			foreach (var scriptInputElement in scriptInfo.Elements)
 			{
-				if (arguments.Any(arg => arg.Name == scriptInputParamName && arg.Type == OrchestrationScriptArgumentType.Parameter))
+				if (arguments.Any(arg => arg.Name == scriptInputElement.Name && arg.Type == OrchestrationScriptArgumentType.Element))
 				{
 					continue;
 				}
 
-				if (profileValues.Any(value => value.Name == scriptInputParamName))
+				if (profileValues.Any(value => value.Name == scriptInputElement.Name))
 				{
 					continue;
 				}
 
-				throw new InvalidOperationException($"Script input parameter missing for confirmed event. Script: {scriptName}. Parameter: {scriptInputParamName}");
-			}
-
-			foreach (string scriptDummyName in scriptInfoResponse.Dummies.Select(param => param.Description))
-			{
-				if (arguments.Any(arg => arg.Name == scriptDummyName && arg.Type == OrchestrationScriptArgumentType.Element))
-				{
-					continue;
-				}
-
-				if (profileValues.Any(value => value.Name == scriptDummyName))
-				{
-					continue;
-				}
-
-				throw new InvalidOperationException($"Script input dummy missing for confirmed event. Script: {scriptName}. Dummy: {scriptDummyName}");
+				throw new InvalidOperationException($"Script input dummy missing for confirmed event. Script: {scriptName}. Dummy: {scriptInputElement.Name}");
 			}
 		}
 
