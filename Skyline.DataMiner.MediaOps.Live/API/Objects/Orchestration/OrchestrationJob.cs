@@ -4,7 +4,11 @@
 	using System.Collections.Generic;
 	using System.Linq;
 
+	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
+
+	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
 
 	/// <summary>
 	/// This object groups the orchestration events belonging to the same job.
@@ -234,6 +238,33 @@
 				}
 
 				throw new InvalidOperationException($"Script input dummy missing for confirmed event. Script: {scriptName}. Dummy: {scriptInputElement.Name}");
+			}
+
+			ValidateProfileValueTypes(scriptInfo, profileValues);
+		}
+
+		private static void ValidateProfileValueTypes(OrchestrationScriptInputInfo scriptInfo, List<OrchestrationProfileValue> profileValues)
+		{
+			foreach (var profileValue in profileValues)
+			{
+				var matchingParam = scriptInfo.Parameters
+					.FirstOrDefault(p => p.IsFromProfile && p.Name == profileValue.Name);
+
+				if (matchingParam?.LinkedProfileParameter == null)
+				{
+					continue;
+				}
+
+				var expectedValueType = matchingParam.LinkedProfileParameter.Type == Parameter.ParameterType.Number
+					? ParameterValue.ValueType.Double
+					: ParameterValue.ValueType.String;
+
+				if (profileValue.Value.Type != expectedValueType)
+				{
+					throw new InvalidOperationException(
+						$"Profile parameter value type mismatch for '{profileValue.Name}'. " +
+						$"Expected '{expectedValueType}' but got '{profileValue.Value.Type}'.");
+				}
 			}
 		}
 
