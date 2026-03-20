@@ -6,6 +6,8 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
 
+	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
+
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_OrchestrationJob
 	{
@@ -195,6 +197,147 @@
 
 			var configurationHelper = new ConfigurationRepository(api);
 			Assert.AreEqual(10, configurationHelper.CountAll());
+		}
+
+		[TestMethod]
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_ValidateProfileValueType_StringToNumericParameter()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+
+			var eventConfig = CreateEventWithOrchestrationScript(new List<OrchestrationProfileValue>
+			{
+				new OrchestrationProfileValue
+				{
+					Name = "IndividualProfileParam_Int",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "invalid" },
+				},
+				new OrchestrationProfileValue
+				{
+					Name = "IndividualProfileParam_String",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "valid" },
+				},
+				new OrchestrationProfileValue
+				{
+					Name = "DefinitionProfileParam_Int",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 42 },
+				},
+				new OrchestrationProfileValue
+				{
+					Name = "DefinitionProfileParam_String",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "valid" },
+				},
+			});
+
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			job.OrchestrationEvents.Add(eventConfig);
+
+			var ex = Assert.Throws<InvalidOperationException>(
+				() => api.Orchestration.SaveOrchestrationJobConfiguration(job));
+
+			Assert.IsTrue(ex.Message.Contains("IndividualProfileParam_Int"));
+		}
+
+		[TestMethod]
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_ValidateProfileValueType_NumericToStringParameter()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+
+			var eventConfig = CreateEventWithOrchestrationScript(new List<OrchestrationProfileValue>
+			{
+				new OrchestrationProfileValue
+				{
+					Name = "IndividualProfileParam_Int",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 42 },
+				},
+				new OrchestrationProfileValue
+				{
+					Name = "IndividualProfileParam_String",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 123 },
+				},
+				new OrchestrationProfileValue
+				{
+					Name = "DefinitionProfileParam_Int",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 42 },
+				},
+				new OrchestrationProfileValue
+				{
+					Name = "DefinitionProfileParam_String",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "valid" },
+				},
+			});
+
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			job.OrchestrationEvents.Add(eventConfig);
+
+			var ex = Assert.Throws<InvalidOperationException>(
+				() => api.Orchestration.SaveOrchestrationJobConfiguration(job));
+
+			Assert.IsTrue(ex.Message.Contains("IndividualProfileParam_String"));
+		}
+
+		[TestMethod]
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_ValidateProfileValueType_CorrectTypes()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+
+			var eventConfig = CreateEventWithOrchestrationScript(new List<OrchestrationProfileValue>
+			{
+				new OrchestrationProfileValue
+				{
+					Name = "IndividualProfileParam_Int",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 42 },
+				},
+				new OrchestrationProfileValue
+				{
+					Name = "IndividualProfileParam_String",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "valid" },
+				},
+				new OrchestrationProfileValue
+				{
+					Name = "DefinitionProfileParam_Int",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 100 },
+				},
+				new OrchestrationProfileValue
+				{
+					Name = "DefinitionProfileParam_String",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "valid" },
+				},
+			});
+
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			job.OrchestrationEvents.Add(eventConfig);
+
+			// Should not throw
+			api.Orchestration.SaveOrchestrationJobConfiguration(job);
+
+			// Check job is saved
+			var retrievedJobConfig = api.Orchestration.GetOrchestrationJobConfiguration(job.JobId);
+			Assert.IsNotNull(retrievedJobConfig);
+		}
+
+		private static OrchestrationEventConfiguration CreateEventWithOrchestrationScript(List<OrchestrationProfileValue> profileValues)
+		{
+			var eventConfig = new OrchestrationEventConfiguration
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Test Event",
+				GlobalOrchestrationScript = "OrchestrationScript",
+			};
+
+			eventConfig.GlobalOrchestrationScriptArguments = new List<OrchestrationScriptArgument>
+			{
+				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Parameter, "InputParam", "value"),
+				new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Element, "InputDummy", "123/1000"),
+			};
+
+			eventConfig.Profile = new OrchestrationProfile
+			{
+				Values = new List<OrchestrationProfileValue>(profileValues),
+			};
+
+			return eventConfig;
 		}
 	}
 }
