@@ -751,12 +751,13 @@
 
 			lock (_lock)
 			{
+				var warnings = new HashSet<string>();
+
 				bool isConnected = false;
 				bool isConnecting = false;
 				bool isDisconnecting = false;
 				Endpoint connectedSource = null;
 				Endpoint pendingConnectedSource = null;
-				var warnings = new List<string>();
 
 				if (_liteConnectivityInfoProvider.TryGetConnectionForDestination(endpoint, out var connection) &&
 					connection.IsConnected)
