@@ -4,6 +4,7 @@
 
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.GQI.Metrics;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element;
@@ -443,6 +444,7 @@
 			using var connectivity = new ConnectivityInfoProvider(api);
 
 			var source1Connectivity = connectivity.GetConnectivity(source1);
+			source1Connectivity.Warnings.Should().BeEmpty();
 			source1Connectivity.IsConnected.Should().BeTrue();
 			source1Connectivity.IsConnecting.Should().BeFalse();
 			source1Connectivity.IsDisconnecting.Should().BeFalse();
@@ -454,6 +456,7 @@
 			source1Connectivity.Levels[audioLevel].ConnectedDestinations.Should().BeEquivalentTo([audioDestination2]);
 
 			var destination1Connectivity = connectivity.GetConnectivity(destination1);
+			destination1Connectivity.Warnings.Should().BeEmpty();
 			destination1Connectivity.IsConnected.Should().BeTrue();
 			destination1Connectivity.IsConnecting.Should().BeTrue();
 			destination1Connectivity.IsDisconnecting.Should().BeFalse();
@@ -467,6 +470,7 @@
 			destination1Connectivity.Levels[audioLevel].PendingConnectedSource.Should().Be(audioSource3);
 
 			var source2Connectivity = connectivity.GetConnectivity(source2);
+			source2Connectivity.Warnings.Should().BeEmpty();
 			source2Connectivity.IsConnected.Should().BeTrue();
 			source2Connectivity.IsConnecting.Should().BeFalse();
 			source2Connectivity.IsDisconnecting.Should().BeFalse();
@@ -476,6 +480,7 @@
 			source2Connectivity.PendingConnectedDestinations.Should().BeEmpty();
 
 			var destination2Connectivity = connectivity.GetConnectivity(destination2);
+			destination2Connectivity.Warnings.Should().BeEmpty();
 			destination2Connectivity.IsConnected.Should().BeTrue();
 			destination2Connectivity.IsConnecting.Should().BeFalse();
 			destination2Connectivity.IsDisconnecting.Should().BeFalse();
@@ -484,6 +489,7 @@
 			destination2Connectivity.ConnectedDestinations.Should().BeEmpty();
 
 			var source3Connectivity = connectivity.GetConnectivity(source3);
+			source3Connectivity.Warnings.Should().BeEmpty();
 			source3Connectivity.IsConnected.Should().BeFalse();
 			source3Connectivity.IsConnecting.Should().BeTrue();
 			source3Connectivity.IsDisconnecting.Should().BeFalse();
@@ -493,6 +499,7 @@
 			source3Connectivity.PendingConnectedDestinations.Should().BeEquivalentTo([destination1]);
 
 			var destination3Connectivity = connectivity.GetConnectivity(destination3);
+			destination3Connectivity.Warnings.Should().BeEmpty();
 			destination3Connectivity.IsConnected.Should().BeFalse();
 			destination3Connectivity.IsConnecting.Should().BeFalse();
 			destination3Connectivity.IsDisconnecting.Should().BeFalse();
@@ -501,24 +508,28 @@
 			destination3Connectivity.ConnectedDestinations.Should().BeEmpty();
 
 			var source4Connectivity = connectivity.GetConnectivity(source4);
+			source4Connectivity.Warnings.Should().BeEmpty();
 			source4Connectivity.IsConnected.Should().BeTrue();
 			source4Connectivity.IsConnecting.Should().BeFalse();
 			source4Connectivity.IsDisconnecting.Should().BeTrue();
 			source4Connectivity.ConnectedState.Should().Be(ConnectionState.Partial);
 
 			var destination4Connectivity = connectivity.GetConnectivity(destination4);
+			destination4Connectivity.Warnings.Should().BeEmpty();
 			destination4Connectivity.IsConnected.Should().BeTrue();
 			destination4Connectivity.IsConnecting.Should().BeFalse();
 			destination4Connectivity.IsDisconnecting.Should().BeTrue();
 			destination4Connectivity.ConnectedState.Should().Be(ConnectionState.Partial);
 
 			var source5Connectivity = connectivity.GetConnectivity(source5);
+			source5Connectivity.Warnings.Should().BeEmpty();
 			source5Connectivity.IsConnected.Should().BeFalse();
 			source5Connectivity.IsConnecting.Should().BeFalse();
 			source5Connectivity.IsDisconnecting.Should().BeFalse();
 			source5Connectivity.ConnectedState.Should().Be(ConnectionState.Disconnected);
 
 			var destination5Connectivity = connectivity.GetConnectivity(destination5);
+			destination5Connectivity.Warnings.Should().BeEmpty();
 			destination5Connectivity.IsConnected.Should().BeTrue();
 			destination5Connectivity.IsConnecting.Should().BeFalse();
 			destination5Connectivity.IsDisconnecting.Should().BeFalse();
@@ -563,6 +574,7 @@
 
 			result.Keys.Should().BeEquivalentTo([source1, destination1, source2, destination2, source3, destination3]);
 
+			result[source1].Warnings.Should().BeEmpty();
 			result[source1].IsConnected.Should().BeTrue();
 			result[source1].IsConnecting.Should().BeFalse();
 			result[source1].IsDisconnecting.Should().BeFalse();
@@ -573,6 +585,7 @@
 			result[source1].Levels[videoLevel].ConnectedDestinations.Should().BeEquivalentTo([videoDestination1]);
 			result[source1].Levels[audioLevel].ConnectedDestinations.Should().BeEquivalentTo([audioDestination2]);
 
+			result[destination1].Warnings.Should().BeEmpty();
 			result[destination1].IsConnected.Should().BeTrue();
 			result[destination1].IsConnecting.Should().BeTrue();
 			result[destination1].IsDisconnecting.Should().BeFalse();
@@ -584,6 +597,7 @@
 			result[destination1].Levels[videoLevel].PendingConnectedSource.Should().Be(videoSource3);
 			result[destination1].Levels[audioLevel].PendingConnectedSource.Should().Be(audioSource3);
 
+			result[source2].Warnings.Should().BeEmpty();
 			result[source2].IsConnected.Should().BeTrue();
 			result[source2].IsConnecting.Should().BeFalse();
 			result[source2].IsDisconnecting.Should().BeFalse();
@@ -591,6 +605,7 @@
 			result[source2].ConnectedDestinations.Should().BeEquivalentTo([destination2]);
 			result[source2].PendingConnectedDestinations.Should().BeEmpty();
 
+			result[destination2].Warnings.Should().BeEmpty();
 			result[destination2].IsConnected.Should().BeTrue();
 			result[destination2].IsConnecting.Should().BeFalse();
 			result[destination2].IsDisconnecting.Should().BeFalse();
@@ -598,6 +613,7 @@
 			result[destination2].ConnectedSources.Should().BeEquivalentTo([source1, source2]);
 			result[destination2].PendingConnectedSources.Should().BeEmpty();
 
+			result[source3].Warnings.Should().BeEmpty();
 			result[source3].IsConnected.Should().BeFalse();
 			result[source3].IsConnecting.Should().BeTrue();
 			result[source3].IsDisconnecting.Should().BeFalse();
@@ -605,12 +621,43 @@
 			result[source3].ConnectedDestinations.Should().BeEmpty();
 			result[source3].PendingConnectedDestinations.Should().BeEquivalentTo([destination1]);
 
+			result[destination3].Warnings.Should().BeEmpty();
 			result[destination3].IsConnected.Should().BeFalse();
 			result[destination3].IsConnecting.Should().BeFalse();
 			result[destination3].IsDisconnecting.Should().BeFalse();
 			result[destination3].ConnectedState.Should().Be(ConnectionState.Disconnected);
 			result[destination3].ConnectedSources.Should().BeEmpty();
 			result[destination3].PendingConnectedSources.Should().BeEmpty();
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectivity_UnknownEndpointInVsg()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var videoLevel = api.Levels.ReadSingle("Video");
+
+			var videoSource1 = api.Endpoints.ReadSingle("Video Source 1");
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+			var videoDestination1 = api.Endpoints.ReadSingle("Video Destination 1");
+			var audioDestination2 = api.Endpoints.ReadSingle("Audio Destination 2");
+
+			var source1 = api.VirtualSignalGroups.ReadSingle("Source 1");
+
+			// Simulate a virtual signal group referencing an unknown endpoint
+			var unknownEndpointReference = new ApiObjectReference<Endpoint>(Guid.NewGuid());
+			source1.AssignEndpointToLevel(videoLevel, unknownEndpointReference);
+			api.VirtualSignalGroups.Update(source1);
+
+			simulation.CreateTestConnection(videoSource1, videoDestination1);
+			simulation.CreateTestConnection(audioSource1, audioDestination2);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var source1Connectivity = connectivity.GetConnectivity(source1);
+			source1Connectivity.IsConnected.Should().BeTrue();
+			source1Connectivity.Warnings.Should().BeEquivalentTo([$"Virtual signal group 'Source 1' [{source1.ID}] references endpoint {unknownEndpointReference.ID} on level 'Video', but the endpoint was not found."]);
 		}
 
 		#endregion
