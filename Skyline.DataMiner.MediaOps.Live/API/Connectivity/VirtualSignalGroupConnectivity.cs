@@ -110,12 +110,12 @@
 				int hash = 17;
 
 				hash = (hash * 31) + EqualityComparer<VirtualSignalGroup>.Default.GetHashCode(VirtualSignalGroup);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(Levels);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(ConnectedSources);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(PendingConnectedSources);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(ConnectedDestinations);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(PendingConnectedDestinations);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(Warnings);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(Levels, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(ConnectedSources, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(PendingConnectedSources, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(ConnectedDestinations, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(PendingConnectedDestinations, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(Warnings, ignoreOrder: true);
 
 				return hash;
 			}

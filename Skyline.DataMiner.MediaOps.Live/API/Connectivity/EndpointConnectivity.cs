@@ -152,7 +152,7 @@
 				hash = (hash * 31) + EqualityComparer<Endpoint>.Default.GetHashCode(PendingConnectedSource);
 				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(VirtualSignalGroups, ignoreOrder: true);
 				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(DestinationConnections, ignoreOrder: true);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(Warnings);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(Warnings, ignoreOrder: true);
 
 				return hash;
 			}
