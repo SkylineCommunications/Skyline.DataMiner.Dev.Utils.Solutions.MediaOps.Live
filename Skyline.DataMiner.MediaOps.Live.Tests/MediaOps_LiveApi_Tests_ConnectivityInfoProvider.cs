@@ -660,6 +660,148 @@
 			source1Connectivity.Warnings.Should().BeEquivalentTo([$"Virtual signal group 'Source 1' [{source1.ID}] references endpoint {unknownEndpointReference.ID} on level 'Video', but the endpoint was not found."]);
 		}
 
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_VirtualSignalGroup_GetConnectivity_UnknownLevelInVsg()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+
+			var source1 = api.VirtualSignalGroups.ReadSingle("Source 1");
+
+			// Simulate a virtual signal group referencing an unknown level
+			var unknownLevelReference = new ApiObjectReference<Level>(Guid.NewGuid());
+			source1.AssignEndpointToLevel(unknownLevelReference, (ApiObjectReference<Endpoint>)audioSource1);
+			api.VirtualSignalGroups.Update(source1);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var source1Connectivity = connectivity.GetConnectivity(source1);
+			source1Connectivity.Warnings.Should().BeEquivalentTo([$"Virtual signal group 'Source 1' [{source1.ID}] references level {unknownLevelReference.ID}, but the level was not found."]);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity_SourceConnectedToUnknownDestination()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+
+			// Directly add a connection row with an unknown destination to the mediation element's connections table
+			var unknownDestinationId = Guid.NewGuid();
+			var mediationElement = simulation.Dms.Agents[123].Elements[1000];
+			var connectionsTable = mediationElement.GetTableParameter(5000);
+			connectionsTable.SetRow(
+				unknownDestinationId.ToString(),
+				[
+					unknownDestinationId.ToString(),
+					"Unknown Destination",
+					1, // IsConnected=true
+					audioSource1.ID.ToString(),
+					audioSource1.Name,
+				]);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var audioSource1Connectivity = connectivity.GetConnectivity(audioSource1);
+			audioSource1Connectivity.IsConnected.Should().BeTrue();
+			audioSource1Connectivity.Warnings.Should().BeEquivalentTo([$"Source endpoint '{audioSource1.Name}' [{audioSource1.ID}] has an active connection to destination endpoint [{unknownDestinationId}], but the destination endpoint was not found."]);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity_SourcePendingActionForUnknownDestination()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var audioSource1 = api.Endpoints.ReadSingle("Audio Source 1");
+
+			// Directly add a pending action row with an unknown destination to the mediation element's pending actions table
+			var unknownDestinationId = Guid.NewGuid();
+			var mediationElement = simulation.Dms.Agents[123].Elements[1000];
+			var pendingActionsTable = mediationElement.GetTableParameter(3000);
+			pendingActionsTable.SetRow(
+				unknownDestinationId.ToString(),
+				[
+					unknownDestinationId.ToString(),
+					"Unknown Destination",
+					(int)PendingConnectionActionType.Connect,
+					DateTime.Now.ToOADate(),
+					audioSource1.ID.ToString(),
+					audioSource1.Name,
+				]);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var audioSource1Connectivity = connectivity.GetConnectivity(audioSource1);
+			audioSource1Connectivity.IsConnected.Should().BeFalse();
+			audioSource1Connectivity.IsConnecting.Should().BeFalse(); // Not set because destination could not be resolved
+			audioSource1Connectivity.Warnings.Should().BeEquivalentTo([$"Source endpoint '{audioSource1.Name}' [{audioSource1.ID}] has a pending {PendingConnectionActionType.Connect} action for destination {unknownDestinationId}, but the destination endpoint was not found."]);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity_DestinationConnectedToUnknownSource()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+
+			// Directly add a connection row with an unknown source to the mediation element's connections table
+			var unknownSourceId = Guid.NewGuid();
+			var mediationElement = simulation.Dms.Agents[123].Elements[1000];
+			var connectionsTable = mediationElement.GetTableParameter(5000);
+			connectionsTable.SetRow(
+				audioDestination1.ID.ToString(),
+				[
+					audioDestination1.ID.ToString(),
+					audioDestination1.Name,
+					1, // IsConnected=true
+					unknownSourceId.ToString(),
+					"Unknown Source",
+				]);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var audioDestination1Connectivity = connectivity.GetConnectivity(audioDestination1);
+			audioDestination1Connectivity.IsConnected.Should().BeTrue();
+			audioDestination1Connectivity.ConnectedSource.Should().BeNull();
+			audioDestination1Connectivity.Warnings.Should().BeEquivalentTo([$"Destination endpoint '{audioDestination1.Name}' [{audioDestination1.ID}] is connected to source {unknownSourceId}, but the source endpoint was not found."]);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_ConnectivityInfoProvider_Endpoint_GetConnectivity_DestinationPendingConnectFromUnknownSource()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var audioDestination1 = api.Endpoints.ReadSingle("Audio Destination 1");
+
+			// Directly add a pending action row with an unknown source to the mediation element's pending actions table
+			var unknownSourceId = Guid.NewGuid();
+			var mediationElement = simulation.Dms.Agents[123].Elements[1000];
+			var pendingActionsTable = mediationElement.GetTableParameter(3000);
+			pendingActionsTable.SetRow(
+				audioDestination1.ID.ToString(),
+				[
+					audioDestination1.ID.ToString(),
+					audioDestination1.Name,
+					(int)PendingConnectionActionType.Connect,
+					DateTime.Now.ToOADate(),
+					unknownSourceId.ToString(),
+					"Unknown Source",
+				]);
+
+			using var connectivity = new ConnectivityInfoProvider(api);
+
+			var audioDestination1Connectivity = connectivity.GetConnectivity(audioDestination1);
+			audioDestination1Connectivity.IsConnecting.Should().BeFalse();
+			audioDestination1Connectivity.PendingConnectedSource.Should().BeNull();
+			audioDestination1Connectivity.Warnings.Should().BeEquivalentTo([$"Destination endpoint '{audioDestination1.Name}' [{audioDestination1.ID}] has a pending connect action from source {unknownSourceId}, but the source endpoint was not found."]);
+		}
+
 		#endregion
 	}
 }
