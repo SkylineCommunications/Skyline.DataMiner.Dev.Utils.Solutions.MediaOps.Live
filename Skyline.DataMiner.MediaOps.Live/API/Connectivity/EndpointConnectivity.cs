@@ -17,7 +17,8 @@
 			bool isDisconnecting,
 			Endpoint connectedSource,
 			Endpoint pendingConnectedSource,
-			IReadOnlyCollection<EndpointConnection> destinationConnections)
+			IReadOnlyCollection<EndpointConnection> destinationConnections,
+			IReadOnlyCollection<string> warnings)
 		{
 			Endpoint = endpoint ?? throw new ArgumentNullException(nameof(endpoint));
 			VirtualSignalGroups = virtualSignalGroups ?? [];
@@ -27,6 +28,7 @@
 			ConnectedSource = connectedSource;
 			PendingConnectedSource = pendingConnectedSource;
 			DestinationConnections = destinationConnections ?? [];
+			Warnings = warnings ?? [];
 		}
 
 		/// <summary>
@@ -71,6 +73,18 @@
 		/// Empty if none.
 		/// </summary>
 		public IReadOnlyCollection<EndpointConnection> DestinationConnections { get; }
+
+		/// <summary>
+		/// Gets the warnings that occurred while building the connectivity information.
+		/// For example, when a connected source or destination endpoint could not be resolved.
+		/// Empty if there are no warnings.
+		/// </summary>
+		public IReadOnlyCollection<string> Warnings { get; }
+
+		/// <summary>
+		/// Gets a value indicating whether there are any warnings.
+		/// </summary>
+		public bool HasWarnings => Warnings.Count > 0;
 
 		/// <summary>
 		/// Gets the destinations this endpoint is connected to.
@@ -120,7 +134,8 @@
 				   EqualityComparer<Endpoint>.Default.Equals(ConnectedSource, other.ConnectedSource) &&
 				   EqualityComparer<Endpoint>.Default.Equals(PendingConnectedSource, other.PendingConnectedSource) &&
 				   CollectionEqualityHelper.Equals(VirtualSignalGroups, other.VirtualSignalGroups, ignoreOrder: true) &&
-				   CollectionEqualityHelper.Equals(DestinationConnections, other.DestinationConnections, ignoreOrder: true);
+				   CollectionEqualityHelper.Equals(DestinationConnections, other.DestinationConnections, ignoreOrder: true) &&
+				   CollectionEqualityHelper.Equals(Warnings, other.Warnings);
 		}
 
 		public override int GetHashCode()
@@ -137,6 +152,7 @@
 				hash = (hash * 31) + EqualityComparer<Endpoint>.Default.GetHashCode(PendingConnectedSource);
 				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(VirtualSignalGroups, ignoreOrder: true);
 				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(DestinationConnections, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(Warnings, ignoreOrder: true);
 
 				return hash;
 			}
