@@ -4,6 +4,7 @@
 	using System.Threading;
 
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions;
@@ -215,9 +216,15 @@
 					return baseConnection;
 				}
 
-				if (ConnectionHelper.TryCloneConnection(baseConnection, "MediaOps.Live - Connection", out var clonedConnection, out exception))
+				// Attempt to clone; if it fails, use the original connection
+				try
 				{
-					return clonedConnection;
+					return ConnectionHelper.CloneConnection(baseConnection, "MediaOps.Live - Cache Connection");
+				}
+				catch (DataMinerException ex) when (ex.Message.Contains("Cannot clone non-authenticated or non-regular connections"))
+				{
+					// Fall back to the original connection when cloning isn't supported
+					return baseConnection;
 				}
 			}
 			catch (Exception ex)
@@ -233,9 +240,22 @@
 		/// </summary>
 		private static void InvalidateIfConnectionDestroyed()
 		{
-			if (_instance == null || !_instance.Connection.IsShuttingDown)
+			if (_instance == null)
 			{
 				return;
+			}
+
+			try
+			{
+				// If this succeeds and connection is still active, nothing to do
+				if (!_instance.Connection.IsShuttingDown)
+				{
+					return;
+				}
+			}
+			catch
+			{
+				// Treat any exception as an inactive connection
 			}
 
 			// The connection is shutting down or already destroyed and can no longer be used.
@@ -243,7 +263,7 @@
 			{
 				_instance.Dispose();
 			}
-			catch (Exception)
+			catch
 			{
 				// ignore
 			}
