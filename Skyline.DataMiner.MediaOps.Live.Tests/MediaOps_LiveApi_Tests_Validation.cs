@@ -106,7 +106,7 @@
 
 			var ex = Assert.Throws<Exception>(
 				() => { api.Levels.CreateOrUpdate(level); });
-			Assert.AreEqual("Validation failed:\r\n- Transport type is mandatory.", ex.Message);
+			Assert.AreEqual($"Validation failed:{Environment.NewLine}- Transport type is mandatory.", ex.Message);
 		}
 
 		[TestMethod]
@@ -205,7 +205,7 @@
 
 			var ex = Assert.Throws<Exception>(
 				() => { api.Endpoints.CreateOrUpdate(endpoint); });
-			Assert.AreEqual("Validation failed:\r\n- Transport type is mandatory.", ex.Message);
+			Assert.AreEqual($"Validation failed:{Environment.NewLine}- Transport type is mandatory.", ex.Message);
 		}
 
 		[TestMethod]
