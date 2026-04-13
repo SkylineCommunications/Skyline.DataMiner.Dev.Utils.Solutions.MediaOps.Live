@@ -51,6 +51,11 @@
 
 		internal void ExecuteEventsNow(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents, PerformanceTracker performanceTracker)
 		{
+			ExecuteEventsNowAsync(orchestrationEvents, performanceTracker).GetAwaiter().GetResult();
+		}
+
+		internal async Task ExecuteEventsNowAsync(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents, PerformanceTracker performanceTracker)
+		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				// Only allow execution of events that are in Draft or Confirmed state.
@@ -64,7 +69,7 @@
 					return;
 				}
 
-				ExecuteEventsAsync(eventsToExecute, performanceTracker).GetAwaiter().GetResult();
+				await ExecuteEventsAsync(eventsToExecute, performanceTracker);
 			}
 		}
 
