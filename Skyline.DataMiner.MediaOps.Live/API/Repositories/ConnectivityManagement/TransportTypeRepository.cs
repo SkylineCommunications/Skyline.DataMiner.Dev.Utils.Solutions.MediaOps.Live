@@ -96,26 +96,18 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 
 		private void CheckIfStillInUse(ICollection<TransportType> transportTypes)
 		{
-			var inUse = new List<TransportType>();
+			var transportTypesInUse = new List<TransportType>();
 			var referencingLevels = new Dictionary<Guid, Level>();
 			var referencingEndpoints = new Dictionary<Guid, Endpoint>();
 
 			foreach (var tt in transportTypes)
 			{
-				var levelFilter = new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Level.Id),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.TransportType).Equal(tt.ID));
-
-				var endpointFilter = new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType).Equal(tt.ID));
-
-				var levels = Helper.DomInstances.Read(levelFilter).Select(d => new Level(d)).ToList();
-				var endpoints = Helper.DomInstances.Read(endpointFilter).Select(d => new Endpoint(d)).ToList();
+				var levels = Api.Levels.Read(LevelExposers.TransportType.UncheckedEqual(tt)).ToList();
+				var endpoints = Api.Endpoints.Read(EndpointExposers.TransportType.UncheckedEqual(tt)).ToList();
 
 				if (levels.Count > 0 || endpoints.Count > 0)
 				{
-					inUse.Add(tt);
+					transportTypesInUse.Add(tt);
 
 					foreach (var level in levels)
 					{
@@ -129,9 +121,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 				}
 			}
 
-			if (inUse.Count > 0)
+			if (transportTypesInUse.Count > 0)
 			{
-				throw new TransportTypeInUseException("One or more transport types are still in use", inUse, referencingLevels.Values.ToList(), referencingEndpoints.Values.ToList());
+				throw new TransportTypeInUseException("One or more transport types are still in use", transportTypesInUse, referencingLevels.Values.ToList(), referencingEndpoints.Values.ToList());
 			}
 		}
 	}

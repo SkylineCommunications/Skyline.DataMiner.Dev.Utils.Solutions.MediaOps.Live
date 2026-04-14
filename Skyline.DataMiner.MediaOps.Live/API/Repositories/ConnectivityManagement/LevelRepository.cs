@@ -134,20 +134,16 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 
 		private void CheckIfStillInUse(ICollection<Level> instances)
 		{
-			var inUse = new List<Level>();
+			var levelsInUse = new List<Level>();
 			var referencingVsgs = new Dictionary<Guid, VirtualSignalGroup>();
 
 			foreach (var level in instances)
 			{
-				var filter = new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level).Equal(level.ID));
-
-				var vsgs = Helper.DomInstances.Read(filter).Select(d => new VirtualSignalGroup(d)).ToList();
+				var vsgs = Api.VirtualSignalGroups.Read(VirtualSignalGroupExposers.Level.Equal(level)).ToList();
 
 				if (vsgs.Count > 0)
 				{
-					inUse.Add(level);
+					levelsInUse.Add(level);
 
 					foreach (var vsg in vsgs)
 					{
@@ -156,9 +152,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 				}
 			}
 
-			if (inUse.Count > 0)
+			if (levelsInUse.Count > 0)
 			{
-				throw new LevelInUseException("One or more levels are still in use", inUse, referencingVsgs.Values.ToList());
+				throw new LevelInUseException("One or more levels are still in use", levelsInUse, referencingVsgs.Values.ToList());
 			}
 		}
 	}

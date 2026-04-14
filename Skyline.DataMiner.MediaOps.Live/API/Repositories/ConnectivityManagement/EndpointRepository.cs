@@ -229,20 +229,16 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 
 		private void CheckIfStillInUse(ICollection<Endpoint> instances)
 		{
-			var inUse = new List<Endpoint>();
+			var endpointsInUse = new List<Endpoint>();
 			var referencingVsgs = new Dictionary<Guid, VirtualSignalGroup>();
 
 			foreach (var endpoint in instances)
 			{
-				var filter = new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint).Equal(endpoint.ID));
-
-				var vsgs = Helper.DomInstances.Read(filter).Select(d => new VirtualSignalGroup(d)).ToList();
+				var vsgs = Api.VirtualSignalGroups.Read(VirtualSignalGroupExposers.Endpoint.Equal(endpoint)).ToList();
 
 				if (vsgs.Count > 0)
 				{
-					inUse.Add(endpoint);
+					endpointsInUse.Add(endpoint);
 
 					foreach (var vsg in vsgs)
 					{
@@ -251,9 +247,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 				}
 			}
 
-			if (inUse.Count > 0)
+			if (endpointsInUse.Count > 0)
 			{
-				throw new EndpointInUseException("One or more endpoints are still in use", inUse, referencingVsgs.Values.ToList());
+				throw new EndpointInUseException("One or more endpoints are still in use", endpointsInUse, referencingVsgs.Values.ToList());
 			}
 		}
 	}
