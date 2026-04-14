@@ -444,6 +444,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 				foreach (Connection connection in connections.Where(x => x.HasDestination()))
 				{
 					VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
+
 					lockRequests.Add(new VirtualSignalGroupLockRequest(
 						dstVirtualSignalGroup,
 						"Orchestration Engine",
