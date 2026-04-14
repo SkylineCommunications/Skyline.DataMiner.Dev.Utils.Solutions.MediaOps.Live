@@ -298,6 +298,8 @@
 			var element = Dms.GetOrCreateAgent(dmaId)
 				.CreateElement(elementId, name, Constants.MediationProtocolName);
 
+			element.CreateStandaloneParameter(9000000); // Interapp receiver
+
 			var elementsTable = element.CreateTable(MediationElement.ElementsTableId);
 			elementsTable.AddColumnMapping(0, 1001); // Element ID
 			elementsTable.AddColumnMapping(1, 1002); // Element name

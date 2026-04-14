@@ -444,13 +444,23 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 				throw new InvalidOperationException($"Element with ID {msg.ElId} not found in DMA {msg.DataMinerID}.");
 			}
 
-			if (!element.TryGetStandaloneParameter(msg.ParameterId, out StandaloneParameter param))
+			if (element.TryGetSpecialParameterValue(msg.ParameterId, out var specialValue))
 			{
-				param = element.CreateStandaloneParameter(msg.ParameterId);
+				throw new InvalidOperationException($"Parameter with ID {msg.ParameterId} in Element {msg.ElId} on DMA {msg.DataMinerID} is a special parameter and cannot be set.");
 			}
-
-			var rawValue = msg.Value?.InteropValue;
-			param.SetValue(rawValue);
+			else if (element.TryGetStandaloneParameter(msg.ParameterId, out StandaloneParameter param))
+			{
+				var rawValue = msg.Value?.InteropValue;
+				param.SetValue(rawValue);
+			}
+			else if (element.TryGetTableByColumnParameterId(msg.ParameterId, out TableParameter table))
+			{
+				throw new NotImplementedException($"Setting table parameters is not implemented. Parameter ID: {msg.ParameterId}, Element ID: {msg.ElId}, DMA ID: {msg.DataMinerID}");
+			}
+			else
+			{
+				throw new InvalidOperationException($"Parameter with ID {msg.ParameterId} not found in Element {msg.ElId} on DMA {msg.DataMinerID}.");
+			}
 
 			yield return new SetParameterResponseMessage();
 		}
