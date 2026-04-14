@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
@@ -482,6 +483,94 @@ public class OrchestrationHelper
 
 		Dictionary<Guid, OrchestrationEventConfiguration> eventConfigs = GetEventsAsEventConfigurations(orchestrationEvents);
 		ExecuteEventsNow(eventConfigs.Values, mediaOpsPlanHelper);
+	}
+
+	/// <summary>
+	///     Start asynchronous execution for an event, based on ID.
+	/// </summary>
+	/// <param name="orchestrationIds">The IDs of the events to execute.</param>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
+	/// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+	public async Task ExecuteEventsNowAsync(IEnumerable<Guid> orchestrationIds, IMediaOpsPlanHelper mediaOpsPlanHelper, OrchestrationSettings settings = null)
+	{
+		if (orchestrationIds is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationIds));
+		}
+
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
+		List<Guid> eventIds = orchestrationIds.ToList();
+		if (!eventIds.Any())
+		{
+			return;
+		}
+
+		List<OrchestrationEventConfiguration> orchestrationEvents = GetEventConfigurationsById(eventIds).ToList();
+		await ExecuteEventsNowAsync(orchestrationEvents, mediaOpsPlanHelper, settings);
+	}
+
+	/// <summary>
+	///     Start asynchronous execution for a set of events.
+	/// </summary>
+	/// <param name="orchestrationEvents">The events to execute.</param>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
+	/// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+	public async Task ExecuteEventsNowAsync(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents, IMediaOpsPlanHelper mediaOpsPlanHelper, OrchestrationSettings settings = null)
+	{
+		if (orchestrationEvents is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationEvents));
+		}
+
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-ExecuteEventsNowAsync")))
+		using (PerformanceTracker performanceTracker = new(collector))
+		{
+			var eventExecutionHelper = new OrchestrationEventExecutionHelper(_api, mediaOpsPlanHelper, settings);
+
+			IEnumerable<OrchestrationEventConfiguration> events = orchestrationEvents.ToList();
+			if (!events.Any())
+			{
+				return;
+			}
+
+			// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
+			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > DateTimeOffset.Now));
+
+			await eventExecutionHelper.ExecuteEventsNowAsync(events, performanceTracker);
+		}
+	}
+
+	/// <summary>
+	///     Start asynchronous execution for a set of events.
+	/// </summary>
+	/// <param name="orchestrationEvents">The events to execute.</param>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	/// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
+	public async Task ExecuteEventsNowAsync(IEnumerable<OrchestrationEvent> orchestrationEvents, IMediaOpsPlanHelper mediaOpsPlanHelper)
+	{
+		if (orchestrationEvents is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationEvents));
+		}
+
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
+		Dictionary<Guid, OrchestrationEventConfiguration> eventConfigs = GetEventsAsEventConfigurations(orchestrationEvents);
+		await ExecuteEventsNowAsync(eventConfigs.Values, mediaOpsPlanHelper);
 	}
 
 	/// <summary>
