@@ -1,8 +1,9 @@
-﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Runtime.ExceptionServices;
 	using System.Text.RegularExpressions;
 	using System.Threading;
 	using System.Threading.Tasks;
@@ -349,15 +350,41 @@
 				}
 
 				// Perform disconnects
-				var takeHelper = _api.GetConnectionHandler();
+				ICollection<VsgDisconnectResult> results = null;
+				Exception disconnectException = null;
 
-				var results = await takeHelper.DisconnectAsync(
-					requests,
-					performanceTracker,
-					new() { WaitForCompletion = true, BypassLockValidation = true });
+				try
+				{
+					var takeHelper = _api.GetConnectionHandler();
+					results = await takeHelper.DisconnectAsync(
+						requests,
+						performanceTracker,
+						new() { WaitForCompletion = true, BypassLockValidation = true });
+				}
+				catch (Exception ex)
+				{
+					disconnectException = ex;
+				}
 
-				// Unlock all involved VSGs after disconnect
-				_api.VirtualSignalGroups.UnlockVirtualSignalGroups(virtualSignalGroupsToUnlock);
+				try
+				{
+					// Unlock all involved VSGs after disconnect
+					_api.VirtualSignalGroups.UnlockVirtualSignalGroups(virtualSignalGroupsToUnlock);
+				}
+				catch (Exception ex)
+				{
+					if (disconnectException != null)
+					{
+						throw new AggregateException("Disconnect and unlock both failed.", disconnectException, ex);
+					}
+
+					throw;
+				}
+
+				if (disconnectException != null)
+				{
+					ExceptionDispatchInfo.Capture(disconnectException).Throw();
+				}
 
 				// Return results
 				return results;
@@ -417,7 +444,6 @@
 				foreach (Connection connection in connections.Where(x => x.HasDestination()))
 				{
 					VirtualSignalGroup dstVirtualSignalGroup = allInvolvedVsgs[connection.DestinationVsg.Value.ID];
-
 					lockRequests.Add(new VirtualSignalGroupLockRequest(
 						dstVirtualSignalGroup,
 						"Orchestration Engine",
