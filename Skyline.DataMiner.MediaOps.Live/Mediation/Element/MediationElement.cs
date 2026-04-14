@@ -145,20 +145,20 @@
 				.Select(row => Convert.ToString(row[0]));
 		}
 
-		public string GetConnectionHandlerScriptName(IDmsElement destinationElement)
+		public string GetConnectionHandlerScriptName(IDmsElement mediatedElement)
 		{
-			if (destinationElement is null)
+			if (mediatedElement is null)
 			{
-				throw new ArgumentNullException(nameof(destinationElement));
+				throw new ArgumentNullException(nameof(mediatedElement));
 			}
 
 			var scriptColumn = DmsElement.GetTable(ElementsTableId).GetColumn<string>(1003);
 
-			var script = scriptColumn.GetValue(destinationElement.DmsElementId.Value, KeyType.PrimaryKey);
+			var script = scriptColumn.GetValue(mediatedElement.DmsElementId.Value, KeyType.PrimaryKey);
 
 			if (String.IsNullOrEmpty(script))
 			{
-				throw new InvalidOperationException($"No connection handler script found for element '{destinationElement.Name}' in mediation element '{Name}'.");
+				throw new InvalidOperationException($"No connection handler script found for element '{mediatedElement.Name}' in mediation element '{Name}'.");
 			}
 
 			return script;

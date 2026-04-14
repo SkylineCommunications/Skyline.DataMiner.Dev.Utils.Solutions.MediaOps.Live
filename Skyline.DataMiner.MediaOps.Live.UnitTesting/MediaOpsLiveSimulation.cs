@@ -298,7 +298,11 @@
 			var element = Dms.GetOrCreateAgent(dmaId)
 				.CreateElement(elementId, name, Constants.MediationProtocolName);
 
-			element.CreateTable(MediationElement.ElementsTableId);
+			var elementsTable = element.CreateTable(MediationElement.ElementsTableId);
+			elementsTable.AddColumnMapping(0, 1001); // Element ID
+			elementsTable.AddColumnMapping(1, 1002); // Element name
+			elementsTable.AddColumnMapping(2, 1003); // Connection handler script name
+
 			element.CreateTable(MediationElement.ConnectionHandlerScriptsTableId);
 			element.CreateTable(MediationElement.ConnectionsTableId);
 			element.CreateTable(MediationElement.PendingConnectionActionsTableId);

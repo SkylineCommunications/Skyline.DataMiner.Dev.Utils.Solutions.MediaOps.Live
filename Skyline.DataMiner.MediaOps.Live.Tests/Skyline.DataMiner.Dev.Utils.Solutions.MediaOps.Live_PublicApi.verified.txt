@@ -1401,7 +1401,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element
         public static string ProtocolName { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.MediationElementSubscription CreateSubscription() { }
         public override bool Equals(object obj) { }
-        public string GetConnectionHandlerScriptName(Skyline.DataMiner.Core.DataMinerSystem.Common.IDmsElement destinationElement) { }
+        public string GetConnectionHandlerScriptName(Skyline.DataMiner.Core.DataMinerSystem.Common.IDmsElement mediatedElement) { }
         public System.Collections.Generic.IEnumerable<string> GetConnectionHandlerScriptNames() { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection> GetConnections() { }
         public override int GetHashCode() { }
