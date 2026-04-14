@@ -1,18 +1,21 @@
-﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
+
 	using SLDataGateway.API.Types.Querying;
 
 	public class EndpointRepository : Repository<Endpoint>
@@ -211,32 +214,46 @@
 				endpointsAfterSave[instance.ID] = instance;
 			}
 
-			var duplicates = endpointsAfterSave.Values
+			var duplicateGroups = endpointsAfterSave.Values
 				.GroupBy(x => (x.Role, x.Name))
 				.Where(g => g.Count() > 1)
-				.Select(g => g.Key.Name)
 				.ToList();
 
-			if (duplicates.Count > 0)
+			if (duplicateGroups.Count > 0)
 			{
-				var names = String.Join(", ", duplicates.OrderBy(x => x, new NaturalSortComparer()));
-				throw new InvalidOperationException($"Cannot save endpoints. The following names are already in use: {names}");
+				var duplicateNames = duplicateGroups.Select(g => g.Key.Name).Distinct().ToList();
+				var names = String.Join(", ", duplicateNames.OrderBy(x => x, new NaturalSortComparer()));
+				throw new DuplicateNamesException($"Cannot save endpoints. The following names are already in use: {names}", duplicateNames);
 			}
 		}
 
 		private void CheckIfStillInUse(ICollection<Endpoint> instances)
 		{
-			FilterElement<DomInstance> CreateFilter(Endpoint e) =>
-				new ORFilterElement<DomInstance>(
-					new ANDFilterElement<DomInstance>(
-						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
-						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint).Equal(e.ID)));
+			var inUse = new List<Endpoint>();
+			var referencingVsgs = new Dictionary<Guid, VirtualSignalGroup>();
 
-			var virtualSignalGroups = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Helper.DomInstances.Read);
-
-			if (virtualSignalGroups.Any())
+			foreach (var endpoint in instances)
 			{
-				throw new InvalidOperationException("One or more endpoints are still in use");
+				var filter = new ANDFilterElement<DomInstance>(
+					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
+					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Endpoint).Equal(endpoint.ID));
+
+				var vsgs = Helper.DomInstances.Read(filter).Select(d => new VirtualSignalGroup(d)).ToList();
+
+				if (vsgs.Count > 0)
+				{
+					inUse.Add(endpoint);
+
+					foreach (var vsg in vsgs)
+					{
+						referencingVsgs[vsg.ID] = vsg;
+					}
+				}
+			}
+
+			if (inUse.Count > 0)
+			{
+				throw new EndpointInUseException("One or more endpoints are still in use", inUse, referencingVsgs.Values.ToList());
 			}
 		}
 	}

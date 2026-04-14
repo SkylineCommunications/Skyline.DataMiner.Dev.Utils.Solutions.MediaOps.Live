@@ -1,4 +1,4 @@
-﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;
@@ -7,6 +7,7 @@
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
@@ -303,16 +304,16 @@
 			}
 
 			// Check for duplicate names in the projected view.
-			var duplicates = vsgsAfterSave.Values
+			var duplicateGroups = vsgsAfterSave.Values
 				.GroupBy(x => (x.Role, x.Name))
 				.Where(g => g.Count() > 1)
-				.Select(g => g.Key.Name)
 				.ToList();
 
-			if (duplicates.Count > 0)
+			if (duplicateGroups.Count > 0)
 			{
-				var names = String.Join(", ", duplicates.OrderBy(x => x, new NaturalSortComparer()));
-				throw new InvalidOperationException($"Cannot save VSGs. The following names are already in use: {names}");
+				var duplicateNames = duplicateGroups.Select(g => g.Key.Name).Distinct().ToList();
+				var names = String.Join(", ", duplicateNames.OrderBy(x => x, new NaturalSortComparer()));
+				throw new DuplicateNamesException($"Cannot save VSGs. The following names are already in use: {names}", duplicateNames);
 			}
 		}
 	}
