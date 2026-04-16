@@ -431,8 +431,8 @@
 
 					if (elementId == null)
 					{
-						// Skip connections without a valid destination element
-						continue;
+						throw new InvalidOperationException(
+							$"Cannot resolve destination elements. Missing element for endpoints: {String.Join(", ", group.Select(ctx => ctx.Destination.Name))}");
 					}
 
 					// Get the element once for this group
@@ -479,7 +479,9 @@
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				foreach (var group in takeContexts.GroupBy(x => new { x.MediationElement, x.DestinationElement }))
+				foreach (var group in takeContexts
+					.Where(x => x.MediationElement != null)
+					.GroupBy(x => new { x.MediationElement, x.DestinationElement }))
 				{
 					var mediationElement = group.Key.MediationElement;
 					var destinationElement = group.Key.DestinationElement;

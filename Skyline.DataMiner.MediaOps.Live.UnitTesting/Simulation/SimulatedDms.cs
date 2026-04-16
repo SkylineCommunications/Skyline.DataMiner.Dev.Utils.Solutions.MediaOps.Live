@@ -1,11 +1,13 @@
-﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 {
 	using System;
 	using System.Collections;
 	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Newtonsoft.Json;
+
 	using Skyline.DataMiner.Net.AppPackages;
 	using Skyline.DataMiner.Net.AppPackages.Messages;
 	using Skyline.DataMiner.Net.Automation;
@@ -18,6 +20,7 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Connection;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Parameters;
 	using Skyline.DataMiner.Utils.DOM.UnitTesting;
+
 	using Parameter = Skyline.DataMiner.Net.Profiles.Parameter;
 	using ParameterValue = Skyline.DataMiner.Net.Profiles.ParameterValue;
 
@@ -238,6 +241,10 @@
 					responses = HandleMessage(msg);
 					return true;
 
+				case SetParameterMessage msg:
+					responses = HandleMessage(msg);
+					return true;
+
 				case SetDataMinerInfoMessage msg:
 					responses = HandleMessage(msg);
 					return true;
@@ -400,6 +407,17 @@
 			{
 				paramValue = specialValue;
 			}
+			else if (element.TryGetTableByColumnParameterId(msg.ParameterId, out TableParameter table))
+			{
+				if (table.TryGetCellValue(msg.ParameterId, msg.TableIndex, out var cellValue))
+				{
+					paramValue = new Net.Messages.ParameterValue(Convert.ToString(cellValue));
+				}
+				else
+				{
+					throw new InvalidOperationException($"Cell with index {msg.TableIndex} not found in table with ID {table.Id} in Element {msg.ElId} on DMA {msg.DataMinerID}.");
+				}
+			}
 			else if (element.TryGetStandaloneParameter(msg.ParameterId, out StandaloneParameter param))
 			{
 				paramValue = param.ToParameterValue();
@@ -416,6 +434,35 @@
 				ParameterId = msg.ParameterId,
 				Value = paramValue,
 			};
+		}
+
+		private IEnumerable<DMSMessage> HandleMessage(SetParameterMessage msg)
+		{
+			if (!Agents.TryGetValue(msg.DataMinerID, out SimulatedDma dma) ||
+				!dma.Elements.TryGetValue(msg.ElId, out SimulatedElement element))
+			{
+				throw new InvalidOperationException($"Element with ID {msg.ElId} not found in DMA {msg.DataMinerID}.");
+			}
+
+			if (element.TryGetSpecialParameterValue(msg.ParameterId, out var specialValue))
+			{
+				throw new InvalidOperationException($"Parameter with ID {msg.ParameterId} in Element {msg.ElId} on DMA {msg.DataMinerID} is a special parameter and cannot be set.");
+			}
+			else if (element.TryGetStandaloneParameter(msg.ParameterId, out StandaloneParameter param))
+			{
+				var rawValue = msg.Value?.InteropValue;
+				param.SetValue(rawValue);
+			}
+			else if (element.TryGetTableByColumnParameterId(msg.ParameterId, out TableParameter table))
+			{
+				throw new NotImplementedException($"Setting table parameters is not implemented. Parameter ID: {msg.ParameterId}, Element ID: {msg.ElId}, DMA ID: {msg.DataMinerID}");
+			}
+			else
+			{
+				throw new InvalidOperationException($"Parameter with ID {msg.ParameterId} not found in Element {msg.ElId} on DMA {msg.DataMinerID}.");
+			}
+
+			yield return new SetParameterResponseMessage();
 		}
 
 		private IEnumerable<DMSMessage> HandleMessage(SetDataMinerInfoMessage msg)
