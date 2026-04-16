@@ -376,6 +376,48 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
         public System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectRequest> FailedRequests { get; }
     }
     [System.Serializable]
+    public class DuplicateLevelNumbersException : System.Exception
+    {
+        public DuplicateLevelNumbersException() { }
+        public DuplicateLevelNumbersException(string message) { }
+        protected DuplicateLevelNumbersException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+        public DuplicateLevelNumbersException(string message, System.Collections.Generic.IReadOnlyCollection<long> duplicateNumbers) { }
+        public DuplicateLevelNumbersException(string message, System.Exception innerException) { }
+        public System.Collections.Generic.IReadOnlyCollection<long> DuplicateNumbers { get; }
+    }
+    [System.Serializable]
+    public class DuplicateNamesException : System.Exception
+    {
+        public DuplicateNamesException() { }
+        public DuplicateNamesException(string message) { }
+        protected DuplicateNamesException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+        public DuplicateNamesException(string message, System.Collections.Generic.IReadOnlyCollection<string> duplicateNames) { }
+        public DuplicateNamesException(string message, System.Exception innerException) { }
+        public System.Collections.Generic.IReadOnlyCollection<string> DuplicateNames { get; }
+    }
+    [System.Serializable]
+    public class EndpointInUseException : System.Exception
+    {
+        public EndpointInUseException() { }
+        public EndpointInUseException(string message) { }
+        protected EndpointInUseException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+        public EndpointInUseException(string message, System.Exception innerException) { }
+        public EndpointInUseException(string message, System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoints, System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> referencingVirtualSignalGroups) { }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> Endpoints { get; }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> ReferencingVirtualSignalGroups { get; }
+    }
+    [System.Serializable]
+    public class LevelInUseException : System.Exception
+    {
+        public LevelInUseException() { }
+        public LevelInUseException(string message) { }
+        protected LevelInUseException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+        public LevelInUseException(string message, System.Exception innerException) { }
+        public LevelInUseException(string message, System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level> levels, System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> referencingVirtualSignalGroups) { }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level> Levels { get; }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> ReferencingVirtualSignalGroups { get; }
+    }
+    [System.Serializable]
     public class ScriptExecutionFailedException : System.Exception
     {
         public ScriptExecutionFailedException() { }
@@ -389,6 +431,18 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
         public string ScriptName { get; }
         public System.Collections.Generic.IDictionary<string, string> ScriptOutput { get; }
         public override string ToString() { }
+    }
+    [System.Serializable]
+    public class TransportTypeInUseException : System.Exception
+    {
+        public TransportTypeInUseException() { }
+        public TransportTypeInUseException(string message) { }
+        protected TransportTypeInUseException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+        public TransportTypeInUseException(string message, System.Exception innerException) { }
+        public TransportTypeInUseException(string message, System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> transportTypes, System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level> referencingLevels, System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> referencingEndpoints) { }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> ReferencingEndpoints { get; }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level> ReferencingLevels { get; }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.TransportType> TransportTypes { get; }
     }
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Extensions

@@ -1,15 +1,18 @@
-﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
+
 	using SLDataGateway.API.Types.Querying;
 
 	public class LevelRepository : Repository<Level>
@@ -87,16 +90,16 @@
 				levelsAfterSave[instance.ID] = instance;
 			}
 
-			var duplicates = levelsAfterSave.Values
+			var duplicateGroups = levelsAfterSave.Values
 				.GroupBy(x => x.Name)
 				.Where(g => g.Count() > 1)
-				.Select(g => g.Key)
 				.ToList();
 
-			if (duplicates.Count > 0)
+			if (duplicateGroups.Count > 0)
 			{
-				var names = String.Join(", ", duplicates.OrderBy(x => x, new NaturalSortComparer()));
-				throw new InvalidOperationException($"Cannot save levels. The following names are already in use: {names}");
+				var duplicateNames = duplicateGroups.Select(g => g.Key).ToList();
+				var names = String.Join(", ", duplicateNames.OrderBy(x => x, new NaturalSortComparer()));
+				throw new DuplicateNamesException($"Cannot save levels. The following names are already in use: {names}", duplicateNames);
 			}
 		}
 
@@ -116,31 +119,42 @@
 				levelsAfterSave[instance.ID] = instance;
 			}
 
-			var duplicates = levelsAfterSave.Values
+			var duplicateGroups = levelsAfterSave.Values
 				.GroupBy(x => x.Number)
 				.Where(g => g.Count() > 1)
-				.Select(g => g.Key)
 				.ToList();
 
-			if (duplicates.Count > 0)
+			if (duplicateGroups.Count > 0)
 			{
-				var numbers = String.Join(", ", duplicates.OrderBy(x => x));
-				throw new InvalidOperationException($"Cannot save levels. The following numbers are already in use: {numbers}");
+				var duplicateNumbers = duplicateGroups.Select(g => g.Key).ToList();
+				var numbers = String.Join(", ", duplicateNumbers.OrderBy(x => x));
+				throw new DuplicateLevelNumbersException($"Cannot save levels. The following numbers are already in use: {numbers}", duplicateNumbers);
 			}
 		}
 
 		private void CheckIfStillInUse(ICollection<Level> instances)
 		{
-			FilterElement<DomInstance> CreateFilter(Level l) =>
-				new ANDFilterElement<DomInstance>(
-					DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.VirtualSignalGroup.Id),
-					DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLevel.Level).Equal(l.ID));
+			var levelsInUse = new List<Level>();
+			var referencingVsgs = new Dictionary<Guid, VirtualSignalGroup>();
 
-			var virtualSignalGroups = FilterQueryExecutor.RetrieveFilteredItems(instances, CreateFilter, Helper.DomInstances.Read);
-
-			if (virtualSignalGroups.Any())
+			foreach (var level in instances)
 			{
-				throw new InvalidOperationException("One or more levels are still in use");
+				var vsgs = Api.VirtualSignalGroups.Read(VirtualSignalGroupExposers.Level.Equal(level)).ToList();
+
+				if (vsgs.Count > 0)
+				{
+					levelsInUse.Add(level);
+
+					foreach (var vsg in vsgs)
+					{
+						referencingVsgs[vsg.ID] = vsg;
+					}
+				}
+			}
+
+			if (levelsInUse.Count > 0)
+			{
+				throw new LevelInUseException("One or more levels are still in use", levelsInUse, referencingVsgs.Values.ToList());
 			}
 		}
 	}
