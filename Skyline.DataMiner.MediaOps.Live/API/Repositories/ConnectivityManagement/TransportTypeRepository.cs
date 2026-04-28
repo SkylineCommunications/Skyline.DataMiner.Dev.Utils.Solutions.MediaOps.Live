@@ -1,15 +1,18 @@
-﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
 {
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
+
 	using SLDataGateway.API.Types.Querying;
 
 	public class TransportTypeRepository : Repository<TransportType>
@@ -78,35 +81,49 @@
 				transportTypesAfterSave[instance.ID] = instance;
 			}
 
-			var duplicates = transportTypesAfterSave.Values
+			var duplicateGroups = transportTypesAfterSave.Values
 				.GroupBy(x => x.Name)
 				.Where(g => g.Count() > 1)
-				.Select(g => g.Key)
 				.ToList();
 
-			if (duplicates.Count > 0)
+			if (duplicateGroups.Count > 0)
 			{
-				var names = String.Join(", ", duplicates.OrderBy(x => x, new NaturalSortComparer()));
-				throw new InvalidOperationException($"Cannot save transport types. The following names are already in use: {names}");
+				var duplicateNames = duplicateGroups.Select(g => g.Key).ToList();
+				var names = String.Join(", ", duplicateNames.OrderBy(x => x, new NaturalSortComparer()));
+				throw new DuplicateNamesException($"Cannot save transport types. The following names are already in use: {names}", duplicateNames);
 			}
 		}
 
 		private void CheckIfStillInUse(ICollection<TransportType> transportTypes)
 		{
-			FilterElement<DomInstance> CreateFilter(TransportType tt) =>
-				new ORFilterElement<DomInstance>(
-					new ANDFilterElement<DomInstance>(
-						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Level.Id),
-						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.LevelInfo.TransportType).Equal(tt.ID)),
-					new ANDFilterElement<DomInstance>(
-						DomInstanceExposers.DomDefinitionId.Equal(SlcConnectivityManagementIds.Definitions.Endpoint.Id),
-						DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.EndpointInfo.TransportType).Equal(tt.ID)));
+			var transportTypesInUse = new List<TransportType>();
+			var referencingLevels = new Dictionary<Guid, Level>();
+			var referencingEndpoints = new Dictionary<Guid, Endpoint>();
 
-			var instances = FilterQueryExecutor.RetrieveFilteredItems(transportTypes, CreateFilter, Helper.DomInstances.Read);
-
-			if (instances.Any())
+			foreach (var tt in transportTypes)
 			{
-				throw new InvalidOperationException("One or more transport types are still in use");
+				var levels = Api.Levels.Read(LevelExposers.TransportType.UncheckedEqual(tt)).ToList();
+				var endpoints = Api.Endpoints.Read(EndpointExposers.TransportType.UncheckedEqual(tt)).ToList();
+
+				if (levels.Count > 0 || endpoints.Count > 0)
+				{
+					transportTypesInUse.Add(tt);
+
+					foreach (var level in levels)
+					{
+						referencingLevels[level.ID] = level;
+					}
+
+					foreach (var endpoint in endpoints)
+					{
+						referencingEndpoints[endpoint.ID] = endpoint;
+					}
+				}
+			}
+
+			if (transportTypesInUse.Count > 0)
+			{
+				throw new TransportTypeInUseException("One or more transport types are still in use", transportTypesInUse, referencingLevels.Values.ToList(), referencingEndpoints.Values.ToList());
 			}
 		}
 	}

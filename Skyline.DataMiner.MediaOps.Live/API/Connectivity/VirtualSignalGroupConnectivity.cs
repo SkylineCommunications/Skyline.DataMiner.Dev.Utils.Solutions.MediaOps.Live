@@ -15,7 +15,8 @@
 			IReadOnlyCollection<VirtualSignalGroup> connectedSources,
 			IReadOnlyCollection<VirtualSignalGroup> pendingConnectedSources,
 			IReadOnlyCollection<VirtualSignalGroup> connectedDestinations,
-			IReadOnlyCollection<VirtualSignalGroup> pendingConnectedDestinations)
+			IReadOnlyCollection<VirtualSignalGroup> pendingConnectedDestinations,
+			IReadOnlyCollection<string> warnings)
 		{
 			VirtualSignalGroup = virtualSignalGroup ?? throw new ArgumentNullException(nameof(virtualSignalGroup));
 			Levels = levelsConnectivity ?? new Dictionary<Level, EndpointConnectivity>();
@@ -23,6 +24,7 @@
 			PendingConnectedSources = pendingConnectedSources ?? [];
 			ConnectedDestinations = connectedDestinations ?? [];
 			PendingConnectedDestinations = pendingConnectedDestinations ?? [];
+			Warnings = warnings ?? [];
 		}
 
 		/// <summary>
@@ -59,6 +61,18 @@
 		/// </summary>
 		public IReadOnlyCollection<VirtualSignalGroup> PendingConnectedDestinations { get; }
 
+		/// <summary>
+		/// Gets the warnings that occurred while building the connectivity information.
+		/// For example, when an endpoint or level referenced by the virtual signal group could not be found.
+		/// Empty if there are no warnings.
+		/// </summary>
+		public IReadOnlyCollection<string> Warnings { get; }
+
+		/// <summary>
+		/// Gets a value indicating whether there are any warnings.
+		/// </summary>
+		public bool HasWarnings => Warnings.Count > 0;
+
 		public ConnectionState ConnectedState =>
 			Levels.Values.All(x => x.IsConnected)
 				? ConnectionState.Connected
@@ -85,7 +99,8 @@
 				   CollectionEqualityHelper.Equals(ConnectedSources, other.ConnectedSources) &&
 				   CollectionEqualityHelper.Equals(PendingConnectedSources, other.PendingConnectedSources) &&
 				   CollectionEqualityHelper.Equals(ConnectedDestinations, other.ConnectedDestinations) &&
-				   CollectionEqualityHelper.Equals(PendingConnectedDestinations, other.PendingConnectedDestinations);
+				   CollectionEqualityHelper.Equals(PendingConnectedDestinations, other.PendingConnectedDestinations) &&
+				   CollectionEqualityHelper.Equals(Warnings, other.Warnings);
 		}
 
 		public override int GetHashCode()
@@ -95,11 +110,12 @@
 				int hash = 17;
 
 				hash = (hash * 31) + EqualityComparer<VirtualSignalGroup>.Default.GetHashCode(VirtualSignalGroup);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(Levels);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(ConnectedSources);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(PendingConnectedSources);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(ConnectedDestinations);
-				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(PendingConnectedDestinations);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(Levels, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(ConnectedSources, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(PendingConnectedSources, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(ConnectedDestinations, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(PendingConnectedDestinations, ignoreOrder: true);
+				hash = (hash * 31) + CollectionEqualityHelper.GetHashCode(Warnings, ignoreOrder: true);
 
 				return hash;
 			}

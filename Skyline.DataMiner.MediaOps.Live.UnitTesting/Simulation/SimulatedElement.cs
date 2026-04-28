@@ -146,6 +146,21 @@
 			return table;
 		}
 
+		public bool TryGetTableByColumnParameterId(int columnParameterId, out TableParameter table)
+		{
+			foreach (var param in _parameters.Values)
+			{
+				if (param is TableParameter t && t.HasColumn(columnParameterId))
+				{
+					table = t;
+					return true;
+				}
+			}
+
+			table = null;
+			return false;
+		}
+
 		internal LiteElementInfoEvent ToLiteElementInfo()
 		{
 			return new LiteElementInfoEvent

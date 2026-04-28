@@ -1,6 +1,6 @@
 # Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live
 
-This documentation describes how to use the public API exposed by `Skyline.DataMiner.Solutions.MediaOps.Live`.
+This documentation describes how to use the public API exposed by `Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live`.
 The API is intended to be used when developing custom solutions based on the MediaOps.LIVE solution.
 
 ## Installation
@@ -8,14 +8,14 @@ The API is intended to be used when developing custom solutions based on the Med
 Add the NuGet package to your solution:
 
 ```bash
-dotnet add package Skyline.DataMiner.Solutions.MediaOps.Live
+dotnet add package Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live
 ```
 
 Depending on your project type, one of the following additional packages is also required:
 
-- Automation scripts: `Skyline.DataMiner.Solutions.MediaOps.Live.Automation`
-- Protocols: `Skyline.DataMiner.Solutions.MediaOps.Live.Protocol`
-- GQI Ad-hoc data sources and custom operators: `Skyline.DataMiner.Solutions.MediaOps.Live.GQI`
+- Automation scripts: `Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Automation`
+- Protocols: `Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.Protocol`
+- GQI Ad-hoc data sources and custom operators: `Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live.GQI`
 
 > [!NOTE]
 > This library targets `.NET Framework 4.8`.

@@ -48,22 +48,6 @@
 			}
 		}
 
-		public static bool TryCloneConnection(IConnection baseConnection, string clientName, out IConnection connection, out Exception exception)
-		{
-			try
-			{
-				connection = CloneConnection(baseConnection, clientName);
-				exception = null;
-				return true;
-			}
-			catch (Exception ex)
-			{
-				connection = null;
-				exception = ex;
-				return false;
-			}
-		}
-
 		public static bool IsManagedDataMinerModule(IConnection connection)
 		{
 			if (connection == null)

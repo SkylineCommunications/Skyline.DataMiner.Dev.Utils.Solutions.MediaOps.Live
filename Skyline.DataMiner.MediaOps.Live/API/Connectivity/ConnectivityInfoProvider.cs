@@ -676,6 +676,8 @@
 
 			lock (_lock)
 			{
+				var warnings = new HashSet<string>();
+
 				var isConnected = false;
 				var isConnecting = false;
 				var isDisconnecting = false;
@@ -688,16 +690,20 @@
 				{
 					isConnected = true;
 
-					if (_vsgCache.TryGetEndpoint(connection.Destination, out var destination))
+					if (!_vsgCache.TryGetEndpoint(connection.Destination, out var destination))
 					{
-						destinationStates[destination] = EndpointConnectionState.Connected;
+						warnings.Add($"Source endpoint '{endpoint.Name}' [{endpoint.ID}] has an active connection to destination endpoint [{connection.Destination.ID}], but the destination endpoint was not found.");
+						continue;
 					}
+
+					destinationStates[destination] = EndpointConnectionState.Connected;
 				}
 
 				foreach (var pendingAction in pendingActions)
 				{
 					if (!_vsgCache.TryGetEndpoint(pendingAction.Destination, out var destination))
 					{
+						warnings.Add($"Source endpoint '{endpoint.Name}' [{endpoint.ID}] has a pending {pendingAction.Action} action for destination {pendingAction.Destination.ID}, but the destination endpoint was not found.");
 						continue;
 					}
 
@@ -726,7 +732,8 @@
 					isDisconnecting,
 					connectedSource: null,
 					pendingConnectedSource: null,
-					destinationConnections);
+					destinationConnections,
+					warnings);
 			}
 		}
 
@@ -744,6 +751,8 @@
 
 			lock (_lock)
 			{
+				var warnings = new HashSet<string>();
+
 				bool isConnected = false;
 				bool isConnecting = false;
 				bool isDisconnecting = false;
@@ -756,9 +765,9 @@
 					isConnected = true;
 
 					if (connection.ConnectedSource.HasValue &&
-						_vsgCache.TryGetEndpoint(connection.ConnectedSource.Value, out Endpoint connectedSourceEndpoint))
+						!_vsgCache.TryGetEndpoint(connection.ConnectedSource.Value, out connectedSource))
 					{
-						connectedSource = connectedSourceEndpoint;
+						warnings.Add($"Destination endpoint '{endpoint.Name}' [{endpoint.ID}] is connected to source {connection.ConnectedSource.Value.ID}, but the source endpoint was not found.");
 					}
 				}
 
@@ -766,12 +775,17 @@
 				{
 					if (pendingAction.Action == PendingConnectionActionType.Connect)
 					{
-						if (pendingAction.PendingSource.HasValue &&
-							_vsgCache.TryGetEndpoint(pendingAction.PendingSource.Value, out var pendingSource) &&
-							pendingSource != connectedSource)
+						if (pendingAction.PendingSource.HasValue)
 						{
-							isConnecting = true;
-							pendingConnectedSource = pendingSource;
+							if (!_vsgCache.TryGetEndpoint(pendingAction.PendingSource.Value, out var pendingSource))
+							{
+								warnings.Add($"Destination endpoint '{endpoint.Name}' [{endpoint.ID}] has a pending connect action from source {pendingAction.PendingSource.Value.ID}, but the source endpoint was not found.");
+							}
+							else if (pendingSource != connectedSource)
+							{
+								isConnecting = true;
+								pendingConnectedSource = pendingSource;
+							}
 						}
 					}
 					else if (pendingAction.Action == PendingConnectionActionType.Disconnect)
@@ -793,12 +807,14 @@
 					isDisconnecting,
 					connectedSource,
 					pendingConnectedSource,
-					destinationConnections: null);
+					destinationConnections: null,
+					warnings);
 			}
 		}
 
 		private VirtualSignalGroupConnectivity BuildVirtualSignalGroupConnectivity(VirtualSignalGroup virtualSignalGroup)
 		{
+			var warnings = new HashSet<string>();
 			var levelsConnectivity = new Dictionary<Level, EndpointConnectivity>();
 			var connectedSources = new HashSet<VirtualSignalGroup>();
 			var pendingConnectedSources = new HashSet<VirtualSignalGroup>();
@@ -807,14 +823,16 @@
 
 			foreach (var levelEndpoint in virtualSignalGroup.GetLevelEndpoints())
 			{
-				if (!_vsgCache.TryGetEndpoint(levelEndpoint.Endpoint, out var endpoint))
-				{
-					throw new InvalidOperationException($"Endpoint {levelEndpoint.Endpoint.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
-				}
-
 				if (!_levelsCache.TryGetLevel(levelEndpoint.Level, out var level))
 				{
-					throw new InvalidOperationException($"Level {levelEndpoint.Level.ID} not found for virtual signal group '{virtualSignalGroup.Name}'");
+					warnings.Add($"Virtual signal group '{virtualSignalGroup.Name}' [{virtualSignalGroup.ID}] references level {levelEndpoint.Level.ID}, but the level was not found.");
+					continue;
+				}
+
+				if (!_vsgCache.TryGetEndpoint(levelEndpoint.Endpoint, out var endpoint))
+				{
+					warnings.Add($"Virtual signal group '{virtualSignalGroup.Name}' [{virtualSignalGroup.ID}] references endpoint {levelEndpoint.Endpoint.ID} on level '{level.Name}', but the endpoint was not found.");
+					continue;
 				}
 
 				var endpointConnectivity = GetConnectivity(endpoint);
@@ -846,7 +864,8 @@
 				connectedSources,
 				pendingConnectedSources,
 				connectedDestinations,
-				pendingConnectedDestinations);
+				pendingConnectedDestinations,
+				warnings);
 		}
 
 		private sealed class InvalidationContext

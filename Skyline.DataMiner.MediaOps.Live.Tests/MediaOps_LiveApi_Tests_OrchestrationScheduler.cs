@@ -211,6 +211,89 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
+		public async Task MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteNowAsync()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var ev = new OrchestrationEvent()
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Test Event Confirmed",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+
+			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+
+			var planHelper = api.GetMediaOpsPlanHelper();
+			await api.Orchestration.ExecuteEventsNowAsync([ev], planHelper);
+
+			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.AreEqual(EventState.Completed, ev.EventState);
+		}
+
+		[TestMethod]
+		public async Task MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteNowAsyncWithSuccessfulScripts()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var ev = new OrchestrationEventConfiguration
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Test Event Confirmed",
+				GlobalOrchestrationScript = "Script_Success",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJobConfiguration(orchestrationJob);
+
+			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+
+			var planHelper = api.GetMediaOpsPlanHelper();
+			await api.Orchestration.ExecuteEventsNowAsync([ev], planHelper);
+
+			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.AreEqual(EventState.Completed, ev.EventState);
+		}
+
+		[TestMethod]
+		public async Task MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteNowAsyncWithFailedScripts()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var ev = new OrchestrationEventConfiguration
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Test Event Confirmed",
+				GlobalOrchestrationScript = "Script_Fail",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJobConfiguration(orchestrationJob);
+
+			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+
+			var planHelper = api.GetMediaOpsPlanHelper();
+			await api.Orchestration.ExecuteEventsNowAsync([ev], planHelper);
+
+			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.AreEqual(EventState.Failed, ev.EventState);
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_Reschedule()
 		{
 			var simulation = new MediaOpsLiveSimulation();

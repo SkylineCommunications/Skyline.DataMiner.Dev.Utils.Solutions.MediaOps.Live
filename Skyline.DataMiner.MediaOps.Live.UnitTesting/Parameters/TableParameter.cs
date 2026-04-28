@@ -9,6 +9,7 @@
 
 	public class TableParameter : ParameterBase
 	{
+		private readonly ConcurrentDictionary<int, int> _columnMappings = new();
 		private readonly ConcurrentDictionary<string, object[]> _rows = new();
 
 		public TableParameter(SimulatedElement element, int id) : base(element, id)
@@ -18,6 +19,16 @@
 		public int TableId => Id;
 
 		public IReadOnlyDictionary<string, object[]> Rows => _rows;
+
+		public void AddColumnMapping(int columnIndex, int columnParameterId)
+		{
+			_columnMappings[columnParameterId] = columnIndex;
+		}
+
+		public bool HasColumn(int columnParameterId)
+		{
+			return _columnMappings.ContainsKey(columnParameterId);
+		}
 
 		public void SetRow(string key, object[] row)
 		{
@@ -58,6 +69,20 @@
 				};
 				Element.Dma.NotifySubscriptions(e);
 			}
+		}
+
+		public bool TryGetCellValue(int columnParameterId, string tableIndex, out object cellValue)
+		{
+			if (_columnMappings.TryGetValue(columnParameterId, out int columnIndex) &&
+				Rows.TryGetValue(tableIndex, out var row) &&
+				columnIndex < row.Length)
+			{
+				cellValue = row[columnIndex];
+				return true;
+			}
+
+			cellValue = null;
+			return false;
 		}
 
 		internal ParameterValue ToParameterValue()
