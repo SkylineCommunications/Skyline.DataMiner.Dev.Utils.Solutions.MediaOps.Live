@@ -217,7 +217,8 @@
 					continue;
 				}
 
-				if (profileValues.Any(value => value.Name == scriptInputParam.Name))
+				if (profileValues.Any(value => value.Name == scriptInputParam.Name
+				|| (Guid.TryParse(value.Name, out var providedId) && providedId == scriptInputParam.ProfileParameterId)))
 				{
 					continue;
 				}
@@ -228,11 +229,6 @@
 			foreach (var scriptInputElement in scriptInfo.Elements)
 			{
 				if (arguments.Any(arg => arg.Name == scriptInputElement.Name && arg.Type == OrchestrationScriptArgumentType.Element))
-				{
-					continue;
-				}
-
-				if (profileValues.Any(value => value.Name == scriptInputElement.Name))
 				{
 					continue;
 				}
