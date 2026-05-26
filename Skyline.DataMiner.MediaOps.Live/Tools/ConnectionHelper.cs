@@ -35,7 +35,14 @@
 					return baseConnection;
 				}
 
-				var connection2 = ConnectionSettings.GetConnection("localhost", attributes);
+				var hostname = "localhost";
+
+				if (baseConnection is Connection baseConn)
+				{
+					hostname = baseConn.ConnectionString;
+				}
+
+				var connection2 = ConnectionSettings.GetConnection(hostname, attributes);
 				connection2.ClientApplicationName = clientName;
 				connection2.AuthenticateUsingTicket(ticket);
 				connection2.Subscribe();
