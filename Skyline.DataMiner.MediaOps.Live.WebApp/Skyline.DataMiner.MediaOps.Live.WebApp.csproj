@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+<PropertyGroup>
+<TargetFramework>net48</TargetFramework>
+<LangVersion>latest</LangVersion>
+<OutputType>Exe</OutputType>
+<RootNamespace>Skyline.DataMiner.MediaOps.Live.WebApp</RootNamespace>
+<AssemblyName>Skyline.DataMiner.MediaOps.Live.WebApp</AssemblyName>
+</PropertyGroup>
+<ItemGroup>
+<PackageReference Include="Microsoft.AspNet.WebApi.OwinSelfHost" Version="5.3.0" />
+<PackageReference Include="Microsoft.Owin.Host.HttpListener" Version="4.2.2" />
+<PackageReference Include="Microsoft.Owin.Hosting" Version="4.2.2" />
+<PackageReference Include="Microsoft.Owin.StaticFiles" Version="4.2.2" />
+<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+<PackageReference Include="Skyline.DataMiner.Utils.PerformanceAnalyzer" Version="3.0.2" />
+</ItemGroup>
+<ItemGroup>
+<ProjectReference Include="..\Skyline.DataMiner.MediaOps.Live\Skyline.DataMiner.MediaOps.Live.csproj" />
+</ItemGroup>
+<ItemGroup>
+<Content Include="Views\**\*" CopyToOutputDirectory="PreserveNewest" />
+<Content Include=".env" CopyToOutputDirectory="PreserveNewest" Condition="Exists('.env')" />
+</ItemGroup>
+</Project>

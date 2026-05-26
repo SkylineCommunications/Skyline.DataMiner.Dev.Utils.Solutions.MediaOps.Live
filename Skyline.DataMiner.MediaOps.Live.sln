@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.3.11520.95 d18.3
+VisualStudioVersion = 18.3.11520.95
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skyline.DataMiner.MediaOps.Live", "Skyline.DataMiner.MediaOps.Live\Skyline.DataMiner.MediaOps.Live.csproj", "{2C9B1C2B-BE7B-4C07-9F0D-365AE6F5F7FE}"
 EndProject
@@ -16,6 +16,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skyline.DataMiner.MediaOps.Live.GQI", "Skyline.DataMiner.MediaOps.Live.GQI\Skyline.DataMiner.MediaOps.Live.GQI.csproj", "{1C507AB0-3D8B-F644-1165-2C08C582F8E6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skyline.DataMiner.MediaOps.Live.Plan", "Skyline.DataMiner.MediaOps.Live.Plan\Skyline.DataMiner.MediaOps.Live.Plan.csproj", "{FEBBE668-9338-CB4E-D44C-41A411FD0168}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Skyline.DataMiner.MediaOps.Live.WebApp", "Skyline.DataMiner.MediaOps.Live.WebApp\Skyline.DataMiner.MediaOps.Live.WebApp.csproj", "{B0513061-4C1F-0D66-7F9C-CCF3DE076F70}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -51,6 +53,10 @@ Global
 		{FEBBE668-9338-CB4E-D44C-41A411FD0168}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FEBBE668-9338-CB4E-D44C-41A411FD0168}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FEBBE668-9338-CB4E-D44C-41A411FD0168}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0513061-4C1F-0D66-7F9C-CCF3DE076F70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0513061-4C1F-0D66-7F9C-CCF3DE076F70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0513061-4C1F-0D66-7F9C-CCF3DE076F70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0513061-4C1F-0D66-7F9C-CCF3DE076F70}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
