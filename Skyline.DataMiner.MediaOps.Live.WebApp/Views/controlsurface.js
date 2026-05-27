@@ -391,6 +391,18 @@ document.getElementById('btnConnect').onclick = async function() {
     var reqs = Object.values(requests);
     if (!reqs.length) return;
 
+    // Save original state for rollback on error
+    var originalState = reqs.map(function(req) {
+        var src = allSources.find(function(s) { return s.Id === req.SourceId; });
+        var dst = allDestinations.find(function(d) { return d.Id === req.DestinationId; });
+        return {
+            src: src,
+            dst: dst,
+            oldPendingSourceName: dst ? dst.PendingConnectedSourceName : null,
+            oldPendingDestinations: src ? (src.PendingDisconnectDestinations ? src.PendingDisconnectDestinations.slice() : null) : null
+        };
+    });
+
     // Optimistically update all affected destinations to show pending connects
     reqs.forEach(function(req) {
         var src = allSources.find(function(s) { return s.Id === req.SourceId; });
@@ -420,7 +432,20 @@ document.getElementById('btnConnect').onclick = async function() {
         }
         setStatus('Take initiated');
         // Wait for SSE event to update UI
-    } catch(e) { setStatus('Take failed'); showError(e.message); }
+    } catch(e) { 
+        // Rollback optimistic updates on error
+        originalState.forEach(function(state) {
+            if (state.dst) {
+                state.dst.PendingConnectedSourceName = state.oldPendingSourceName;
+            }
+            if (state.src) {
+                state.src.PendingDisconnectDestinations = state.oldPendingDestinations;
+            }
+        });
+        applyFilters();
+        setStatus('Take failed');
+        showError(e.message);
+    }
 };
 
 document.getElementById('btnDisconnect').onclick = async function() {
@@ -460,8 +485,11 @@ document.getElementById('btnDisconnectCancel').onclick = function() {
 document.getElementById('btnDoDisconnectLevels').onclick = async function() {
     if (!selectedDiscLevels.size) { setStatus('Select at least one level.'); return; }
 
-    // Optimistically update all affected sources to show pending disconnects
+    // Save original pending disconnects state for rollback on error
     var dst = selectedDestination;
+    var originalPendingDisconnects = dst && dst.PendingDisconnects ? JSON.parse(JSON.stringify(dst.PendingDisconnects)) : null;
+
+    // Optimistically update all affected sources to show pending disconnects
     if (dst && dst.ConnectedLevelMappings) {
         dst.ConnectedLevelMappings.forEach(function(mapping) {
             // Check if this level is being disconnected
@@ -494,7 +522,15 @@ document.getElementById('btnDoDisconnectLevels').onclick = async function() {
         setStatus('Release initiated');
         document.getElementById('disconnectModal').classList.remove('visible');
         // Wait for SSE event to update UI
-    } catch(e) { setStatus('Release failed'); showError(e.message); }
+    } catch(e) { 
+        // Rollback optimistic updates on error
+        if (dst) {
+            dst.PendingDisconnects = originalPendingDisconnects;
+        }
+        applyFilters();
+        setStatus('Release failed');
+        showError(e.message);
+    }
 };
 
 function setStatus(msg) { document.getElementById('status').textContent = msg; }
@@ -540,7 +576,8 @@ function showSourceConnectionsModal(source) {
             levelsDiv.className = 'src-conn-card-levels';
             mappings.forEach(function(m) {
                 var level = document.createElement('span');
-                level.className = 'src-conn-level';
+                var isShuffled = m.SourceLevel !== m.DestinationLevel;
+                level.className = 'src-conn-level' + (isShuffled ? ' shuffled' : '');
                 level.textContent = esc(m.SourceLevel) + ' \u2192 ' + esc(m.DestinationLevel);
                 levelsDiv.appendChild(level);
             });
@@ -577,8 +614,11 @@ async function performSourceDisconnect(sourceId, destinationId, mappings) {
     if (mappings.length === 0) return;
     setStatus('Releasing...');
 
-    // Optimistically update the destination's pending disconnect immediately
+    // Save original pending disconnects state for rollback on error
     var dst = allDestinations.find(function(d) { return d.Id === destinationId; });
+    var originalPendingDisconnects = dst && dst.PendingDisconnects ? JSON.parse(JSON.stringify(dst.PendingDisconnects)) : null;
+
+    // Optimistically update the destination's pending disconnect immediately
     if (dst && currentSourceModal) {
         // Create optimistic pending disconnect entry
         if (!dst.PendingDisconnects) dst.PendingDisconnects = [];
@@ -610,7 +650,18 @@ async function performSourceDisconnect(sourceId, destinationId, mappings) {
         }
         setStatus('Release initiated');
         // Modal will auto-close when SSE event updates the source data (if no more connections)
-    } catch(e) { setStatus('Release failed'); showError(e.message); }
+    } catch(e) { 
+        // Rollback optimistic updates on error
+        if (dst) {
+            dst.PendingDisconnects = originalPendingDisconnects;
+            // Refresh the modal to show reverted state
+            if (currentSourceModal) {
+                showSourceConnectionsModal(currentSourceModal);
+            }
+        }
+        setStatus('Release failed');
+        showError(e.message);
+    }
 }
 
 async function refreshVsgs(vsgIds) {
