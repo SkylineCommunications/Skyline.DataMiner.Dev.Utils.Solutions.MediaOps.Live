@@ -204,29 +204,11 @@
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 
-			var eventConfig = CreateEventWithOrchestrationScript(new List<OrchestrationProfileValue>
-			{
-				new OrchestrationProfileValue
-				{
-					Name = "IndividualProfileParam_Int",
-					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "invalid" },
-				},
-				new OrchestrationProfileValue
-				{
-					Name = "IndividualProfileParam_String",
-					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "valid" },
-				},
-				new OrchestrationProfileValue
-				{
-					Name = "DefinitionProfileParam_Int",
-					Value = new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 42 },
-				},
-				new OrchestrationProfileValue
-				{
-					Name = "DefinitionProfileParam_String",
-					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "valid" },
-				},
-			});
+			var profileValues = CreateValidProfileValues();
+			profileValues.First(v => v.Name == "IndividualProfileParam_Int").Value =
+				new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "invalid" };
+
+			var eventConfig = CreateEventWithOrchestrationScript(profileValues);
 
 			var job = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
 			job.OrchestrationEvents.Add(eventConfig);
@@ -242,29 +224,11 @@
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 
-			var eventConfig = CreateEventWithOrchestrationScript(new List<OrchestrationProfileValue>
-			{
-				new OrchestrationProfileValue
-				{
-					Name = "IndividualProfileParam_Int",
-					Value = new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 42 },
-				},
-				new OrchestrationProfileValue
-				{
-					Name = "IndividualProfileParam_String",
-					Value = new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 123 },
-				},
-				new OrchestrationProfileValue
-				{
-					Name = "DefinitionProfileParam_Int",
-					Value = new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 42 },
-				},
-				new OrchestrationProfileValue
-				{
-					Name = "DefinitionProfileParam_String",
-					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "valid" },
-				},
-			});
+			var profileValues = CreateValidProfileValues();
+			profileValues.First(v => v.Name == "IndividualProfileParam_String").Value =
+				new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 123 };
+
+			var eventConfig = CreateEventWithOrchestrationScript(profileValues);
 
 			var job = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
 			job.OrchestrationEvents.Add(eventConfig);
@@ -280,7 +244,62 @@
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 
-			var eventConfig = CreateEventWithOrchestrationScript(new List<OrchestrationProfileValue>
+			var eventConfig = CreateEventWithOrchestrationScript(CreateValidProfileValues());
+
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			job.OrchestrationEvents.Add(eventConfig);
+
+			// Should not throw
+			api.Orchestration.SaveOrchestrationJobConfiguration(job);
+
+			// Check job is saved
+			var retrievedJobConfig = api.Orchestration.GetOrchestrationJobConfiguration(job.JobId);
+			Assert.IsNotNull(retrievedJobConfig);
+		}
+
+		[TestMethod]
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_ValidateProfileValueType_StringToDiscreteNumericParameter()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+
+			var profileValues = CreateValidProfileValues();
+			profileValues.First(v => v.Name == "IndividualProfileParam_DiscreteNumeric").Value =
+				new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "1080" };
+
+			var eventConfig = CreateEventWithOrchestrationScript(profileValues);
+
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			job.OrchestrationEvents.Add(eventConfig);
+
+			var ex = Assert.Throws<InvalidOperationException>(
+				() => api.Orchestration.SaveOrchestrationJobConfiguration(job));
+
+			Assert.IsTrue(ex.Message.Contains("IndividualProfileParam_DiscreteNumeric"));
+		}
+
+		[TestMethod]
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_ValidateProfileValueType_NumericToDiscreteStringParameter()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+
+			var profileValues = CreateValidProfileValues();
+			profileValues.First(v => v.Name == "IndividualProfileParam_DiscreteString").Value =
+				new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 1 };
+
+			var eventConfig = CreateEventWithOrchestrationScript(profileValues);
+
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			job.OrchestrationEvents.Add(eventConfig);
+
+			var ex = Assert.Throws<InvalidOperationException>(
+				() => api.Orchestration.SaveOrchestrationJobConfiguration(job));
+
+			Assert.IsTrue(ex.Message.Contains("IndividualProfileParam_DiscreteString"));
+		}
+
+		private static List<OrchestrationProfileValue> CreateValidProfileValues()
+		{
+			return new List<OrchestrationProfileValue>
 			{
 				new OrchestrationProfileValue
 				{
@@ -302,17 +321,17 @@
 					Name = "DefinitionProfileParam_String",
 					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "valid" },
 				},
-			});
-
-			var job = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
-			job.OrchestrationEvents.Add(eventConfig);
-
-			// Should not throw
-			api.Orchestration.SaveOrchestrationJobConfiguration(job);
-
-			// Check job is saved
-			var retrievedJobConfig = api.Orchestration.GetOrchestrationJobConfiguration(job.JobId);
-			Assert.IsNotNull(retrievedJobConfig);
+				new OrchestrationProfileValue
+				{
+					Name = "IndividualProfileParam_DiscreteNumeric",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = 1080 },
+				},
+				new OrchestrationProfileValue
+				{
+					Name = "IndividualProfileParam_DiscreteString",
+					Value = new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = "HD" },
+				},
+			};
 		}
 
 		private static OrchestrationEventConfiguration CreateEventWithOrchestrationScript(List<OrchestrationProfileValue> profileValues)
