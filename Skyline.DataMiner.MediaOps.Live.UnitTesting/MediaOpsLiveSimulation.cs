@@ -347,6 +347,8 @@
 			Dms.AddProfileParameter("IndividualProfileParam_String", new Guid("b0e37ff1-fe56-4bd7-b108-9e8c992eb6d9"), Parameter.ParameterType.Text);
 			Dms.AddProfileParameter("DefinitionProfileParam_Int", new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e"), Parameter.ParameterType.Number);
 			Dms.AddProfileParameter("DefinitionProfileParam_String", new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f"), Parameter.ParameterType.Text);
+			Dms.AddDiscreteProfileParameter("IndividualProfileParam_DiscreteNumeric", new Guid("1b2bcaf0-9a3f-4d5d-87df-9b8aa9b9b911"), InterpreteType.TypeEnum.Double);
+			Dms.AddDiscreteProfileParameter("IndividualProfileParam_DiscreteString", new Guid("2c3cdb01-ab4a-5e6e-98e0-ac9bbaba2c22"), InterpreteType.TypeEnum.String);
 
 			Dms.AddProfileDefinition(
 				"Definition 1",
@@ -382,6 +384,8 @@
 						{ "IndividualProfileParam_String", new Guid("b0e37ff1-fe56-4bd7-b108-9e8c992eb6d9") },
 						{ "DefinitionProfileParam_Int", new Guid("70b3e8fc-7a6d-4c8d-bbe7-ab806625081e") },
 						{ "DefinitionProfileParam_String", new Guid("864d57be-4c26-4754-8da2-0cc0ba50bf6f") },
+						{ "IndividualProfileParam_DiscreteNumeric", new Guid("1b2bcaf0-9a3f-4d5d-87df-9b8aa9b9b911") },
+						{ "IndividualProfileParam_DiscreteString", new Guid("2c3cdb01-ab4a-5e6e-98e0-ac9bbaba2c22") },
 					},
 					ProfileDefinitions =
 					{

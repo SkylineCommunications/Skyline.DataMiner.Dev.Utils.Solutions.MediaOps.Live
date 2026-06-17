@@ -17,8 +17,8 @@
 			OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("OrchestrationScript");
 
 			Assert.AreEqual("OrchestrationScript", info.ScriptName);
-			Assert.HasCount(5, info.Parameters);
-			Assert.HasCount(4, info.Parameters.Where(param => param.IsFromProfile));
+			Assert.HasCount(7, info.Parameters);
+			Assert.HasCount(6, info.Parameters.Where(param => param.IsFromProfile));
 			Assert.HasCount(1, info.Elements);
 		}
 

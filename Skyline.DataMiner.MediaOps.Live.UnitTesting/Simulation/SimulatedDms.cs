@@ -88,6 +88,28 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 			_profileParameters.Add(param);
 		}
 
+		public void AddDiscreteProfileParameter(string parameterName, Guid parameterId, InterpreteType.TypeEnum interpreteType, IEnumerable<KeyValuePair<string, string>> discretes = null)
+		{
+			Parameter param = new Parameter(parameterId)
+			{
+				Name = parameterName,
+				Categories = ProfileParameterCategory.Monitoring,
+				Type = Parameter.ParameterType.Discrete,
+				InterpreteType = new InterpreteType { Type = interpreteType },
+			};
+
+			if (discretes != null)
+			{
+				foreach (var discrete in discretes)
+				{
+					param.Discretes.Add(discrete.Key);
+					param.DiscreetDisplayValues.Add(discrete.Value);
+				}
+			}
+
+			_profileParameters.Add(param);
+		}
+
 		public void AddProfileDefinition(string name, Guid id, List<Guid> parameterIds)
 		{
 			ProfileDefinition definition = new ProfileDefinition(id)

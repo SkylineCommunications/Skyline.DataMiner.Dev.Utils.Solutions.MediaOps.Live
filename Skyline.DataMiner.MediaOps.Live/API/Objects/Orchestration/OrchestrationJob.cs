@@ -251,9 +251,7 @@
 					continue;
 				}
 
-				var expectedValueType = matchingParam.LinkedProfileParameter.Type == Parameter.ParameterType.Number
-					? ParameterValue.ValueType.Double
-					: ParameterValue.ValueType.String;
+				var expectedValueType = GetExpectedValueType(matchingParam.LinkedProfileParameter);
 
 				if (profileValue.Value.Type != expectedValueType)
 				{
@@ -261,6 +259,25 @@
 						$"Profile parameter value type mismatch for '{profileValue.Name}'. " +
 						$"Expected '{expectedValueType}' but got '{profileValue.Value.Type}'.");
 				}
+			}
+		}
+
+		private static ParameterValue.ValueType GetExpectedValueType(Parameter profileParameter)
+		{
+			switch (profileParameter.Type)
+			{
+				case Parameter.ParameterType.Number:
+					return ParameterValue.ValueType.Double;
+
+				case Parameter.ParameterType.Discrete:
+					// For Discrete parameters, the underlying value type is dictated by the
+					// InterpreteType (e.g., numeric discretes use Double, string discretes use String).
+					return profileParameter.InterpreteType?.Type == InterpreteType.TypeEnum.Double
+						? ParameterValue.ValueType.Double
+						: ParameterValue.ValueType.String;
+
+				default:
+					return ParameterValue.ValueType.String;
 			}
 		}
 
