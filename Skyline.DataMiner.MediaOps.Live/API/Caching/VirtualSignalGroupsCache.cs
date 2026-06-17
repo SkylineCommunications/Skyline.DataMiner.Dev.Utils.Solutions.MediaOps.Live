@@ -190,6 +190,40 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching
 			}
 		}
 
+		/// <summary>
+		/// Gets a value indicating whether the specified virtual signal group has job information stored on its state.
+		/// </summary>
+		public bool HasJobInfo(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup)
+		{
+			lock (_lock)
+			{
+				return HasJobInfo(virtualSignalGroup, out _, out _, out _);
+			}
+		}
+
+		/// <summary>
+		/// Gets the job information stored on the state of the specified virtual signal group.
+		/// </summary>
+		/// <returns><see langword="true"/> if job information is available; otherwise, <see langword="false"/>.</returns>
+		public bool HasJobInfo(ApiObjectReference<VirtualSignalGroup> virtualSignalGroup, out string jobReference, out string jobName, out string jobDescription)
+		{
+			lock (_lock)
+			{
+				if (!TryGetVirtualSignalGroupState(virtualSignalGroup, out var state) || !state.HasJobInfo)
+				{
+					jobReference = null;
+					jobName = null;
+					jobDescription = null;
+					return false;
+				}
+
+				jobReference = state.JobReference;
+				jobName = state.JobName;
+				jobDescription = state.JobDescription;
+				return true;
+			}
+		}
+
 		public IReadOnlyCollection<VirtualSignalGroup> GetVirtualSignalGroupsThatContainEndpoint(ApiObjectReference<Endpoint> endpoint)
 		{
 			lock (_lock)

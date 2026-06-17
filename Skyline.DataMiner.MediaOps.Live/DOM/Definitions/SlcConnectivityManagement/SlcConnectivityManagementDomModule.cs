@@ -32,6 +32,7 @@
 			new LevelDefinition(),
 			new VirtualSignalGroupDefinition(),
 			new VirtualSignalGroupStateDefinition(),
+			new ControlSurfaceSettingsDefinition(),
 		};
 	}
 }

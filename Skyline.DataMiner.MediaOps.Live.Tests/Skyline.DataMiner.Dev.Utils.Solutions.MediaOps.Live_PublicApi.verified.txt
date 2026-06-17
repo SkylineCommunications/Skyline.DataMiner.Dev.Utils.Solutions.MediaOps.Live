@@ -119,6 +119,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsInCategory(Skyline.DataMiner.Solutions.Categories.API.ApiObjectReference<Skyline.DataMiner.Solutions.Categories.API.Category> category) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsThatContainEndpoint(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> GetVirtualSignalGroupsWithRole(Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums.EndpointRole role) { }
+        public bool HasJobInfo(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup) { }
+        public bool HasJobInfo(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup, out string jobReference, out string jobName, out string jobDescription) { }
         public bool IsLocked(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup) { }
         public bool IsLocked(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup, out string lockedBy, out System.DateTimeOffset lockedTime, out string reason) { }
         public bool IsProtected(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroup) { }
@@ -504,6 +506,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API
     public interface IMediaOpsLiveApi
     {
         Skyline.DataMiner.Net.IConnection Connection { get; }
+        Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement.ControlSurfaceSettingsRepository ControlSurfaceSettings { get; }
         Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement.EndpointRepository Endpoints { get; }
         Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement.LevelRepository Levels { get; }
         Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.MediationElements MediationElements { get; }
@@ -524,6 +527,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API
     {
         public MediaOpsLiveApi(Skyline.DataMiner.Net.IConnection connection) { }
         public Skyline.DataMiner.Net.IConnection Connection { get; }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement.ControlSurfaceSettingsRepository ControlSurfaceSettings { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement.EndpointRepository Endpoints { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement.LevelRepository Levels { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.MediationElements MediationElements { get; }
@@ -585,6 +589,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement
 {
+    public class ControlSurfaceSettings : Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.ControlSurfaceSettings>
+    {
+        public const string JobReferencePlaceholder = "[JOBREFERENCE]";
+        public ControlSurfaceSettings() { }
+        public bool JobDetailsLinkEnabled { get; set; }
+        public string JobDetailsUrlTemplate { get; set; }
+        public string ResolveJobDetailsUrl(string jobReference) { }
+    }
     public class Endpoint : Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>
     {
         public Endpoint() { }
@@ -765,6 +777,16 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityMana
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, string> Name;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup, Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums.EndpointRole> Role;
     }
+    public class VirtualSignalGroupJobInfoRequest
+    {
+        public VirtualSignalGroupJobInfoRequest(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
+        public VirtualSignalGroupJobInfoRequest(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, string jobReference, string jobName, string jobDescription) { }
+        public bool HasJobInfo { get; }
+        public string JobDescription { get; }
+        public string JobName { get; }
+        public string JobReference { get; }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup VirtualSignalGroup { get; }
+    }
     public class VirtualSignalGroupLockRequest
     {
         public VirtualSignalGroupLockRequest(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
@@ -779,9 +801,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityMana
     {
         public VirtualSignalGroupState() { }
         public VirtualSignalGroupState(System.Guid id) { }
+        public bool HasJobInfo { get; }
         public bool IsLocked { get; }
         public bool IsProtected { get; }
         public bool IsUnlocked { get; }
+        public string JobDescription { get; set; }
+        public string JobName { get; set; }
+        public string JobReference { get; set; }
         public string LockJobReference { get; set; }
         public string LockReason { get; set; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums.LockState LockState { get; set; }
@@ -792,6 +818,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityMana
     public static class VirtualSignalGroupStateExposers
     {
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, System.Guid> ID;
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, string> JobDescription;
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, string> JobName;
+        public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, string> JobReference;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, string> LockJobReference;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, string> LockReason;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState, Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums.LockState> LockState;
@@ -891,6 +920,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
     public class OrchestrationJobInfo : Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObject<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobInfo>
     {
         public OrchestrationJobInfo() { }
+        public string JobDescription { get; set; }
         public string JobName { get; set; }
         public string JobReference { get; }
         public string JobUrl { get; set; }
@@ -947,6 +977,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Querying
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.ConnectivityManagement
 {
+    public class ControlSurfaceSettingsRepository : Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Repository<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.ControlSurfaceSettings>
+    {
+        protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinition { get; }
+        protected override Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.ControlSurfaceSettings CreateInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.ControlSurfaceSettings GetOrCreate() { }
+        protected override void ValidateBeforeDelete(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.ControlSurfaceSettings> instances) { }
+        protected override void ValidateBeforeSave(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.ControlSurfaceSettings> instances) { }
+    }
     public class EndpointRepository : Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Repository<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>
     {
         protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinition { get; }
@@ -984,6 +1022,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
     public class VirtualSignalGroupRepository : Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Repository<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup>
     {
         protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinition { get; }
+        public void ClearJobInfo(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups) { }
         public override Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup Create(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup instance) { }
         protected override Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance> CreateFilter(string fieldName, Skyline.DataMiner.Net.Messages.SLDataGateway.Comparer comparer, object value) { }
         protected override Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup CreateInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
@@ -999,6 +1038,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
         public void ProtectVirtualSignalGroup(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
         public void ProtectVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupLockRequest> protectRequests) { }
         public void ProtectVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
+        public void SetJobInfo(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupJobInfoRequest> requests) { }
+        public void SetJobInfo(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, string jobReference, string jobName, string jobDescription) { }
         public void UnlockVirtualSignalGroup(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
         public void UnlockVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups) { }
         public override Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup Update(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup instance) { }
@@ -1008,6 +1049,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
     public class VirtualSignalGroupStateRepository : Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Repository<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState>
     {
         protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinition { get; }
+        public void ClearJobInfo(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups) { }
         protected override Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance> CreateFilter(string fieldName, Skyline.DataMiner.Net.Messages.SLDataGateway.Comparer comparer, object value) { }
         protected override Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState CreateInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
         protected override SLDataGateway.API.Types.Querying.IOrderByElement CreateOrderBy(string fieldName, SLDataGateway.API.Types.Querying.SortOrder sortOrder, bool naturalSort = false) { }
@@ -1020,6 +1062,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
         public void ProtectVirtualSignalGroup(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
         public void ProtectVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupLockRequest> protectRequests) { }
         public void ProtectVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups, string user, string reason, string jobReference, System.DateTimeOffset? time = default) { }
+        public void SetJobInfo(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupJobInfoRequest> requests) { }
+        public void SetJobInfo(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, string jobReference, string jobName, string jobDescription) { }
         public bool TryGetByVirtualSignalGroup(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup, out Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroupState virtualSignalGroupState) { }
         public void UnlockVirtualSignalGroup(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup virtualSignalGroup) { }
         public void UnlockVirtualSignalGroups(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.VirtualSignalGroup> virtualSignalGroups) { }

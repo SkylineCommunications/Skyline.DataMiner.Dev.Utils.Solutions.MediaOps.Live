@@ -145,6 +145,36 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 			Api.VirtualSignalGroupStates.UnlockVirtualSignalGroups(virtualSignalGroups);
 		}
 
+		public void SetJobInfo(VirtualSignalGroup virtualSignalGroup, string jobReference, string jobName, string jobDescription)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			Api.VirtualSignalGroupStates.SetJobInfo(virtualSignalGroup, jobReference, jobName, jobDescription);
+		}
+
+		public void SetJobInfo(ICollection<VirtualSignalGroupJobInfoRequest> requests)
+		{
+			if (requests is null)
+			{
+				throw new ArgumentNullException(nameof(requests));
+			}
+
+			Api.VirtualSignalGroupStates.SetJobInfo(requests);
+		}
+
+		public void ClearJobInfo(ICollection<VirtualSignalGroup> virtualSignalGroups)
+		{
+			if (virtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroups));
+			}
+
+			Api.VirtualSignalGroupStates.ClearJobInfo(virtualSignalGroups);
+		}
+
 		public override VirtualSignalGroup Create(VirtualSignalGroup instance)
 		{
 			if (instance is null)

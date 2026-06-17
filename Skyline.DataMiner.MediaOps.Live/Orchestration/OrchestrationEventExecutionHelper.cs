@@ -375,6 +375,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 				{
 					// Unlock all involved VSGs after disconnect
 					_api.VirtualSignalGroups.UnlockVirtualSignalGroups(virtualSignalGroupsToUnlock);
+
+					// Clear the stored job info from the destination VSGs (post-roll cleanup)
+					_api.VirtualSignalGroups.ClearJobInfo(virtualSignalGroupsToUnlock);
 				}
 				catch (Exception ex)
 				{
@@ -407,6 +410,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			{
 				List<VsgConnectionRequest> requests = [];
 				List<VirtualSignalGroupLockRequest> lockRequests = [];
+				List<VirtualSignalGroupJobInfoRequest> jobInfoRequests = [];
 
 				HashSet<Guid> allInvolvedVsgIds = [];
 				HashSet<int> allInvolvedLevelNumbers = [];
@@ -457,6 +461,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 						$"{jobInfo.JobReference}",
 						orchestrationEvent.EventTime));
 
+					jobInfoRequests.Add(new VirtualSignalGroupJobInfoRequest(
+						dstVirtualSignalGroup,
+						jobInfo.JobReference,
+						jobInfo.JobName,
+						jobInfo.JobDescription));
+
 					if (!connection.HasSource())
 					{
 						continue;
@@ -484,6 +494,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 
 				// Lock all involved VSGs before connecting
 				_api.VirtualSignalGroups.LockVirtualSignalGroups(lockRequests);
+
+				// Store job info on the destination VSGs (persisted independently of the lock state)
+				_api.VirtualSignalGroups.SetJobInfo(jobInfoRequests);
 
 				// Perform connections
 				var takeHelper = _api.GetConnectionHandler();

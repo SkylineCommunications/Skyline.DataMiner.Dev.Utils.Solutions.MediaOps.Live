@@ -136,6 +136,66 @@
 		public bool IsProtected => LockState == LockState.Protected;
 
 		public bool IsUnlocked => LockState == LockState.Unlocked;
+
+		/// <summary>
+		/// Gets or sets the reference of the job that is associated with this virtual signal group.
+		/// </summary>
+		/// <remarks>
+		/// This information is persisted independently of the lock state, so it survives a manual unlock
+		/// and is only cleared explicitly (typically at the start of the post-roll).
+		/// </remarks>
+		public string JobReference
+		{
+			get
+			{
+				return _domInstance.VirtualSignalGroupJobInfo.JobReference;
+			}
+
+			set
+			{
+				_domInstance.VirtualSignalGroupJobInfo.JobReference = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the name of the job that is associated with this virtual signal group.
+		/// </summary>
+		public string JobName
+		{
+			get
+			{
+				return _domInstance.VirtualSignalGroupJobInfo.JobName;
+			}
+
+			set
+			{
+				_domInstance.VirtualSignalGroupJobInfo.JobName = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the description of the job that is associated with this virtual signal group.
+		/// </summary>
+		public string JobDescription
+		{
+			get
+			{
+				return _domInstance.VirtualSignalGroupJobInfo.JobDescription;
+			}
+
+			set
+			{
+				_domInstance.VirtualSignalGroupJobInfo.JobDescription = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets a value indicating whether any job information is stored for this virtual signal group.
+		/// </summary>
+		public bool HasJobInfo =>
+			!String.IsNullOrWhiteSpace(JobReference)
+			|| !String.IsNullOrWhiteSpace(JobName)
+			|| !String.IsNullOrWhiteSpace(JobDescription);
 	}
 
 	public static class VirtualSignalGroupStateExposers
@@ -147,5 +207,8 @@
 		public static readonly Exposer<VirtualSignalGroupState, string> LockReason = new(x => x.LockReason, nameof(VirtualSignalGroupState.LockReason));
 		public static readonly Exposer<VirtualSignalGroupState, string> LockJobReference = new(x => x.LockJobReference, nameof(VirtualSignalGroupState.LockJobReference));
 		public static readonly Exposer<VirtualSignalGroupState, DateTimeOffset> LockTime = new(x => x.LockTime, nameof(VirtualSignalGroupState.LockTime));
+		public static readonly Exposer<VirtualSignalGroupState, string> JobReference = new(x => x.JobReference, nameof(VirtualSignalGroupState.JobReference));
+		public static readonly Exposer<VirtualSignalGroupState, string> JobName = new(x => x.JobName, nameof(VirtualSignalGroupState.JobName));
+		public static readonly Exposer<VirtualSignalGroupState, string> JobDescription = new(x => x.JobDescription, nameof(VirtualSignalGroupState.JobDescription));
 	}
 }

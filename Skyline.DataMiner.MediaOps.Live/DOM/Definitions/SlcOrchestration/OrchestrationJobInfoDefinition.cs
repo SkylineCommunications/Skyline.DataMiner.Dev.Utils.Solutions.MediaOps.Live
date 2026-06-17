@@ -77,6 +77,15 @@
 				new FieldDescriptor
 				{
 					FieldType = typeof(string),
+					ID = SlcOrchestrationIds.Sections.JobInfo.JobDescription,
+					Name = "Job Description",
+					IsOptional = true,
+				});
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
 					ID = SlcOrchestrationIds.Sections.JobInfo.MonitoringService,
 					Name = "Monitoring Service",
 					IsOptional = true,
