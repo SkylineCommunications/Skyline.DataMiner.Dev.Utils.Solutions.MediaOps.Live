@@ -127,7 +127,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 			{
 				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("b3f7c812-9a45-4e26-8d71-2c6f1a9b4e83"))
 				{ ModuleId = "(slc)connectivity_management" };
-				public static FieldDescriptorID JobDetailsLinkEnabled { get; } = new FieldDescriptorID(new Guid("d8a14f63-2b97-4c50-91e8-7f3a6c2d5b41"));
+				public static FieldDescriptorID JobDetailsEnabled { get; } = new FieldDescriptorID(new Guid("d8a14f63-2b97-4c50-91e8-7f3a6c2d5b41"));
 				public static FieldDescriptorID JobDetailsUrlTemplate { get; } = new FieldDescriptorID(new Guid("4e9b7c21-6d83-4a15-92f6-8b1c3e7a9d54"));
 			}
 		}
@@ -2703,7 +2703,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 		}
 
 		/// <summary>
-		/// Gets or sets the JobDetailsLinkEnabled field of the DOM Instance.
+		/// Gets or sets the JobDetailsEnabled field of the DOM Instance.
 		/// </summary>
 		/// <remarks>
 		/// When retrieving the value:
@@ -2717,11 +2717,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
 		/// </list>
 		/// </remarks>
-		public Boolean? JobDetailsLinkEnabled
+		public Boolean? JobDetailsEnabled
 		{
 			get
 			{
-				var wrapper = section.GetValue<Boolean>(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsLinkEnabled);
+				var wrapper = section.GetValue<Boolean>(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsEnabled);
 				if (wrapper != null)
 				{
 					return (Boolean?)wrapper.Value;
@@ -2736,11 +2736,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 			{
 				if (value == null)
 				{
-					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsLinkEnabled);
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsEnabled);
 				}
 				else
 				{
-					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsLinkEnabled, (Boolean)value);
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsEnabled, (Boolean)value);
 				}
 			}
 		}

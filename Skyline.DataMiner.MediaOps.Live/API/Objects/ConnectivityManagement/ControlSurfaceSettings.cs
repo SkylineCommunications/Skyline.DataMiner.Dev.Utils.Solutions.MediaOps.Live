@@ -37,18 +37,18 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityMana
 		internal static DomDefinitionId DomDefinition => SlcConnectivityManagementIds.Definitions.ControlSurfaceSettings;
 
 		/// <summary>
-		/// Gets or sets a value indicating whether the job details link is enabled in the Control Surface.
+		/// Gets or sets a value indicating whether the job details feature is enabled in the Control Surface.
 		/// </summary>
-		public bool JobDetailsLinkEnabled
+		public bool JobDetailsEnabled
 		{
 			get
 			{
-				return _domInstance.ControlSurfaceSettings.JobDetailsLinkEnabled ?? false;
+				return _domInstance.ControlSurfaceSettings.JobDetailsEnabled ?? false;
 			}
 
 			set
 			{
-				_domInstance.ControlSurfaceSettings.JobDetailsLinkEnabled = value;
+				_domInstance.ControlSurfaceSettings.JobDetailsEnabled = value;
 			}
 		}
 
@@ -75,10 +75,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityMana
 		/// Resolves the job details URL for the specified job reference using the configured template.
 		/// </summary>
 		/// <param name="jobReference">The job reference to insert into the template.</param>
-		/// <returns>The resolved URL, or <see langword="null"/> if the link is disabled, no template is configured, or no job reference is provided.</returns>
+		/// <returns>The resolved URL, or <see langword="null"/> if the feature is disabled, no template is configured, or no job reference is provided.</returns>
 		public string ResolveJobDetailsUrl(string jobReference)
 		{
-			if (!JobDetailsLinkEnabled
+			if (!JobDetailsEnabled
 				|| String.IsNullOrWhiteSpace(JobDetailsUrlTemplate)
 				|| String.IsNullOrWhiteSpace(jobReference))
 			{

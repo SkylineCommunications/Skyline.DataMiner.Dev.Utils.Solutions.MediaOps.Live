@@ -593,7 +593,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityMana
     {
         public const string JobReferencePlaceholder = "[JOBREFERENCE]";
         public ControlSurfaceSettings() { }
-        public bool JobDetailsLinkEnabled { get; set; }
+        public bool JobDetailsEnabled { get; set; }
         public string JobDetailsUrlTemplate { get; set; }
         public string ResolveJobDetailsUrl(string jobReference) { }
     }

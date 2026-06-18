@@ -35,8 +35,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Definitions.SlcConnectiv
 				new FieldDescriptor
 				{
 					FieldType = typeof(bool),
-					ID = SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsLinkEnabled,
-					Name = "Job Details Link Enabled",
+					ID = SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsEnabled,
+					Name = "Job Details Enabled",
 					IsOptional = true,
 				});
 
