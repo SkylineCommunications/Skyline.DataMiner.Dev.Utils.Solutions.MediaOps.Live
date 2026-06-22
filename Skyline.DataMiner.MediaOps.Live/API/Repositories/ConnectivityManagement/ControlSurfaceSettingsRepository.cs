@@ -15,12 +15,21 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 		protected internal override DomDefinitionId DomDefinition => ControlSurfaceSettings.DomDefinition;
 
 		/// <summary>
+		/// Gets the singleton Control Surface settings, or <see langword="null"/> if they do not exist yet.
+		/// </summary>
+		/// <returns>The Control Surface settings, or <see langword="null"/> if they do not exist yet.</returns>
+		public ControlSurfaceSettings Read()
+		{
+			return ReadAll().FirstOrDefault();
+		}
+
+		/// <summary>
 		/// Gets the singleton Control Surface settings, creating them with default values if they do not exist yet.
 		/// </summary>
 		/// <returns>The Control Surface settings.</returns>
 		public ControlSurfaceSettings GetOrCreate()
 		{
-			var existing = ReadAll().FirstOrDefault();
+			var existing = Read();
 			if (existing != null)
 			{
 				return existing;

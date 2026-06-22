@@ -234,5 +234,42 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			// Assert - every placeholder occurrence is replaced.
 			Assert.AreEqual("https://control-surface.example.com/JobRef-8/jobs/JobRef-8/details", resolvedUrl);
 		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroupJobInfo_ControlSurfaceReadReturnsNullWhenNoSettingsStored()
+		{
+			// Arrange
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			// Act - read the singleton settings before any have been stored.
+			var storedSettings = api.ControlSurfaceSettings.Read();
+
+			// Assert - no settings exist yet, so null is returned.
+			Assert.IsNull(storedSettings);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroupJobInfo_ControlSurfaceReadReturnsStoredSettings()
+		{
+			// Arrange
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var settings = new ControlSurfaceSettings
+			{
+				JobDetailsEnabled = true,
+				JobDetailsUrlTemplate = $"https://control-surface.example.com/jobs/{ControlSurfaceSettings.JobReferencePlaceholder}/details",
+			};
+			api.ControlSurfaceSettings.CreateOrUpdate(settings);
+
+			// Act - read back the stored singleton settings.
+			var storedSettings = api.ControlSurfaceSettings.Read();
+
+			// Assert - the stored settings are returned.
+			Assert.IsNotNull(storedSettings);
+			Assert.IsTrue(storedSettings.JobDetailsEnabled);
+			Assert.AreEqual($"https://control-surface.example.com/jobs/{ControlSurfaceSettings.JobReferencePlaceholder}/details", storedSettings.JobDetailsUrlTemplate);
+		}
 	}
 }

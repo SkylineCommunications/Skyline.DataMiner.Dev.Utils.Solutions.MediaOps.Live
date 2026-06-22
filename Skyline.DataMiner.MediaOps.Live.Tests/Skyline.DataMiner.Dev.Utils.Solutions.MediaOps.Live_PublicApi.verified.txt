@@ -982,6 +982,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
         protected override Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomDefinitionId DomDefinition { get; }
         protected override Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.ControlSurfaceSettings CreateInstance(Skyline.DataMiner.Net.Apps.DataMinerObjectModel.DomInstance domInstance) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.ControlSurfaceSettings GetOrCreate() { }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.ControlSurfaceSettings Read() { }
         protected override void ValidateBeforeDelete(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.ControlSurfaceSettings> instances) { }
         protected override void ValidateBeforeSave(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.ControlSurfaceSettings> instances) { }
     }
