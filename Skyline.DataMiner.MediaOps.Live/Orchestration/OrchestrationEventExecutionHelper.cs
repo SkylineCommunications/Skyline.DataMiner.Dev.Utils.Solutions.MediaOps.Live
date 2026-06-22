@@ -457,8 +457,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 					lockRequests.Add(new VirtualSignalGroupLockRequest(
 						dstVirtualSignalGroup,
 						"Orchestration Engine",
-						$"Locked for job: {jobInfo.JobReference}",
-						$"{jobInfo.JobReference}",
+						$"Locked for job: {jobInfo.JobName}",
+						jobInfo.JobReference,
 						orchestrationEvent.EventTime));
 
 					jobInfoRequests.Add(new VirtualSignalGroupJobInfoRequest(
