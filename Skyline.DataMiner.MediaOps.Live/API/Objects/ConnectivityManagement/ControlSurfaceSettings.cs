@@ -16,12 +16,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityMana
 		/// </summary>
 		public const string JobReferencePlaceholder = "[JOBREFERENCE]";
 
+		private static readonly Guid SingletonId = new Guid("7c3e1a2b-4f56-4d89-b3c7-9e0f1d2a4b5c");
+
 		private readonly ControlSurfaceSettingsInstance _domInstance;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ControlSurfaceSettings"/> class.
 		/// </summary>
-		public ControlSurfaceSettings() : this(new ControlSurfaceSettingsInstance())
+		public ControlSurfaceSettings() : this(new ControlSurfaceSettingsInstance(SingletonId))
 		{
 		}
 

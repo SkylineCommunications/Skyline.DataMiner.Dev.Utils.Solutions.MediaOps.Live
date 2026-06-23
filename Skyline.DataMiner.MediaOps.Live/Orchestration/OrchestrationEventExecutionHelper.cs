@@ -371,27 +371,37 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 					disconnectException = ex;
 				}
 
+				Exception unlockException = null;
+				Exception clearJobInfoException = null;
+
 				try
 				{
 					// Unlock all involved VSGs after disconnect
 					_api.VirtualSignalGroups.UnlockVirtualSignalGroups(virtualSignalGroupsToUnlock);
+				}
+				catch (Exception ex)
+				{
+					unlockException = ex;
+				}
 
+				try
+				{
 					// Clear the stored job info from the destination VSGs (post-roll cleanup)
 					_api.VirtualSignalGroups.ClearJobInfo(virtualSignalGroupsToUnlock);
 				}
 				catch (Exception ex)
 				{
-					if (disconnectException != null)
-					{
-						throw new AggregateException("Disconnect and unlock both failed.", disconnectException, ex);
-					}
-
-					throw;
+					clearJobInfoException = ex;
 				}
 
-				if (disconnectException != null)
+				var postRollExceptions = new[] { disconnectException, unlockException, clearJobInfoException }.Where(e => e != null).ToArray();
+				if (postRollExceptions.Length > 1)
 				{
-					ExceptionDispatchInfo.Capture(disconnectException).Throw();
+					throw new AggregateException("One or more post-roll operations failed.", postRollExceptions);
+				}
+				else if (postRollExceptions.Length == 1)
+				{
+					ExceptionDispatchInfo.Capture(postRollExceptions[0]).Throw();
 				}
 
 				// Return results
@@ -457,7 +467,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 					lockRequests.Add(new VirtualSignalGroupLockRequest(
 						dstVirtualSignalGroup,
 						"Orchestration Engine",
-						$"Locked for job '{jobInfo.JobName}'",
+						$"Locked for job '{(!String.IsNullOrEmpty(jobInfo.JobName) ? jobInfo.JobName : jobInfo.JobReference)}'",
 						jobInfo.JobReference,
 						orchestrationEvent.EventTime));
 
