@@ -28,6 +28,8 @@
 
 		VirtualSignalGroupStateRepository VirtualSignalGroupStates { get; }
 
+		ControlSurfaceSettingsRepository ControlSurfaceSettings { get; }
+
 		MediaOpsLiveCache GetCache();
 
 		TakeHelper GetConnectionHandler();

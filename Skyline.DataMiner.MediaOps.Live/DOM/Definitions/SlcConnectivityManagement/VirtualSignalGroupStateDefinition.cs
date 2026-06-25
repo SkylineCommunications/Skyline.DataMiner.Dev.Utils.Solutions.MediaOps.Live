@@ -19,6 +19,7 @@
 			{
 				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.VirtualSignalGroupStateInfo.Id),
 				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.Id) { IsOptional = true },
+				new SectionDefinitionLink(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.Id) { IsOptional = true },
 			},
 			ModuleSettingsOverrides = new ModuleSettingsOverrides
 			{
@@ -29,6 +30,7 @@
 		{
 			GetVirtualSignalGroupStateInfoSectionDefinition(),
 			GetVirtualSignalGroupLockDefinition(),
+			GetVirtualSignalGroupJobInfoDefinition(),
 		};
 
 		private static CustomSectionDefinition GetVirtualSignalGroupStateInfoSectionDefinition()
@@ -104,6 +106,44 @@
 					FieldType = typeof(string),
 					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockJobReference,
 					Name = "Lock Job Reference",
+					IsOptional = true,
+				});
+
+			return sectionDefinition;
+		}
+
+		private static CustomSectionDefinition GetVirtualSignalGroupJobInfoDefinition()
+		{
+			var sectionDefinition = new CustomSectionDefinition
+			{
+				ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.Id,
+				Name = "Virtual Signal Group Job Info",
+			};
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
+					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobReference,
+					Name = "Job Reference",
+					IsOptional = true,
+				});
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
+					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobName,
+					Name = "Job Name",
+					IsOptional = true,
+				});
+
+			sectionDefinition.AddOrReplaceFieldDescriptor(
+				new FieldDescriptor
+				{
+					FieldType = typeof(string),
+					ID = SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobDescription,
+					Name = "Job Description",
 					IsOptional = true,
 				});
 

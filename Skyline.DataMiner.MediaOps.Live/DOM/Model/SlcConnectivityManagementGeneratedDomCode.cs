@@ -59,6 +59,15 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 				public static FieldDescriptorID VirtualSignalGroupReference { get; } = new FieldDescriptorID(new Guid("7becf594-ff77-4530-8fa4-d64fed7a5bcc"));
 			}
 
+			public static class VirtualSignalGroupJobInfo
+			{
+				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("7c5e9a14-3b62-4d81-9f07-2a6b8c1d4e90"))
+				{ ModuleId = "(slc)connectivity_management" };
+				public static FieldDescriptorID JobReference { get; } = new FieldDescriptorID(new Guid("1d8f4b27-6a93-4c05-8e21-5f7c9b2a3d61"));
+				public static FieldDescriptorID JobName { get; } = new FieldDescriptorID(new Guid("9a2c7e34-4f81-4b06-92d3-6e8a1c5b7f42"));
+				public static FieldDescriptorID JobDescription { get; } = new FieldDescriptorID(new Guid("3e6b1d59-7c24-4a08-83f5-9b1e4d2c6a73"));
+			}
+
 			public static class VirtualSignalGroupInfo
 			{
 				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("a7d8863e-82d4-4bf3-a4c5-f34b1fb7eac0"))
@@ -113,6 +122,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 				{ ModuleId = "(slc)connectivity_management" };
 				public static FieldDescriptorID Name { get; } = new FieldDescriptorID(new Guid("021ce486-e060-4d71-b861-87f187597047"));
 			}
+
+			public static class ControlSurfaceSettings
+			{
+				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("b3f7c812-9a45-4e26-8d71-2c6f1a9b4e83"))
+				{ ModuleId = "(slc)connectivity_management" };
+				public static FieldDescriptorID JobDetailsEnabled { get; } = new FieldDescriptorID(new Guid("d8a14f63-2b97-4c50-91e8-7f3a6c2d5b41"));
+				public static FieldDescriptorID JobDetailsUrlTemplate { get; } = new FieldDescriptorID(new Guid("4e9b7c21-6d83-4a15-92f6-8b1c3e7a9d54"));
+			}
 		}
 
 		public static class Definitions
@@ -126,6 +143,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 			public static DomDefinitionId VirtualSignalGroupState { get; } = new DomDefinitionId(new Guid("7a19a11c-3428-46b1-acfa-2ab0ef8c662f"))
 			{ ModuleId = "(slc)connectivity_management" };
 			public static DomDefinitionId TransportType { get; } = new DomDefinitionId(new Guid("91ddfbfe-00db-4244-b8e3-5a0a08fa3ced"))
+			{ ModuleId = "(slc)connectivity_management" };
+			public static DomDefinitionId ControlSurfaceSettings { get; } = new DomDefinitionId(new Guid("a1c8e9f4-3b27-4d60-85a9-6e2f1b8c4a73"))
 			{ ModuleId = "(slc)connectivity_management" };
 		}
 
@@ -546,6 +565,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 		/// </summary>
 		public VirtualSignalGroupStateInfoSection VirtualSignalGroupStateInfo { get; set; }
 
+		/// <summary>
+		/// Gets or sets the VirtualSignalGroupJobInfo section of the DOM Instance.
+		/// </summary>
+		public VirtualSignalGroupJobInfoSection VirtualSignalGroupJobInfo { get; set; }
+
 		public static explicit operator VirtualSignalGroupStateInstance(DomInstance instance)
 		{
 			return new VirtualSignalGroupStateInstance(instance);
@@ -584,6 +608,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 			if (VirtualSignalGroupLock != null && !VirtualSignalGroupLock.IsEmpty)
 			{
 				domInstance.Sections.Add(VirtualSignalGroupLock.ToSection());
+			}
+
+			if (VirtualSignalGroupJobInfo != null && !VirtualSignalGroupJobInfo.IsEmpty)
+			{
+				domInstance.Sections.Add(VirtualSignalGroupJobInfo.ToSection());
 			}
 
 			domInstance.Sections.Add(VirtualSignalGroupStateInfo.ToSection());
@@ -625,6 +654,16 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 			else
 			{
 				VirtualSignalGroupStateInfo = new VirtualSignalGroupStateInfoSection(_virtualSignalGroupStateInfo);
+			}
+
+			var _virtualSignalGroupJobInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.Id));
+			if (_virtualSignalGroupJobInfo is null)
+			{
+				VirtualSignalGroupJobInfo = new VirtualSignalGroupJobInfoSection();
+			}
+			else
+			{
+				VirtualSignalGroupJobInfo = new VirtualSignalGroupJobInfoSection(_virtualSignalGroupJobInfo);
 			}
 		}
 	}
@@ -747,6 +786,116 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 			}
 
 			TransportTypeField = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.TransportTypeField.Id)).Select(section => new TransportTypeFieldSection(section)).ToList();
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a ControlSurfaceSettingsInstance DOM instance.
+	/// The <see cref="ControlSurfaceSettingsInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class ControlSurfaceSettingsInstance : DomInstanceBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ControlSurfaceSettingsInstance"/> class. Creates an empty <see cref="ControlSurfaceSettingsInstance"/> instance with default settings.
+		/// </summary>
+		public ControlSurfaceSettingsInstance() : base(SlcConnectivityManagementIds.Definitions.ControlSurfaceSettings)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ControlSurfaceSettingsInstance"/> class. Creates an empty <see cref="ControlSurfaceSettingsInstance"/> instance with default settings and a specific ID.
+		/// </summary>
+		public ControlSurfaceSettingsInstance(Guid id) : base(SlcConnectivityManagementIds.Definitions.ControlSurfaceSettings, id)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ControlSurfaceSettingsInstance"/> class using the specified <paramref name="domInstance"/> for initializing the object.
+		/// </summary>
+		/// <param name="domInstance">The <see cref="DomInstance"/> object that provides data for initializing the <see cref="ControlSurfaceSettingsInstance"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public ControlSurfaceSettingsInstance(DomInstance domInstance) : base(domInstance)
+		{
+			if (!domInstance.DomDefinitionId.Equals(SlcConnectivityManagementIds.Definitions.ControlSurfaceSettings))
+				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcConnectivityManagementIds.Definitions.ControlSurfaceSettings)}'", nameof(domInstance));
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Gets or sets the ControlSurfaceSettings section of the DOM Instance.
+		/// </summary>
+		public ControlSurfaceSettingsSection ControlSurfaceSettings { get; set; }
+
+		public static explicit operator ControlSurfaceSettingsInstance(DomInstance instance)
+		{
+			return new ControlSurfaceSettingsInstance(instance);
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="ControlSurfaceSettingsInstance"/>.
+		/// </summary>
+		/// <returns>A new <see cref="ControlSurfaceSettingsInstance"/> object that is a deep copy of this instance.</returns>
+		public ControlSurfaceSettingsInstance Clone()
+		{
+			return new ControlSurfaceSettingsInstance((DomInstance)this.ToInstance().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="ControlSurfaceSettingsInstance"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="ControlSurfaceSettingsInstance"/> object that is a copy of this instance but with a different id.</returns>
+		public ControlSurfaceSettingsInstance Duplicate()
+		{
+			var instance = (DomInstance)this.ToInstance().Clone();
+			instance.ID = new DomInstanceId(Guid.NewGuid())
+			{ ModuleId = ModuleId };
+			foreach (var section in instance.Sections)
+			{
+				section.ID = new Skyline.DataMiner.Net.Sections.SectionID(Guid.NewGuid());
+			}
+
+			return new ControlSurfaceSettingsInstance(instance);
+		}
+
+		/// <inheritdoc />
+		protected sealed override DomInstance InternalToInstance()
+		{
+			domInstance.Sections.Clear();
+			domInstance.Sections.Add(ControlSurfaceSettings.ToSection());
+
+			return domInstance;
+		}
+
+		/// <inheritdoc />
+		public sealed override void Save(DomHelper helper)
+		{
+			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
+			var instance = ToInstance();
+			if (exist == null)
+			{
+				domInstance = helper.DomInstances.Create(instance);
+			}
+			else
+			{
+				domInstance = helper.DomInstances.Update(instance);
+			}
+		}
+
+		protected sealed override void InitializeProperties()
+		{
+			var _controlSurfaceSettings = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.Id));
+			if (_controlSurfaceSettings is null)
+			{
+				ControlSurfaceSettings = new ControlSurfaceSettingsSection();
+			}
+			else
+			{
+				ControlSurfaceSettings = new ControlSurfaceSettingsSection(_controlSurfaceSettings);
+			}
 		}
 	}
 }
@@ -1262,6 +1411,183 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 		{
 			if (section.GetValue<Guid>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupStateInfo.VirtualSignalGroupReference) == null)
 				throw new InvalidOperationException("'VirtualSignalGroupReference' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			return section;
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a VirtualSignalGroupJobInfoSection section.
+	/// The <see cref="VirtualSignalGroupJobInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class VirtualSignalGroupJobInfoSection : DomSectionBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupJobInfoSection"/> class. Creates an empty <see cref="VirtualSignalGroupJobInfoSection"/> object with default settings.
+		/// </summary>
+		public VirtualSignalGroupJobInfoSection() : base(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.Id)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="VirtualSignalGroupJobInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// </summary>
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="VirtualSignalGroupJobInfoSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public VirtualSignalGroupJobInfoSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.Id)
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the JobReference field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String JobReference
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobReference);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobReference);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobReference, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the JobName field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String JobName
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobName);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobName);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobName, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the JobDescription field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String JobDescription
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobDescription);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobDescription);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobDescription, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="VirtualSignalGroupJobInfoSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupJobInfoSection"/> object that is a deep copy of this section.</returns>
+		public VirtualSignalGroupJobInfoSection Clone()
+		{
+			return new VirtualSignalGroupJobInfoSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="VirtualSignalGroupJobInfoSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="VirtualSignalGroupJobInfoSection"/> object that is a copy of this section but with a different id.</returns>
+		public VirtualSignalGroupJobInfoSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new VirtualSignalGroupJobInfoSection(section);
+		}
+
+		/// <inheritdoc />
+		protected override Section InternalToSection()
+		{
 			return section;
 		}
 	}
@@ -2351,6 +2677,140 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityMan
 		{
 			if (section.GetValue<String>(SlcConnectivityManagementIds.Sections.TransportTypeField.Name) == null)
 				throw new InvalidOperationException("'Name' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			return section;
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a ControlSurfaceSettingsSection section.
+	/// The <see cref="ControlSurfaceSettingsSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class ControlSurfaceSettingsSection : DomSectionBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ControlSurfaceSettingsSection"/> class. Creates an empty <see cref="ControlSurfaceSettingsSection"/> object with default settings.
+		/// </summary>
+		public ControlSurfaceSettingsSection() : base(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.Id)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ControlSurfaceSettingsSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// </summary>
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="ControlSurfaceSettingsSection"/>. If the section is <c>null</c>, the constructor will not perform any initialization.</param>
+		public ControlSurfaceSettingsSection(Section section) : base(section, SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.Id)
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the JobDetailsEnabled field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public Boolean? JobDetailsEnabled
+		{
+			get
+			{
+				var wrapper = section.GetValue<Boolean>(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsEnabled);
+				if (wrapper != null)
+				{
+					return (Boolean?)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsEnabled);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsEnabled, (Boolean)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the JobDetailsUrlTemplate field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String JobDetailsUrlTemplate
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsUrlTemplate);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsUrlTemplate);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcConnectivityManagementIds.Sections.ControlSurfaceSettings.JobDetailsUrlTemplate, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="ControlSurfaceSettingsSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="ControlSurfaceSettingsSection"/> object that is a deep copy of this section.</returns>
+		public ControlSurfaceSettingsSection Clone()
+		{
+			return new ControlSurfaceSettingsSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="ControlSurfaceSettingsSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="ControlSurfaceSettingsSection"/> object that is a copy of this section but with a different id.</returns>
+		public ControlSurfaceSettingsSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new ControlSurfaceSettingsSection(section);
+		}
+
+		/// <inheritdoc />
+		protected override Section InternalToSection()
+		{
 			return section;
 		}
 	}

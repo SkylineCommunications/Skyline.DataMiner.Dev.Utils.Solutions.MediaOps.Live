@@ -37,6 +37,7 @@
 			VirtualSignalGroupStates = new VirtualSignalGroupStateRepository(this);
 			Levels = new LevelRepository(this);
 			TransportTypes = new TransportTypeRepository(this);
+			ControlSurfaceSettings = new ControlSurfaceSettingsRepository(this);
 
 			Orchestration = new OrchestrationHelper(SlcOrchestrationHelper, this);
 		}
@@ -54,6 +55,8 @@
 		public LevelRepository Levels { get; }
 
 		public TransportTypeRepository TransportTypes { get; }
+
+		public ControlSurfaceSettingsRepository ControlSurfaceSettings { get; }
 
 		public OrchestrationHelper Orchestration { get; }
 

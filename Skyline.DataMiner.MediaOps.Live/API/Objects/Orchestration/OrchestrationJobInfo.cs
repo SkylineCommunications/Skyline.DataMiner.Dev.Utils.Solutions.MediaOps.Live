@@ -65,6 +65,22 @@
 		}
 
 		/// <summary>
+		/// Gets or sets the description of the job.
+		/// </summary>
+		public string JobDescription
+		{
+			get
+			{
+				return _domInstance.JobInfo.JobDescription;
+			}
+
+			set
+			{
+				_domInstance.JobInfo.JobDescription = value;
+			}
+		}
+
+		/// <summary>
 		/// Gets or sets the access URL of the job.
 		/// </summary>
 		public string JobUrl

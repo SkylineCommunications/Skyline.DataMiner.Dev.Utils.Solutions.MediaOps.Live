@@ -170,6 +170,55 @@
 			Delete(virtualSignalGroupStates);
 		}
 
+		/// <summary>
+		/// Stores job information on the state of the specified virtual signal group.
+		/// </summary>
+		/// <remarks>
+		/// The job information is persisted independently of the lock state, so it survives a manual unlock.
+		/// It should be cleared explicitly using <see cref="ClearJobInfo(ICollection{VirtualSignalGroup})"/> (typically at the start of the post-roll).
+		/// </remarks>
+		public void SetJobInfo(VirtualSignalGroup virtualSignalGroup, string jobReference, string jobName, string jobDescription)
+		{
+			if (virtualSignalGroup is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroup));
+			}
+
+			SetJobInfo([new VirtualSignalGroupJobInfoRequest(virtualSignalGroup, jobReference, jobName, jobDescription)]);
+		}
+
+		/// <summary>
+		/// Stores job information on the states of the specified virtual signal groups.
+		/// </summary>
+		/// <remarks>
+		/// The job information is persisted independently of the lock state, so it survives a manual unlock.
+		/// It should be cleared explicitly using <see cref="ClearJobInfo(ICollection{VirtualSignalGroup})"/> (typically at the start of the post-roll).
+		/// </remarks>
+		public void SetJobInfo(ICollection<VirtualSignalGroupJobInfoRequest> requests)
+		{
+			if (requests is null)
+			{
+				throw new ArgumentNullException(nameof(requests));
+			}
+
+			UpdateVirtualSignalGroupJobInfo(requests);
+		}
+
+		/// <summary>
+		/// Clears any stored job information from the states of the specified virtual signal groups.
+		/// </summary>
+		public void ClearJobInfo(ICollection<VirtualSignalGroup> virtualSignalGroups)
+		{
+			if (virtualSignalGroups is null)
+			{
+				throw new ArgumentNullException(nameof(virtualSignalGroups));
+			}
+
+			var requests = virtualSignalGroups.Select(vsg => new VirtualSignalGroupJobInfoRequest(vsg)).ToList();
+
+			UpdateVirtualSignalGroupJobInfo(requests);
+		}
+
 		protected internal override VirtualSignalGroupState CreateInstance(DomInstance domInstance)
 		{
 			return new VirtualSignalGroupState(domInstance);
@@ -201,6 +250,12 @@
 					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockJobReference), comparer, value);
 				case nameof(VirtualSignalGroupState.LockTime):
 					return FilterElementFactory.Create<DateTimeOffset>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockTime), comparer, value);
+				case nameof(VirtualSignalGroupState.JobReference):
+					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobReference), comparer, value);
+				case nameof(VirtualSignalGroupState.JobName):
+					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobName), comparer, value);
+				case nameof(VirtualSignalGroupState.JobDescription):
+					return FilterElementFactory.Create<string>(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobDescription), comparer, value);
 			}
 
 			return base.CreateFilter(fieldName, comparer, value);
@@ -222,6 +277,12 @@
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockJobReference), sortOrder, naturalSort);
 				case nameof(VirtualSignalGroupState.LockTime):
 					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupLock.LockTime), sortOrder, naturalSort);
+				case nameof(VirtualSignalGroupState.JobReference):
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobReference), sortOrder, naturalSort);
+				case nameof(VirtualSignalGroupState.JobName):
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobName), sortOrder, naturalSort);
+				case nameof(VirtualSignalGroupState.JobDescription):
+					return OrderByElementFactory.Create(DomInstanceExposers.FieldValues.DomInstanceField(SlcConnectivityManagementIds.Sections.VirtualSignalGroupJobInfo.JobDescription), sortOrder, naturalSort);
 			}
 
 			return base.CreateOrderBy(fieldName, sortOrder, naturalSort);
@@ -296,6 +357,69 @@
 				state.LockReason = expectedReason;
 				state.LockJobReference = expectedJobRef;
 				state.LockTime = expectedTime;
+
+				statesToUpdate.Add(state);
+			}
+
+			// Save changes
+			CreateOrUpdate(statesToUpdate);
+		}
+
+		private void UpdateVirtualSignalGroupJobInfo(ICollection<VirtualSignalGroupJobInfoRequest> requests)
+		{
+			if (requests.Count == 0)
+			{
+				return;
+			}
+
+			// Get all virtual signal groups
+			var virtualSignalGroups = requests.Select(x => x.VirtualSignalGroup).ToList();
+
+			// Get existing states
+			var virtualSignalGroupStates = GetByVirtualSignalGroups(virtualSignalGroups)
+				.SafeToDictionary(x => x.VirtualSignalGroupReference);
+
+			// Create a mapping of VSG to request
+			var requestsByVsg = requests.SafeToDictionary(x => x.VirtualSignalGroup.ID, x => x);
+
+			// Update or create states
+			var statesToUpdate = new List<VirtualSignalGroupState>();
+
+			foreach (var vsg in virtualSignalGroups)
+			{
+				// Get the request for this VSG
+				if (!requestsByVsg.TryGetValue(vsg.ID, out var request))
+				{
+					continue; // Skip if no request found
+				}
+
+				// Retrieve or create the state for the current virtual signal group
+				if (!virtualSignalGroupStates.TryGetValue(vsg.ID, out var state))
+				{
+					// Nothing to clear when there is no existing state
+					if (!request.HasJobInfo)
+					{
+						continue;
+					}
+
+					state = new VirtualSignalGroupState { VirtualSignalGroupReference = vsg.ID };
+				}
+
+				// Check if an update is needed
+				bool needsUpdate =
+					state.JobReference != request.JobReference ||
+					state.JobName != request.JobName ||
+					state.JobDescription != request.JobDescription;
+
+				if (!needsUpdate)
+				{
+					continue;
+				}
+
+				// Apply update (only the job info section, independent of lock state)
+				state.JobReference = request.JobReference;
+				state.JobName = request.JobName;
+				state.JobDescription = request.JobDescription;
 
 				statesToUpdate.Add(state);
 			}

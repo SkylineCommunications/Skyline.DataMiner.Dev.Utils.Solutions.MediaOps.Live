@@ -101,6 +101,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration
 				public static FieldDescriptorID MonitoringService { get; } = new FieldDescriptorID(new Guid("1ad30bca-9282-49da-8d79-3acc197489ff"));
 				public static FieldDescriptorID JobName { get; } = new FieldDescriptorID(new Guid("af147772-ca9c-4638-b28f-0f8db6cc7619"));
 				public static FieldDescriptorID JobURL { get; } = new FieldDescriptorID(new Guid("771a106d-b114-441a-851e-57ed923dde4d"));
+				public static FieldDescriptorID JobDescription { get; } = new FieldDescriptorID(new Guid("5b2f8c41-7e93-4a06-9d52-8c1a6b4f3e72"));
 			}
 		}
 
@@ -1944,6 +1945,49 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration
 				else
 				{
 					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.JobInfo.JobURL, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the JobDescription field of the DOM Instance.
+		/// </summary>
+		/// <remarks>
+		/// When retrieving the value:
+		/// <list type="bullet">
+		/// <item>If the field has been set, it will return the value.</item>
+		/// <item>If the field is not set it will return <see langword="null"/>.</item>
+		/// </list>
+		/// When setting the value:
+		/// <list type="bullet">
+		/// <item>- If <see langword="null"/> is assigned, the field will be removed from the section.</item>
+		/// <item>- If a valid value is assigned, the field value will be added or updated in the section.</item>
+		/// </list>
+		/// </remarks>
+		public String JobDescription
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.JobInfo.JobDescription);
+				if (wrapper != null)
+				{
+					return (String)wrapper.Value;
+				}
+				else
+				{
+					return null;
+				}
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.JobInfo.JobDescription);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.JobInfo.JobDescription, (String)value);
 				}
 			}
 		}
