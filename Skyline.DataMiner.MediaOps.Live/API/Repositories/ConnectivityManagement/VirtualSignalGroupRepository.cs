@@ -7,6 +7,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
@@ -63,6 +64,39 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 
 			var filter = VirtualSignalGroupExposers.Categories.Contains(category.ID);
 			return Read(filter);
+		}
+
+		public VirtualSignalGroup GetByRoleAndName(EndpointRole role, string name)
+		{
+			if (String.IsNullOrWhiteSpace(name))
+			{
+				throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
+			}
+
+			var filter = VirtualSignalGroupExposers.Role.UncheckedEqual(role).AND(VirtualSignalGroupExposers.Name.Equal(name));
+			var virtualSignalGroups = Read(filter).Take(2).ToList();
+
+			if (virtualSignalGroups.Count > 1)
+			{
+				throw new InvalidOperationException($"Multiple virtual signal groups found with role '{role}' and name '{name}'.");
+			}
+
+			return virtualSignalGroups.FirstOrDefault();
+		}
+
+		public IDictionary<(EndpointRole Role, string Name), VirtualSignalGroup> GetByRolesAndNames(IEnumerable<(EndpointRole Role, string Name)> roleNameKeys)
+		{
+			if (roleNameKeys == null)
+			{
+				throw new ArgumentNullException(nameof(roleNameKeys));
+			}
+
+			var matchingVsgs = FilterQueryExecutor.RetrieveFilteredItems(
+				roleNameKeys,
+				key => VirtualSignalGroupExposers.Role.UncheckedEqual(key.Role).AND(VirtualSignalGroupExposers.Name.Equal(key.Name)),
+				Read);
+
+			return matchingVsgs.SafeToDictionary(vsg => (vsg.Role, vsg.Name));
 		}
 
 		public void LockVirtualSignalGroup(VirtualSignalGroup virtualSignalGroup, string user, string reason, string jobReference, DateTimeOffset? time = null)
