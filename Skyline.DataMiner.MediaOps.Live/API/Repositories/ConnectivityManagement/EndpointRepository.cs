@@ -15,6 +15,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Extensions;
 
 	using SLDataGateway.API.Types.Querying;
 
@@ -130,6 +131,39 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Connectivit
 			}
 
 			return GetByTransportMetadata([(fieldName, value)]);
+		}
+
+		public Endpoint GetByRoleAndName(EndpointRole role, string name)
+		{
+			if (String.IsNullOrWhiteSpace(name))
+			{
+				throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
+			}
+
+			var filter = EndpointExposers.Role.UncheckedEqual(role).AND(EndpointExposers.Name.Equal(name));
+			var endpoints = Read(filter).Take(2).ToList();
+
+			if (endpoints.Count > 1)
+			{
+				throw new InvalidOperationException($"Multiple endpoints found with role '{role}' and name '{name}'.");
+			}
+
+			return endpoints.FirstOrDefault();
+		}
+
+		public IDictionary<(EndpointRole Role, string Name), Endpoint> GetByRolesAndNames(IEnumerable<(EndpointRole Role, string Name)> roleNameKeys)
+		{
+			if (roleNameKeys == null)
+			{
+				throw new ArgumentNullException(nameof(roleNameKeys));
+			}
+
+			var matchingEndpoints = FilterQueryExecutor.RetrieveFilteredItems(
+				roleNameKeys,
+				key => EndpointExposers.Role.UncheckedEqual(key.Role).AND(EndpointExposers.Name.Equal(key.Name)),
+				Read);
+
+			return matchingEndpoints.SafeToDictionary(endpoint => (endpoint.Role, endpoint.Name));
 		}
 
 		protected internal override Endpoint CreateInstance(DomInstance domInstance)

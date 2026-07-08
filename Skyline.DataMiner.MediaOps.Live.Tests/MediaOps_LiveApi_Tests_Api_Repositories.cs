@@ -111,6 +111,82 @@
 		}
 
 		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Read_Endpoints_ByRoleAndName()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var keys = new[]
+			{
+				(EndpointRole.Source, "Video Source 1"),
+				(EndpointRole.Source, "Audio Source 2"),
+				(EndpointRole.Destination, "Video Destination 3"),
+				(EndpointRole.Destination, "Video Source 1"), // Name exists, but not for this role
+				(EndpointRole.Source, "Does Not Exist"),
+			};
+
+			var endpoints = api.Endpoints.GetByRolesAndNames(keys);
+
+			Assert.AreEqual(3, endpoints.Count);
+			Assert.AreEqual("Video Source 1", endpoints[(EndpointRole.Source, "Video Source 1")].Name);
+			Assert.AreEqual(EndpointRole.Source, endpoints[(EndpointRole.Source, "Audio Source 2")].Role);
+			Assert.AreEqual("Video Destination 3", endpoints[(EndpointRole.Destination, "Video Destination 3")].Name);
+			Assert.IsFalse(endpoints.ContainsKey((EndpointRole.Destination, "Video Source 1")));
+			Assert.IsFalse(endpoints.ContainsKey((EndpointRole.Source, "Does Not Exist")));
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_GetByRoleAndName_Endpoint()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var endpoint = api.Endpoints.GetByRoleAndName(EndpointRole.Source, "Video Source 1");
+			Assert.IsNotNull(endpoint);
+			Assert.AreEqual("Video Source 1", endpoint.Name);
+			Assert.AreEqual(EndpointRole.Source, endpoint.Role);
+
+			// Name exists, but not for this role
+			Assert.IsNull(api.Endpoints.GetByRoleAndName(EndpointRole.Destination, "Video Source 1"));
+			Assert.IsNull(api.Endpoints.GetByRoleAndName(EndpointRole.Source, "Does Not Exist"));
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_Read_VirtualSignalGroups_ByRoleAndName()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var keys = new[]
+			{
+				(EndpointRole.Source, "Source 1"),
+				(EndpointRole.Destination, "Destination 2"),
+				(EndpointRole.Source, "Destination 1"), // Name exists, but not for this role
+				(EndpointRole.Source, "Does Not Exist"),
+			};
+
+			var vsgs = api.VirtualSignalGroups.GetByRolesAndNames(keys);
+
+			Assert.AreEqual(2, vsgs.Count);
+			Assert.AreEqual("Source 1", vsgs[(EndpointRole.Source, "Source 1")].Name);
+			Assert.AreEqual("Destination 2", vsgs[(EndpointRole.Destination, "Destination 2")].Name);
+			Assert.IsFalse(vsgs.ContainsKey((EndpointRole.Source, "Destination 1")));
+			Assert.IsFalse(vsgs.ContainsKey((EndpointRole.Source, "Does Not Exist")));
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_GetByRoleAndName_VirtualSignalGroup()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var vsg = api.VirtualSignalGroups.GetByRoleAndName(EndpointRole.Source, "Source 1");
+			Assert.IsNotNull(vsg);
+			Assert.AreEqual("Source 1", vsg.Name);
+			Assert.AreEqual(EndpointRole.Source, vsg.Role);
+
+			// Name exists, but not for this role
+			Assert.IsNull(api.VirtualSignalGroups.GetByRoleAndName(EndpointRole.Source, "Destination 1"));
+			Assert.IsNull(api.VirtualSignalGroups.GetByRoleAndName(EndpointRole.Source, "Does Not Exist"));
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_Update()
 		{
 			var api = new MediaOpsLiveApiMock();
