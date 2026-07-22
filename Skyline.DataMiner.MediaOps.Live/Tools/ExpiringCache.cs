@@ -2,7 +2,7 @@
 {
 	using System;
 
-	public class ExpiringCache<T>
+	internal class ExpiringCache<T>
 	{
 		private readonly object _lock = new();
 		private readonly TimeSpan _expiration;

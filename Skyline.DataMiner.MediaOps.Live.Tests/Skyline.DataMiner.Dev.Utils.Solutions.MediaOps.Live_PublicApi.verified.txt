@@ -136,24 +136,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Caching
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity
 {
-    public class ConnectionEndpointsMapping
-    {
-        public ConnectionEndpointsMapping() { }
-        public int ConnectionCount { get; }
-        public int EndpointCount { get; }
-        public void Add(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
-        public void AddOrUpdate(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
-        public void Clear() { }
-        public bool Contains(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
-        public bool Contains(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
-        public bool Contains(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
-        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection> GetConnections(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
-        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection> GetConnectionsWithSource(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> source) { }
-        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>> GetEndpoints(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
-        public bool IsConnected(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> source, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> destination) { }
-        public void Remove(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
-        public bool TryGetConnectionForDestination(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> destination, out Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
-    }
     public sealed class ConnectionMonitor : System.IDisposable
     {
         public ConnectionMonitor(Skyline.DataMiner.Solutions.MediaOps.Live.API.IMediaOpsLiveApi api, Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity.LiteConnectivityInfoProvider liteConnectivityInfoProvider = null) { }
@@ -1831,37 +1813,5 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Take
     public class VsgDisconnectResult : Skyline.DataMiner.Solutions.MediaOps.Live.Take.DisconnectResult<Skyline.DataMiner.Solutions.MediaOps.Live.Take.VsgDisconnectRequest>
     {
         public VsgDisconnectResult(Skyline.DataMiner.Solutions.MediaOps.Live.Take.VsgDisconnectRequest request, bool isSuccessful, System.Threading.Tasks.Task<bool> completionTask) { }
-    }
-}
-namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tools
-{
-    public class ExecuteScriptMessageBuilder
-    {
-        public ExecuteScriptMessageBuilder(string scriptName) { }
-        public Skyline.DataMiner.Net.Messages.ExecuteScriptMessage Build() { }
-        public void SetCheckSets(bool checkSets) { }
-        public void SetDummies(System.Collections.Generic.Dictionary<string, Skyline.DataMiner.Core.DataMinerSystem.Common.DmsElementId> dummies) { }
-        public void SetEntryPoint(Skyline.DataMiner.Net.Automation.AutomationEntryPoint entryPoint) { }
-        public void SetExtendedErrorInfo(bool extendedErrorInfo) { }
-        public void SetInformationEvent(bool allowInformationEvents) { }
-        public void SetInteractive(bool interactive) { }
-        public void SetParameters(System.Collections.Generic.Dictionary<string, string> parameters) { }
-        public void SetSynchronous(bool synchronous) { }
-    }
-    public class ExpiringCache<T>
-    {
-        public ExpiringCache(System.TimeSpan expiration) { }
-        public T GetOrRefresh(System.Func<T> valueFactory) { }
-        public void SetValue(T value) { }
-    }
-    public static class PropertyComparer<T>
-    {
-        public static Skyline.DataMiner.Solutions.MediaOps.Live.Tools.PropertyComparer<T, TKey> Create<TKey>(System.Func<T, TKey> keySelector) { }
-    }
-    public class PropertyComparer<T, TKey> : System.Collections.Generic.IEqualityComparer<T>
-    {
-        public PropertyComparer(System.Func<T, TKey> keySelector, System.Collections.Generic.IEqualityComparer<TKey> keyComparer = null) { }
-        public bool Equals(T x, T y) { }
-        public int GetHashCode(T obj) { }
     }
 }
