@@ -11,8 +11,7 @@
 
 	internal sealed class PendingConnectionActionMapping
 	{
-		private readonly ManyToManyMapping<PendingConnectionAction, ApiObjectReference<Endpoint>> _mapping =
-			new(PropertyComparer<PendingConnectionAction>.Create(x => x.Destination));
+		private readonly ManyToManyMapping<PendingConnectionAction, ApiObjectReference<Endpoint>> _mapping = new();
 
 		public int PendingConnectionActionCount => _mapping.Forward.Count;
 
@@ -44,11 +43,18 @@
 			return pendingConnectionActions.Where(c => c.PendingSource == source).ToList();
 		}
 
-		public bool TryGetPendingConnectionActionForDestination(ApiObjectReference<Endpoint> destination, out PendingConnectionAction pendingConnectionAction)
+		public IReadOnlyCollection<PendingConnectionAction> GetPendingConnectionActionsWithDestination(ApiObjectReference<Endpoint> destination)
 		{
 			var pendingConnectionActions = GetPendingConnectionActions(destination);
 
-			pendingConnectionAction = pendingConnectionActions.SingleOrDefault(c => c.Destination == destination);
+			return pendingConnectionActions.Where(c => c.Destination == destination).ToList();
+		}
+
+		public bool TryGetPendingConnectionActionForDestination(ApiObjectReference<Endpoint> destination, out PendingConnectionAction pendingConnectionAction)
+		{
+			var actions = GetPendingConnectionActionsWithDestination(destination);
+
+			pendingConnectionAction = actions.FirstOrDefault();
 			return pendingConnectionAction != null;
 		}
 
@@ -92,15 +98,13 @@
 			_mapping.TryRemoveForward(pendingAction);
 		}
 
-		public void AddOrUpdate(PendingConnectionAction pendingAction)
+		public void RemoveByDestination(ApiObjectReference<Endpoint> destination)
 		{
-			if (pendingAction is null)
+			var existingActions = GetPendingConnectionActionsWithDestination(destination).ToList();
+			foreach (var existing in existingActions)
 			{
-				throw new ArgumentNullException(nameof(pendingAction));
+				_mapping.TryRemoveForward(existing);
 			}
-
-			Remove(pendingAction);
-			Add(pendingAction);
 		}
 
 		public void Clear()

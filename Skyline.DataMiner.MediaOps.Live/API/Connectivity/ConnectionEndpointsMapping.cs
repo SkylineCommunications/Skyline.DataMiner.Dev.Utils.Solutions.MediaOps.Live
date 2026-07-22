@@ -11,8 +11,7 @@
 
 	public class ConnectionEndpointsMapping
 	{
-		private readonly ManyToManyMapping<Connection, ApiObjectReference<Endpoint>> _mapping =
-			new(PropertyComparer<Connection>.Create(x => x.Destination));
+		private readonly ManyToManyMapping<Connection, ApiObjectReference<Endpoint>> _mapping = new();
 
 		public int ConnectionCount => _mapping.Forward.Count;
 
@@ -42,6 +41,13 @@
 			var connections = GetConnections(source);
 
 			return connections.Where(c => c.ConnectedSource == source).ToList();
+		}
+
+		public IReadOnlyCollection<Connection> GetConnectionsWithDestination(ApiObjectReference<Endpoint> destination)
+		{
+			var connections = GetConnections(destination);
+
+			return connections.Where(c => c.Destination == destination).ToList();
 		}
 
 		public bool TryGetConnectionForDestination(ApiObjectReference<Endpoint> destination, out Connection connection)
@@ -82,15 +88,13 @@
 			_mapping.TryRemoveForward(connection);
 		}
 
-		public void AddOrUpdate(Connection connection)
+		public void RemoveByDestination(ApiObjectReference<Endpoint> destination)
 		{
-			if (connection is null)
+			var existingConnections = GetConnectionsWithDestination(destination).ToList();
+			foreach (var existing in existingConnections)
 			{
-				throw new ArgumentNullException(nameof(connection));
+				_mapping.TryRemoveForward(existing);
 			}
-
-			Remove(connection);
-			Add(connection);
 		}
 
 		public void Clear()

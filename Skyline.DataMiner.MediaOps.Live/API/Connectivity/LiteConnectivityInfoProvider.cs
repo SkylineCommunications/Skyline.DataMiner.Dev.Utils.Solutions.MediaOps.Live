@@ -268,7 +268,8 @@
 
 					impactedEndpoints.UnionWith(connection.GetEndpoints());
 					_connectionsByDestination[connection.Destination] = connection;
-					_connectionEndpointsMapping.AddOrUpdate(connection);
+					_connectionEndpointsMapping.RemoveByDestination(connection.Destination);
+					_connectionEndpointsMapping.Add(connection);
 				}
 			}
 
@@ -316,7 +317,8 @@
 					}
 
 					_pendingActionsByDestination[pendingAction.Destination] = pendingAction;
-					_pendingConnectionActionsMapping.AddOrUpdate(pendingAction);
+					_pendingConnectionActionsMapping.RemoveByDestination(pendingAction.Destination);
+					_pendingConnectionActionsMapping.Add(pendingAction);
 
 					if (hasImpact)
 					{

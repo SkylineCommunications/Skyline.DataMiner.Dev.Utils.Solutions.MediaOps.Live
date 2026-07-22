@@ -142,16 +142,17 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Connectivity
         public int ConnectionCount { get; }
         public int EndpointCount { get; }
         public void Add(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
-        public void AddOrUpdate(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
         public void Clear() { }
         public bool Contains(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
         public bool Contains(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
         public bool Contains(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection> GetConnections(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint) { }
+        public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection> GetConnectionsWithDestination(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> destination) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection> GetConnectionsWithSource(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> source) { }
         public System.Collections.Generic.IReadOnlyCollection<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint>> GetEndpoints(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
         public bool IsConnected(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> source, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> destination) { }
         public void Remove(Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
+        public void RemoveByDestination(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> destination) { }
         public bool TryGetConnectionForDestination(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> destination, out Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element.Connection connection) { }
     }
     public sealed class ConnectionMonitor : System.IDisposable
@@ -1853,15 +1854,5 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tools
         public ExpiringCache(System.TimeSpan expiration) { }
         public T GetOrRefresh(System.Func<T> valueFactory) { }
         public void SetValue(T value) { }
-    }
-    public static class PropertyComparer<T>
-    {
-        public static Skyline.DataMiner.Solutions.MediaOps.Live.Tools.PropertyComparer<T, TKey> Create<TKey>(System.Func<T, TKey> keySelector) { }
-    }
-    public class PropertyComparer<T, TKey> : System.Collections.Generic.IEqualityComparer<T>
-    {
-        public PropertyComparer(System.Func<T, TKey> keySelector, System.Collections.Generic.IEqualityComparer<TKey> keyComparer = null) { }
-        public bool Equals(T x, T y) { }
-        public int GetHashCode(T obj) { }
     }
 }
