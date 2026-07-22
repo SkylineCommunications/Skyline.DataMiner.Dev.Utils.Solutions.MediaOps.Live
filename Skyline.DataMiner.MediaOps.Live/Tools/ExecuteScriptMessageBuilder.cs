@@ -6,7 +6,7 @@
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
 
-	public class ExecuteScriptMessageBuilder
+	internal class ExecuteScriptMessageBuilder
 	{
 		private readonly ExecuteScriptMessage _message;
 		private readonly List<string> _options;

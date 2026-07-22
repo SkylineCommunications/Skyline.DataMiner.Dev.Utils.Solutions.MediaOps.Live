@@ -9,7 +9,7 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Mediation.Element;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
-	public class ConnectionEndpointsMapping
+	internal sealed class ConnectionEndpointsMapping
 	{
 		private readonly ManyToManyMapping<Connection, ApiObjectReference<Endpoint>> _mapping =
 			new(PropertyComparer<Connection>.Create(x => x.Destination));
