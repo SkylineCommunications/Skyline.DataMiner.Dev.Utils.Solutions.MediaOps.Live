@@ -240,14 +240,16 @@ connectionHandler.Take(
 ```csharp
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 
-var connectivityProvider = api.GetConnectivityInfoProvider();
+// Dispose the provider when done to release its subscriptions
+using (var connectivityProvider = api.GetConnectivityInfoProvider())
+{
+    // Check if connected
+    bool isConnected = connectivityProvider.IsConnected(sourceVsg, destinationVsg);
 
-// Check if connected
-bool isConnected = connectivityProvider.IsConnected(sourceVsg, destinationVsg);
-
-// Get detailed connectivity info
-var connectivity = connectivityProvider.GetConnectivity(destinationVsg);
-var connectedSource = connectivity.ConnectedSource;
+    // Get detailed connectivity info
+    var connectivity = connectivityProvider.GetConnectivity(destinationVsg);
+    var connectedSource = connectivity.ConnectedSource;
+}
 ```
 
 ## Next steps

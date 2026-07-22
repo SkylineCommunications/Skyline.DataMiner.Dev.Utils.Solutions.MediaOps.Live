@@ -211,19 +211,21 @@ The GetConnectivity() method can be used to retrieve connectivity information fo
 Both source and destination objects are supported. Depending on the type of object, different information is returned.
 
 ```csharp
-var connectivityInfoProvider = api.GetConnectivityInfoProvider();
+// Dispose the provider when done to release its subscriptions
+using (var connectivityInfoProvider = api.GetConnectivityInfoProvider())
+{
+    // Check if two endpoints (or VSGs) are connected
+    bool isConnected = connectivityInfoProvider.IsConnected(source, destination);
 
-// Check if two endpoints (or VSGs) are connected
-bool isConnected = connectivityInfoProvider.IsConnected(source, destination);
+    // Get connectivity for a destination endpoint
+    var endpointConnectivity = connectivityInfoProvider.GetConnectivity(destinationEndpoint);
+    var connectedSource = endpointConnectivity.ConnectedSource;
+    var connectionState = endpointConnectivity.State;
 
-// Get connectivity for a destination endpoint
-var endpointConnectivity = connectivityInfoProvider.GetConnectivity(destinationEndpoint);
-var connectedSource = endpointConnectivity.ConnectedSource;
-var connectionState = endpointConnectivity.State;
-
-// Get connectivity for a source VSG
-var vsgConnectivity = connectivityInfoProvider.GetConnectivity(sourceVsg);
-var connectedDestinations = vsgConnectivity.ConnectedDestinations;
+    // Get connectivity for a source VSG
+    var vsgConnectivity = connectivityInfoProvider.GetConnectivity(sourceVsg);
+    var connectedDestinations = vsgConnectivity.ConnectedDestinations;
+}
 ```
 
 ### Making Connections
@@ -356,4 +358,7 @@ var subscription = api.Endpoints.Subscribe(filter);
 
 // Only source endpoint changes will be received
 subscription.Changed += HandleSourceChanges;
+
+// Remember to dispose when done
+subscription.Dispose();
 ```

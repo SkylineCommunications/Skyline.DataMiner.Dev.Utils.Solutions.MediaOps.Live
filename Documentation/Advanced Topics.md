@@ -111,6 +111,9 @@ subscription.Changed += (sender, e) =>
 {
     // Only source endpoint changes will trigger this
 };
+
+// Don't forget to dispose when done
+subscription.Dispose();
 ```
 
 ## Logging
