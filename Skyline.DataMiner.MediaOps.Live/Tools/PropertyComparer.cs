@@ -3,7 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 
-	public class PropertyComparer<T, TKey> : IEqualityComparer<T>
+	internal class PropertyComparer<T, TKey> : IEqualityComparer<T>
 	{
 		private readonly Func<T, TKey> _keySelector;
 		private readonly IEqualityComparer<TKey> _keyComparer;
@@ -34,7 +34,7 @@
 		}
 	}
 
-	public static class PropertyComparer<T>
+	internal static class PropertyComparer<T>
 	{
 		public static PropertyComparer<T, TKey> Create<TKey>(Func<T, TKey> keySelector) => new(keySelector);
 	}
