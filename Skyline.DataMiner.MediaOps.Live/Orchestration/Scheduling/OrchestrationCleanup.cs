@@ -33,24 +33,30 @@
 		/// <param name="time">The reference time.</param>
 		internal void CleanupSchedulerTasksBeforeTime(DateTimeOffset time)
 		{
-			IEnumerable<OrchestrationSchedulerTask> tasksToRemove = _scheduler.GetEventTasksBeforeTime(time);
-			CleanupTasks(tasksToRemove);
+			OrchestrationSchedulerTask[] tasksToRemove = _scheduler.GetEventTasksBeforeTime(time).ToArray();
+			if (tasksToRemove.Any())
+			{
+				IEnumerable<ScheduledTaskId> deletedTaskIds = _scheduler.DeleteTasks(tasksToRemove.Select(t => t.ScheduledTaskId));
+				UpdateEvents(tasksToRemove.Where(t => deletedTaskIds.Contains(t.ScheduledTaskId)));
+			}
 		}
 
-		private void CleanupTasks(IEnumerable<OrchestrationSchedulerTask> tasksToRemove)
+		private void UpdateEvents(IEnumerable<OrchestrationSchedulerTask> removedTasks)
 		{
-			IEnumerable<OrchestrationSchedulerTask> orchestrationSchedulerTasksToRemove = tasksToRemove.ToList();
-			if (!orchestrationSchedulerTasksToRemove.Any())
+			if (!removedTasks.Any())
 			{
 				return;
 			}
 
-			IEnumerable<Guid> eventsFromTasksToRemove = orchestrationSchedulerTasksToRemove.SelectMany(task => task.OrchestrationEventIds);
-
+			HashSet<ScheduledTaskId> removedTaskIds = removedTasks.Select(t => t.ScheduledTaskId).ToHashSet();
+			IEnumerable<Guid> eventsFromTasksToRemove = removedTasks.SelectMany(task => task.OrchestrationEventIds);
 			ORFilterElement<DomInstance> filter = new ORFilterElement<DomInstance>(eventsFromTasksToRemove.Select(id => FilterElementFactory.Create(DomInstanceExposers.Id, Comparer.Equals, id)).ToArray());
 			List<OrchestrationEvent> pastEvents = _repository.ReadDom(filter).ToList();
-
-			_scheduler.DeleteEventTasks(pastEvents);
+			foreach (var pastEvent in pastEvents)
+			{
+				if (removedTaskIds.Contains(pastEvent.SchedulerReference))
+					pastEvent.SchedulerReference = null;
+			}
 
 			_repository.CreateOrUpdate(pastEvents);
 		}

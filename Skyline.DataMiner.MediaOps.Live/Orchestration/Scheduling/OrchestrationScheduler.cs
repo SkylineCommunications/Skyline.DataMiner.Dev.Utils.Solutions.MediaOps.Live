@@ -146,6 +146,21 @@
 			}
 		}
 
+		internal IEnumerable<ScheduledTaskId> DeleteTasks(IEnumerable<ScheduledTaskId> taskIds)
+		{
+			var deletedTaskIds = new List<ScheduledTaskId>();
+			foreach (ScheduledTaskId taskId in taskIds)
+			{
+				if (_dms.GetAgent(taskId.DmaId).Scheduler.DeleteTask(taskId.TaskId) == 0)
+				{
+					_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(taskId));
+					deletedTaskIds.Add(taskId);
+				}
+			}
+
+			return deletedTaskIds;
+		}
+
 		private void CreateOrUpdateEventTasks(IEnumerable<OrchestrationEvent> orchestrationEvents)
 		{
 			IEnumerable<IGrouping<DateTimeOffset?, OrchestrationEvent>> groupedByTimeEvents = orchestrationEvents.GroupBy(e => e.EventTime).OrderBy(g => g.Key);

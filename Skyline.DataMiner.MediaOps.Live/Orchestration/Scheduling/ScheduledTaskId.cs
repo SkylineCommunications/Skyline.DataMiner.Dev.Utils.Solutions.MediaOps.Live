@@ -78,5 +78,13 @@
 		{
 			return $"{DmaId}/{TaskId}";
 		}
+
+		public override int GetHashCode()
+		{
+			unchecked
+			{
+				return (DmaId * 397) ^ TaskId;
+			}
+		}
 	}
 }
