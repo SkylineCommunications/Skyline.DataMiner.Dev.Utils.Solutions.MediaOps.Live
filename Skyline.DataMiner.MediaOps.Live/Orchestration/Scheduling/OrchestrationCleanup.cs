@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
@@ -33,24 +34,32 @@
 		/// <param name="time">The reference time.</param>
 		internal void CleanupSchedulerTasksBeforeTime(DateTimeOffset time)
 		{
-			IEnumerable<OrchestrationSchedulerTask> tasksToRemove = _scheduler.GetEventTasksBeforeTime(time);
-			CleanupTasks(tasksToRemove);
-		}
-
-		private void CleanupTasks(IEnumerable<OrchestrationSchedulerTask> tasksToRemove)
-		{
-			IEnumerable<OrchestrationSchedulerTask> orchestrationSchedulerTasksToRemove = tasksToRemove.ToList();
-			if (!orchestrationSchedulerTasksToRemove.Any())
+			OrchestrationSchedulerTask[] tasksToRemove = _scheduler.GetEventTasksBeforeTime(time).ToArray();
+			if (!tasksToRemove.Any())
 			{
 				return;
 			}
 
-			IEnumerable<Guid> eventsFromTasksToRemove = orchestrationSchedulerTasksToRemove.SelectMany(task => task.OrchestrationEventIds);
+			ICollection<ScheduledTaskId> deletedTaskIds = _scheduler.DeleteTasks(tasksToRemove.Select(t => t.ScheduledTaskId).ToArray());
+			UpdateEvents(tasksToRemove.Where(t => deletedTaskIds.Contains(t.ScheduledTaskId)));
+		}
 
+		private void UpdateEvents(IEnumerable<OrchestrationSchedulerTask> removedTasks)
+		{
+			if (!removedTasks.Any())
+			{
+				return;
+			}
+
+			HashSet<ScheduledTaskId> removedTaskIds = removedTasks.Select(t => t.ScheduledTaskId).ToHashSet();
+			IEnumerable<Guid> eventsFromTasksToRemove = removedTasks.SelectMany(task => task.OrchestrationEventIds);
 			ORFilterElement<DomInstance> filter = new ORFilterElement<DomInstance>(eventsFromTasksToRemove.Select(id => FilterElementFactory.Create(DomInstanceExposers.Id, Comparer.Equals, id)).ToArray());
 			List<OrchestrationEvent> pastEvents = _repository.ReadDom(filter).ToList();
-
-			_scheduler.DeleteEventTasks(pastEvents);
+			foreach (var pastEvent in pastEvents)
+			{
+				if (removedTaskIds.Contains(pastEvent.SchedulerReference))
+					pastEvent.SchedulerReference = null;
+			}
 
 			_repository.CreateOrUpdate(pastEvents);
 		}

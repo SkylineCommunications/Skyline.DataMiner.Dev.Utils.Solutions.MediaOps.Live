@@ -63,6 +63,20 @@ public class OrchestrationHelper
 	}
 
 	/// <summary>
+	///     Executes a sync for a timing window anchored at the given base time (1 hour in the past and 12 hours into the future from that base time).
+	///     This consists of deleting orchestration tasks before the window start and preparing tasks for upcoming events.
+	/// </summary>
+	/// <param name="baseTime">The base time to anchor the sliding window to.</param>
+	public void SyncCurrentSlidingWindow(DateTimeOffset baseTime)
+	{
+		new OrchestrationSlidingWindowScheduler(
+			_orchestrationEventRepository,
+			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
+			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future),
+			baseTime).SyncSchedulerWithWindow();
+	}
+
+	/// <summary>
 	///     Creates a recurring scheduled task to prepare orchestration tasks in a sliding window manner.
 	///     If the task already exists, no new task is created.
 	/// </summary>
