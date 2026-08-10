@@ -79,6 +79,11 @@
 			return $"{DmaId}/{TaskId}";
 		}
 
+public override bool Equals(object obj)
+		{
+			return Equals(obj as ScheduledTaskId);
+		}
+
 		public override int GetHashCode()
 		{
 			unchecked
