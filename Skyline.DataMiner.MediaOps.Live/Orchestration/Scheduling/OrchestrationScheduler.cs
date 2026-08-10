@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Async;
@@ -146,7 +147,7 @@
 			}
 		}
 
-		internal IEnumerable<ScheduledTaskId> DeleteTasks(IEnumerable<ScheduledTaskId> taskIds)
+		internal ICollection<ScheduledTaskId> DeleteTasks(IEnumerable<ScheduledTaskId> taskIds)
 		{
 			var deletedTaskIds = new List<ScheduledTaskId>();
 			foreach (ScheduledTaskId taskId in taskIds)

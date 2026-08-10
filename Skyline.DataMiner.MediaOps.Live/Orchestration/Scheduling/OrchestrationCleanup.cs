@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
@@ -34,11 +35,13 @@
 		internal void CleanupSchedulerTasksBeforeTime(DateTimeOffset time)
 		{
 			OrchestrationSchedulerTask[] tasksToRemove = _scheduler.GetEventTasksBeforeTime(time).ToArray();
-			if (tasksToRemove.Any())
+			if (!tasksToRemove.Any())
 			{
-				IEnumerable<ScheduledTaskId> deletedTaskIds = _scheduler.DeleteTasks(tasksToRemove.Select(t => t.ScheduledTaskId));
-				UpdateEvents(tasksToRemove.Where(t => deletedTaskIds.Contains(t.ScheduledTaskId)));
+				return;
 			}
+
+			ICollection<ScheduledTaskId> deletedTaskIds = _scheduler.DeleteTasks(tasksToRemove.Select(t => t.ScheduledTaskId).ToArray());
+			UpdateEvents(tasksToRemove.Where(t => deletedTaskIds.Contains(t.ScheduledTaskId)));
 		}
 
 		private void UpdateEvents(IEnumerable<OrchestrationSchedulerTask> removedTasks)
