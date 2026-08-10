@@ -382,5 +382,37 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			Assert.Contains(ev2.ID, tasksInTimeOrder[1].GetOrchestrationSchedulingInputList());
 			Assert.DoesNotContain(ev2.ID, tasksInTimeOrder[0].GetOrchestrationSchedulingInputList());
 		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_CleanupPastScheduledEvent()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var jobReference = Guid.NewGuid().ToString();
+			var ev = new OrchestrationEvent
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromMinutes(30),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Test Event Past Confirmed",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+
+			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsNotNull(ev.SchedulerReference);
+
+			// Advance the cleanup window base time 2 hours into the future so that the event's
+			// scheduled time (UtcNow + 30 min) falls before the window start (base - 1 h = UtcNow + 1 h).
+			api.Orchestration.SyncCurrentSlidingWindow(DateTimeOffset.UtcNow + TimeSpan.FromHours(2));
+
+			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+
+			var reloadedJob = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
+			Assert.IsNull(reloadedJob.OrchestrationEvents.First().SchedulerReference);
+		}
 	}
 }
