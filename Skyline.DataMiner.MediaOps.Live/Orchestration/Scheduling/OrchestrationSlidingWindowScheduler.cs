@@ -21,6 +21,11 @@
 		}
 
 		internal OrchestrationSlidingWindowScheduler(OrchestrationEventRepository repository, TimeSpan timeSpanPast, TimeSpan timeSpanFuture)
+			: this(repository, timeSpanPast, timeSpanFuture, DateTimeOffset.UtcNow)
+		{
+		}
+
+		internal OrchestrationSlidingWindowScheduler(OrchestrationEventRepository repository, TimeSpan timeSpanPast, TimeSpan timeSpanFuture, DateTimeOffset windowBaseTime)
 		{
 			_orchestrationCleanup = new OrchestrationCleanup(repository);
 			_scheduler = new OrchestrationScheduler(repository.Connection);
@@ -28,7 +33,7 @@
 
 			TimeSpanPast = timeSpanPast;
 			TimeSpanFuture = timeSpanFuture;
-			WindowBaseTime = DateTimeOffset.UtcNow;
+			WindowBaseTime = windowBaseTime;
 		}
 
 		public void SyncSchedulerWithWindow()
