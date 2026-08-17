@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Async;
@@ -144,6 +145,21 @@
 			{
 				DeleteEventTasksForEvents(groupedByTimeEvent.Key.Value, groupedByTimeEvent.ToList());
 			}
+		}
+
+		internal ICollection<ScheduledTaskId> DeleteTasks(IEnumerable<ScheduledTaskId> taskIds)
+		{
+			var deletedTaskIds = new List<ScheduledTaskId>();
+			foreach (ScheduledTaskId taskId in taskIds)
+			{
+				if (_dms.GetAgent(taskId.DmaId).Scheduler.DeleteTask(taskId.TaskId) == 0)
+				{
+					_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(taskId));
+					deletedTaskIds.Add(taskId);
+				}
+			}
+
+			return deletedTaskIds;
 		}
 
 		private void CreateOrUpdateEventTasks(IEnumerable<OrchestrationEvent> orchestrationEvents)

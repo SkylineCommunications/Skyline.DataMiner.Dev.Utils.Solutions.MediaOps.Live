@@ -1625,6 +1625,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
         public void SetupSlidingWindowSchedulerTasks() { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions.RepositorySubscription<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> SubscribeOnEvents() { }
         public void SyncCurrentSlidingWindow() { }
+        public void SyncCurrentSlidingWindow(System.DateTimeOffset baseTime) { }
     }
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling
@@ -1636,6 +1637,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling
         public int DmaId { get; }
         public int TaskId { get; }
         public bool Equals(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling.ScheduledTaskId obj) { }
+        public override bool Equals(object obj) { }
+        public override int GetHashCode() { }
         public override string ToString() { }
         public static bool operator !=(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling.ScheduledTaskId left, Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling.ScheduledTaskId right) { }
         public static bool operator ==(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling.ScheduledTaskId left, Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling.ScheduledTaskId right) { }
