@@ -33,6 +33,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 		private readonly ConcurrentBag<ProfileDefinition> _profileDefinitions = [];
 		private readonly ConcurrentBag<ProfileInstance> _profileInstances = [];
 		private readonly ConcurrentBag<InstalledAppInfo> _appPackages = [];
+		private readonly ConcurrentBag<ExecuteScriptMessage> _executedScripts = [];
 		private readonly DomSLNetMessageHandler _domSlNetMessageHandler = new(validateAgainstDefinition: true);
 
 		public SimulatedDms()
@@ -43,6 +44,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 		public IReadOnlyDictionary<int, SimulatedDma> Agents => _agents;
 
 		public IReadOnlyCollection<SimulatedAutomationScript> Scripts => _scripts;
+
+		public IReadOnlyCollection<ExecuteScriptMessage> ExecutedScripts => _executedScripts;
 
 		public IReadOnlyCollection<Parameter> ProfileParameters => _profileParameters;
 
@@ -669,6 +672,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(script.OrchestrationScriptInfo) } },
 				}),
 			};
+
+			_executedScripts.Add(msg);
 		}
 
 		private IEnumerable<DMSMessage> HandleMessage(GetScriptInfoMessage msg)

@@ -460,6 +460,8 @@ public class OrchestrationHelper
 			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
 		}
 
+		var now = DateTimeOffset.Now;
+
 		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-ExecuteEventsNow")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
@@ -472,7 +474,7 @@ public class OrchestrationHelper
 			}
 
 			// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
-			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > DateTimeOffset.Now));
+			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > now));
 
 			eventExecutionHelper.ExecuteEventsNow(events, performanceTracker);
 		}
@@ -531,6 +533,13 @@ public class OrchestrationHelper
 		{
 			return;
 		}
+
+		// Resolve the events (this also validates against empty Guids) so we can clean up their scheduler tasks.
+		List<OrchestrationEventConfiguration> orchestrationEvents = GetEventConfigurationsById(eventIds).ToList();
+
+		// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
+		var now = DateTimeOffset.Now;
+		_slidingWindowScheduler.DeleteEvents(orchestrationEvents.Where(e => e.EventTime > now));
 
 		OrchestrationAutomationHelper.ExecuteEventsInBackground(_api.Connection, eventIds);
 	}
@@ -595,7 +604,8 @@ public class OrchestrationHelper
 			}
 
 			// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
-			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > DateTimeOffset.Now));
+			var now = DateTime.UtcNow;
+			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > now));
 
 			await eventExecutionHelper.ExecuteEventsNowAsync(events, performanceTracker);
 		}

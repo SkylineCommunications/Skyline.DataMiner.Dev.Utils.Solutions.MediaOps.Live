@@ -29,7 +29,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			var utcScheduledTime = simulation.Dms.GetAllDmsSchedulerTasks().First().StartTime.ToUniversalTime();
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 			Assert.Contains(ev.ID, simulation.Dms.GetAllDmsSchedulerTasks().First().GetOrchestrationSchedulingInputList());
 			Assert.AreEqual(ev.EventTime, utcScheduledTime);
 
@@ -52,7 +52,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			});
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
-			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 		}
 
 		[TestMethod]
@@ -71,7 +71,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			});
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
-			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 		}
 
 		[TestMethod]
@@ -92,13 +92,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 
 			ev.EventState = EventState.Cancelled;
 
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
-			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 			Assert.IsNull(ev.SchedulerReference);
 		}
 
@@ -120,11 +120,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 
 			api.Orchestration.DeleteJob(orchestrationJob);
 
-			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 		}
 
 		[TestMethod]
@@ -145,12 +145,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 
 			var planHelper = api.GetMediaOpsPlanHelper();
 			api.Orchestration.ExecuteEventsNow([ev], planHelper);
 
-			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 			Assert.AreEqual(EventState.Completed, ev.EventState);
 		}
 
@@ -173,12 +173,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJobConfiguration(orchestrationJob);
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 
 			var planHelper = api.GetMediaOpsPlanHelper();
 			api.Orchestration.ExecuteEventsNow([ev], planHelper);
 
-			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 			Assert.AreEqual(EventState.Completed, ev.EventState);
 		}
 
@@ -201,12 +201,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJobConfiguration(orchestrationJob);
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 
 			var planHelper = api.GetMediaOpsPlanHelper();
 			api.Orchestration.ExecuteEventsNow([ev], planHelper);
 
-			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 			Assert.AreEqual(EventState.Failed, ev.EventState);
 		}
 
@@ -228,12 +228,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 
 			var planHelper = api.GetMediaOpsPlanHelper();
 			await api.Orchestration.ExecuteEventsNowAsync([ev], planHelper);
 
-			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 			Assert.AreEqual(EventState.Completed, ev.EventState);
 		}
 
@@ -256,12 +256,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJobConfiguration(orchestrationJob);
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 
 			var planHelper = api.GetMediaOpsPlanHelper();
 			await api.Orchestration.ExecuteEventsNowAsync([ev], planHelper);
 
-			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 			Assert.AreEqual(EventState.Completed, ev.EventState);
 		}
 
@@ -284,12 +284,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJobConfiguration(orchestrationJob);
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 
 			var planHelper = api.GetMediaOpsPlanHelper();
 			await api.Orchestration.ExecuteEventsNowAsync([ev], planHelper);
 
-			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 			Assert.AreEqual(EventState.Failed, ev.EventState);
 		}
 
@@ -314,7 +314,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			var utcScheduledTime = simulation.Dms.GetAllDmsSchedulerTasks().First().StartTime.ToUniversalTime();
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 			Assert.AreEqual(ev.EventTime, utcScheduledTime);
 
 			var twoHoursForNow = DateTimeOffset.UtcNow + TimeSpan.FromHours(2);
@@ -322,8 +322,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
 			utcScheduledTime = simulation.Dms.GetAllDmsSchedulerTasks().First().StartTime.ToUniversalTime();
-			
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 			Assert.AreEqual(ev.EventTime, utcScheduledTime);
 		}
 
@@ -364,7 +364,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(ev3);
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
-			Assert.AreEqual(2, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(2, simulation.Dms.GetAllDmsSchedulerTasks());
 
 			List<SimulatedSchedulerTask> tasksInTimeOrder = simulation.Dms.GetAllDmsSchedulerTasks().OrderBy(task => task.StartTime).ToList();
 
@@ -375,7 +375,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			ev2.EventTime = twoHourFromNow;
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
-			Assert.AreEqual(2, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(2, simulation.Dms.GetAllDmsSchedulerTasks());
 
 			tasksInTimeOrder = simulation.Dms.GetAllDmsSchedulerTasks().OrderBy(task => task.StartTime).ToList();
 
@@ -402,17 +402,86 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			orchestrationJob.OrchestrationEvents.Add(ev);
 			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
 			Assert.IsNotNull(ev.SchedulerReference);
 
 			// Advance the cleanup window base time 2 hours into the future so that the event's
 			// scheduled time (UtcNow + 30 min) falls before the window start (base - 1 h = UtcNow + 1 h).
 			api.Orchestration.SyncCurrentSlidingWindow(DateTimeOffset.UtcNow + TimeSpan.FromHours(2));
 
-			Assert.AreEqual(0, simulation.Dms.GetAllDmsSchedulerTasks().Count());
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 
 			var reloadedJob = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
 			Assert.IsNull(reloadedJob.OrchestrationEvents.First().SchedulerReference);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_LaunchesDeferredScript()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var ev = new OrchestrationEvent
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Test Event Confirmed",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
+
+			api.Orchestration.ExecuteEventsNowInBackground([ev]);
+
+			var launchedScript = simulation.Dms.ExecutedScripts.SingleOrDefault(script => script.ScriptName == Constants.OrchestrationScriptName);
+			Assert.IsNotNull(launchedScript, "Expected the orchestration script to be launched as a deferred task.");
+
+			var options = launchedScript.Options.Sa;
+
+			// The launch must be deferred (fire-and-forget) and carry the event IDs to orchestrate.
+			Assert.Contains("DEFER:TRUE", options);
+			Assert.Contains(
+				option => option.StartsWith($"PARAMETERBYNAME:{Constants.OrchestrationScriptEventIdsParameter}:") && option.Contains(ev.ID.ToString()),
+				options,
+				"Expected the launched script to receive the event ID as a parameter.");
+
+			// The future scheduler task must be removed so the event is not executed again when the task would trigger.
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
+
+			// Fire-and-forget: the deferred script handles execution, so the event is not completed synchronously by the caller.
+			Assert.AreEqual(EventState.Confirmed, ev.EventState);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EmptyGuidThrows()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			Assert.Throws<ArgumentException>(() => api.Orchestration.ExecuteEventsNowInBackground(new List<Guid> { Guid.Empty }));
+
+			Assert.DoesNotContain(
+				script => script.ScriptName == Constants.OrchestrationScriptName,
+				simulation.Dms.ExecutedScripts,
+				"No orchestration script should be launched when the event IDs are invalid.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EmptyDoesNotLaunchScript()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			api.Orchestration.ExecuteEventsNowInBackground(new List<Guid>());
+
+			Assert.DoesNotContain(
+				script => script.ScriptName == Constants.OrchestrationScriptName,
+				simulation.Dms.ExecutedScripts,
+				"No orchestration script should be launched when there are no events to execute.");
 		}
 	}
 }
