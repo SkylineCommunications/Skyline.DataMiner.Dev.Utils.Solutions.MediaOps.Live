@@ -460,6 +460,8 @@ public class OrchestrationHelper
 			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
 		}
 
+		var now = DateTimeOffset.Now;
+
 		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-ExecuteEventsNow")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
@@ -472,7 +474,7 @@ public class OrchestrationHelper
 			}
 
 			// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
-			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > DateTimeOffset.Now));
+			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > now));
 
 			eventExecutionHelper.ExecuteEventsNow(events, performanceTracker);
 		}
@@ -497,6 +499,49 @@ public class OrchestrationHelper
 
 		Dictionary<Guid, OrchestrationEventConfiguration> eventConfigs = GetEventsAsEventConfigurations(orchestrationEvents);
 		ExecuteEventsNow(eventConfigs.Values, mediaOpsPlanHelper);
+	}
+
+	/// <summary>
+	///     Executes the given orchestration events asynchronously by launching the <see cref="Constants.OrchestrationScriptName"/> script as a fire-and-forget deferred task, so the caller is not blocked while the events run.
+	///     Per-event failures are reported on the associated job.
+	/// </summary>
+	/// <param name="orchestrationEvents">The events to execute. They must already be persisted, as the launched script retrieves them by ID.</param>
+	public void ExecuteEventsNowInBackground(IEnumerable<OrchestrationEvent> orchestrationEvents)
+	{
+		if (orchestrationEvents is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationEvents));
+		}
+
+		ExecuteEventsNowInBackground(orchestrationEvents.Select(orchestrationEvent => orchestrationEvent.ID));
+	}
+
+	/// <summary>
+	///     Executes the orchestration events with the given IDs asynchronously by launching the <see cref="Constants.OrchestrationScriptName"/> script as a fire-and-forget deferred task, so the caller is not blocked while the events run.
+	///     Per-event failures are reported on the associated job.
+	/// </summary>
+	/// <param name="orchestrationIds">The IDs of the events to execute. They must already be persisted, as the launched script retrieves them by ID.</param>
+	public void ExecuteEventsNowInBackground(IEnumerable<Guid> orchestrationIds)
+	{
+		if (orchestrationIds is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationIds));
+		}
+
+		var eventIds = orchestrationIds.ToList();
+		if (!eventIds.Any())
+		{
+			return;
+		}
+
+		// Resolve the events (this also validates against empty Guids) so we can clean up their scheduler tasks.
+		List<OrchestrationEventConfiguration> orchestrationEvents = GetEventConfigurationsById(eventIds).ToList();
+
+		// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
+		var now = DateTimeOffset.Now;
+		_slidingWindowScheduler.DeleteEvents(orchestrationEvents.Where(e => e.EventTime > now));
+
+		OrchestrationAutomationHelper.ExecuteEventsInBackground(_api.Connection, eventIds);
 	}
 
 	/// <summary>
@@ -559,7 +604,8 @@ public class OrchestrationHelper
 			}
 
 			// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
-			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > DateTimeOffset.Now));
+			var now = DateTimeOffset.UtcNow;
+			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > now));
 
 			await eventExecutionHelper.ExecuteEventsNowAsync(events, performanceTracker);
 		}
