@@ -1,5 +1,6 @@
 ﻿namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tools
 {
+	using System;
 	using System.Collections.Generic;
 	using System.Linq;
 	using System.Runtime.ExceptionServices;
@@ -12,6 +13,21 @@
 	{
 		public static ExecuteScriptResponseMessage ExecuteAutomationScript(IConnection connection, string scriptName, Dictionary<string, string> parameters, bool checkSets = true, bool extendedErrorInfo = true, bool interactive = false, bool synchronous = true, bool informationEvent = false)
 		{
+			if (connection is null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			if (String.IsNullOrEmpty(scriptName))
+			{
+				throw new ArgumentException($"'{nameof(scriptName)}' cannot be null or empty.", nameof(scriptName));
+			}
+
+			if (parameters is null)
+			{
+				throw new ArgumentNullException(nameof(parameters));
+			}
+
 			var message = BuildExecuteScriptMessage(scriptName, parameters, checkSets, extendedErrorInfo, interactive, synchronous, informationEvent);
 
 			return ExecuteAutomationScript(connection, message);
@@ -19,6 +35,16 @@
 
 		public static ExecuteScriptResponseMessage ExecuteAutomationScript(IConnection connection, ExecuteScriptMessage message)
 		{
+			if (connection is null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			if (message is null)
+			{
+				throw new ArgumentNullException(nameof(message));
+			}
+
 			var progress = connection.Async.Launch(message);
 
 			var result = progress.WaitForAsyncResponse(timeout: 5 * 60);
@@ -41,6 +67,21 @@
 			}
 
 			return response;
+		}
+
+		public static void ExecuteAutomationScriptInBackground(IConnection connection, ExecuteScriptMessage message)
+		{
+			if (connection is null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			if (message is null)
+			{
+				throw new ArgumentNullException(nameof(message));
+			}
+
+			connection.Async.Launch(message);
 		}
 
 		private static ExecuteScriptMessage BuildExecuteScriptMessage(string scriptName, Dictionary<string, string> parameters, bool checkSets, bool extendedErrorInfo, bool interactive, bool synchronous, bool informationEvent)

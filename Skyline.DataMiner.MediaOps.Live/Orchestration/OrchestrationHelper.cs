@@ -500,6 +500,42 @@ public class OrchestrationHelper
 	}
 
 	/// <summary>
+	///     Executes the given orchestration events asynchronously by launching the <see cref="Constants.OrchestrationScriptName"/> script as a fire-and-forget deferred task, so the caller is not blocked while the events run.
+	///     Per-event failures are reported on the associated job.
+	/// </summary>
+	/// <param name="orchestrationEvents">The events to execute. They must already be persisted, as the launched script retrieves them by ID.</param>
+	public void ExecuteEventsNowInBackground(IEnumerable<OrchestrationEvent> orchestrationEvents)
+	{
+		if (orchestrationEvents is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationEvents));
+		}
+
+		ExecuteEventsNowInBackground(orchestrationEvents.Select(orchestrationEvent => orchestrationEvent.ID));
+	}
+
+	/// <summary>
+	///     Executes the orchestration events with the given IDs asynchronously by launching the <see cref="Constants.OrchestrationScriptName"/> script as a fire-and-forget deferred task, so the caller is not blocked while the events run.
+	///     Per-event failures are reported on the associated job.
+	/// </summary>
+	/// <param name="orchestrationIds">The IDs of the events to execute. They must already be persisted, as the launched script retrieves them by ID.</param>
+	public void ExecuteEventsNowInBackground(IEnumerable<Guid> orchestrationIds)
+	{
+		if (orchestrationIds is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationIds));
+		}
+
+		var eventIds = orchestrationIds.ToList();
+		if (!eventIds.Any())
+		{
+			return;
+		}
+
+		OrchestrationAutomationHelper.ExecuteEventsInBackground(_api.Connection, eventIds);
+	}
+
+	/// <summary>
 	///     Start asynchronous execution for an event, based on ID.
 	/// </summary>
 	/// <param name="orchestrationIds">The IDs of the events to execute.</param>

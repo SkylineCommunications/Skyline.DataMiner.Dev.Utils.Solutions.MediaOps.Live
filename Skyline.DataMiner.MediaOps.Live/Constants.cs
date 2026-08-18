@@ -21,6 +21,11 @@
 		public const string OrchestrationScriptName = "ORC-AS-EventOrchestration";
 
 		/// <summary>
+		/// The name of the <see cref="OrchestrationScriptName"/> script parameter that carries the orchestration event IDs to execute, serialized as a JSON array of GUIDs.
+		/// </summary>
+		public const string OrchestrationScriptEventIdsParameter = "Event ID";
+
+		/// <summary>
 		/// The name of the MediaOps Live Sliding Window scheduling script.
 		/// </summary>
 		public const string OrchestrationSlidingWindowSchedulerScriptName = "ORC-AS-SlidingWindowScheduler";

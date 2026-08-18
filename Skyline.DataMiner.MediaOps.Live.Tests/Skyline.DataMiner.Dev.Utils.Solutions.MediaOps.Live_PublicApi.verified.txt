@@ -1263,6 +1263,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live
 {
     public static class Constants
     {
+        public const string OrchestrationScriptEventIdsParameter = "Event ID";
         public const string OrchestrationScriptName = "ORC-AS-EventOrchestration";
         public const string OrchestrationSlidingWindowSchedulerScriptName = "ORC-AS-SlidingWindowScheduler";
         public const string OrchestrationSlidingWindowSchedulerTaskNaming = "MediaOps Live - Schedule upcoming events";
@@ -1608,6 +1609,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
         public System.Threading.Tasks.Task ExecuteEventsNowAsync(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> orchestrationEvents, Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper) { }
         public System.Threading.Tasks.Task ExecuteEventsNowAsync(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventConfiguration> orchestrationEvents, Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationSettings settings = null) { }
         public System.Threading.Tasks.Task ExecuteEventsNowAsync(System.Collections.Generic.IEnumerable<System.Guid> orchestrationIds, Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationSettings settings = null) { }
+        public void ExecuteEventsNowInBackground(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> orchestrationEvents) { }
+        public void ExecuteEventsNowInBackground(System.Collections.Generic.IEnumerable<System.Guid> orchestrationIds) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobConfiguration> GetAllJobConfigurations() { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJob> GetAllJobs() { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> GetAllOrchestrationEventsInTimeRange(System.DateTime start, System.DateTime end) { }
