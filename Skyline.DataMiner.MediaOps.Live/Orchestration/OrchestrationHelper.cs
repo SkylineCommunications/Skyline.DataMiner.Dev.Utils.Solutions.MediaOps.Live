@@ -604,7 +604,7 @@ public class OrchestrationHelper
 			}
 
 			// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
-			var now = DateTime.UtcNow;
+			var now = DateTimeOffset.UtcNow;
 			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > now));
 
 			await eventExecutionHelper.ExecuteEventsNowAsync(events, performanceTracker);
