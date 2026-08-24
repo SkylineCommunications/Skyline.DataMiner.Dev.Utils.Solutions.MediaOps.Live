@@ -261,7 +261,11 @@ public class OrchestrationHelper
 			.Where(orchestrationEvent => orchestrationEvent?.JobInfoReference != null)
 			.ToList();
 
-		var jobInfos = _jobInfoRepository.Read(eventsWithJobInfo.Select(orchestrationEvent => orchestrationEvent.JobInfoReference.Value));
+		var jobInfoIds = eventsWithJobInfo
+			.Select(orchestrationEvent => orchestrationEvent.JobInfoReference.Value)
+			.Distinct();
+
+		var jobInfos = _jobInfoRepository.Read(jobInfoIds);
 
 		var jobInfosByEvent = new Dictionary<OrchestrationEvent, OrchestrationJobInfo>();
 
