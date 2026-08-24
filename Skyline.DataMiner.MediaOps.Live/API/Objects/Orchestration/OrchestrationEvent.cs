@@ -8,6 +8,7 @@
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Extensions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 
@@ -162,9 +163,7 @@
 					return;
 				}
 
-				var valueUtcTime = value.Value.UtcDateTime;
-
-				_domInstance.OrchestrationEventInfo.EventTime = new DateTime(valueUtcTime.Ticks - valueUtcTime.Ticks % TimeSpan.TicksPerSecond, DateTimeKind.Utc);
+				_domInstance.OrchestrationEventInfo.EventTime = value.Value.UtcDateTime.TruncateToSecond();
 			}
 		}
 
@@ -186,7 +185,7 @@
 
 			internal set
 			{
-				_domInstance.OrchestrationEventInfo.ActualStartTime = value?.UtcDateTime;
+				_domInstance.OrchestrationEventInfo.ActualStartTime = value?.UtcDateTime.TruncateToSecond();
 			}
 		}
 
