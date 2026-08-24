@@ -460,8 +460,6 @@ public class OrchestrationHelper
 			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
 		}
 
-		var now = DateTimeOffset.Now;
-
 		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-ExecuteEventsNow")))
 		using (PerformanceTracker performanceTracker = new(collector))
 		{
@@ -473,8 +471,8 @@ public class OrchestrationHelper
 				return;
 			}
 
-			// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
-			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > now));
+			// An event is only allowed to execute once, so any task that would run it again is removed.
+			_slidingWindowScheduler.DeleteEvents(events);
 
 			eventExecutionHelper.ExecuteEventsNow(events, performanceTracker);
 		}
@@ -537,9 +535,19 @@ public class OrchestrationHelper
 		// Resolve the events (this also validates against empty Guids) so we can clean up their scheduler tasks.
 		List<OrchestrationEventConfiguration> orchestrationEvents = GetEventConfigurationsById(eventIds).ToList();
 
-		// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
-		var now = DateTimeOffset.Now;
-		_slidingWindowScheduler.DeleteEvents(orchestrationEvents.Where(e => e.EventTime > now));
+		// An event is only allowed to execute once, so any task that would run it again is removed.
+		_slidingWindowScheduler.DeleteEvents(orchestrationEvents);
+
+		// The launched script is deferred, so the events only reach the Configuring state once it actually starts. Record
+		// the moment execution was requested and persist it, so a caller that synchronizes again in the meantime can see
+		// that these events were already handed off and does not launch them a second time.
+		var requestTime = DateTimeOffset.UtcNow;
+		foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
+		{
+			orchestrationEvent.ActualStartTime = requestTime;
+		}
+
+		_orchestrationEventRepository.CreateOrUpdate(orchestrationEvents);
 
 		OrchestrationAutomationHelper.ExecuteEventsInBackground(_api.Connection, eventIds);
 	}
@@ -603,9 +611,8 @@ public class OrchestrationHelper
 				return;
 			}
 
-			// If an execute is called on an event that was set in the future, remove scheduled tasks for it since we only allow it to execute once.
-			var now = DateTimeOffset.UtcNow;
-			_slidingWindowScheduler.DeleteEvents(events.Where(e => e.EventTime > now));
+			// An event is only allowed to execute once, so any task that would run it again is removed.
+			_slidingWindowScheduler.DeleteEvents(events);
 
 			await eventExecutionHelper.ExecuteEventsNowAsync(events, performanceTracker);
 		}

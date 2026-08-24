@@ -56,7 +56,13 @@
 
 		public void ScheduleEvents(IEnumerable<OrchestrationEvent> events)
 		{
-			IEnumerable<OrchestrationEvent> eventsInWindow = events.Where(e => e.EventTime > WindowBaseTime && e.EventTime <= WindowEndTime);
+			List<OrchestrationEvent> allEvents = events.ToList();
+			List<OrchestrationEvent> eventsInWindow = allEvents.Where(e => e.EventTime > WindowBaseTime && e.EventTime <= WindowEndTime).ToList();
+
+			// An event that no longer falls inside the window must not keep its scheduled task, for example when it was
+			// moved into the past to be executed immediately.
+			_scheduler.DeleteEventTasks(allEvents.Except(eventsInWindow));
+
 			_scheduler.CreateOrUpdateEventScheduling(eventsInWindow);
 		}
 

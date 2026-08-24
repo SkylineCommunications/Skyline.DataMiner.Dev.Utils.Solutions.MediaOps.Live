@@ -139,11 +139,12 @@
 		/// <param name="events">List of event to remove corresponding task for.</param>
 		internal void DeleteEventTasks(IEnumerable<OrchestrationEvent> events)
 		{
-			IEnumerable<IGrouping<DateTimeOffset?, OrchestrationEvent>> groupedByTimeEvents = events.GroupBy(e => e.EventTime).OrderBy(g => g.Key);
-
-			foreach (IGrouping<DateTimeOffset?, OrchestrationEvent> groupedByTimeEvent in groupedByTimeEvents)
+			// The task is resolved through the event's scheduler reference rather than through its time, so an event whose
+			// time changed after it was scheduled (for example when it is moved into the past to execute immediately) still
+			// has its original task removed.
+			foreach (OrchestrationEvent orchestrationEvent in events)
 			{
-				DeleteEventTasksForEvents(groupedByTimeEvent.Key.Value, groupedByTimeEvent.ToList());
+				DeleteEventTaskForEvent(orchestrationEvent);
 			}
 		}
 
@@ -218,38 +219,6 @@
 			}
 		}
 
-		private void DeleteEventTasksForEvents(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents)
-		{
-			OrchestrationSchedulerTask taskForTimeStamp = FindExistingTaskForTimeStamp(timestamp);
-
-			if (taskForTimeStamp == null)
-			{
-				foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
-				{
-					orchestrationEvent.SchedulerReference = null;
-				}
-
-				return;
-			}
-
-			taskForTimeStamp.OrchestrationEventIds.RemoveAll(eventId => orchestrationEvents.Any(e => e.ID == eventId));
-
-			if (!taskForTimeStamp.OrchestrationEventIds.Any())
-			{
-				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.DeleteTask(taskForTimeStamp.ScheduledTaskId.TaskId);
-				_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(taskForTimeStamp.ScheduledTaskId));
-			}
-			else
-			{
-				_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData());
-			}
-
-			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
-			{
-				orchestrationEvent.SchedulerReference = null;
-			}
-		}
-
 		private void DeleteEventTaskForEvent(OrchestrationEvent orchestrationEvent)
 		{
 			if (orchestrationEvent.SchedulerReference == null)
@@ -258,6 +227,13 @@
 			}
 
 			OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.SchedulerReference);
+			if (task == null)
+			{
+				// The task no longer exists (for example because the sliding window already cleaned it up), so only the
+				// dangling reference on the event has to be cleared.
+				orchestrationEvent.SchedulerReference = null;
+				return;
+			}
 
 			task.OrchestrationEventIds.Remove(orchestrationEvent.ID);
 

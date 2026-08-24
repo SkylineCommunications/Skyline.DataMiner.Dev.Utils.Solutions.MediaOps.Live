@@ -75,6 +75,93 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ConfirmedEventMovedIntoThePastIsUnscheduled()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var ev = new OrchestrationEvent
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Test Event Confirmed",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
+
+			// An event that is moved into the past to be executed immediately must not keep the task it was scheduled with.
+			ev.EventTime = DateTimeOffset.UtcNow - TimeSpan.FromMinutes(1);
+			ev.EventState = EventState.Draft;
+
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
+			Assert.IsNull(ev.SchedulerReference);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ConfirmedEventMovedOutOfTheWindowIsUnscheduled()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var ev = new OrchestrationEvent
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Test Event Confirmed",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks());
+
+			// The sliding window only schedules the near future, so an event moved beyond it is scheduled again later.
+			ev.EventTime = DateTimeOffset.UtcNow + TimeSpan.FromDays(7);
+
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
+			Assert.IsNull(ev.SchedulerReference);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_RecordsTheHandOff()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var ev = new OrchestrationEvent
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Test Event Confirmed",
+			};
+
+			var orchestrationJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+			orchestrationJob.OrchestrationEvents.Add(ev);
+			api.Orchestration.SaveOrchestrationJob(orchestrationJob);
+
+			api.Orchestration.ExecuteEventsNowInBackground([ev]);
+
+			// The launched script is deferred, so the hand-off must be persisted for callers that synchronize in the meantime.
+			var storedEvent = api.Orchestration.GetOrchestrationJob(orchestrationJob.JobId).OrchestrationEvents.Single();
+
+			Assert.IsNotNull(storedEvent.ActualStartTime);
+			Assert.IsNull(storedEvent.SchedulerReference);
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_CancelConfirmedEvent()
 		{
 			var simulation = new MediaOpsLiveSimulation();
