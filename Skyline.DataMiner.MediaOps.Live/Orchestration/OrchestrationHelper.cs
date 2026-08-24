@@ -246,6 +246,41 @@ public class OrchestrationHelper
 	}
 
 	/// <summary>
+	///     Gets the <see cref="OrchestrationJobInfo" /> of multiple events in a single bulk call.
+	/// </summary>
+	/// <param name="events">The events to retrieve the job info for.</param>
+	/// <returns>A dictionary with the job info per event. Events without job info are not included.</returns>
+	public IDictionary<OrchestrationEvent, OrchestrationJobInfo> GetJobInfos(IEnumerable<OrchestrationEvent> events)
+	{
+		if (events is null)
+		{
+			throw new ArgumentNullException(nameof(events));
+		}
+
+		var eventsWithJobInfo = events
+			.Where(orchestrationEvent => orchestrationEvent?.JobInfoReference != null)
+			.ToList();
+
+		var jobInfoIds = eventsWithJobInfo
+			.Select(orchestrationEvent => orchestrationEvent.JobInfoReference.Value)
+			.Distinct();
+
+		var jobInfos = _jobInfoRepository.Read(jobInfoIds);
+
+		var jobInfosByEvent = new Dictionary<OrchestrationEvent, OrchestrationJobInfo>();
+
+		foreach (OrchestrationEvent orchestrationEvent in eventsWithJobInfo)
+		{
+			if (jobInfos.TryGetValue(orchestrationEvent.JobInfoReference.Value, out OrchestrationJobInfo jobInfo))
+			{
+				jobInfosByEvent[orchestrationEvent] = jobInfo;
+			}
+		}
+
+		return jobInfosByEvent;
+	}
+
+	/// <summary>
 	/// Get all <see cref="OrchestrationJob" /> objects in the DataMiner system.
 	/// </summary>
 	/// <returns>All <see cref="OrchestrationJob" /> objects.</returns>

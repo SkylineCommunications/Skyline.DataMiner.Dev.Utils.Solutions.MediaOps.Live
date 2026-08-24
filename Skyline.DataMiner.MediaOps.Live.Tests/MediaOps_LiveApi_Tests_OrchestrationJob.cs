@@ -137,6 +137,59 @@
 		}
 
 		[TestMethod]
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_GetJobInfosInBulk()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+
+			var existingJob = api.Orchestration.GetOrCreateNewOrchestrationJob("dd2cd5f2-ee7d-42b8-9b96-1e562d472b63");
+
+			var newEvent = new OrchestrationEvent
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Test Event Confirmed",
+			};
+
+			var newJob = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+			newJob.OrchestrationEvents.Add(newEvent);
+			api.Orchestration.SaveOrchestrationJob(newJob);
+
+			var events = existingJob.OrchestrationEvents.Concat(newJob.OrchestrationEvents).ToList();
+
+			var jobInfos = api.Orchestration.GetJobInfos(events);
+
+			Assert.HasCount(events.Count, jobInfos);
+
+			foreach (var orchestrationEvent in existingJob.OrchestrationEvents)
+			{
+				Assert.AreEqual(existingJob.JobInfo.ID, jobInfos[orchestrationEvent].ID);
+				Assert.AreEqual(existingJob.JobId, jobInfos[orchestrationEvent].JobReference);
+			}
+
+			Assert.AreEqual(newJob.JobInfo.ID, jobInfos[newEvent].ID);
+			Assert.AreEqual(newJob.JobId, jobInfos[newEvent].JobReference);
+		}
+
+		[TestMethod]
+		public void MediaOps_Live_Api_Tests_OrchestrationJob_GetJobInfosWithoutJobInfoReference()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+
+			var unsavedEvent = new OrchestrationEvent
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Test Event Confirmed",
+			};
+
+			var jobInfos = api.Orchestration.GetJobInfos(new[] { unsavedEvent });
+
+			Assert.IsEmpty(jobInfos);
+		}
+
+		[TestMethod]
 		public void MediaOps_Live_Api_Tests_OrchestrationJob_ValidateStopBeforeStart()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
