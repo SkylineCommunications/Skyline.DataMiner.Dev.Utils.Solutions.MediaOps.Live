@@ -380,6 +380,17 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
         public System.Collections.Generic.IReadOnlyCollection<string> DuplicateNames { get; }
     }
     [System.Serializable]
+    public class EndpointAlreadyAssignedException : System.Exception
+    {
+        public EndpointAlreadyAssignedException() { }
+        public EndpointAlreadyAssignedException(string message) { }
+        protected EndpointAlreadyAssignedException(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) { }
+        public EndpointAlreadyAssignedException(string message, System.Exception innerException) { }
+        public EndpointAlreadyAssignedException(string message, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> endpoint, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level> assignedLevel) { }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Level> AssignedLevel { get; }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObjectReference<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement.Endpoint> Endpoint { get; }
+    }
+    [System.Serializable]
     public class EndpointInUseException : System.Exception
     {
         public EndpointInUseException() { }
