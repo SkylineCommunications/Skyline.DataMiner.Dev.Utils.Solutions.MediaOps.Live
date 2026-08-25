@@ -2,6 +2,7 @@
 {
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Solutions.Categories.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Extensions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ConnectivityManagement;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Extensions;
@@ -284,6 +285,67 @@
 			vsgsInCategory2 = api.VirtualSignalGroups.GetByCategory(category2).ToList();
 			Assert.ContainsSingle(vsgsInCategory2);
 			Assert.AreEqual("Source 4", vsgsInCategory2[0].Name);
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroups_AssignSameEndpointTwice_DestinationNotAllowed()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Destination 1");
+			var audioLevel = api.Levels.Query().First(x => x.Name == "Audio");
+			var videoDestination1 = api.Endpoints.Query().First(x => x.Name == "Video Destination 1");
+
+			var videoLevel = api.Levels.Query().First(x => x.Name == "Video");
+
+			// The endpoint is already assigned to the video level of this destination VSG.
+			var exception = Assert.ThrowsExactly<EndpointAlreadyAssignedException>(() => vsg.AssignEndpointToLevel(audioLevel, videoDestination1));
+			Assert.AreEqual(videoDestination1.ID, exception.Endpoint.ID);
+			Assert.AreEqual(videoLevel.ID, exception.AssignedLevel.ID);
+
+			var videoEndpointReference = vsg.Levels.First(x => x.Level == videoLevel).Endpoint;
+			Assert.ThrowsExactly<EndpointAlreadyAssignedException>(() => vsg.AssignEndpointToLevel(vsg.Levels.First(x => x.Level == audioLevel).Level, videoEndpointReference));
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroups_AssignSameEndpointTwice_SourceAllowed()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			var audioLevel = api.Levels.Query().First(x => x.Name == "Audio");
+			var videoSource1 = api.Endpoints.Query().First(x => x.Name == "Video Source 1");
+
+			vsg.AssignEndpointToLevel(audioLevel, videoSource1);
+
+			Assert.HasCount(2, vsg.Levels.Where(x => x.Endpoint == videoSource1));
+
+			api.VirtualSignalGroups.Update(vsg);
+
+			vsg = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			Assert.HasCount(2, vsg.Levels.Where(x => x.Endpoint == videoSource1));
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_VirtualSignalGroups_Validate_DuplicateEndpoint()
+		{
+			var api = new MediaOpsLiveApiMock();
+
+			var audioLevel = api.Levels.Query().First(x => x.Name == "Audio");
+
+			var destination = api.VirtualSignalGroups.Query().First(x => x.Name == "Destination 1");
+			var videoDestination1 = api.Endpoints.Query().First(x => x.Name == "Video Destination 1");
+
+			// Bypass AssignEndpointToLevel to verify the validation itself.
+			destination.Levels.First(x => x.Level == audioLevel).Endpoint = videoDestination1;
+			Assert.IsFalse(destination.Validate().IsValid);
+			Assert.ThrowsExactly<InvalidOperationException>(() => api.VirtualSignalGroups.Update(destination));
+
+			var source = api.VirtualSignalGroups.Query().First(x => x.Name == "Source 1");
+			var videoSource1 = api.Endpoints.Query().First(x => x.Name == "Video Source 1");
+
+			source.Levels.First(x => x.Level == audioLevel).Endpoint = videoSource1;
+			Assert.IsTrue(source.Validate().IsValid);
 		}
 	}
 }

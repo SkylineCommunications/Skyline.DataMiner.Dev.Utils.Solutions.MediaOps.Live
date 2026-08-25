@@ -8,6 +8,7 @@
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Validation;
@@ -251,6 +252,20 @@
 				throw new ArgumentNullException(nameof(endpoint));
 			}
 
+			// An endpoint can only be assigned to one level within a destination virtual signal group.
+			// For source virtual signal groups, assigning the same endpoint to multiple levels is allowed.
+			if (IsDestination)
+			{
+				var alreadyAssigned = Levels.FirstOrDefault(x => x.Endpoint == endpoint && x.Level != level);
+				if (alreadyAssigned != null)
+				{
+					throw new EndpointAlreadyAssignedException(
+						$"Endpoint with ID '{endpoint.ID}' is already assigned to another level in this destination virtual signal group.",
+						endpoint,
+						alreadyAssigned.Level);
+				}
+			}
+
 			var existing = Levels.FirstOrDefault(x => x.Level == level);
 			if (existing != null)
 			{
@@ -293,11 +308,18 @@
 				throw new InvalidOperationException($"Endpoint and level must have the same transport type.");
 			}
 
-			// Check if the endpoint is already assigned to another level in this virtual signal group
-			var existingLevelEndpoint = Levels.FirstOrDefault(x => x.Endpoint == endpoint && x.Level != level);
-			if (existingLevelEndpoint != null)
+			// An endpoint can only be assigned to one level within a destination virtual signal group.
+			// For source virtual signal groups, assigning the same endpoint to multiple levels is allowed.
+			if (IsDestination)
 			{
-				throw new InvalidOperationException($"Endpoint '{endpoint.Name}' is already assigned to another level in this virtual signal group.");
+				var existingLevelEndpoint = Levels.FirstOrDefault(x => x.Endpoint == endpoint && x.Level != level);
+				if (existingLevelEndpoint != null)
+				{
+					throw new EndpointAlreadyAssignedException(
+						$"Endpoint '{endpoint.Name}' is already assigned to another level in this destination virtual signal group.",
+						endpoint,
+						existingLevelEndpoint.Level);
+				}
 			}
 
 			var existing = Levels.FirstOrDefault(x => x.Level == level);
@@ -421,6 +443,22 @@
 			foreach (var level in duplicateLevels)
 			{
 				result.AddError($"Multiple endpoints are assigned to level with ID '{level.ID}'.", this, x => x.Levels);
+			}
+
+			// Error when the same endpoint is assigned to multiple levels of a destination virtual signal group.
+			// This is allowed for source virtual signal groups.
+			if (IsDestination)
+			{
+				var duplicateEndpoints = Levels
+					.Where(x => x.Endpoint != null)
+					.GroupBy(x => x.Endpoint)
+					.Where(g => g.Count() > 1)
+					.Select(g => g.Key);
+
+				foreach (var endpoint in duplicateEndpoints)
+				{
+					result.AddError($"Endpoint with ID '{endpoint.ID}' is assigned to multiple levels of this destination virtual signal group.", this, x => x.Levels);
+				}
 			}
 
 			return result;
