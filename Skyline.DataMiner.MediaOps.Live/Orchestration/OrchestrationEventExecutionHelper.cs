@@ -551,7 +551,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 
 								if (nodeScriptResult.HadError)
 								{
-									errors.TryAdd($"\nError during orchestration for node {nodeConfiguration.NodeId}: " +
+									string nodeLabel = nodeConfiguration.NodeLabel;
+									string nodeDescription = !String.IsNullOrWhiteSpace(nodeLabel) ? $"'{nodeLabel}'" : nodeConfiguration.NodeId;
+
+									errors.TryAdd($"\nError during orchestration for node {nodeDescription}: " +
 										$"{String.Join("\n", nodeScriptResult.ErrorMessages)}");
 								}
 							},
