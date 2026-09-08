@@ -38,6 +38,7 @@ jobs:
     uses: SkylineCommunications/_ReusableWorkflows/.github/workflows/Master Workflow.yml@main
     with:
       sonarcloud-project-name: SkylineCommunications_Skyline.DataMiner.MediaOps.Live
+      nuget-push-source: "https://api.nuget.org/v3/index.json"
     secrets:
       NUGET_API_KEY: ${{ secrets.NUGETAPIKEY_GITHUB }}
 
