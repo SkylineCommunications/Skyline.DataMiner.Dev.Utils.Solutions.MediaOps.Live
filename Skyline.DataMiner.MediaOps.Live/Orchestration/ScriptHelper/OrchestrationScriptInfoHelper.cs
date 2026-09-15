@@ -151,26 +151,34 @@
 
 		private bool TryGetScriptOrchestrationInfo(string scriptName, out OrchestrationScriptInfo orchestrationScriptInfo)
 		{
+			RequestScriptInfoOutput scriptInfoOutput;
+
 			try
 			{
 				var response = OrchestrationAutomationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName);
 
 				if (response != null &&
 					!response.HadError &&
-					response.EntryPointResult?.Result is RequestScriptInfoOutput scriptInfoOutput)
+					response.EntryPointResult?.Result is RequestScriptInfoOutput result)
 				{
-					orchestrationScriptInfo = ParseScriptInfo(scriptInfoOutput.Data);
-					return true;
+					scriptInfoOutput = result;
+				}
+				else
+				{
+					orchestrationScriptInfo = null;
+					return false;
 				}
 			}
 			catch (Exception)
 			{
 				// Swallow exception and return false.
 				// This can happen when the OnRequestScriptInfo entry point doesn't exist.
+				orchestrationScriptInfo = null;
+				return false;
 			}
 
-			orchestrationScriptInfo = null;
-			return false;
+			orchestrationScriptInfo = ParseScriptInfo(scriptInfoOutput.Data);
+			return true;
 		}
 
 		private static OrchestrationScriptInfo ParseScriptInfo(IReadOnlyDictionary<string, string> resultDictionary)
