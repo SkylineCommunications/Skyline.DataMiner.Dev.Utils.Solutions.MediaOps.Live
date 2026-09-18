@@ -12,12 +12,18 @@
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
 	internal static class OrchestrationAutomationHelper
 	{
 		public static ExecuteScriptResponseMessage ExecuteGetOrchestrationScriptInfo(IConnection connection, string scriptName)
+		{
+			return ExecuteGetOrchestrationScriptInfo(connection, scriptName, null);
+		}
+
+		public static ExecuteScriptResponseMessage ExecuteGetOrchestrationScriptInfo(IConnection connection, string scriptName, OrchestrationInputValues providedValues)
 		{
 			if (connection is null)
 			{
@@ -33,6 +39,12 @@
 			{
 				[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.OrchestrationScriptInfo),
 			};
+
+			if (providedValues != null && providedValues.Count > 0)
+			{
+				var input = new OrchestrationScriptInput { InputValues = providedValues.ToDictionary() };
+				metaData[OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey] = JsonConvert.SerializeObject(input);
+			}
 
 			var messageBuilder = new ExecuteScriptMessageBuilder(scriptName);
 			messageBuilder.SetCheckSets(false);

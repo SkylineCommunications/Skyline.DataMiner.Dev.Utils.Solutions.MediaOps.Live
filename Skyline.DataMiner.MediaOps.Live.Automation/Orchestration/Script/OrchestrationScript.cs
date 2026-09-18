@@ -3,9 +3,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
-
 	using Newtonsoft.Json;
-
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Automation;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
@@ -19,17 +17,17 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects;
-	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
-
 	using DropdownParameterDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.DropdownParameterDisplayInfo;
 	using GroupPresetOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<Mvc.DisplayTypes.PresetGroupDisplayInfo.PresetInfo>;
 	using NumericParameterDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.NumericParameterDisplayInfo;
@@ -57,9 +55,52 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 		public OrchestrationEventConfiguration EventConfiguration => _eventConfiguration?.Value;
 
-		public abstract void Orchestrate(IEngine engine);
+		/// <summary>
+		/// Gets the input items of this script, evaluated for the values that are currently provided.
+		/// This is <see langword="null"/> for scripts that do not override <see cref="GetParameters(OrchestrationInputValues)"/>.
+		/// </summary>
+		public OrchestrationInputDefinition Inputs { get; private set; }
+
+		/// <summary>
+		/// Gets the resolved values of the input items of this script.
+		/// </summary>
+		public OrchestrationInputValues InputValues { get; private set; } = OrchestrationInputValues.Empty;
+
+		/// <summary>
+		/// Performs the orchestration.
+		/// Override this method when the script does not use dynamic inputs, otherwise override
+		/// <see cref="Orchestrate(IEngine, OrchestrationInputValues)"/>.
+		/// </summary>
+		/// <param name="engine">Link with SLAutomation process.</param>
+		public virtual void Orchestrate(IEngine engine)
+		{
+			throw new NotImplementedException($"'{GetType().Name}' must override Orchestrate(IEngine) or Orchestrate(IEngine, OrchestrationInputValues).");
+		}
+
+		/// <summary>
+		/// Performs the orchestration with the values that were provided for the inputs of this script.
+		/// The default implementation calls <see cref="Orchestrate(IEngine)"/>.
+		/// </summary>
+		/// <param name="engine">Link with SLAutomation process.</param>
+		/// <param name="inputs">The resolved values of the inputs of this script, addressed by path.</param>
+		public virtual void Orchestrate(IEngine engine, OrchestrationInputValues inputs)
+		{
+			Orchestrate(engine);
+		}
 
 		public abstract IEnumerable<IOrchestrationParameters> GetParameters();
+
+		/// <summary>
+		/// Gets the input items this script requires, based on the values that were already provided.
+		/// This method is called again every time a value changes that affects which items are relevant, so that
+		/// items can appear or disappear, options and ranges can change, and groups can be repeated.
+		/// </summary>
+		/// <param name="providedValues">The values that were already provided, keyed by the path of the field they belong to.</param>
+		/// <returns>The input items to expose, or <see langword="null"/> when this script does not use dynamic inputs.</returns>
+		public virtual OrchestrationInputDefinition GetParameters(OrchestrationInputValues providedValues)
+		{
+			return null;
+		}
 
 		public virtual DmsServiceId SetupService(IEngine engine)
 		{
@@ -156,6 +197,33 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			return param.Value;
 		}
 
+		/// <summary>
+		/// Attempts to get the value of the input field with the specified path.
+		/// </summary>
+		/// <param name="path">The path of the field, for example <c>destinations/1/endpoint</c>.</param>
+		/// <param name="value">When this method returns <see langword="true"/>, contains the value of the field.</param>
+		/// <returns><see langword="true"/> when the field holds a value; otherwise, <see langword="false"/>.</returns>
+		public bool TryGetInputValue(string path, out object value)
+		{
+			return InputValues.TryGetValue(path, out value);
+		}
+
+		/// <summary>
+		/// Gets the value of the input field with the specified path.
+		/// </summary>
+		/// <param name="path">The path of the field, for example <c>destinations/1/endpoint</c>.</param>
+		/// <returns>The value of the field.</returns>
+		/// <exception cref="InvalidOperationException">Thrown when the field does not hold a value.</exception>
+		public object GetInputValue(string path)
+		{
+			if (!TryGetInputValue(path, out var value))
+			{
+				throw new InvalidOperationException($"Orchestration input '{path}' is missing");
+			}
+
+			return value;
+		}
+
 		public bool TryGetMetadataValue(string metadataParam, out string metadataValue)
 		{
 			return _metadata.TryGetValue(metadataParam, out metadataValue);
@@ -239,7 +307,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
 
-			OrchestrationScriptInfo scriptInfo = GetScriptInfo();
+			OrchestrationScriptInfo scriptInfo = GetScriptInfo(OrchestrationInputValues.Empty);
 
 			_parameterInfos = CreateParameterInfos(scriptInfo, new OrchestrationScriptInput());
 
@@ -248,7 +316,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				GetValuesFromUser(_parameterInfos);
 			}
 
-			Orchestrate(engine);
+			Orchestrate(engine, InputValues);
 		}
 
 		private OrchestrationEventConfiguration LoadEventFromMetaData(IEngine engine)
@@ -284,7 +352,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			{
 				case OrchestrationScriptAction.OrchestrationScriptInfo:
 					{
-						OrchestrationScriptInfo scriptInfo = GetScriptInfo();
+						// The caller can pass the values it already collected so the returned input definition reflects them.
+						OrchestrationScriptInput scriptInput = ReadScriptInput(metaData);
+						OrchestrationScriptInfo scriptInfo = GetScriptInfo(new OrchestrationInputValues(scriptInput.InputValues));
 						return new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } };
 					}
 
@@ -302,7 +372,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			}
 		}
 
-		private OrchestrationScriptInfo GetScriptInfo()
+		private OrchestrationScriptInfo GetScriptInfo(OrchestrationInputValues providedValues)
 		{
 			OrchestrationScriptInfo info = new OrchestrationScriptInfo();
 			foreach (IOrchestrationParameters orchestrationParameters in GetParameters())
@@ -325,7 +395,62 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				throw new NotSupportedException("Currently only a single profile definition can be supported by an orchestration script");
 			}
 
+			info.InputDefinition = EvaluateInputs(providedValues);
+
+			RegisterProfileBackedInputs(info);
+
 			return info;
+		}
+
+		// Profile backed inputs are also published by path so consumers that key inputs by profile parameter keep working.
+		private void RegisterProfileBackedInputs(OrchestrationScriptInfo info)
+		{
+			if (info.InputDefinition == null)
+			{
+				return;
+			}
+
+			foreach (var field in info.InputDefinition.GetAllFields().Where(x => x.IsProfileBacked))
+			{
+				info.ProfileParametersIdByName[field.Path] = field.ProfileParameterId.Value;
+			}
+		}
+
+		private OrchestrationInputDefinition EvaluateInputs(OrchestrationInputValues providedValues)
+		{
+			OrchestrationInputValues values = providedValues ?? OrchestrationInputValues.Empty;
+			OrchestrationInputDefinition definition = OrchestrationInputDefinition.Evaluate(ResolveInputs, values);
+
+			Inputs = definition;
+			InputValues = definition == null ? values : definition.GetValues();
+
+			return definition;
+		}
+
+		private OrchestrationInputDefinition ResolveInputs(OrchestrationInputValues values)
+		{
+			OrchestrationInputDefinition definition = GetParameters(values);
+
+			if (definition == null)
+			{
+				return null;
+			}
+
+			new OrchestrationInputProfileResolver(new ProfileHelper(_engine.SendSLNetMessages)).Resolve(definition);
+
+			return definition;
+		}
+
+		private static OrchestrationScriptInput ReadScriptInput(IReadOnlyDictionary<string, string> metaData)
+		{
+			if (metaData != null
+				&& metaData.TryGetValue(OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey, out string serializedScriptInput)
+				&& !String.IsNullOrWhiteSpace(serializedScriptInput))
+			{
+				return JsonConvert.DeserializeObject<OrchestrationScriptInput>(serializedScriptInput) ?? new OrchestrationScriptInput();
+			}
+
+			return new OrchestrationScriptInput();
 		}
 
 		private void GetValuesFromUser(List<ParameterInfo> infos)
@@ -592,15 +717,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 		private void PerformOrchestrationFromEntryPoint(IReadOnlyDictionary<string, string> metaData, bool askMissingValues)
 		{
-			OrchestrationScriptInfo scriptInfo = GetScriptInfo();
+			OrchestrationScriptInput orchestrationScriptInput = ReadScriptInput(metaData);
 
-			OrchestrationScriptInput orchestrationScriptInput = new OrchestrationScriptInput();
-			if (metaData.TryGetValue(OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey, out string serializedScriptInputRequestScriptInfo))
-			{
-				orchestrationScriptInput = JsonConvert.DeserializeObject<OrchestrationScriptInput>(serializedScriptInputRequestScriptInfo);
-			}
+			// The metadata is assigned first so the script can already use it while it determines its inputs.
+			_metadata = orchestrationScriptInput.Metadata ?? new Dictionary<string, string>();
 
-			_metadata = orchestrationScriptInput.Metadata;
+			OrchestrationScriptInfo scriptInfo = GetScriptInfo(new OrchestrationInputValues(orchestrationScriptInput.InputValues));
+
 			_parameterInfos = CreateParameterInfos(scriptInfo, orchestrationScriptInput);
 
 			if (askMissingValues)
@@ -615,7 +738,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			TryGetMetadataValue("{Orchestration Level}", out string orchestrationLevel);
 			_orchestrationLevel = Enum.TryParse(orchestrationLevel, out OrchestrationLevel parsedLevel) ? parsedLevel : OrchestrationLevel.Unknown;
 
-			Orchestrate(_engine);
+			Orchestrate(_engine, InputValues);
 
 			if (_orchestrationLevel != OrchestrationLevel.Global)
 			{
