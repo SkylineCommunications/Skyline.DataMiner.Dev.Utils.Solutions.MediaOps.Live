@@ -25,7 +25,7 @@
 		protected override Section DefineHeaderSection()
 		{
 			var section = new Section();
-			var labelSpan = Label.Text.Length / 5;
+			var labelSpan = Math.Max(1, Label.Text.Length / 5);
 			section.AddWidget(Label, 0, 0, 1, labelSpan);
 			section.AddWidget(Value, 1, 0, 1, labelSpan);
 			return section;
