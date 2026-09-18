@@ -22,6 +22,7 @@
 			ProfileParameterValues = profileParameterValues;
 			ProfileInstance = profileInstance;
 			Metadata = new Dictionary<string, string>();
+			InputValues = new Dictionary<string, object>();
 		}
 
 		[JsonProperty]
@@ -32,5 +33,11 @@
 
 		[JsonProperty]
 		public Dictionary<string, string> Metadata { get; set; }
+
+		/// <summary>
+		/// Gets or sets the dynamic orchestration input values that were already provided, keyed by the path of the field they belong to.
+		/// </summary>
+		[JsonProperty]
+		public Dictionary<string, object> InputValues { get; set; }
 	}
 }
