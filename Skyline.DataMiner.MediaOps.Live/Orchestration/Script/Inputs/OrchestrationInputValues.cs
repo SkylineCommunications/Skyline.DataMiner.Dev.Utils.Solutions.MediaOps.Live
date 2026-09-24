@@ -100,6 +100,42 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		}
 
 		/// <summary>
+		/// Gets the provided value for the specified path as a number.
+		/// </summary>
+		/// <param name="path">The path of the field.</param>
+		/// <returns>The value as a number, or <see langword="null"/> when no numeric value was provided.</returns>
+		public double? GetNumber(string path)
+		{
+			return TryGetValue(path, out var value) && value.TryGetNumber(out var result)
+				? result
+				: (double?)null;
+		}
+
+		/// <summary>
+		/// Gets the provided value for the specified path as a date and time in UTC.
+		/// </summary>
+		/// <param name="path">The path of the field.</param>
+		/// <returns>The value as a date and time in UTC, or <see langword="null"/> when no date and time was provided.</returns>
+		public DateTime? GetDateTime(string path)
+		{
+			return TryGetValue(path, out var value) && value.TryGetDateTime(out var result)
+				? result
+				: (DateTime?)null;
+		}
+
+		/// <summary>
+		/// Gets the provided value for the specified path as a duration.
+		/// </summary>
+		/// <param name="path">The path of the field.</param>
+		/// <returns>The value as a duration, or <see langword="null"/> when no duration was provided.</returns>
+		public TimeSpan? GetTimeSpan(string path)
+		{
+			return TryGetValue(path, out var value) && value.TryGetTimeSpan(out var result)
+				? result
+				: (TimeSpan?)null;
+		}
+
+		/// <summary>
 		/// Gets the provided value for the specified path as a whole number, clamped to the specified bounds.
 		/// This is the typical way to translate a value into the number of repetitions of a repeated group.
 		/// </summary>

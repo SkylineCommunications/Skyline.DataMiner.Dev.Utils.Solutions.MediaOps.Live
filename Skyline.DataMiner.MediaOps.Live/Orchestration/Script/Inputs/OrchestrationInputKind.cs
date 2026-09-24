@@ -26,6 +26,16 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public const string Discrete = "discrete";
 
 		/// <summary>
+		/// A date and time input field.
+		/// </summary>
+		public const string DateTime = "dateTime";
+
+		/// <summary>
+		/// A duration input field.
+		/// </summary>
+		public const string TimeSpan = "timeSpan";
+
+		/// <summary>
 		/// A field that is backed by a profile parameter and whose definition is only known once it is resolved.
 		/// </summary>
 		public const string Profile = "profile";

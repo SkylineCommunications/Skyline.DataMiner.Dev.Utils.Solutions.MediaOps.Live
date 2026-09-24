@@ -59,6 +59,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 				case OrchestrationInputKind.Discrete:
 					return new OrchestrationDiscreteInputField();
 
+				case OrchestrationInputKind.DateTime:
+					return new OrchestrationDateTimeInputField();
+
+				case OrchestrationInputKind.TimeSpan:
+					return new OrchestrationTimeSpanInputField();
+
 				case OrchestrationInputKind.Profile:
 					return new OrchestrationProfileInputField();
 

@@ -86,5 +86,33 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 			return Options.FirstOrDefault(option => option.Value == value)?.GetDisplayText();
 		}
+
+		/// <inheritdoc/>
+		public override string FormatValue(OrchestrationInputValue value)
+		{
+			return value == null ? null : Options.FirstOrDefault(option => option.Value == value)?.GetDisplayText() ?? value.ToString();
+		}
+
+		internal override void ValidateDefinition()
+		{
+			if (Options.Count == 0)
+			{
+				ThrowUnusableDefinition(Path, "it has no options.");
+			}
+
+			if (Options.Any(option => option?.Value == null))
+			{
+				ThrowUnusableDefinition(Path, "an option has no value.");
+			}
+
+			var duplicate = Options.GroupBy(option => option.Value).FirstOrDefault(group => group.Count() > 1);
+
+			if (duplicate != null)
+			{
+				ThrowUnusableDefinition(Path, $"the value '{duplicate.Key}' is used by more than one option.");
+			}
+
+			base.ValidateDefinition();
+		}
 	}
 }

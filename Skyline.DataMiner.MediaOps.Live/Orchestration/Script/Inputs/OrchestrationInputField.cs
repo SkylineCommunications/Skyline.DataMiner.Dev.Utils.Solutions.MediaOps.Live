@@ -22,6 +22,25 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public bool TriggersReevaluation { get; set; }
 
 		/// <summary>
+		/// Gets or sets a value indicating whether the operator cannot edit this field.
+		/// </summary>
+		[JsonProperty("isDisabled")]
+		public bool IsDisabled { get; set; }
+
+		/// <summary>
+		/// Gets or sets a value indicating whether the script considers the current value of this field valid.
+		/// Use this for checks the field definition cannot express, and explain the problem in <see cref="ValidationMessage"/>.
+		/// </summary>
+		[JsonProperty("isValid")]
+		public bool IsValid { get; set; } = true;
+
+		/// <summary>
+		/// Gets or sets the message the script shows next to this field, typically why the current value is not valid.
+		/// </summary>
+		[JsonProperty("validationMessage", NullValueHandling = NullValueHandling.Ignore)]
+		public string ValidationMessage { get; set; }
+
+		/// <summary>
 		/// Gets or sets the name of the profile parameter this field is backed by, or <see langword="null"/> when the field is script local.
 		/// </summary>
 		[JsonProperty("profileParameterName", NullValueHandling = NullValueHandling.Ignore)]
@@ -83,6 +102,54 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 			error = null;
 			return true;
+		}
+
+		/// <summary>
+		/// Formats the specified value the way it is shown to the operator.
+		/// </summary>
+		/// <param name="value">The value to format.</param>
+		/// <returns>The text to show, or <see langword="null"/> when <paramref name="value"/> is <see langword="null"/>.</returns>
+		public virtual string FormatValue(OrchestrationInputValue value)
+		{
+			return value?.ToString();
+		}
+
+		/// <summary>
+		/// Determines whether the effective value of this field is acceptable, both for the field definition and for the script.
+		/// </summary>
+		/// <param name="error">When this method returns <see langword="false"/>, contains the reason why the value is not acceptable.</param>
+		/// <returns><see langword="true"/> when the value is acceptable; otherwise, <see langword="false"/>.</returns>
+		public bool TryValidate(out string error)
+		{
+			if (!IsValidValue(GetEffectiveValue(), out error))
+			{
+				return false;
+			}
+
+			if (!IsValid)
+			{
+				error = String.IsNullOrWhiteSpace(ValidationMessage) ? $"'{Name}' is not valid." : ValidationMessage;
+				return false;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Verifies that this field can hold at least one value and that its default value fits the definition.
+		/// </summary>
+		/// <exception cref="InvalidOperationException">Thrown when the definition of this field is not usable.</exception>
+		internal virtual void ValidateDefinition()
+		{
+			if (DefaultValue != null && !IsValidValue(DefaultValue, out var error))
+			{
+				throw new InvalidOperationException($"The default value of orchestration input '{Path}' is not valid. {error}");
+			}
+		}
+
+		private protected static void ThrowUnusableDefinition(string path, string reason)
+		{
+			throw new InvalidOperationException($"Orchestration input '{path}' has no usable definition: {reason}");
 		}
 	}
 }

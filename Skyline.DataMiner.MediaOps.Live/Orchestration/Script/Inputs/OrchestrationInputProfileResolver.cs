@@ -200,10 +200,17 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 			resolved.Description = source.Description;
 			resolved.IsRequired = source.IsRequired;
 			resolved.TriggersReevaluation = source.TriggersReevaluation;
+			resolved.IsDisabled = source.IsDisabled;
+			resolved.IsValid = source.IsValid;
+			resolved.ValidationMessage = source.ValidationMessage;
 			resolved.Value = source.Value;
-			resolved.DefaultValue = source.DefaultValue ?? GetDefaultValue(parameter);
 			resolved.ProfileParameterName = parameter.Name;
 			resolved.ProfileParameterId = parameter.ID;
+
+			// The default of the profile parameter can fall outside what the script narrowed it to.
+			var profileDefault = GetDefaultValue(parameter);
+			resolved.DefaultValue = source.DefaultValue
+				?? (profileDefault != null && resolved.IsValidValue(profileDefault, out _) ? profileDefault : null);
 
 			return resolved;
 		}

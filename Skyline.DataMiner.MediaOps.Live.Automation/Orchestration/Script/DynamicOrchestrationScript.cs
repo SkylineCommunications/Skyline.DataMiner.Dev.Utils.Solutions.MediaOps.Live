@@ -5,8 +5,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 	using System.Linq;
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Net.Profiles;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
+	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 
 	/// <summary>
 	/// Base class for orchestration scripts whose inputs depend on the values that were already provided,
@@ -14,6 +16,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 	/// </summary>
 	public abstract class DynamicOrchestrationScript : OrchestrationScriptBase
 	{
+		private OrchestrationInputValues _providedValues = OrchestrationInputValues.Empty;
+
 		/// <summary>
 		/// Gets the input items of this script, evaluated for the values that are currently provided.
 		/// </summary>
@@ -28,9 +32,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		/// Gets the input items this script requires, based on the values that were already provided.
 		/// This method is called again every time a value changes that affects which items are relevant.
 		/// </summary>
+		/// <param name="engine">Link with SLAutomation process, for example to read profile parameters or DOM instances the inputs are derived from.</param>
 		/// <param name="providedValues">The values that were already provided, keyed by the path of the field they belong to.</param>
 		/// <returns>The input items to expose.</returns>
-		public abstract OrchestrationInputDefinition GetInputs(OrchestrationInputValues providedValues);
+		public abstract OrchestrationInputDefinition GetInputs(IEngine engine, OrchestrationInputValues providedValues);
 
 		/// <summary>
 		/// Performs the orchestration with the values that were provided for the inputs of this script.
@@ -76,24 +81,54 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			OrchestrationInputValues values = providedValues ?? OrchestrationInputValues.Empty;
 			var profileResolver = new OrchestrationInputProfileResolver(new ProfileHelper(engine.SendSLNetMessages));
 
-			OrchestrationInputDefinition definition = OrchestrationInputDefinition.Evaluate(v => ResolveInputs(profileResolver, v), values);
+			OrchestrationInputDefinition definition = OrchestrationInputDefinition.Evaluate(v => ResolveInputs(engine, profileResolver, v), values);
 
+			_providedValues = values;
 			Inputs = definition;
 			InputValues = definition.GetValues();
 
 			return definition;
 		}
 
-		internal override void ExecuteOrchestration(IEngine engine)
+		internal override void ExecuteOrchestration(IEngine engine, bool askMissingValues)
 		{
+			if (Inputs == null)
+			{
+				EvaluateInputs(engine, OrchestrationInputValues.Empty);
+			}
+
+			if (!Inputs.TryValidateValues(out var errors))
+			{
+				if (!askMissingValues)
+				{
+					throw new InvalidOperationException($"The inputs of orchestration script '{GetType().Name}' are not valid. {String.Join(" ", errors)}");
+				}
+
+				AskInputValues(engine);
+			}
+
 			Orchestrate(engine, InputValues);
 		}
 
-		private OrchestrationInputDefinition ResolveInputs(OrchestrationInputProfileResolver profileResolver, OrchestrationInputValues values)
+		private void AskInputValues(IEngine engine)
 		{
-			OrchestrationInputDefinition definition = GetInputs(values)
+			var controller = new InteractiveController(engine);
+			var dialog = new GetOrchestrationInputValuesDialog(engine, Inputs, _providedValues, values => EvaluateInputs(engine, values));
+
+			dialog.Completed += (sender, args) => controller.Stop();
+
+			controller.ShowDialog(dialog);
+
+			EvaluateInputs(engine, dialog.ProvidedValues);
+		}
+
+		private OrchestrationInputDefinition ResolveInputs(IEngine engine, OrchestrationInputProfileResolver profileResolver, OrchestrationInputValues values)
+		{
+			OrchestrationInputDefinition definition = GetInputs(engine, values)
 				?? throw new InvalidOperationException($"'{GetType().Name}.{nameof(GetInputs)}' must return an input definition.");
 
+			// The structure is checked first, so resolving never walks a cyclic or overly deep tree.
+			definition.ValidateStructure();
 			profileResolver.Resolve(definition);
 
 			return definition;

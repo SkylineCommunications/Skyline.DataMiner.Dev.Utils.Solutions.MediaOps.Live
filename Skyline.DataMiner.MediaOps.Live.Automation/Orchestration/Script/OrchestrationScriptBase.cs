@@ -230,7 +230,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 		internal abstract OrchestrationInputDefinition EvaluateInputs(IEngine engine, OrchestrationInputValues providedValues);
 
-		internal abstract void ExecuteOrchestration(IEngine engine);
+		internal abstract void ExecuteOrchestration(IEngine engine, bool askMissingValues);
 
 		private void RunSafe(IEngine engine)
 		{
@@ -245,7 +245,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				GetValuesFromUser(_parameterInfos);
 			}
 
-			ExecuteOrchestration(engine);
+			ExecuteOrchestration(engine, true);
 		}
 
 		private OrchestrationEventConfiguration LoadEventFromMetaData(IEngine engine)
@@ -642,7 +642,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			TryGetMetadataValue("{Orchestration Level}", out string orchestrationLevel);
 			_orchestrationLevel = Enum.TryParse(orchestrationLevel, out OrchestrationLevel parsedLevel) ? parsedLevel : OrchestrationLevel.Unknown;
 
-			ExecuteOrchestration(_engine);
+			ExecuteOrchestration(_engine, askMissingValues);
 
 			if (_orchestrationLevel != OrchestrationLevel.Global)
 			{

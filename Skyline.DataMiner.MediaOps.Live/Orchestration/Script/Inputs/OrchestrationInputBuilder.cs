@@ -48,6 +48,28 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		}
 
 		/// <summary>
+		/// Adds a date and time input field.
+		/// </summary>
+		/// <param name="name">The name of the field, unique within its parent.</param>
+		/// <param name="configure">An optional callback to further configure the field.</param>
+		/// <returns>The current builder.</returns>
+		public OrchestrationInputBuilder AddDateTime(string name, Action<OrchestrationDateTimeInputField> configure = null)
+		{
+			return AddField(name, configure);
+		}
+
+		/// <summary>
+		/// Adds a duration input field.
+		/// </summary>
+		/// <param name="name">The name of the field, unique within its parent.</param>
+		/// <param name="configure">An optional callback to further configure the field.</param>
+		/// <returns>The current builder.</returns>
+		public OrchestrationInputBuilder AddTimeSpan(string name, Action<OrchestrationTimeSpanInputField> configure = null)
+		{
+			return AddField(name, configure);
+		}
+
+		/// <summary>
 		/// Adds an input field that is limited to the specified options.
 		/// </summary>
 		/// <param name="name">The name of the field, unique within its parent.</param>

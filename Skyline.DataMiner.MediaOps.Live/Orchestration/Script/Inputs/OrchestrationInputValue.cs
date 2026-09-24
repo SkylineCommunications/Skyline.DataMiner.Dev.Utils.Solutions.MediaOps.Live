@@ -9,6 +9,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 	/// <summary>
 	/// The value of an orchestration input field, which is either text or a number.
+	/// A date and time is held as round-trip text in UTC and a duration as a number of seconds, so every value can be stored as a profile parameter value.
 	/// </summary>
 	[JsonConverter(typeof(OrchestrationInputValueJsonConverter))]
 	public sealed class OrchestrationInputValue : IEquatable<OrchestrationInputValue>
@@ -73,6 +74,24 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 			return FromNumber(number);
 		}
 
+		/// <summary>
+		/// Converts a date and time to an orchestration input value.
+		/// </summary>
+		/// <param name="dateTime">The date and time.</param>
+		public static implicit operator OrchestrationInputValue(DateTime dateTime)
+		{
+			return FromDateTime(dateTime);
+		}
+
+		/// <summary>
+		/// Converts a duration to an orchestration input value.
+		/// </summary>
+		/// <param name="timeSpan">The duration.</param>
+		public static implicit operator OrchestrationInputValue(TimeSpan timeSpan)
+		{
+			return FromTimeSpan(timeSpan);
+		}
+
 		public static bool operator ==(OrchestrationInputValue left, OrchestrationInputValue right)
 		{
 			return left is null ? right is null : left.Equals(right);
@@ -101,6 +120,26 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public static OrchestrationInputValue FromNumber(double number)
 		{
 			return new OrchestrationInputValue(number);
+		}
+
+		/// <summary>
+		/// Creates a date and time value. A value without a kind is taken as UTC.
+		/// </summary>
+		/// <param name="dateTime">The date and time.</param>
+		/// <returns>The value, held as round-trip text in UTC.</returns>
+		public static OrchestrationInputValue FromDateTime(DateTime dateTime)
+		{
+			return FromText(ToUniversal(dateTime).ToString("o", CultureInfo.InvariantCulture));
+		}
+
+		/// <summary>
+		/// Creates a duration value.
+		/// </summary>
+		/// <param name="timeSpan">The duration.</param>
+		/// <returns>The value, held as a number of seconds.</returns>
+		public static OrchestrationInputValue FromTimeSpan(TimeSpan timeSpan)
+		{
+			return FromNumber(timeSpan.TotalSeconds);
 		}
 
 		/// <summary>
@@ -181,6 +220,44 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 			return true;
 		}
 
+		/// <summary>
+		/// Attempts to get this value as a date and time in UTC.
+		/// </summary>
+		/// <param name="dateTime">When this method returns <see langword="true"/>, contains the date and time in UTC.</param>
+		/// <returns><see langword="true"/> when this value represents a date and time; otherwise, <see langword="false"/>.</returns>
+		public bool TryGetDateTime(out DateTime dateTime)
+		{
+			if (IsText && DateTime.TryParse(_text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out dateTime))
+			{
+				return true;
+			}
+
+			dateTime = default;
+			return false;
+		}
+
+		/// <summary>
+		/// Attempts to get this value as a duration. A number is taken as seconds; text is parsed in the constant ("c") format.
+		/// </summary>
+		/// <param name="timeSpan">When this method returns <see langword="true"/>, contains the duration.</param>
+		/// <returns><see langword="true"/> when this value represents a duration; otherwise, <see langword="false"/>.</returns>
+		public bool TryGetTimeSpan(out TimeSpan timeSpan)
+		{
+			if (IsNumber)
+			{
+				if (Double.IsNaN(_number) || Double.IsInfinity(_number) || Math.Abs(_number) > TimeSpan.MaxValue.TotalSeconds)
+				{
+					timeSpan = default;
+					return false;
+				}
+
+				timeSpan = TimeSpan.FromTicks((long)Math.Round(_number * TimeSpan.TicksPerSecond));
+				return true;
+			}
+
+			return TimeSpan.TryParseExact(_text, "c", CultureInfo.InvariantCulture, out timeSpan);
+		}
+
 		/// <inheritdoc/>
 		public bool Equals(OrchestrationInputValue other)
 		{
@@ -210,6 +287,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public override string ToString()
 		{
 			return IsNumber ? _number.ToString(CultureInfo.InvariantCulture) : _text;
+		}
+
+		internal static DateTime ToUniversal(DateTime dateTime)
+		{
+			return dateTime.Kind == DateTimeKind.Unspecified
+				? DateTime.SpecifyKind(dateTime, DateTimeKind.Utc)
+				: dateTime.ToUniversalTime();
 		}
 	}
 }

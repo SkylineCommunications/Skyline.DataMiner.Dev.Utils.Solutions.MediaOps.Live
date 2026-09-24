@@ -14,7 +14,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		{
 			var script = new LegacyScript();
 
-			script.ExecuteOrchestration(null);
+			script.ExecuteOrchestration(null, false);
 
 			Assert.IsTrue(script.WasOrchestrated);
 		}
@@ -34,9 +34,44 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			var inputs = new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { ["General/Endpoint"] = "ENC-A" });
 			script.EvaluateInputs(Mock.Of<IEngine>(), inputs);
 
-			script.ExecuteOrchestration(null);
+			script.ExecuteOrchestration(null, false);
 
 			Assert.AreEqual("ENC-A", script.Endpoint);
+		}
+
+		[TestMethod]
+		public void DynamicOrchestrationScript_ExecuteOrchestration_RejectsAMissingRequiredInput()
+		{
+			var script = new DynamicScript();
+			script.EvaluateInputs(Mock.Of<IEngine>(), OrchestrationInputValues.Empty);
+
+			var exception = Assert.ThrowsExactly<InvalidOperationException>(() => script.ExecuteOrchestration(null, false));
+
+			StringAssert.Contains(exception.Message, "'Endpoint' requires a value.");
+			Assert.IsNull(script.Endpoint);
+		}
+
+		[TestMethod]
+		public void DynamicOrchestrationScript_ExecuteOrchestration_RejectsAValueTheScriptReportsAsInvalid()
+		{
+			var script = new DynamicScript();
+			var inputs = new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { ["General/Endpoint"] = "BLOCKED" });
+			script.EvaluateInputs(Mock.Of<IEngine>(), inputs);
+
+			var exception = Assert.ThrowsExactly<InvalidOperationException>(() => script.ExecuteOrchestration(null, false));
+
+			StringAssert.Contains(exception.Message, "BLOCKED cannot be used.");
+		}
+
+		[TestMethod]
+		public void DynamicOrchestrationScript_EvaluateInputs_PassesTheEngineToGetInputs()
+		{
+			var script = new DynamicScript();
+			var engine = Mock.Of<IEngine>();
+
+			script.EvaluateInputs(engine, OrchestrationInputValues.Empty);
+
+			Assert.AreSame(engine, script.ReceivedEngine);
 		}
 
 		[TestMethod]
@@ -66,15 +101,28 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		{
 			public string Endpoint { get; private set; }
 
+			public IEngine ReceivedEngine { get; private set; }
+
 			public override void Orchestrate(IEngine engine, OrchestrationInputValues inputs)
 			{
 				Endpoint = inputs.GetString("General/Endpoint");
 			}
 
-			public override OrchestrationInputDefinition GetInputs(OrchestrationInputValues providedValues)
+			public override OrchestrationInputDefinition GetInputs(IEngine engine, OrchestrationInputValues providedValues)
 			{
+				ReceivedEngine = engine;
+
 				return new OrchestrationInputBuilder()
-					.AddGroup("General", general => general.AddText("Endpoint"))
+					.AddGroup("General", general => general.AddText("Endpoint", field =>
+					{
+						field.IsRequired = true;
+
+						if (providedValues.HasValue("General/Endpoint", "BLOCKED"))
+						{
+							field.IsValid = false;
+							field.ValidationMessage = "BLOCKED cannot be used.";
+						}
+					}))
 					.Build();
 			}
 		}

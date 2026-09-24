@@ -16,6 +16,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// </summary>
 		public const int CurrentVersion = 1;
 
+		/// <summary>
+		/// The maximum number of nesting levels, where the top level items are the first level.
+		/// </summary>
+		public const int MaxDepth = 5;
+
 		// A default value is only known after a first evaluation, while it can itself determine the structure.
 		private const int MaxEvaluations = 5;
 
@@ -164,16 +169,17 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		}
 
 		/// <summary>
-		/// Verifies that the structure of this definition is valid.
+		/// Verifies that the structure of this definition is valid: names are unique within their parent, paths match the names,
+		/// items are nested at most <see cref="MaxDepth"/> levels deep without cycles, and every field has a usable definition.
 		/// </summary>
 		/// <exception cref="InvalidOperationException">Thrown when the definition is not structurally valid.</exception>
 		public void ValidateStructure()
 		{
-			ValidateItems(Items, null);
+			ValidateItems(Items, null, 1, new HashSet<OrchestrationInputItem>());
 		}
 
 		/// <summary>
-		/// Verifies that every field holds an acceptable value.
+		/// Verifies that every field holds an acceptable value, including the validity the script reported for it.
 		/// </summary>
 		/// <param name="errors">The problems that were found.</param>
 		/// <returns><see langword="true"/> when every field holds an acceptable value; otherwise, <see langword="false"/>.</returns>
@@ -183,7 +189,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 			foreach (var field in GetAllFields())
 			{
-				if (!field.IsValidValue(field.GetEffectiveValue(), out var error))
+				if (!field.TryValidate(out var error))
 				{
 					problems.Add(error);
 				}
@@ -209,12 +215,28 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 			}
 		}
 
-		private static void ValidateItems(IEnumerable<OrchestrationInputItem> items, string parentPath)
+		private static void ValidateItems(IEnumerable<OrchestrationInputItem> items, string parentPath, int depth, HashSet<OrchestrationInputItem> visited)
 		{
 			var seenNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
 			foreach (var item in items)
 			{
+				if (item == null)
+				{
+					throw new InvalidOperationException($"'{parentPath ?? "The root"}' contains an empty orchestration input item.");
+				}
+
+				if (depth > MaxDepth)
+				{
+					throw new InvalidOperationException($"Orchestration input '{parentPath}' nests items deeper than the maximum of {MaxDepth} levels.");
+				}
+
+				// Items don't override equality, so this tracks instances. A repeated instance would otherwise recurse forever.
+				if (!visited.Add(item))
+				{
+					throw new InvalidOperationException($"Orchestration input item '{item.Name}' within '{parentPath ?? "the root"}' is added more than once, which creates a cycle.");
+				}
+
 				if (!OrchestrationInputPath.IsValidName(item.Name))
 				{
 					throw new InvalidOperationException($"'{item.Name}' is not a valid orchestration input name. It cannot be empty or contain '{OrchestrationInputPath.Separator}'.");
@@ -234,7 +256,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 				if (item is OrchestrationInputGroup group)
 				{
-					ValidateItems(group.Children, expectedPath);
+					ValidateItems(group.Children, expectedPath, depth + 1, visited);
+				}
+				else if (item is OrchestrationInputField field)
+				{
+					field.ValidateDefinition();
 				}
 			}
 		}

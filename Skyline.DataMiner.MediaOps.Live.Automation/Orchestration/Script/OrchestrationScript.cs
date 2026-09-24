@@ -39,7 +39,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			return null;
 		}
 
-		internal override void ExecuteOrchestration(IEngine engine)
+		internal override void ExecuteOrchestration(IEngine engine, bool askMissingValues)
 		{
 			Orchestrate(engine);
 		}

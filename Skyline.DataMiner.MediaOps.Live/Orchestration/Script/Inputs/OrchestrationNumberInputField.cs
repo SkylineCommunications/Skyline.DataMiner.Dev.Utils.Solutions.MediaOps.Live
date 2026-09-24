@@ -1,5 +1,6 @@
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 {
+	using System;
 	using System.Globalization;
 
 	using Newtonsoft.Json;
@@ -74,6 +75,39 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 			}
 
 			return true;
+		}
+
+		/// <inheritdoc/>
+		public override string FormatValue(OrchestrationInputValue value)
+		{
+			var text = base.FormatValue(value);
+
+			return text == null || String.IsNullOrEmpty(Unit) ? text : $"{text} {Unit}";
+		}
+
+		internal override void ValidateDefinition()
+		{
+			if ((Minimum.HasValue && Double.IsNaN(Minimum.Value)) || (Maximum.HasValue && Double.IsNaN(Maximum.Value)))
+			{
+				ThrowUnusableDefinition(Path, "the range is not a number.");
+			}
+
+			if (Minimum.HasValue && Maximum.HasValue && Minimum.Value > Maximum.Value)
+			{
+				ThrowUnusableDefinition(Path, $"the minimum {Minimum.Value.ToString(CultureInfo.InvariantCulture)} is larger than the maximum {Maximum.Value.ToString(CultureInfo.InvariantCulture)}.");
+			}
+
+			if (StepSize.HasValue && !(StepSize.Value > 0))
+			{
+				ThrowUnusableDefinition(Path, "the step size must be larger than zero.");
+			}
+
+			if (Decimals < 0)
+			{
+				ThrowUnusableDefinition(Path, "the number of decimals cannot be negative.");
+			}
+
+			base.ValidateDefinition();
 		}
 	}
 }
