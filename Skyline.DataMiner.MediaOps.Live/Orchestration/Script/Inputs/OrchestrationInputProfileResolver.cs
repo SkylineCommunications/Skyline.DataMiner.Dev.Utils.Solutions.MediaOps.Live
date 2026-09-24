@@ -2,6 +2,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Globalization;
 	using System.Linq;
 
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
@@ -77,14 +78,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 			var field = new OrchestrationDiscreteInputField();
 
 			var displayValues = new Queue<string>(parameter.DiscreetDisplayValues);
+			var discreteValues = parameter.Discretes.Select(discrete => ToDiscreteValue(parameter, discrete)).ToList();
 
-			foreach (var discrete in parameter.Discretes)
+			foreach (var discrete in discreteValues)
 			{
-				var display = displayValues.Count > 0 ? displayValues.Dequeue() : discrete;
+				var display = displayValues.Count > 0 ? displayValues.Dequeue() : discrete.ToString();
 
 				// An empty override means the profile parameter is taken as is.
-				if (allowedValues.Count > 0
-					&& !allowedValues.Any(allowed => OrchestrationInputValueConverter.AreEqual(allowed, discrete)))
+				if (allowedValues.Count > 0 && !allowedValues.Contains(discrete))
 				{
 					continue;
 				}
@@ -92,17 +93,26 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 				field.Options.Add(new OrchestrationInputOption(display, discrete));
 			}
 
-			var unknown = allowedValues
-				.Where(allowed => !parameter.Discretes.Any(discrete => OrchestrationInputValueConverter.AreEqual(allowed, discrete)))
-				.ToList();
+			var unknown = allowedValues.Where(allowed => !discreteValues.Contains(allowed)).ToList();
 
 			if (unknown.Count > 0)
 			{
 				throw new InvalidOperationException(
-					$"'{source.Path}' allows {String.Join(", ", unknown.Select(x => $"'{OrchestrationInputValueConverter.ToStringValue(x)}'"))}, which profile parameter '{parameter.Name}' does not define.");
+					$"'{source.Path}' allows {String.Join(", ", unknown.Select(x => $"'{x}'"))}, which profile parameter '{parameter.Name}' does not define.");
 			}
 
 			return field;
+		}
+
+		private static OrchestrationInputValue ToDiscreteValue(Parameter parameter, string discrete)
+		{
+			if (parameter.InterpreteType?.Type == InterpreteType.TypeEnum.Double
+				&& Double.TryParse(discrete, NumberStyles.Float, CultureInfo.InvariantCulture, out var number))
+			{
+				return number;
+			}
+
+			return discrete;
 		}
 
 		private static OrchestrationInputField CreateNumberField(OrchestrationProfileInputField source, Parameter parameter)
@@ -198,7 +208,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 			return resolved;
 		}
 
-		private static object GetDefaultValue(Parameter parameter)
+		private static OrchestrationInputValue GetDefaultValue(Parameter parameter)
 		{
 			if (parameter.DefaultValue == null)
 			{
@@ -210,7 +220,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 				return parameter.DefaultValue.StringValue;
 			}
 
-			return Double.IsNaN(parameter.DefaultValue.DoubleValue) ? null : (object)parameter.DefaultValue.DoubleValue;
+			return Double.IsNaN(parameter.DefaultValue.DoubleValue) ? null : OrchestrationInputValue.FromNumber(parameter.DefaultValue.DoubleValue);
 		}
 
 		private Parameter GetProfileParameter(string name)

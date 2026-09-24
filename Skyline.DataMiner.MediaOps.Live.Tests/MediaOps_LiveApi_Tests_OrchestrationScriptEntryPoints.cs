@@ -31,7 +31,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		public void DynamicOrchestrationScript_ExecuteOrchestration_PassesTheInputValues()
 		{
 			var script = new DynamicScript();
-			var inputs = new OrchestrationInputValues(new Dictionary<string, object> { ["General/Endpoint"] = "ENC-A" });
+			var inputs = new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { ["General/Endpoint"] = "ENC-A" });
 			script.EvaluateInputs(Mock.Of<IEngine>(), inputs);
 
 			script.ExecuteOrchestration(null);

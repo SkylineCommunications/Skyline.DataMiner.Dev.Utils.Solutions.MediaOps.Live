@@ -43,7 +43,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public string Unit { get; set; }
 
 		/// <inheritdoc/>
-		public override bool IsValidValue(object value, out string error)
+		public override bool IsValidValue(OrchestrationInputValue value, out string error)
 		{
 			if (!base.IsValidValue(value, out error))
 			{
@@ -55,7 +55,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 				return true;
 			}
 
-			if (!OrchestrationInputValueConverter.TryToDouble(value, out var number))
+			if (!value.TryGetNumber(out var number))
 			{
 				error = $"'{Name}' requires a numeric value.";
 				return false;

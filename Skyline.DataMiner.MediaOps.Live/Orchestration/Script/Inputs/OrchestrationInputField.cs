@@ -44,19 +44,19 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// Gets or sets the value of this field.
 		/// </summary>
 		[JsonProperty("value", NullValueHandling = NullValueHandling.Ignore)]
-		public object Value { get; set; }
+		public OrchestrationInputValue Value { get; set; }
 
 		/// <summary>
 		/// Gets or sets the value that is used when the operator did not provide one.
 		/// </summary>
 		[JsonProperty("defaultValue", NullValueHandling = NullValueHandling.Ignore)]
-		public object DefaultValue { get; set; }
+		public OrchestrationInputValue DefaultValue { get; set; }
 
 		/// <summary>
 		/// Gets the value of this field, falling back to the default value when no value is set.
 		/// </summary>
 		/// <returns>The effective value of this field.</returns>
-		public object GetEffectiveValue()
+		public OrchestrationInputValue GetEffectiveValue()
 		{
 			return Value ?? DefaultValue;
 		}
@@ -67,7 +67,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <param name="value">The value to verify.</param>
 		/// <param name="error">When this method returns <see langword="false"/>, contains the reason why the value is not acceptable.</param>
 		/// <returns><see langword="true"/> when the value is acceptable; otherwise, <see langword="false"/>.</returns>
-		public virtual bool IsValidValue(object value, out string error)
+		public virtual bool IsValidValue(OrchestrationInputValue value, out string error)
 		{
 			if (value == null)
 			{

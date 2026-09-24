@@ -1,6 +1,13 @@
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
+	using Newtonsoft.Json;
+
+	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
@@ -29,7 +36,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		{
 			var simulation = CreateSimulationWithDynamicScript();
 
-			var providedValues = new OrchestrationInputValues(new Dictionary<string, object>
+			var providedValues = new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
 			{
 				[NumberOfDestinationsPath] = 3,
 			});
@@ -46,7 +53,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		{
 			var simulation = CreateSimulationWithDynamicScript();
 
-			var providedValues = new OrchestrationInputValues(new Dictionary<string, object>
+			var providedValues = new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
 			{
 				[NumberOfDestinationsPath] = 2,
 				["Destinations/Destination 1/Endpoint"] = "ENC-A",
@@ -55,7 +62,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			var info = simulation.Api.Orchestration.Scripts.GetOrchestrationScriptInputInfo(ScriptName, providedValues);
 
 			Assert.IsTrue(info.InputDefinition.TryGetField("Destinations/Destination 1/Endpoint", out var endpoint));
-			Assert.AreEqual("ENC-A", endpoint.Value);
+			Assert.AreEqual<OrchestrationInputValue>("ENC-A", endpoint.Value);
 		}
 
 		[TestMethod]
@@ -67,6 +74,88 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			Assert.IsFalse(info.HasDynamicInputs);
 			Assert.IsNull(info.InputDefinition);
+		}
+
+		[TestMethod]
+		public void OrchestrationHelper_SaveOrchestrationJobConfiguration_RejectsAConfirmedEventWithAMissingRequiredInput()
+		{
+			var simulation = CreateSimulationWithDynamicScript();
+
+			var job = CreateJobWithDynamicScript(simulation.Api, new Dictionary<string, OrchestrationInputValue>
+			{
+				[NumberOfDestinationsPath] = 2,
+				["Destinations/Destination 1/Endpoint"] = "ENC-A",
+			});
+
+			var exception = Assert.ThrowsExactly<InvalidOperationException>(() => simulation.Api.Orchestration.SaveOrchestrationJobConfiguration(job));
+
+			Assert.Contains("Endpoint", exception.Message);
+		}
+
+		[TestMethod]
+		public void OrchestrationHelper_SaveOrchestrationJobConfiguration_StoresTheDynamicInputValuesAsProfileValues()
+		{
+			var simulation = CreateSimulationWithDynamicScript();
+
+			var job = CreateJobWithDynamicScript(simulation.Api, new Dictionary<string, OrchestrationInputValue>
+			{
+				[NumberOfDestinationsPath] = 2,
+				["Destinations/Destination 1/Endpoint"] = "ENC-A",
+				["Destinations/Destination 2/Endpoint"] = "ENC-B",
+			});
+
+			simulation.Api.Orchestration.SaveOrchestrationJobConfiguration(job);
+
+			var stored = simulation.Api.Orchestration.GetOrchestrationJobConfiguration(job.JobId).OrchestrationEvents.Single().Profile.GetInputValues();
+
+			Assert.HasCount(3, stored.ToDictionary());
+			Assert.AreEqual(2, stored.GetInt32(NumberOfDestinationsPath));
+			Assert.IsTrue(stored.TryGetValue(NumberOfDestinationsPath, out var count));
+			Assert.IsTrue(count.IsNumber);
+			Assert.AreEqual("ENC-B", stored.GetString("Destinations/Destination 2/Endpoint"));
+		}
+
+		[TestMethod]
+		public void OrchestrationEventExecutionHelper_ExecuteOrchestrationScript_PassesTheDynamicInputValuesToTheScript()
+		{
+			var simulation = CreateSimulationWithDynamicScript();
+
+			var profile = new OrchestrationProfile();
+			profile.SetInputValues(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
+			{
+				[NumberOfDestinationsPath] = 1,
+				["Destinations/Destination 1/Endpoint"] = "ENC-A",
+			}));
+
+			var result = OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(simulation.Api.Connection, ScriptName, new List<OrchestrationScriptArgument>(), profile);
+
+			Assert.IsFalse(result.HadError);
+
+			var metaData = simulation.Dms.ExecutedScripts.Single(x => x.ScriptName == ScriptName).CustomEntryPoint.Parameters.OfType<RequestScriptInfoInput>().Single().Data;
+			var input = JsonConvert.DeserializeObject<OrchestrationScriptInput>(metaData[OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey]);
+
+			Assert.AreEqual<OrchestrationInputValue>("ENC-A", input.InputValues["Destinations/Destination 1/Endpoint"]);
+			Assert.AreEqual<OrchestrationInputValue>(1, input.InputValues[NumberOfDestinationsPath]);
+		}
+
+		private static OrchestrationJobConfiguration CreateJobWithDynamicScript(MediaOpsLiveApi api, Dictionary<string, OrchestrationInputValue> inputValues)
+		{
+			var eventConfig = new OrchestrationEventConfiguration
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventState = EventState.Confirmed,
+				EventType = EventType.Other,
+				Name = "Dynamic Event",
+				GlobalOrchestrationScript = ScriptName,
+			};
+
+			eventConfig.Profile = new OrchestrationProfile();
+			eventConfig.Profile.SetInputValues(new OrchestrationInputValues(inputValues));
+
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(Guid.NewGuid().ToString());
+			job.OrchestrationEvents.Add(eventConfig);
+
+			return job;
 		}
 
 		private static MediaOpsLiveSimulation CreateSimulationWithDynamicScript()

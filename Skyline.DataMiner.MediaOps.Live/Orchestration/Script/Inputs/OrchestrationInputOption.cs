@@ -30,18 +30,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// </summary>
 		/// <param name="display">The text that is shown to the operator.</param>
 		/// <param name="value">The value that is passed to the orchestration script.</param>
-		public OrchestrationInputOption(string display, string value)
-		{
-			Display = display;
-			Value = value;
-		}
-
-		/// <summary>
-		/// Initializes a new instance of the <see cref="OrchestrationInputOption"/> class.
-		/// </summary>
-		/// <param name="display">The text that is shown to the operator.</param>
-		/// <param name="value">The value that is passed to the orchestration script.</param>
-		public OrchestrationInputOption(string display, double value)
+		public OrchestrationInputOption(string display, OrchestrationInputValue value)
 		{
 			Display = display;
 			Value = value;
@@ -54,10 +43,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public string Display { get; set; }
 
 		/// <summary>
-		/// Gets the value that is passed to the orchestration script. It is either text or a number.
+		/// Gets the value that is passed to the orchestration script.
 		/// </summary>
 		[JsonProperty("value")]
-		public object Value { get; private set; }
+		public OrchestrationInputValue Value { get; private set; }
 
 		/// <summary>
 		/// Gets the display text, falling back to the value when no display text was provided.
@@ -65,7 +54,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <returns>The text to show to the operator.</returns>
 		public string GetDisplayText()
 		{
-			return String.IsNullOrEmpty(Display) ? OrchestrationInputValueConverter.ToStringValue(Value) : Display;
+			return String.IsNullOrEmpty(Display) ? Value?.ToString() : Display;
 		}
 
 		/// <inheritdoc/>

@@ -45,7 +45,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		/// <param name="path">The path of the field, for example <c>destinations/1/endpoint</c>.</param>
 		/// <param name="value">When this method returns <see langword="true"/>, contains the value of the field.</param>
 		/// <returns><see langword="true"/> when the field holds a value; otherwise, <see langword="false"/>.</returns>
-		public bool TryGetInputValue(string path, out object value)
+		public bool TryGetInputValue(string path, out OrchestrationInputValue value)
 		{
 			return InputValues.TryGetValue(path, out value);
 		}
@@ -56,7 +56,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		/// <param name="path">The path of the field, for example <c>destinations/1/endpoint</c>.</param>
 		/// <returns>The value of the field.</returns>
 		/// <exception cref="InvalidOperationException">Thrown when the field does not hold a value.</exception>
-		public object GetInputValue(string path)
+		public OrchestrationInputValue GetInputValue(string path)
 		{
 			if (!TryGetInputValue(path, out var value))
 			{

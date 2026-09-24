@@ -148,7 +148,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <returns>The values, keyed by field path.</returns>
 		public OrchestrationInputValues GetValues()
 		{
-			var values = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+			var values = new Dictionary<string, OrchestrationInputValue>(StringComparer.OrdinalIgnoreCase);
 
 			foreach (var field in GetAllFields())
 			{

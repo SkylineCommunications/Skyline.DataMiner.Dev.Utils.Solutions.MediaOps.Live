@@ -11,14 +11,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public override string Kind => OrchestrationInputKind.Text;
 
 		/// <inheritdoc/>
-		public override bool IsValidValue(object value, out string error)
+		public override bool IsValidValue(OrchestrationInputValue value, out string error)
 		{
 			if (!base.IsValidValue(value, out error))
 			{
 				return false;
 			}
 
-			if (IsRequired && String.IsNullOrWhiteSpace(OrchestrationInputValueConverter.ToStringValue(value)))
+			if (IsRequired && String.IsNullOrWhiteSpace(value?.ToString()))
 			{
 				error = $"'{Name}' requires a value.";
 				return false;

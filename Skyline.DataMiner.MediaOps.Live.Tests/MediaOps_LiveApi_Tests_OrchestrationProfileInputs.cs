@@ -65,9 +65,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			var options = ((OrchestrationDiscreteInputField)field).Options;
 			Assert.HasCount(2, options);
-			Assert.AreEqual("ASTRA 1M", options[0].Value);
+			Assert.AreEqual<OrchestrationInputValue>("ASTRA 1M", options[0].Value);
 			Assert.IsFalse(String.IsNullOrEmpty(options[0].Display));
-			Assert.DoesNotContain("EUTELSAT 7B", options.Select(x => x.Value).ToList());
+			Assert.DoesNotContain("EUTELSAT 7B", options.Select(x => x.Value.Text).ToList());
 		}
 
 		[TestMethod]

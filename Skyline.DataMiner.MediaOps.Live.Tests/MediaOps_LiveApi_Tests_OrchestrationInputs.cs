@@ -45,7 +45,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		{
 			var definition = BuildDestinationsDefinition(2);
 
-			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, object>
+			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
 			{
 				["Destinations/Destination 1/Endpoint"] = "ENC-A",
 				["Destinations/Destination 2/Endpoint"] = "ENC-B",
@@ -53,8 +53,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			Assert.IsTrue(definition.TryGetField("Destinations/Destination 1/Endpoint", out var first));
 			Assert.IsTrue(definition.TryGetField("Destinations/Destination 2/Endpoint", out var second));
-			Assert.AreEqual("ENC-A", first.Value);
-			Assert.AreEqual("ENC-B", second.Value);
+			Assert.AreEqual<OrchestrationInputValue>("ENC-A", first.Value);
+			Assert.AreEqual<OrchestrationInputValue>("ENC-B", second.Value);
 		}
 
 		[TestMethod]
@@ -115,14 +115,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		[TestMethod]
 		public void OrchestrationInputDefinition_GetParameters_ShowsDependentGroupOnlyWhenRelevant()
 		{
-			var unicast = EvaluateExampleScript(new OrchestrationInputValues(new Dictionary<string, object>
+			var unicast = EvaluateExampleScript(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
 			{
 				[RoutingModePath] = "Unicast",
 			}));
 
 			Assert.IsFalse(unicast.TryGetGroup("Multicast settings", out _));
 
-			var multicast = EvaluateExampleScript(new OrchestrationInputValues(new Dictionary<string, object>
+			var multicast = EvaluateExampleScript(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
 			{
 				[RoutingModePath] = "Multicast",
 			}));
@@ -134,14 +134,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		[TestMethod]
 		public void OrchestrationInputDefinition_GetParameters_NarrowsOptionsBasedOnOtherValue()
 		{
-			var multicast = EvaluateExampleScript(new OrchestrationInputValues(new Dictionary<string, object>
+			var multicast = EvaluateExampleScript(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
 			{
 				[RoutingModePath] = "Multicast",
 			}));
 
 			Assert.IsTrue(multicast.TryGetField("Destinations/Destination 1/Format", out var format));
 
-			var options = ((OrchestrationDiscreteInputField)format).Options.Select(x => x.Value).ToList();
+			var options = ((OrchestrationDiscreteInputField)format).Options.Select(x => x.Value.Text).ToList();
 			Assert.Contains("SMPTE 2110", options);
 			Assert.DoesNotContain("SDI", options);
 		}
@@ -151,7 +151,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		{
 			var definition = BuildDestinationsDefinition(1);
 
-			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, object>
+			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
 			{
 				["Destinations/Destination 1/Endpoint"] = "ENC-A",
 				["Destinations/Destination 2/Endpoint"] = "ENC-B",
@@ -171,7 +171,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 				})
 				.Build();
 
-			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, object> { ["Retries"] = 9 }));
+			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { ["Retries"] = 9 }));
 
 			Assert.IsFalse(definition.TryValidateValues(out var errors));
 			Assert.HasCount(1, errors);
@@ -184,7 +184,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 				.AddDiscrete("Format", "SMPTE 2110", "JPEG XS")
 				.Build();
 
-			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, object> { ["Format"] = "SDI" }));
+			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { ["Format"] = "SDI" }));
 
 			Assert.IsFalse(definition.TryValidateValues(out _));
 		}
@@ -193,7 +193,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		public void OrchestrationInputDefinition_Serialization_RoundTripsGroupsFieldsAndValues()
 		{
 			var definition = BuildDestinationsDefinition(2);
-			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, object>
+			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
 			{
 				[NumberOfDestinationsPath] = 2,
 				["Destinations/Destination 2/Endpoint"] = "ENC-B",
@@ -210,7 +210,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			Assert.IsTrue(restored.TryGetField("Destinations/Destination 2/Endpoint", out var endpoint));
 			Assert.IsInstanceOfType<OrchestrationTextInputField>(endpoint);
-			Assert.AreEqual("ENC-B", endpoint.Value);
+			Assert.AreEqual<OrchestrationInputValue>("ENC-B", endpoint.Value);
 
 			Assert.IsTrue(restored.TryGetField(NumberOfDestinationsPath, out var count));
 			Assert.IsInstanceOfType<OrchestrationNumberInputField>(count);
@@ -220,7 +220,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		[TestMethod]
 		public void OrchestrationInputValues_GetInt32_ClampsToTheProvidedBounds()
 		{
-			var values = new OrchestrationInputValues(new Dictionary<string, object> { ["count"] = "42" });
+			var values = new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { ["count"] = "42" });
 
 			Assert.AreEqual(8, values.GetInt32("count", 1, 8));
 			Assert.AreEqual(1, values.GetInt32("missing", 1, 8));
@@ -242,11 +242,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			var options = ((OrchestrationDiscreteInputField)field).Options;
 			Assert.AreEqual("Unicast", options[0].Display);
-			Assert.AreEqual("Unicast", options[0].Value);
+			Assert.AreEqual<OrchestrationInputValue>("Unicast", options[0].Value);
 			Assert.AreEqual("Multicast (SSM)", options[1].Display);
-			Assert.AreEqual("MCAST", options[1].Value);
+			Assert.AreEqual<OrchestrationInputValue>("MCAST", options[1].Value);
 			Assert.AreEqual("Low latency", options[2].Display);
-			Assert.AreEqual(1d, options[2].Value);
+			Assert.AreEqual<OrchestrationInputValue>(1d, options[2].Value);
 		}
 
 		[TestMethod]
@@ -256,7 +256,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 				.AddDiscrete("Routing mode", field => field.AddOption("Multicast (SSM)", "MCAST"))
 				.Build();
 
-			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, object> { ["Routing mode"] = "MCAST" }));
+			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { ["Routing mode"] = "MCAST" }));
 
 			Assert.IsTrue(definition.TryGetField("Routing mode", out var field));
 			Assert.AreEqual("Multicast (SSM)", ((OrchestrationDiscreteInputField)field).GetSelectedDisplayValue());
@@ -269,7 +269,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 				.AddDiscrete("Routing mode", field => field.AddOption("Multicast (SSM)", "MCAST"))
 				.Build();
 
-			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, object> { ["Routing mode"] = "Multicast (SSM)" }));
+			definition.ApplyValues(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { ["Routing mode"] = "Multicast (SSM)" }));
 
 			Assert.IsFalse(definition.TryValidateValues(out _));
 		}
@@ -291,9 +291,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			var options = ((OrchestrationDiscreteInputField)field).Options;
 			Assert.AreEqual("Multicast (SSM)", options[0].Display);
-			Assert.AreEqual("MCAST", options[0].Value);
+			Assert.AreEqual<OrchestrationInputValue>("MCAST", options[0].Value);
 			Assert.AreEqual("Low latency", options[1].Display);
-			Assert.IsTrue(OrchestrationInputValueConverter.AreEqual(1d, options[1].Value));
+			Assert.AreEqual<OrchestrationInputValue>(1d, options[1].Value);
 		}
 
 		[TestMethod]
@@ -308,7 +308,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		[TestMethod]
 		public void OrchestrationInputDefinition_Evaluate_ProvidedValueOverridesTheDefault()
 		{
-			var providedValues = new OrchestrationInputValues(new Dictionary<string, object> { [NumberOfDestinationsPath] = 1 });
+			var providedValues = new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { [NumberOfDestinationsPath] = 1 });
 
 			var definition = OrchestrationInputDefinition.Evaluate(BuildDefinitionWithDefaultCount, providedValues);
 
@@ -323,7 +323,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			Assert.IsTrue(definition.TryGetField(NumberOfDestinationsPath, out var field));
 			Assert.IsNull(field.Value);
-			Assert.AreEqual(3, Convert.ToInt32(field.GetEffectiveValue()));
+			Assert.AreEqual<OrchestrationInputValue>(3, field.GetEffectiveValue());
 		}
 
 		[TestMethod]

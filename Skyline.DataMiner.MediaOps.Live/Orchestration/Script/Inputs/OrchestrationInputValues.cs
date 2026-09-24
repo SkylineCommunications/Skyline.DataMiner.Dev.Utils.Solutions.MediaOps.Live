@@ -9,7 +9,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 	/// </summary>
 	public class OrchestrationInputValues
 	{
-		private readonly Dictionary<string, object> _values;
+		private readonly Dictionary<string, OrchestrationInputValue> _values;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationInputValues"/> class without any value.
@@ -21,10 +21,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationInputValues"/> class.
 		/// </summary>
-		/// <param name="values">The already provided values, keyed by field path.</param>
-		public OrchestrationInputValues(IDictionary<string, object> values)
+		/// <param name="values">The already provided values, keyed by field path. Entries without a value are skipped.</param>
+		public OrchestrationInputValues(IDictionary<string, OrchestrationInputValue> values)
 		{
-			_values = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+			_values = new Dictionary<string, OrchestrationInputValue>(StringComparer.OrdinalIgnoreCase);
 
 			if (values == null)
 			{
@@ -33,7 +33,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 			foreach (var value in values)
 			{
-				if (!String.IsNullOrEmpty(value.Key))
+				if (!String.IsNullOrEmpty(value.Key) && value.Value != null)
 				{
 					_values[value.Key] = value.Value;
 				}
@@ -66,7 +66,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <param name="path">The path of the field.</param>
 		/// <param name="value">When this method returns <see langword="true"/>, contains the provided value.</param>
 		/// <returns><see langword="true"/> when a value was provided; otherwise, <see langword="false"/>.</returns>
-		public bool TryGetValue(string path, out object value)
+		public bool TryGetValue(string path, out OrchestrationInputValue value)
 		{
 			if (String.IsNullOrEmpty(path))
 			{
@@ -84,7 +84,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <returns>The value as text, or <see langword="null"/> when no value was provided.</returns>
 		public string GetString(string path)
 		{
-			return TryGetValue(path, out var value) ? OrchestrationInputValueConverter.ToStringValue(value) : null;
+			return TryGetValue(path, out var value) ? value.ToString() : null;
 		}
 
 		/// <summary>
@@ -94,7 +94,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <returns>The value as a whole number, or <see langword="null"/> when no numeric value was provided.</returns>
 		public int? GetInt32(string path)
 		{
-			return TryGetValue(path, out var value) && OrchestrationInputValueConverter.TryToInt32(value, out var result)
+			return TryGetValue(path, out var value) && value.TryGetInt32(out var result)
 				? result
 				: (int?)null;
 		}
@@ -125,9 +125,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <param name="path">The path of the field.</param>
 		/// <param name="expectedValue">The value to compare against.</param>
 		/// <returns><see langword="true"/> when both values are equal; otherwise, <see langword="false"/>.</returns>
-		public bool HasValue(string path, object expectedValue)
+		public bool HasValue(string path, OrchestrationInputValue expectedValue)
 		{
-			return TryGetValue(path, out var value) && OrchestrationInputValueConverter.AreEqual(value, expectedValue);
+			return TryGetValue(path, out var value) && value == expectedValue;
 		}
 
 		/// <summary>
@@ -144,8 +144,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 			foreach (var value in _values)
 			{
-				if (!other.TryGetValue(value.Key, out var otherValue)
-					|| !OrchestrationInputValueConverter.AreEqual(value.Value, otherValue))
+				if (!other.TryGetValue(value.Key, out var otherValue) || value.Value != otherValue)
 				{
 					return false;
 				}
@@ -158,9 +157,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// Gets the provided values as a dictionary.
 		/// </summary>
 		/// <returns>A copy of the provided values.</returns>
-		public Dictionary<string, object> ToDictionary()
+		public Dictionary<string, OrchestrationInputValue> ToDictionary()
 		{
-			return new Dictionary<string, object>(_values, StringComparer.OrdinalIgnoreCase);
+			return new Dictionary<string, OrchestrationInputValue>(_values, StringComparer.OrdinalIgnoreCase);
 		}
 	}
 }

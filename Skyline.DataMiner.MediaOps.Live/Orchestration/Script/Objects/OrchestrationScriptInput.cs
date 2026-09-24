@@ -5,6 +5,8 @@
 
 	using Newtonsoft.Json;
 
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
+
 	internal class OrchestrationScriptInput
 	{
 		internal OrchestrationScriptInput()
@@ -22,7 +24,7 @@
 			ProfileParameterValues = profileParameterValues;
 			ProfileInstance = profileInstance;
 			Metadata = new Dictionary<string, string>();
-			InputValues = new Dictionary<string, object>();
+			InputValues = new Dictionary<string, OrchestrationInputValue>();
 		}
 
 		[JsonProperty]
@@ -38,6 +40,6 @@
 		/// Gets or sets the dynamic orchestration input values that were already provided, keyed by the path of the field they belong to.
 		/// </summary>
 		[JsonProperty]
-		public Dictionary<string, object> InputValues { get; set; }
+		public Dictionary<string, OrchestrationInputValue> InputValues { get; set; }
 	}
 }

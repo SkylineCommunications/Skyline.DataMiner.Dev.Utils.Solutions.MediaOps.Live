@@ -102,9 +102,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 			}
 		}
 
-		internal IEnumerable<object> GetAllowedValues()
+		internal IEnumerable<OrchestrationInputValue> GetAllowedValues()
 		{
-			return AllowedTextValues.Cast<object>().Concat(AllowedNumberValues.Cast<object>());
+			return AllowedTextValues.Select(OrchestrationInputValue.FromText)
+				.Concat(AllowedNumberValues.Select(OrchestrationInputValue.FromNumber));
 		}
 	}
 }

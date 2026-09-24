@@ -55,7 +55,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		}
 
 		/// <inheritdoc/>
-		public override bool IsValidValue(object value, out string error)
+		public override bool IsValidValue(OrchestrationInputValue value, out string error)
 		{
 			if (!base.IsValidValue(value, out error))
 			{
@@ -67,9 +67,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 				return true;
 			}
 
-			if (!Options.Any(option => OrchestrationInputValueConverter.AreEqual(option.Value, value)))
+			if (!Options.Any(option => option.Value == value))
 			{
-				error = $"'{Name}' does not allow the value '{OrchestrationInputValueConverter.ToStringValue(value)}'.";
+				error = $"'{Name}' does not allow the value '{value}'.";
 				return false;
 			}
 
@@ -84,7 +84,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		{
 			var value = GetEffectiveValue();
 
-			return Options.FirstOrDefault(option => OrchestrationInputValueConverter.AreEqual(option.Value, value))?.GetDisplayText();
+			return Options.FirstOrDefault(option => option.Value == value)?.GetDisplayText();
 		}
 	}
 }
