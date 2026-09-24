@@ -111,6 +111,40 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Mediation.Connect
         void RegisterConnections(System.Collections.Generic.ICollection<Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Mediation.ConnectionHandlers.ConnectionUpdate> connections);
     }
 }
+namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script
+{
+    public abstract class DynamicOrchestrationScript : Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.OrchestrationScriptBase
+    {
+        protected DynamicOrchestrationScript() { }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues InputValues { get; }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputDefinition Inputs { get; }
+        public object GetInputValue(string path) { }
+        public abstract Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputDefinition GetInputs(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues providedValues);
+        public abstract void Orchestrate(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues inputs);
+        public bool TryGetInputValue(string path, out object value) { }
+    }
+    public abstract class OrchestrationScript : Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.OrchestrationScriptBase
+    {
+        protected OrchestrationScript() { }
+        public object GetParameterValue(string paramName) { }
+        public abstract System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects.IOrchestrationParameters> GetParameters();
+        public abstract void Orchestrate(Skyline.DataMiner.Automation.IEngine engine);
+    }
+    public abstract class OrchestrationScriptBase
+    {
+        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventConfiguration EventConfiguration { get; }
+        public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId GetEventMonitoringService() { }
+        [Skyline.DataMiner.Automation.AutomationEntryPoint(Skyline.DataMiner.Automation.AutomationEntryPointType.Types.OnRequestScriptInfo)]
+        public Skyline.DataMiner.Net.Automation.RequestScriptInfoOutput OnRequestScriptInfoRequest(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Net.Automation.RequestScriptInfoInput inputData) { }
+        public void OrchestrateAllConnections(int timeoutSeconds = 60) { }
+        public void OrchestrateNode(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfig) { }
+        public void Run(Skyline.DataMiner.Automation.IEngine engine) { }
+        public virtual Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId SetupService(Skyline.DataMiner.Automation.IEngine engine) { }
+        public virtual void TearDownService(Skyline.DataMiner.Automation.IEngine engine) { }
+        public bool TryGetMetadataValue(string metadataParam, out string metadataValue) { }
+        public bool TryGetNodeConfiguration(string nodeLabel, out Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfiguration) { }
+    }
+}
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs
 {
     public class GetOrchestrationValuesDialog : Skyline.DataMiner.Utils.InteractiveAutomationScript.Dialog
@@ -215,33 +249,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
         public object Value { get; set; }
         public System.Type ValueType { get; set; }
         public override string ToString() { }
-    }
-}
-namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script
-{
-    public abstract class OrchestrationScript
-    {
-        protected OrchestrationScript() { }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventConfiguration EventConfiguration { get; }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues InputValues { get; }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputDefinition Inputs { get; }
-        public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId GetEventMonitoringService() { }
-        public object GetInputValue(string path) { }
-        public object GetParameterValue(string paramName) { }
-        public abstract System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects.IOrchestrationParameters> GetParameters();
-        public virtual Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputDefinition GetParameters(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues providedValues) { }
-        [Skyline.DataMiner.Automation.AutomationEntryPoint(Skyline.DataMiner.Automation.AutomationEntryPointType.Types.OnRequestScriptInfo)]
-        public Skyline.DataMiner.Net.Automation.RequestScriptInfoOutput OnRequestScriptInfoRequest(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Net.Automation.RequestScriptInfoInput inputData) { }
-        public virtual void Orchestrate(Skyline.DataMiner.Automation.IEngine engine) { }
-        public virtual void Orchestrate(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues inputs) { }
-        public void OrchestrateAllConnections(int timeoutSeconds = 60) { }
-        public void OrchestrateNode(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfig) { }
-        public void Run(Skyline.DataMiner.Automation.IEngine engine) { }
-        public virtual Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId SetupService(Skyline.DataMiner.Automation.IEngine engine) { }
-        public virtual void TearDownService(Skyline.DataMiner.Automation.IEngine engine) { }
-        public bool TryGetInputValue(string path, out object value) { }
-        public bool TryGetMetadataValue(string metadataParam, out string metadataValue) { }
-        public bool TryGetNodeConfiguration(string nodeLabel, out Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfiguration) { }
     }
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Take

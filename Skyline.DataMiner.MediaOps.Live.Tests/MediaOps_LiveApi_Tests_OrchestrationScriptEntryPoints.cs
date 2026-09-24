@@ -1,5 +1,6 @@
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
+	using Moq;
 	using Skyline.DataMiner.Automation;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects;
@@ -9,34 +10,41 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 	public sealed class MediaOps_LiveApi_Tests_OrchestrationScriptEntryPoints
 	{
 		[TestMethod]
-		public void OrchestrationScript_Orchestrate_ForwardsToTheLegacyOverloadOfExistingScripts()
+		public void OrchestrationScript_ExecuteOrchestration_CallsOrchestrate()
 		{
 			var script = new LegacyScript();
 
-			script.Orchestrate(null, OrchestrationInputValues.Empty);
+			script.ExecuteOrchestration(null);
 
 			Assert.IsTrue(script.WasOrchestrated);
 		}
 
 		[TestMethod]
-		public void OrchestrationScript_Orchestrate_PassesTheInputValuesToScriptsThatWantThem()
+		public void OrchestrationScript_EvaluateInputs_ReturnsNoInputDefinition()
+		{
+			var script = new LegacyScript();
+
+			Assert.IsNull(script.EvaluateInputs(null, OrchestrationInputValues.Empty));
+		}
+
+		[TestMethod]
+		public void DynamicOrchestrationScript_ExecuteOrchestration_PassesTheInputValues()
 		{
 			var script = new DynamicScript();
 			var inputs = new OrchestrationInputValues(new Dictionary<string, object> { ["General/Endpoint"] = "ENC-A" });
+			script.EvaluateInputs(Mock.Of<IEngine>(), inputs);
 
-			script.Orchestrate(null, inputs);
+			script.ExecuteOrchestration(null);
 
 			Assert.AreEqual("ENC-A", script.Endpoint);
 		}
 
 		[TestMethod]
-		public void OrchestrationScript_Orchestrate_ThrowsWhenNeitherOverloadIsImplemented()
+		public void DynamicOrchestrationScript_GetProfileParameters_ReturnsNone()
 		{
-			var script = new ScriptWithoutOrchestrate();
+			var script = new DynamicScript();
 
-			var exception = Assert.ThrowsExactly<NotImplementedException>(() => script.Orchestrate(null, OrchestrationInputValues.Empty));
-
-			Assert.Contains(nameof(ScriptWithoutOrchestrate), exception.Message);
+			Assert.IsEmpty(script.GetProfileParameters());
 		}
 
 		private sealed class LegacyScript : OrchestrationScript
@@ -54,7 +62,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			}
 		}
 
-		private sealed class DynamicScript : OrchestrationScript
+		private sealed class DynamicScript : DynamicOrchestrationScript
 		{
 			public string Endpoint { get; private set; }
 
@@ -63,24 +71,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 				Endpoint = inputs.GetString("General/Endpoint");
 			}
 
-			public override IEnumerable<IOrchestrationParameters> GetParameters()
-			{
-				return new IOrchestrationParameters[0];
-			}
-
-			public override OrchestrationInputDefinition GetParameters(OrchestrationInputValues providedValues)
+			public override OrchestrationInputDefinition GetInputs(OrchestrationInputValues providedValues)
 			{
 				return new OrchestrationInputBuilder()
 					.AddGroup("General", general => general.AddText("Endpoint"))
 					.Build();
-			}
-		}
-
-		private sealed class ScriptWithoutOrchestrate : OrchestrationScript
-		{
-			public override IEnumerable<IOrchestrationParameters> GetParameters()
-			{
-				return new IOrchestrationParameters[0];
 			}
 		}
 	}
