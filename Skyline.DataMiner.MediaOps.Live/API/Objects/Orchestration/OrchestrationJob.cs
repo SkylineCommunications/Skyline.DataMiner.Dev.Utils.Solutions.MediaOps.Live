@@ -214,12 +214,6 @@
 
 			foreach (var scriptInputParam in scriptInfo.Parameters)
 			{
-				// Profile backed dynamic inputs are published by path and validated together with the other dynamic inputs.
-				if (scriptInfo.HasDynamicInputs && scriptInfo.InputDefinition.TryGetField(scriptInputParam.Name, out _))
-				{
-					continue;
-				}
-
 				if (arguments.Any(arg => arg.Name == scriptInputParam.Name && arg.Type == OrchestrationScriptArgumentType.Parameter))
 				{
 					continue;

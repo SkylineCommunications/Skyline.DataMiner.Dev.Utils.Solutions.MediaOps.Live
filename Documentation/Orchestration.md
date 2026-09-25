@@ -453,8 +453,10 @@ public class Script : DynamicOrchestrationScript
 ```
 
 `GetInputs` is called every time a value changes of a field that has `TriggersReevaluation` set, and once more when the event is confirmed and executed.
-It receives the engine, so the inputs can be derived from profile parameters, DOM instances or other data in the system.
+It receives the engine, so options and ranges can be derived from DOM instances or other data in the system.
 It must not keep state between calls: everything it needs comes from `providedValues`.
+
+Dynamic inputs don't use profile parameters, profile definitions or profile instances. Every input is defined by the script itself.
 
 #### Field types
 
@@ -465,11 +467,32 @@ It must not keep state between calls: everything it needs comes from `providedVa
 | `AddDiscrete` | one of the options | `Options` (display text and value) |
 | `AddDateTime` | date and time, in UTC | `Minimum`, `Maximum`, `Precision` |
 | `AddTimeSpan` | duration | `Minimum`, `Maximum`, `Precision` |
-| `AddProfileParameter` | as defined by the profile parameter | narrows the discretes or range of the profile parameter |
 | `AddGroup` | none, it bundles other items | |
 
 Every field also has `IsRequired`, `DefaultValue`, `Description`, `TriggersReevaluation` and `IsDisabled`.
 For checks the definition can't express, such as two destinations using the same endpoint, set `IsValid` to `false` and explain why in `ValidationMessage`.
+
+#### Presets
+
+Where a classic script uses profile instances as presets, a dynamic script uses a dropdown of its own. Mark it with `TriggersReevaluation`
+and derive the defaults of the other fields from the selected preset. A value the operator entered explicitly still wins over the preset.
+
+```csharp
+var preset = providedValues.GetString("Preset") ?? "HD";
+var isUhd = preset == "UHD";
+
+builder.AddDiscrete("Preset", field =>
+{
+    field.DefaultValue = "HD";
+    field.TriggersReevaluation = true;
+}, "HD", "UHD");
+
+builder.AddNumber("Bitrate", field =>
+{
+    field.Unit = "Mbps";
+    field.DefaultValue = isUhd ? 50 : 20;
+});
+```
 
 #### Paths
 
@@ -494,7 +517,7 @@ When the script is run manually, or with the option to ask for missing values, t
 
 Input parameters of orchestration events never take part in resource capability or capacity matching, for classic and dynamic scripts alike.
 They only mean something to the script. Resources are matched on the capabilities and capacities of the node configuration.
-Dynamic inputs are stored by path with the event, also when a field is backed by a profile parameter.
+Dynamic inputs are stored by path with the event.
 
 ### Get available orchestration scripts
 

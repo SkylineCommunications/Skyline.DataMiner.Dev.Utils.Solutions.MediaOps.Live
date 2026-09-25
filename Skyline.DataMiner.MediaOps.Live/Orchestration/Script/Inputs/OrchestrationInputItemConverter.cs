@@ -65,9 +65,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 				case OrchestrationInputKind.TimeSpan:
 					return new OrchestrationTimeSpanInputField();
 
-				case OrchestrationInputKind.Profile:
-					return new OrchestrationProfileInputField();
-
 				default:
 					throw new JsonSerializationException($"Unknown orchestration input item kind '{kind}'.");
 			}

@@ -116,42 +116,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		}
 
 		/// <summary>
-		/// Adds a field that is backed by a profile parameter. The profile parameter determines the value type and what the field accepts;
-		/// the optional callback can only narrow that, for example by restricting the discretes or tightening the range.
-		/// Its value is stored by path, like any other input, and never takes part in capability or capacity matching.
-		/// </summary>
-		/// <param name="name">The name of the field, unique within its parent.</param>
-		/// <param name="profileParameterName">The name of the profile parameter that backs this field.</param>
-		/// <param name="configure">An optional callback to narrow what the profile parameter accepts.</param>
-		/// <returns>The current builder.</returns>
-		public OrchestrationInputBuilder AddProfileParameter(string name, string profileParameterName, Action<OrchestrationProfileInputField> configure = null)
-		{
-			if (String.IsNullOrEmpty(profileParameterName))
-			{
-				throw new ArgumentException($"'{nameof(profileParameterName)}' cannot be null or empty.", nameof(profileParameterName));
-			}
-
-			return AddField<OrchestrationProfileInputField>(
-				name,
-				field =>
-				{
-					field.ProfileParameterName = profileParameterName;
-					configure?.Invoke(field);
-				});
-		}
-
-		/// <summary>
-		/// Adds a field that is backed by the profile parameter of the same name.
-		/// </summary>
-		/// <param name="profileParameterName">The name of the profile parameter that backs this field.</param>
-		/// <param name="configure">An optional callback to narrow what the profile parameter accepts.</param>
-		/// <returns>The current builder.</returns>
-		public OrchestrationInputBuilder AddProfileParameter(string profileParameterName, Action<OrchestrationProfileInputField> configure = null)
-		{
-			return AddProfileParameter(profileParameterName, profileParameterName, configure);
-		}
-
-		/// <summary>
 		/// Adds a group that bundles related input items.
 		/// Call this in a loop to repeat a group, for example once per destination.
 		/// </summary>

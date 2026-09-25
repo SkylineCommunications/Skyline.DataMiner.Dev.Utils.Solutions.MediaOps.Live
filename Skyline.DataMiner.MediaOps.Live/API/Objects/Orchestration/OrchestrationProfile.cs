@@ -33,9 +33,11 @@
 
 			foreach (var value in Values ?? Enumerable.Empty<OrchestrationProfileValue>())
 			{
-				if (value?.Name != null && (value.Value?.Type == ParameterValue.ValueType.String || value.Value?.Type == ParameterValue.ValueType.Double))
+				var inputValue = value?.Name == null ? null : ToInputValue(value.Value);
+
+				if (inputValue != null)
 				{
-					values[value.Name] = OrchestrationInputValue.FromParameterValue(value.Value);
+					values[value.Name] = inputValue;
 				}
 			}
 
@@ -54,8 +56,58 @@
 			}
 
 			Values = inputValues.ToDictionary()
-				.Select(value => new OrchestrationProfileValue { Name = value.Key, Value = value.Value.ToParameterValue() })
+				.Select(value => new OrchestrationProfileValue { Name = value.Key, Value = ToParameterValue(value.Value) })
 				.ToList();
+		}
+
+		/// <summary>
+		/// Sets or replaces the value of a single input of a dynamic orchestration script.
+		/// </summary>
+		/// <param name="path">The path of the input field.</param>
+		/// <param name="value">The value, or <see langword="null"/> to remove it.</param>
+		public void SetInputValue(string path, OrchestrationInputValue value)
+		{
+			if (String.IsNullOrEmpty(path))
+			{
+				throw new ArgumentException($"'{nameof(path)}' cannot be null or empty.", nameof(path));
+			}
+
+			if (Values == null)
+			{
+				Values = new List<OrchestrationProfileValue>();
+			}
+
+			foreach (var existing in Values.Where(x => String.Equals(x?.Name, path, StringComparison.OrdinalIgnoreCase)).ToList())
+			{
+				Values.Remove(existing);
+			}
+
+			if (value != null)
+			{
+				Values.Add(new OrchestrationProfileValue { Name = path, Value = ToParameterValue(value) });
+			}
+		}
+
+		private static OrchestrationInputValue ToInputValue(ParameterValue value)
+		{
+			switch (value?.Type)
+			{
+				case ParameterValue.ValueType.Double:
+					return Double.IsNaN(value.DoubleValue) ? null : OrchestrationInputValue.FromNumber(value.DoubleValue);
+
+				case ParameterValue.ValueType.String:
+					return value.StringValue == null ? null : OrchestrationInputValue.FromText(value.StringValue);
+
+				default:
+					return null;
+			}
+		}
+
+		private static ParameterValue ToParameterValue(OrchestrationInputValue value)
+		{
+			return value.IsNumber
+				? new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = value.Number }
+				: new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = value.Text };
 		}
 	}
 }

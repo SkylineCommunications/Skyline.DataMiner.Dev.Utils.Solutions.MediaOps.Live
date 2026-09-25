@@ -41,25 +41,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public string ValidationMessage { get; set; }
 
 		/// <summary>
-		/// Gets or sets the name of the profile parameter this field is backed by, or <see langword="null"/> when the field is script local.
-		/// </summary>
-		[JsonProperty("profileParameterName", NullValueHandling = NullValueHandling.Ignore)]
-		public string ProfileParameterName { get; set; }
-
-		/// <summary>
-		/// Gets or sets the identifier of the profile parameter this field is backed by. It is filled in when the field is resolved.
-		/// </summary>
-		[JsonProperty("profileParameterId", NullValueHandling = NullValueHandling.Ignore)]
-		public Guid? ProfileParameterId { get; set; }
-
-		/// <summary>
-		/// Gets a value indicating whether the definition of this field comes from a profile parameter.
-		/// Like every orchestration input, its value never takes part in capability or capacity matching.
-		/// </summary>
-		[JsonIgnore]
-		public bool IsProfileBacked => ProfileParameterId.HasValue;
-
-		/// <summary>
 		/// Gets or sets the value of this field.
 		/// </summary>
 		[JsonProperty("value", NullValueHandling = NullValueHandling.Ignore)]

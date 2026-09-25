@@ -930,6 +930,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
         public string Instance { get; set; }
         public System.Collections.Generic.IList<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationProfileValue> Values { get; set; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues GetInputValues() { }
+        public void SetInputValue(string path, Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue value) { }
         public void SetInputValues(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues inputValues) { }
     }
     public class OrchestrationProfileValue
@@ -1699,8 +1700,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputBuilder AddDiscrete(string name, System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputOption> options, System.Action<Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationDiscreteInputField> configure = null) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputBuilder AddGroup(string name, System.Action<Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputBuilder> configure) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputBuilder AddNumber(string name, System.Action<Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationNumberInputField> configure = null) { }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputBuilder AddProfileParameter(string profileParameterName, System.Action<Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationProfileInputField> configure = null) { }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputBuilder AddProfileParameter(string name, string profileParameterName, System.Action<Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationProfileInputField> configure = null) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputBuilder AddText(string name, System.Action<Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationTextInputField> configure = null) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputBuilder AddTimeSpan(string name, System.Action<Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationTimeSpanInputField> configure = null) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputDefinition Build() { }
@@ -1731,16 +1730,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue DefaultValue { get; set; }
         [Newtonsoft.Json.JsonProperty("isDisabled")]
         public bool IsDisabled { get; set; }
-        [Newtonsoft.Json.JsonIgnore]
-        public bool IsProfileBacked { get; }
         [Newtonsoft.Json.JsonProperty("isRequired")]
         public bool IsRequired { get; set; }
         [Newtonsoft.Json.JsonProperty("isValid")]
         public bool IsValid { get; set; }
-        [Newtonsoft.Json.JsonProperty("profileParameterId", NullValueHandling=Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.Guid? ProfileParameterId { get; set; }
-        [Newtonsoft.Json.JsonProperty("profileParameterName", NullValueHandling=Newtonsoft.Json.NullValueHandling.Ignore)]
-        public string ProfileParameterName { get; set; }
         [Newtonsoft.Json.JsonProperty("triggersReevaluation")]
         public bool TriggersReevaluation { get; set; }
         [Newtonsoft.Json.JsonProperty("validationMessage", NullValueHandling=Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -1783,7 +1776,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public const string Discrete = "discrete";
         public const string Group = "group";
         public const string Number = "number";
-        public const string Profile = "profile";
         public const string Text = "text";
         public const string TimeSpan = "timeSpan";
     }
@@ -1805,11 +1797,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public static string Combine(string parentPath, string name) { }
         public static bool IsValidName(string name) { }
     }
-    public class OrchestrationInputProfileResolver
-    {
-        public OrchestrationInputProfileResolver(Skyline.DataMiner.Net.Profiles.ProfileHelper profileHelper) { }
-        public void Resolve(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputDefinition definition) { }
-    }
     [Newtonsoft.Json.JsonConverter(typeof(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValueJsonConverter))]
     public sealed class OrchestrationInputValue : System.IEquatable<Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue>
     {
@@ -1821,7 +1808,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public bool Equals(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue other) { }
         public override bool Equals(object obj) { }
         public override int GetHashCode() { }
-        public Skyline.DataMiner.Net.Profiles.ParameterValue ToParameterValue() { }
         public override string ToString() { }
         public bool TryGetDateTime(out System.DateTime dateTime) { }
         public bool TryGetInt32(out int number) { }
@@ -1829,7 +1815,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public bool TryGetTimeSpan(out System.TimeSpan timeSpan) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue FromDateTime(System.DateTime dateTime) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue FromNumber(double number) { }
-        public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue FromParameterValue(Skyline.DataMiner.Net.Profiles.ParameterValue value) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue FromText(string text) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue FromTimeSpan(System.TimeSpan timeSpan) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue op_Implicit(System.DateTime dateTime) { }
@@ -1878,29 +1863,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public string Unit { get; set; }
         public override string FormatValue(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue value) { }
         public override bool IsValidValue(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue value, out string error) { }
-    }
-    public class OrchestrationProfileInputField : Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputField
-    {
-        public OrchestrationProfileInputField() { }
-        [Newtonsoft.Json.JsonProperty("allowedNumberValues")]
-        public System.Collections.Generic.List<double> AllowedNumberValues { get; }
-        [Newtonsoft.Json.JsonProperty("allowedTextValues")]
-        public System.Collections.Generic.List<string> AllowedTextValues { get; }
-        [Newtonsoft.Json.JsonIgnore]
-        public bool HasAllowedValues { get; }
-        [Newtonsoft.Json.JsonIgnore]
-        public bool HasOverride { get; }
-        public override string Kind { get; }
-        [Newtonsoft.Json.JsonProperty("maximum", NullValueHandling=Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double? Maximum { get; set; }
-        [Newtonsoft.Json.JsonProperty("minimum", NullValueHandling=Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double? Minimum { get; set; }
-        [Newtonsoft.Json.JsonProperty("stepSize", NullValueHandling=Newtonsoft.Json.NullValueHandling.Ignore)]
-        public double? StepSize { get; set; }
-        public void Allow(System.Collections.Generic.IEnumerable<double> values) { }
-        public void Allow(System.Collections.Generic.IEnumerable<string> values) { }
-        public void Allow(params double[] values) { }
-        public void Allow(params string[] values) { }
     }
     public class OrchestrationTextInputField : Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputField
     {

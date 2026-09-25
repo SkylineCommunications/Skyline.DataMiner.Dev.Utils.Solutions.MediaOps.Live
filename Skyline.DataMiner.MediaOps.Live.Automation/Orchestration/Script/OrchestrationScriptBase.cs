@@ -326,23 +326,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			info.InputDefinition = EvaluateInputs(_engine, providedValues);
 
-			RegisterProfileBackedInputs(info);
-
 			return info;
-		}
-
-		// Profile backed inputs are also published by path so consumers that key inputs by profile parameter keep working.
-		private void RegisterProfileBackedInputs(OrchestrationScriptInfo info)
-		{
-			if (info.InputDefinition == null)
-			{
-				return;
-			}
-
-			foreach (var field in info.InputDefinition.GetAllFields().Where(x => x.IsProfileBacked))
-			{
-				info.ProfileParametersIdByName[field.Path] = field.ProfileParameterId.Value;
-			}
 		}
 
 		private static OrchestrationScriptInput ReadScriptInput(IReadOnlyDictionary<string, string> metaData)

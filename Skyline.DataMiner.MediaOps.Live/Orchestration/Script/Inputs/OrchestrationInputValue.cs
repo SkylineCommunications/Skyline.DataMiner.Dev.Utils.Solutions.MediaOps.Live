@@ -5,11 +5,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 	using Newtonsoft.Json;
 
-	using Skyline.DataMiner.Net.Profiles;
-
 	/// <summary>
 	/// The value of an orchestration input field, which is either text or a number.
-	/// A date and time is held as round-trip text in UTC and a duration as a number of seconds, so every value can be stored as a profile parameter value.
+	/// A date and time is held as round-trip text in UTC and a duration as a number of seconds.
 	/// </summary>
 	[JsonConverter(typeof(OrchestrationInputValueJsonConverter))]
 	public sealed class OrchestrationInputValue : IEquatable<OrchestrationInputValue>
@@ -140,43 +138,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public static OrchestrationInputValue FromTimeSpan(TimeSpan timeSpan)
 		{
 			return FromNumber(timeSpan.TotalSeconds);
-		}
-
-		/// <summary>
-		/// Creates a value from a profile parameter value.
-		/// </summary>
-		/// <param name="value">The profile parameter value.</param>
-		/// <returns>The value, or <see langword="null"/> when <paramref name="value"/> holds no value.</returns>
-		/// <exception cref="NotSupportedException">Thrown when the profile parameter value is neither text nor a number.</exception>
-		public static OrchestrationInputValue FromParameterValue(ParameterValue value)
-		{
-			if (value == null)
-			{
-				return null;
-			}
-
-			switch (value.Type)
-			{
-				case ParameterValue.ValueType.Double:
-					return Double.IsNaN(value.DoubleValue) ? null : FromNumber(value.DoubleValue);
-
-				case ParameterValue.ValueType.String:
-					return value.StringValue == null ? null : FromText(value.StringValue);
-
-				default:
-					throw new NotSupportedException($"Profile parameter values of type {value.Type} are not supported as orchestration input values.");
-			}
-		}
-
-		/// <summary>
-		/// Converts this value to a profile parameter value.
-		/// </summary>
-		/// <returns>The profile parameter value.</returns>
-		public ParameterValue ToParameterValue()
-		{
-			return IsNumber
-				? new ParameterValue { Type = ParameterValue.ValueType.Double, DoubleValue = _number }
-				: new ParameterValue { Type = ParameterValue.ValueType.String, StringValue = _text };
 		}
 
 		/// <summary>

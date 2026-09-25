@@ -2,6 +2,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
 	using Newtonsoft.Json;
 
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
 
 	[TestClass]
@@ -218,17 +219,63 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
-		public void OrchestrationInputValue_ToParameterValue_RoundTripsDateTimeAndTimeSpan()
+		public void OrchestrationInputDefinition_Evaluate_TakesDefaultsFromAPresetDropdown()
+		{
+			OrchestrationInputDefinition GetInputs(OrchestrationInputValues values)
+			{
+				var isUhd = values.HasValue("Preset", "UHD");
+
+				return new OrchestrationInputBuilder()
+					.AddDiscrete("Preset", field =>
+					{
+						field.DefaultValue = "HD";
+						field.TriggersReevaluation = true;
+					}, "HD", "UHD")
+					.AddNumber("Bitrate", field => field.DefaultValue = isUhd ? 50 : 20)
+					.Build();
+			}
+
+			var preset = OrchestrationInputDefinition.Evaluate(GetInputs, new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { ["Preset"] = "UHD" }));
+			var overridden = OrchestrationInputDefinition.Evaluate(GetInputs, new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { ["Preset"] = "UHD", ["Bitrate"] = 35 }));
+
+			Assert.AreEqual(50d, preset.GetValues().GetNumber("Bitrate"));
+			Assert.AreEqual(35d, overridden.GetValues().GetNumber("Bitrate"), "Expected an explicit value to win over the preset.");
+		}
+
+		[TestMethod]
+		public void OrchestrationProfile_SetInputValues_RoundTripsDateTimeAndTimeSpan()
 		{
 			var start = new DateTime(2026, 9, 24, 12, 0, 0, DateTimeKind.Utc);
-			var dateTimeValue = OrchestrationInputValue.FromDateTime(start);
-			var timeSpanValue = OrchestrationInputValue.FromTimeSpan(TimeSpan.FromSeconds(45));
+			var profile = new OrchestrationProfile();
 
-			var restoredDateTime = OrchestrationInputValue.FromParameterValue(dateTimeValue.ToParameterValue());
-			var restoredTimeSpan = OrchestrationInputValue.FromParameterValue(timeSpanValue.ToParameterValue());
+			profile.SetInputValues(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
+			{
+				["Start"] = start,
+				["Duration"] = TimeSpan.FromSeconds(45),
+			}));
 
-			Assert.AreEqual(dateTimeValue, restoredDateTime);
-			Assert.AreEqual(timeSpanValue, restoredTimeSpan);
+			var restored = profile.GetInputValues();
+
+			Assert.AreEqual(start, restored.GetDateTime("Start"));
+			Assert.AreEqual(TimeSpan.FromSeconds(45), restored.GetTimeSpan("Duration"));
+		}
+
+		[TestMethod]
+		public void OrchestrationProfile_SetInputValue_ReplacesAndRemovesASingleValue()
+		{
+			var profile = new OrchestrationProfile();
+
+			profile.SetInputValue("Endpoint", "ENC-A");
+			profile.SetInputValue("Endpoint", "ENC-B");
+			profile.SetInputValue("Count", 2);
+
+			Assert.HasCount(2, profile.Values);
+			Assert.AreEqual("ENC-B", profile.GetInputValues().GetString("Endpoint"));
+
+			profile.SetInputValue("Endpoint", null);
+
+			Assert.IsFalse(profile.GetInputValues().Contains("Endpoint"));
+			Assert.AreEqual(2, profile.GetInputValues().GetInt32("Count"));
 		}
 
 		[TestMethod]
