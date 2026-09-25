@@ -454,7 +454,8 @@ public class Script : DynamicOrchestrationScript
 
 `GetInputs` is called every time a value changes of a field that has `TriggersReevaluation` set, and once more when the event is confirmed and executed.
 It receives the engine, so options and ranges can be derived from DOM instances or other data in the system.
-It must not keep state between calls: everything it needs comes from `providedValues`.
+It must not remember values between calls: the values it works with always come from `providedValues`.
+Within one request it can run a few times, until defaults no longer change the inputs, so cache data you read from the system in a field of the script.
 
 Dynamic inputs don't use profile parameters, profile definitions or profile instances. Every input is defined by the script itself.
 
