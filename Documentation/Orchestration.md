@@ -490,10 +490,11 @@ A definition that can't be used is rejected, with a message that names the item:
 Values are checked against the definition that was evaluated for them, and against `IsValid`, when a job or event is confirmed and before `Orchestrate` runs.
 When the script is run manually, or with the option to ask for missing values, the operator is asked for the inputs that are missing or not valid.
 
-#### Classic and dynamic inputs
+#### Inputs and resource matching
 
-Dynamic inputs belong to the script. They are stored by path with the event and don't take part in resource capability or capacity matching.
-Classic scripts keep using profile parameters and profile definitions, and those are the only inputs that are matched against resources.
+Input parameters of orchestration events never take part in resource capability or capacity matching, for classic and dynamic scripts alike.
+They only mean something to the script. Resources are matched on the capabilities and capacities of the node configuration.
+Dynamic inputs are stored by path with the event, also when a field is backed by a profile parameter.
 
 ### Get available orchestration scripts
 

@@ -118,7 +118,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <summary>
 		/// Adds a field that is backed by a profile parameter. The profile parameter determines the value type and what the field accepts;
 		/// the optional callback can only narrow that, for example by restricting the discretes or tightening the range.
-		/// Its value is stored as a profile parameter value and takes part in capability and capacity matching.
+		/// Its value is stored by path, like any other input, and never takes part in capability or capacity matching.
 		/// </summary>
 		/// <param name="name">The name of the field, unique within its parent.</param>
 		/// <param name="profileParameterName">The name of the profile parameter that backs this field.</param>

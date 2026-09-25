@@ -53,8 +53,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public Guid? ProfileParameterId { get; set; }
 
 		/// <summary>
-		/// Gets a value indicating whether the value of this field is stored as a profile parameter value.
-		/// Script local fields only mean something to the script itself and never take part in capability or capacity matching.
+		/// Gets a value indicating whether the definition of this field comes from a profile parameter.
+		/// Like every orchestration input, its value never takes part in capability or capacity matching.
 		/// </summary>
 		[JsonIgnore]
 		public bool IsProfileBacked => ProfileParameterId.HasValue;
