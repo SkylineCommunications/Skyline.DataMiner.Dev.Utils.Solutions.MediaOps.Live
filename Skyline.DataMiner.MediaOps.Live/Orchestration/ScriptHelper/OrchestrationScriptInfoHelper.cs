@@ -13,6 +13,7 @@
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 
 	/// <summary>
@@ -46,6 +47,19 @@
 		/// <returns>Returns the orchestration script input information for the specified script.</returns>
 		public OrchestrationScriptInputInfo GetOrchestrationScriptInputInfo(string scriptName)
 		{
+			return GetOrchestrationScriptInputInfo(scriptName, null);
+		}
+
+		/// <summary>
+		/// Request the orchestration script input information for the specified script, based on the input values that were already provided.
+		/// Call this again whenever a value changes that the script uses to decide which input items are relevant, so that items can appear
+		/// or disappear, options and ranges can change, and groups can be repeated.
+		/// </summary>
+		/// <param name="scriptName">Name of the orchestration script.</param>
+		/// <param name="providedValues">The input values that were already provided, keyed by the path of the field they belong to.</param>
+		/// <returns>Returns the orchestration script input information for the specified script.</returns>
+		public OrchestrationScriptInputInfo GetOrchestrationScriptInputInfo(string scriptName, OrchestrationInputValues providedValues)
+		{
 			var script = _connection.GetDms().GetScript(scriptName)
 				?? throw new InvalidOperationException("The specified script was not found.");
 
@@ -73,7 +87,7 @@
 				return result;
 			}
 
-			if (TryGetScriptOrchestrationInfo(scriptName, out var scriptOrchestrationInfo))
+			if (TryGetScriptOrchestrationInfo(scriptName, providedValues, out var scriptOrchestrationInfo))
 			{
 				if (scriptOrchestrationInfo.ProfileDefinitions.Any())
 				{
@@ -88,6 +102,8 @@
 					orchestrationParam.LoadLinkedProfileParameter(_profileHelper);
 					result.Parameters.Add(orchestrationParam);
 				}
+
+				result.InputDefinition = scriptOrchestrationInfo.InputDefinition;
 			}
 
 			return result;
@@ -149,13 +165,13 @@
 			return true;
 		}
 
-		private bool TryGetScriptOrchestrationInfo(string scriptName, out OrchestrationScriptInfo orchestrationScriptInfo)
+		private bool TryGetScriptOrchestrationInfo(string scriptName, OrchestrationInputValues providedValues, out OrchestrationScriptInfo orchestrationScriptInfo)
 		{
 			RequestScriptInfoOutput scriptInfoOutput;
 
 			try
 			{
-				var response = OrchestrationAutomationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName);
+				var response = OrchestrationAutomationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName, providedValues);
 
 				if (response != null &&
 					!response.HadError &&

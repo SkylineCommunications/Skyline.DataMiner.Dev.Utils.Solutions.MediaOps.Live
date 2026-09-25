@@ -608,7 +608,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 					// First try to execute with the entry point
 					var input = new OrchestrationScriptInput(
 						profile.Values.ToDictionary(value => value.Name, value => value.Value.Type == ParameterValue.ValueType.Double ? (object)value.Value.DoubleValue : value.Value.StringValue),
-						profile.Instance);
+						profile.Instance)
+					{
+						InputValues = profile.GetInputValues().ToDictionary(),
+					};
 
 					foreach (OrchestrationScriptArgument orchestrationScriptArgument in arguments.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata))
 					{

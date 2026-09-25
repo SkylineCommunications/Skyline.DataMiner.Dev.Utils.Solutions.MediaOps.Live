@@ -363,7 +363,162 @@ Both options can also be combined, in which case additional parameters can be pr
 > Only a single profile instance can be provided per orchestration script configuration. If multiple profile instances are required, the configuration should be split up in different events.
 > Alternatively, the profile instance can also be loaded from within the script itself.
 
+### Provide input to a dynamic orchestration script
+
+A dynamic orchestration script (see [Dynamic orchestration scripts](#dynamic-orchestration-scripts)) takes its input values by field path.
+The values are stored with the event, in the profile of the event or node configuration. Only provide the values that differ from the defaults.
+
+```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
+
+var profile = new OrchestrationProfile();
+profile.SetInputValues(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
+{
+    ["General/Number of destinations"] = 2,
+    ["Destinations/Destination 1/Endpoint"] = "ENC-A",
+    ["Destinations/Destination 2/Endpoint"] = "ENC-B",
+    ["Schedule/Start"] = new DateTime(2026, 9, 24, 12, 0, 0, DateTimeKind.Utc),
+    ["Schedule/Pre-roll"] = TimeSpan.FromMinutes(10),
+}));
+
+OrchestrationInputValues stored = profile.GetInputValues();
+```
+
+When an event is confirmed, the script evaluates its inputs again with the stored values. The event is rejected when a value is missing or no longer valid.
+
 ## Orchestration Scripts
+
+### Dynamic orchestration scripts
+
+A classic orchestration script derives from `OrchestrationScript` and returns a fixed list of profile parameters and definitions from `GetParameters()`.
+A dynamic orchestration script derives from `DynamicOrchestrationScript` instead. Its inputs can depend on the values that were already provided:
+
+- inputs can appear or disappear, for example the settings of the selected transport standard;
+- groups can be repeated, for example once per destination;
+- options, ranges and defaults can change, for example the frequency range of the selected band.
+
+Existing scripts keep working unchanged. Pick the base class that matches the contract you need.
+
+```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script;
+using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
+
+public class Script : DynamicOrchestrationScript
+{
+    public override OrchestrationInputDefinition GetInputs(IEngine engine, OrchestrationInputValues providedValues)
+    {
+        var isKuBand = providedValues.HasValue("Downlink/Band", "Ku");
+        var destinationCount = providedValues.GetInt32("General/Number of destinations", 1, 8);
+
+        return new OrchestrationInputBuilder()
+            .AddGroup("General", general => general.AddNumber("Number of destinations", field =>
+            {
+                field.Minimum = 1;
+                field.Maximum = 8;
+                field.DefaultValue = 1;
+                field.TriggersReevaluation = true;
+            }))
+            .AddGroup("Downlink", downlink =>
+            {
+                downlink.AddDiscrete("Band", field =>
+                {
+                    field.DefaultValue = "C";
+                    field.TriggersReevaluation = true;
+                }, "C", "Ku");
+
+                downlink.AddNumber("Frequency", field =>
+                {
+                    field.Minimum = isKuBand ? 10.7 : 3.7;
+                    field.Maximum = isKuBand ? 12.75 : 4.2;
+                    field.Unit = "GHz";
+                    field.IsRequired = true;
+                });
+            })
+            .AddGroup("Destinations", destinations =>
+            {
+                for (var index = 1; index <= destinationCount; index++)
+                {
+                    destinations.AddGroup($"Destination {index}", destination => destination.AddText("Endpoint", field => field.IsRequired = true));
+                }
+            })
+            .Build();
+    }
+
+    public override void Orchestrate(IEngine engine, OrchestrationInputValues inputs)
+    {
+        var frequency = inputs.GetNumber("Downlink/Frequency");
+        var endpoint = inputs.GetString("Destinations/Destination 1/Endpoint");
+    }
+}
+```
+
+`GetInputs` is called every time a value changes of a field that has `TriggersReevaluation` set, and once more when the event is confirmed and executed.
+It receives the engine, so options and ranges can be derived from DOM instances or other data in the system.
+It must not remember values between calls: the values it works with always come from `providedValues`.
+Within one request it can run a few times, until defaults no longer change the inputs, so cache data you read from the system in a field of the script.
+
+Dynamic inputs don't use profile parameters, profile definitions or profile instances. Every input is defined by the script itself.
+
+#### Field types
+
+| Builder method | Value | Type-specific properties |
+| --- | --- | --- |
+| `AddText` | text | |
+| `AddNumber` | number | `Minimum`, `Maximum`, `StepSize`, `Decimals`, `Unit` |
+| `AddDiscrete` | one of the options | `Options` (display text and value) |
+| `AddDateTime` | date and time, in UTC | `Minimum`, `Maximum`, `Precision` |
+| `AddTimeSpan` | duration | `Minimum`, `Maximum`, `Precision` |
+| `AddGroup` | none, it bundles other items | |
+
+Every field also has `IsRequired`, `DefaultValue`, `Description`, `TriggersReevaluation` and `IsDisabled`.
+For checks the definition can't express, such as two destinations using the same endpoint, set `IsValid` to `false` and explain why in `ValidationMessage`.
+
+#### Presets
+
+Where a classic script uses profile instances as presets, a dynamic script uses a dropdown of its own. Mark it with `TriggersReevaluation`
+and derive the defaults of the other fields from the selected preset. A value the operator entered explicitly still wins over the preset.
+
+```csharp
+var preset = providedValues.GetString("Preset") ?? "HD";
+var isUhd = preset == "UHD";
+
+builder.AddDiscrete("Preset", field =>
+{
+    field.DefaultValue = "HD";
+    field.TriggersReevaluation = true;
+}, "HD", "UHD");
+
+builder.AddNumber("Bitrate", field =>
+{
+    field.Unit = "Mbps";
+    field.DefaultValue = isUhd ? 50 : 20;
+});
+```
+
+#### Paths
+
+Every item has a name that is unique among its siblings. The path of a field is the chain of names from the top level, separated by `/`, for example `Destinations/Destination 2/Endpoint`.
+The same name can be reused under different parents. Items can be nested at most five levels deep.
+
+Read values in `Orchestrate` with `GetString`, `GetNumber`, `GetInt32`, `GetDateTime` or `GetTimeSpan` of `OrchestrationInputValues`, or with `GetInputValue(path)` of the script.
+
+#### Validation
+
+A definition that can't be used is rejected, with a message that names the item:
+
+- duplicate names among siblings, or a name that contains `/`;
+- items nested deeper than five levels, or an item that is added more than once;
+- a range whose minimum is larger than its maximum, a step size that isn't positive, or a dropdown without options;
+- a default value that the field itself doesn't accept.
+
+Values are checked against the definition that was evaluated for them, and against `IsValid`, when a job or event is confirmed and before `Orchestrate` runs.
+When the script is run manually, or with the option to ask for missing values, the operator is asked for the inputs that are missing or not valid.
+
+#### Inputs and resource matching
+
+Input parameters of orchestration events never take part in resource capability or capacity matching, for classic and dynamic scripts alike.
+They only mean something to the script. Resources are matched on the capabilities and capacities of the node configuration.
+Dynamic inputs are stored by path with the event.
 
 ### Get available orchestration scripts
 
@@ -392,6 +547,31 @@ Guid definition = scriptInputInformation.ProfileDefinition;
 List<OrchestrationScriptInputParameter> parameters = scriptInputInformation.Parameters;
 List<OrchestrationScriptInputElement> elements = scriptInputInformation.Elements;
 ```
+
+For a dynamic orchestration script, `HasDynamicInputs` is `true` and `InputDefinition` holds its inputs.
+Pass the values that were provided so far to get the inputs that apply to them. Request the inputs again whenever a field with `TriggersReevaluation` changes.
+
+```csharp
+using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
+
+var providedValues = new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
+{
+    ["Downlink/Band"] = "Ku",
+});
+
+OrchestrationScriptInputInfo info = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo("NameOfOrchestrationScript", providedValues);
+
+if (info.HasDynamicInputs)
+{
+    foreach (OrchestrationInputField field in info.InputDefinition.GetAllFields())
+    {
+        string shownValue = field.FormatValue(field.GetEffectiveValue());
+        bool isValid = field.TryValidate(out string error);
+    }
+}
+```
+
+`InputDefinition` is `null` for a classic script, and also when the script could not be executed, for example because it failed or timed out.
 
 ### Get a list of available script input profile instances
 

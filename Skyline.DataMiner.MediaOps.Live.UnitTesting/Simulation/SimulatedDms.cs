@@ -16,6 +16,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 	using Skyline.DataMiner.Net.Messages.Advanced;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Connection;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Parameters;
@@ -62,12 +63,26 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 
 		public void AddScript(string name, ICollection<string> parameters = null, ICollection<string> dummies = null, string folder = null, OrchestrationScriptInfo orchestrationScriptInfo = null)
 		{
+			orchestrationScriptInfo ??= new OrchestrationScriptInfo();
+
+			AddScript(name, _ => orchestrationScriptInfo, parameters, dummies, folder);
+		}
+
+		/// <summary>
+		/// Adds a script that reevaluates its orchestration input items based on the values that were already provided.
+		/// </summary>
+		/// <param name="name">The name of the script.</param>
+		/// <param name="orchestrationScriptInfoResolver">Produces the script info for the provided input values.</param>
+		/// <param name="parameters">The descriptions of the input parameters of the script.</param>
+		/// <param name="dummies">The descriptions of the dummies of the script.</param>
+		/// <param name="folder">The folder the script is located in.</param>
+		public void AddScript(string name, Func<OrchestrationInputValues, OrchestrationScriptInfo> orchestrationScriptInfoResolver, ICollection<string> parameters = null, ICollection<string> dummies = null, string folder = null)
+		{
 			parameters ??= [];
 			dummies ??= [];
 			folder ??= String.Empty;
-			orchestrationScriptInfo ??= new OrchestrationScriptInfo();
 
-			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, orchestrationScriptInfo) { Folder = folder });
+			_scripts.Add(new SimulatedAutomationScript(name, parameters, dummies, orchestrationScriptInfoResolver) { Folder = folder });
 		}
 
 		public void AddProfileParameter(string parameterName, Guid parameterId, Parameter.ParameterType type)
@@ -661,6 +676,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 
 			int returnCode = msg.ScriptName == "Script_Fail" ? -1 : 0;
 
+			var scriptInfo = script.GetOrchestrationScriptInfo(GetProvidedInputValues(msg));
+
 			yield return new ExecuteScriptResponseMessage
 			{
 				saRet = new SA(
@@ -669,11 +686,27 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 				]),
 				EntryPointResult = new AutomationEntryPointResult(new RequestScriptInfoOutput
 				{
-					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(script.OrchestrationScriptInfo) } },
+					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } },
 				}),
 			};
 
 			_executedScripts.Add(msg);
+		}
+
+		private static OrchestrationInputValues GetProvidedInputValues(ExecuteScriptMessage msg)
+		{
+			var metaData = msg.CustomEntryPoint?.Parameters?.OfType<RequestScriptInfoInput>().FirstOrDefault()?.Data;
+
+			if (metaData == null
+				|| !metaData.TryGetValue(OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey, out var serializedInput)
+				|| String.IsNullOrWhiteSpace(serializedInput))
+			{
+				return OrchestrationInputValues.Empty;
+			}
+
+			var input = JsonConvert.DeserializeObject<OrchestrationScriptInput>(serializedInput);
+
+			return new OrchestrationInputValues(input?.InputValues);
 		}
 
 		private IEnumerable<DMSMessage> HandleMessage(GetScriptInfoMessage msg)
