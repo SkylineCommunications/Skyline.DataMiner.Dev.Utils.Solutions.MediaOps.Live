@@ -1849,6 +1849,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public System.TimeSpan? GetTimeSpan(string path) { }
         public bool HasSameValues(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues other) { }
         public bool HasValue(string path, Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue expectedValue) { }
+        public bool IsTriggeredBy(string path) { }
         public System.Collections.Generic.Dictionary<string, Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue> ToDictionary() { }
         public bool TryGetValue(string path, out Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue value) { }
     }

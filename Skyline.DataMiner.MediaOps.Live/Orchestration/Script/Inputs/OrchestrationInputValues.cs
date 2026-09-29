@@ -66,6 +66,16 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public string TriggeringInputPath { get; }
 
 		/// <summary>
+		/// Determines whether a change of the input with the specified path triggered this evaluation.
+		/// </summary>
+		/// <param name="path">The path of the field.</param>
+		/// <returns><see langword="true"/> when the field triggered this evaluation; otherwise, <see langword="false"/>.</returns>
+		public bool IsTriggeredBy(string path)
+		{
+			return !String.IsNullOrEmpty(path) && String.Equals(TriggeringInputPath, path, StringComparison.OrdinalIgnoreCase);
+		}
+
+		/// <summary>
 		/// Determines whether a value was provided for the specified path.
 		/// </summary>
 		/// <param name="path">The path of the field.</param>

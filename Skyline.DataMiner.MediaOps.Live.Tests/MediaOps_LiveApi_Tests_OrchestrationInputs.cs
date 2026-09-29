@@ -342,6 +342,16 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
+		public void OrchestrationInputValues_IsTriggeredBy_MatchesTheTriggeringPathIgnoringCase()
+		{
+			var values = new OrchestrationInputValues(null, RoutingModePath);
+
+			Assert.IsTrue(values.IsTriggeredBy(RoutingModePath.ToUpperInvariant()));
+			Assert.IsFalse(values.IsTriggeredBy(NumberOfDestinationsPath));
+			Assert.IsFalse(OrchestrationInputValues.Empty.IsTriggeredBy(RoutingModePath));
+		}
+
+		[TestMethod]
 		public void OrchestrationInputDefinition_Evaluate_ValueSetByTheScriptReplacesTheProvidedValue()
 		{
 			var providedValues = new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { [NumberOfDestinationsPath] = 1 });
