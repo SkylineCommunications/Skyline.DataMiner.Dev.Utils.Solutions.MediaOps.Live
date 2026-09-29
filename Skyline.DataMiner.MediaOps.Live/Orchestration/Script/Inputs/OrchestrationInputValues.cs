@@ -14,7 +14,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationInputValues"/> class without any value.
 		/// </summary>
-		public OrchestrationInputValues() : this(null)
+		public OrchestrationInputValues() : this(null, null)
 		{
 		}
 
@@ -22,9 +22,19 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// Initializes a new instance of the <see cref="OrchestrationInputValues"/> class.
 		/// </summary>
 		/// <param name="values">The already provided values, keyed by field path. Entries without a value are skipped.</param>
-		public OrchestrationInputValues(IDictionary<string, OrchestrationInputValue> values)
+		public OrchestrationInputValues(IDictionary<string, OrchestrationInputValue> values) : this(values, null)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationInputValues"/> class.
+		/// </summary>
+		/// <param name="values">The already provided values, keyed by field path. Entries without a value are skipped.</param>
+		/// <param name="triggeringInputPath">The path of the input whose change triggered this evaluation, or <see langword="null"/> for the initial evaluation.</param>
+		public OrchestrationInputValues(IDictionary<string, OrchestrationInputValue> values, string triggeringInputPath)
 		{
 			_values = new Dictionary<string, OrchestrationInputValue>(StringComparer.OrdinalIgnoreCase);
+			TriggeringInputPath = triggeringInputPath;
 
 			if (values == null)
 			{
@@ -49,6 +59,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// Gets the number of provided values.
 		/// </summary>
 		public int Count => _values.Count;
+
+		/// <summary>
+		/// Gets the path of the input whose change triggered this evaluation, or <see langword="null"/> for the initial evaluation.
+		/// </summary>
+		public string TriggeringInputPath { get; }
 
 		/// <summary>
 		/// Determines whether a value was provided for the specified path.

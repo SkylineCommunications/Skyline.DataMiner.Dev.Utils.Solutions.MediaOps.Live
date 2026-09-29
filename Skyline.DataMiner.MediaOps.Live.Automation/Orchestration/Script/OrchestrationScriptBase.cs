@@ -283,7 +283,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 					{
 						// The caller can pass the values it already collected so the returned input definition reflects them.
 						OrchestrationScriptInput scriptInput = ReadScriptInput(metaData);
-						OrchestrationScriptInfo scriptInfo = GetScriptInfo(new OrchestrationInputValues(scriptInput.InputValues));
+						OrchestrationScriptInfo scriptInfo = GetScriptInfo(new OrchestrationInputValues(scriptInput.InputValues, scriptInput.TriggeringInputPath));
 						return new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } };
 					}
 

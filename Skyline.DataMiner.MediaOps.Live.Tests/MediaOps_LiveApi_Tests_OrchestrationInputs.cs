@@ -327,6 +327,36 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
+		public void OrchestrationInputDefinition_Evaluate_PreservesTheTriggeringInputPath()
+		{
+			var triggeringInputPaths = new List<string>();
+			var providedValues = new OrchestrationInputValues(null, RoutingModePath);
+
+			OrchestrationInputDefinition.Evaluate(values =>
+			{
+				triggeringInputPaths.Add(values.TriggeringInputPath);
+				return BuildDefinitionWithDefaultCount(values);
+			}, providedValues);
+
+			Assert.IsTrue(triggeringInputPaths.All(path => path == RoutingModePath));
+		}
+
+		[TestMethod]
+		public void OrchestrationInputDefinition_Evaluate_ValueSetByTheScriptReplacesTheProvidedValue()
+		{
+			var providedValues = new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue> { [NumberOfDestinationsPath] = 1 });
+
+			var definition = OrchestrationInputDefinition.Evaluate(
+				values => new OrchestrationInputBuilder()
+					.AddGroup("General", general => general.AddNumber("Number of destinations", field => field.Value = 4))
+					.Build(),
+				providedValues);
+
+			Assert.IsTrue(definition.TryGetField(NumberOfDestinationsPath, out var field));
+			Assert.AreEqual<OrchestrationInputValue>(4, field.Value);
+		}
+
+		[TestMethod]
 		public void OrchestrationInputDefinition_Evaluate_ReturnsNullForScriptsWithoutDynamicInputs()
 		{
 			Assert.IsNull(OrchestrationInputDefinition.Evaluate(_ => null, OrchestrationInputValues.Empty));

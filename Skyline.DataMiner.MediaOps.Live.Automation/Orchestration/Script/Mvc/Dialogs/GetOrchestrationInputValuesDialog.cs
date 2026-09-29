@@ -57,19 +57,26 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			Build();
 		}
 
-		private void OnValueChanged()
+		private void OnValueChanged(string triggeringInputPath)
 		{
 			CollectValues();
-			Reevaluate();
+			Reevaluate(triggeringInputPath);
 			Build();
 		}
 
-		private bool Reevaluate()
+		private bool Reevaluate(string triggeringInputPath = null)
 		{
 			try
 			{
-				_definition = _reevaluate(ProvidedValues);
+				_definition = _reevaluate(new OrchestrationInputValues(_providedValues, triggeringInputPath));
 				_errorMessage = null;
+
+				// Every field value is either provided or set by the script; the latter becomes provided as well.
+				foreach (var field in _definition.GetAllFields().Where(x => x.Value != null))
+				{
+					_providedValues[field.Path] = field.Value;
+				}
+
 				return true;
 			}
 			catch (Exception e)
@@ -190,7 +197,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			if (field.TriggersReevaluation)
 			{
-				textBox.FocusLost += (sender, args) => OnValueChanged();
+				textBox.FocusLost += (sender, args) => OnValueChanged(field.Path);
 			}
 
 			return new FieldEditor(field, textBox, shownValue, () => String.IsNullOrEmpty(textBox.Text) ? null : OrchestrationInputValue.FromText(textBox.Text));
@@ -219,7 +226,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			if (field.TriggersReevaluation)
 			{
-				numeric.Changed += (sender, args) => OnValueChanged();
+				numeric.Changed += (sender, args) => OnValueChanged(field.Path);
 			}
 
 			return new FieldEditor(field, numeric, shownValue, () => OrchestrationInputValue.FromNumber(numeric.Value)) { Unit = field.Unit };
@@ -241,7 +248,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			if (field.TriggersReevaluation)
 			{
-				dropDown.Changed += (sender, args) => OnValueChanged();
+				dropDown.Changed += (sender, args) => OnValueChanged(field.Path);
 			}
 
 			return new FieldEditor(field, dropDown, shownValue, () => dropDown.Selected);
@@ -271,7 +278,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			if (field.TriggersReevaluation)
 			{
-				picker.Changed += (sender, args) => OnValueChanged();
+				picker.Changed += (sender, args) => OnValueChanged(field.Path);
 			}
 
 			return new FieldEditor(field, picker, shownValue, () => OrchestrationInputValue.FromDateTime(ToUniversal(Truncate(picker.DateTime, field.Precision))));
@@ -299,7 +306,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			if (field.TriggersReevaluation)
 			{
-				time.Changed += (sender, args) => OnValueChanged();
+				time.Changed += (sender, args) => OnValueChanged(field.Path);
 			}
 
 			return new FieldEditor(field, time, shownValue, () => OrchestrationInputValue.FromTimeSpan(time.TimeSpan));

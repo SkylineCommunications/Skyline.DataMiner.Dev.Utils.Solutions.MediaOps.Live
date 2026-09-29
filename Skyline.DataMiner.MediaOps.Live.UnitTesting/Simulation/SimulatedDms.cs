@@ -706,7 +706,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 
 			var input = JsonConvert.DeserializeObject<OrchestrationScriptInput>(serializedInput);
 
-			return new OrchestrationInputValues(input?.InputValues);
+			return new OrchestrationInputValues(input?.InputValues, input?.TriggeringInputPath);
 		}
 
 		private IEnumerable<DMSMessage> HandleMessage(GetScriptInfoMessage msg)

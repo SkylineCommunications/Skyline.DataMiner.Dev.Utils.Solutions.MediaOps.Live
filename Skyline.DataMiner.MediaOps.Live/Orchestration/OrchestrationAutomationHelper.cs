@@ -40,9 +40,9 @@
 				[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.OrchestrationScriptInfo),
 			};
 
-			if (providedValues != null && providedValues.Count > 0)
+			if (providedValues != null && (providedValues.Count > 0 || !String.IsNullOrEmpty(providedValues.TriggeringInputPath)))
 			{
-				var input = new OrchestrationScriptInput { InputValues = providedValues.ToDictionary() };
+				var input = new OrchestrationScriptInput { InputValues = providedValues.ToDictionary(), TriggeringInputPath = providedValues.TriggeringInputPath };
 				metaData[OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey] = JsonConvert.SerializeObject(input);
 			}
 

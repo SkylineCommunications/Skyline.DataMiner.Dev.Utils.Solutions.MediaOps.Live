@@ -1836,7 +1836,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
     {
         public OrchestrationInputValues() { }
         public OrchestrationInputValues(System.Collections.Generic.IDictionary<string, Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue> values) { }
+        public OrchestrationInputValues(System.Collections.Generic.IDictionary<string, Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue> values, string triggeringInputPath) { }
         public int Count { get; }
+        public string TriggeringInputPath { get; }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues Empty { get; }
         public bool Contains(string path) { }
         public System.DateTime? GetDateTime(string path) { }

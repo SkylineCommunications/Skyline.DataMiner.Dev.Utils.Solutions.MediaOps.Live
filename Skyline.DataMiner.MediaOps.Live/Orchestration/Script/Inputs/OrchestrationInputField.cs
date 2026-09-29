@@ -42,6 +42,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 		/// <summary>
 		/// Gets or sets the value of this field.
+		/// A value the script sets while building its inputs replaces the provided value, for example to load a preset.
 		/// </summary>
 		[JsonProperty("value", NullValueHandling = NullValueHandling.Ignore)]
 		public OrchestrationInputValue Value { get; set; }

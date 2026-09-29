@@ -41,5 +41,11 @@
 		/// </summary>
 		[JsonProperty]
 		public Dictionary<string, OrchestrationInputValue> InputValues { get; set; }
+
+		/// <summary>
+		/// Gets or sets the path of the input whose change triggered this evaluation.
+		/// </summary>
+		[JsonProperty]
+		public string TriggeringInputPath { get; set; }
 	}
 }

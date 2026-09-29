@@ -66,8 +66,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 				definition.ValidateStructure();
 
+				var valuesSetByScript = definition.GetAllFields()
+					.Where(x => x.Value != null)
+					.ToDictionary(x => x.Path, x => x.Value, StringComparer.OrdinalIgnoreCase);
+
 				// Only the values that were really provided are applied, so a default never turns into an explicit value.
 				definition.ApplyValues(values);
+				definition.ApplyValues(new OrchestrationInputValues(valuesSetByScript));
 
 				var effectiveValues = definition.GetValues();
 
@@ -76,7 +81,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 					break;
 				}
 
-				evaluationValues = effectiveValues;
+				evaluationValues = new OrchestrationInputValues(effectiveValues.ToDictionary(), values.TriggeringInputPath);
 			}
 
 			return definition;

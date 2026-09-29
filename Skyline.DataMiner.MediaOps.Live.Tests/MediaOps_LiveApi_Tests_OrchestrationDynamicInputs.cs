@@ -66,6 +66,25 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
+		public void OrchestrationScriptInfoHelper_GetOrchestrationScriptInputInfo_PassesTheTriggeringInputPathWithoutValues()
+		{
+			string triggeringInputPath = null;
+			var simulation = new MediaOpsLiveSimulation();
+			simulation.Dms.AddScript(
+				ScriptName,
+				values =>
+				{
+					triggeringInputPath = values.TriggeringInputPath;
+					return BuildScriptInfo(values);
+				},
+				folder: "MediaOps/OrchestrationScripts");
+
+			simulation.Api.Orchestration.Scripts.GetOrchestrationScriptInputInfo(ScriptName, new OrchestrationInputValues(null, NumberOfDestinationsPath));
+
+			Assert.AreEqual(NumberOfDestinationsPath, triggeringInputPath);
+		}
+
+		[TestMethod]
 		public void OrchestrationScriptInfoHelper_GetOrchestrationScriptInputInfo_LegacyScriptHasNoDynamicInputs()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
