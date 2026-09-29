@@ -1675,6 +1675,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         [Newtonsoft.Json.JsonProperty("precision")]
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationTimePrecision Precision { get; set; }
+        public override bool SupportsLinks { get; }
         public override string FormatValue(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue value) { }
         public override bool IsValidValue(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue value, out string error) { }
     }
@@ -1734,6 +1735,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public bool IsRequired { get; set; }
         [Newtonsoft.Json.JsonProperty("isValid")]
         public bool IsValid { get; set; }
+        [Newtonsoft.Json.JsonIgnore]
+        public virtual bool SupportsLinks { get; }
         [Newtonsoft.Json.JsonProperty("triggersReevaluation")]
         public bool TriggersReevaluation { get; set; }
         [Newtonsoft.Json.JsonProperty("validationMessage", NullValueHandling=Newtonsoft.Json.NullValueHandling.Ignore)]
@@ -1888,6 +1891,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         [Newtonsoft.Json.JsonProperty("precision")]
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationTimePrecision Precision { get; set; }
+        public override bool SupportsLinks { get; }
         public override string FormatValue(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue value) { }
         public override bool IsValidValue(Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue value, out string error) { }
     }

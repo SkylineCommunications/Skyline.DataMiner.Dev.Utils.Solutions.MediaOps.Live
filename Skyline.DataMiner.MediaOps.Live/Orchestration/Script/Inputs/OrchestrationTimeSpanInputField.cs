@@ -14,6 +14,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <inheritdoc/>
 		public override string Kind => OrchestrationInputKind.TimeSpan;
 
+		/// <inheritdoc/>
+		public override bool SupportsLinks => false;
+
 		/// <summary>
 		/// Gets or sets the shortest accepted duration, or <see langword="null"/> when there is no lower bound.
 		/// </summary>

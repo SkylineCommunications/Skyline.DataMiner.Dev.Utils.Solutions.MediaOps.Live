@@ -14,6 +14,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <inheritdoc/>
 		public override string Kind => OrchestrationInputKind.DateTime;
 
+		/// <inheritdoc/>
+		public override bool SupportsLinks => false;
+
 		/// <summary>
 		/// Gets or sets the earliest accepted date and time, or <see langword="null"/> when there is no lower bound.
 		/// </summary>

@@ -473,6 +473,9 @@ Dynamic inputs don't use profile parameters, profile definitions or profile inst
 Every field also has `IsRequired`, `DefaultValue`, `Description`, `TriggersReevaluation` and `IsDisabled`.
 For checks the definition can't express, such as two destinations using the same endpoint, set `IsValid` to `false` and explain why in `ValidationMessage`.
 
+`SupportsLinks` tells whether an app such as MediaOps Plan may link the field to a value that is only known later, such as a job property or the name of the assigned resource.
+It is `false` for date/time and duration fields. Fields with `TriggersReevaluation` aren't offered for linking either, because the structure of the inputs has to be known while configuring.
+
 #### Presets
 
 Where a classic script uses profile instances as presets, a dynamic script uses a dropdown of its own. Mark it with `TriggersReevaluation`

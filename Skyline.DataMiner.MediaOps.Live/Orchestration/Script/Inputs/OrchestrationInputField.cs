@@ -53,6 +53,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public OrchestrationInputValue DefaultValue { get; set; }
 
 		/// <summary>
+		/// Gets a value indicating whether the value of this field can be linked to a value that is resolved later, such as a property or a profile parameter.
+		/// </summary>
+		[JsonIgnore]
+		public virtual bool SupportsLinks => true;
+
+		/// <summary>
 		/// Gets the value of this field, falling back to the default value when no value is set.
 		/// </summary>
 		/// <returns>The effective value of this field.</returns>
