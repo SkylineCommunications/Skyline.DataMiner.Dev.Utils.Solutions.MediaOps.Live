@@ -1669,9 +1669,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public OrchestrationDateTimeInputField() { }
         public override string Kind { get; }
         [Newtonsoft.Json.JsonProperty("maximum", NullValueHandling=Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTime? Maximum { get; set; }
+        public System.DateTimeOffset? Maximum { get; set; }
         [Newtonsoft.Json.JsonProperty("minimum", NullValueHandling=Newtonsoft.Json.NullValueHandling.Ignore)]
-        public System.DateTime? Minimum { get; set; }
+        public System.DateTimeOffset? Minimum { get; set; }
         [Newtonsoft.Json.JsonConverter(typeof(Newtonsoft.Json.Converters.StringEnumConverter))]
         [Newtonsoft.Json.JsonProperty("precision")]
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationTimePrecision Precision { get; set; }
@@ -1812,15 +1812,15 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public override bool Equals(object obj) { }
         public override int GetHashCode() { }
         public override string ToString() { }
-        public bool TryGetDateTime(out System.DateTime dateTime) { }
+        public bool TryGetDateTime(out System.DateTimeOffset dateTime) { }
         public bool TryGetInt32(out int number) { }
         public bool TryGetNumber(out double number) { }
         public bool TryGetTimeSpan(out System.TimeSpan timeSpan) { }
-        public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue FromDateTime(System.DateTime dateTime) { }
+        public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue FromDateTime(System.DateTimeOffset dateTime) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue FromNumber(double number) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue FromText(string text) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue FromTimeSpan(System.TimeSpan timeSpan) { }
-        public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue op_Implicit(System.DateTime dateTime) { }
+        public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue op_Implicit(System.DateTimeOffset dateTime) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue op_Implicit(System.TimeSpan timeSpan) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue op_Implicit(double number) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue op_Implicit(string text) { }
@@ -1841,7 +1841,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
         public string TriggeringInputPath { get; }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues Empty { get; }
         public bool Contains(string path) { }
-        public System.DateTime? GetDateTime(string path) { }
+        public System.DateTimeOffset? GetDateTime(string path) { }
         public int? GetInt32(string path) { }
         public int GetInt32(string path, int minimum, int maximum) { }
         public double? GetNumber(string path) { }

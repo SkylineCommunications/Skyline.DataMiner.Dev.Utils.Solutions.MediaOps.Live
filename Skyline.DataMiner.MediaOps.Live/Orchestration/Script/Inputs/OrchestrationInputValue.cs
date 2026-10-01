@@ -76,7 +76,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// Converts a date and time to an orchestration input value.
 		/// </summary>
 		/// <param name="dateTime">The date and time.</param>
-		public static implicit operator OrchestrationInputValue(DateTime dateTime)
+		public static implicit operator OrchestrationInputValue(DateTimeOffset dateTime)
 		{
 			return FromDateTime(dateTime);
 		}
@@ -121,13 +121,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		}
 
 		/// <summary>
-		/// Creates a date and time value. A value without a kind is taken as UTC.
+		/// Creates a date and time value.
 		/// </summary>
 		/// <param name="dateTime">The date and time.</param>
 		/// <returns>The value, held as round-trip text in UTC.</returns>
-		public static OrchestrationInputValue FromDateTime(DateTime dateTime)
+		public static OrchestrationInputValue FromDateTime(DateTimeOffset dateTime)
 		{
-			return FromText(ToUniversal(dateTime).ToString("o", CultureInfo.InvariantCulture));
+			return FromText(dateTime.UtcDateTime.ToString("o", CultureInfo.InvariantCulture));
 		}
 
 		/// <summary>
@@ -186,10 +186,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// </summary>
 		/// <param name="dateTime">When this method returns <see langword="true"/>, contains the date and time in UTC.</param>
 		/// <returns><see langword="true"/> when this value represents a date and time; otherwise, <see langword="false"/>.</returns>
-		public bool TryGetDateTime(out DateTime dateTime)
+		public bool TryGetDateTime(out DateTimeOffset dateTime)
 		{
-			if (IsText && DateTime.TryParse(_text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out dateTime))
+			if (IsText && DateTimeOffset.TryParse(_text, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var parsed))
 			{
+				dateTime = parsed.ToUniversalTime();
 				return true;
 			}
 
@@ -248,13 +249,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		public override string ToString()
 		{
 			return IsNumber ? _number.ToString(CultureInfo.InvariantCulture) : _text;
-		}
-
-		internal static DateTime ToUniversal(DateTime dateTime)
-		{
-			return dateTime.Kind == DateTimeKind.Unspecified
-				? DateTime.SpecifyKind(dateTime, DateTimeKind.Utc)
-				: dateTime.ToUniversalTime();
 		}
 	}
 }

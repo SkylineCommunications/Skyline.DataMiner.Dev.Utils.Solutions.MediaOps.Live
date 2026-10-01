@@ -278,19 +278,20 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			if (field.Minimum.HasValue)
 			{
-				picker.Minimum = OrchestrationInputValue.ToUniversal(field.Minimum.Value).ToLocalTime();
+				picker.Minimum = field.Minimum.Value.LocalDateTime;
 			}
 
 			if (field.Maximum.HasValue)
 			{
-				picker.Maximum = OrchestrationInputValue.ToUniversal(field.Maximum.Value).ToLocalTime();
+				picker.Maximum = field.Maximum.Value.LocalDateTime;
 			}
 
-			var editor = new FieldEditor(field, picker, shownValue, () => OrchestrationInputValue.FromDateTime(ToUniversal(Truncate(picker.DateTime, field.Precision))));
+			// The picker works in the time zone of the server, which is how DateTimeOffset takes a value without a kind.
+			var editor = new FieldEditor(field, picker, shownValue, () => OrchestrationInputValue.FromDateTime(new DateTimeOffset(Truncate(picker.DateTime, field.Precision))));
 
 			if (shownValue != null && shownValue.TryGetDateTime(out var dateTime))
 			{
-				picker.DateTime = dateTime.ToLocalTime();
+				picker.DateTime = dateTime.LocalDateTime;
 			}
 			else
 			{
@@ -344,14 +345,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			}
 
 			return editor;
-		}
-
-		// The picker works in the time zone of the server; a value without a kind is taken as such.
-		private static DateTime ToUniversal(DateTime dateTime)
-		{
-			return dateTime.Kind == DateTimeKind.Unspecified
-				? DateTime.SpecifyKind(dateTime, DateTimeKind.Local).ToUniversalTime()
-				: dateTime.ToUniversalTime();
 		}
 
 		private static DateTime Truncate(DateTime dateTime, OrchestrationTimePrecision precision)

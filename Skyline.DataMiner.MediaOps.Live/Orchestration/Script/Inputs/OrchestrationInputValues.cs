@@ -141,11 +141,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// </summary>
 		/// <param name="path">The path of the field.</param>
 		/// <returns>The value as a date and time in UTC, or <see langword="null"/> when no date and time was provided.</returns>
-		public DateTime? GetDateTime(string path)
+		public DateTimeOffset? GetDateTime(string path)
 		{
 			return TryGetValue(path, out var value) && value.TryGetDateTime(out var result)
 				? result
-				: (DateTime?)null;
+				: (DateTimeOffset?)null;
 		}
 
 		/// <summary>

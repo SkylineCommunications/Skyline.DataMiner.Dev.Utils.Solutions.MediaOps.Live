@@ -377,7 +377,7 @@ profile.SetInputValues(new OrchestrationInputValues(new Dictionary<string, Orche
     ["General/Number of destinations"] = 2,
     ["Destinations/Destination 1/Endpoint"] = "ENC-A",
     ["Destinations/Destination 2/Endpoint"] = "ENC-B",
-    ["Schedule/Start"] = new DateTime(2026, 9, 24, 12, 0, 0, DateTimeKind.Utc),
+    ["Schedule/Start"] = new DateTimeOffset(2026, 9, 24, 12, 0, 0, TimeSpan.Zero),
     ["Schedule/Pre-roll"] = TimeSpan.FromMinutes(10),
 }));
 
@@ -466,7 +466,7 @@ Dynamic inputs don't use profile parameters, profile definitions or profile inst
 | `AddText` | text | |
 | `AddNumber` | number | `Minimum`, `Maximum`, `StepSize`, `Decimals`, `Unit` |
 | `AddDiscrete` | one of the options | `Options` (display text and value) |
-| `AddDateTime` | date and time, in UTC | `Minimum`, `Maximum`, `Precision` |
+| `AddDateTime` | date and time (`DateTimeOffset`), held in UTC | `Minimum`, `Maximum`, `Precision` |
 | `AddTimeSpan` | duration | `Minimum`, `Maximum`, `Precision` |
 | `AddGroup` | none, it bundles other items | |
 

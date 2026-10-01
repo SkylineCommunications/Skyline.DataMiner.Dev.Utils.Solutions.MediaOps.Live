@@ -150,17 +150,30 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			var field = new OrchestrationDateTimeInputField
 			{
 				Name = "Start",
-				Minimum = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-				Maximum = new DateTime(2026, 12, 31, 0, 0, 0, DateTimeKind.Utc),
+				Minimum = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+				Maximum = new DateTimeOffset(2026, 12, 31, 0, 0, 0, TimeSpan.Zero),
 			};
 
-			Assert.IsTrue(field.IsValidValue(new DateTime(2026, 6, 1, 12, 0, 0, DateTimeKind.Utc), out _));
-			Assert.IsFalse(field.IsValidValue(new DateTime(2025, 12, 31, 23, 0, 0, DateTimeKind.Utc), out var tooEarly));
-			Assert.IsFalse(field.IsValidValue(new DateTime(2027, 1, 1, 0, 0, 0, DateTimeKind.Utc), out _));
+			Assert.IsTrue(field.IsValidValue(new DateTimeOffset(2026, 6, 1, 12, 0, 0, TimeSpan.Zero), out _));
+			Assert.IsFalse(field.IsValidValue(new DateTimeOffset(2025, 12, 31, 23, 0, 0, TimeSpan.Zero), out var tooEarly));
+			Assert.IsFalse(field.IsValidValue(new DateTimeOffset(2027, 1, 1, 0, 0, 0, TimeSpan.Zero), out _));
 			Assert.IsFalse(field.IsValidValue("not a date", out var notADate));
 
 			StringAssert.Contains(tooEarly, "cannot be before");
 			StringAssert.Contains(notADate, "requires a date and time");
+		}
+
+		[TestMethod]
+		public void OrchestrationDateTimeInputField_IsValidValue_ComparesInstantsAcrossOffsets()
+		{
+			var field = new OrchestrationDateTimeInputField
+			{
+				Name = "Start",
+				Minimum = new DateTimeOffset(2026, 10, 1, 10, 0, 0, TimeSpan.FromHours(2)),
+			};
+
+			Assert.IsTrue(field.IsValidValue(new DateTimeOffset(2026, 10, 1, 9, 0, 0, TimeSpan.Zero), out _));
+			Assert.IsFalse(field.IsValidValue(new DateTimeOffset(2026, 10, 1, 7, 59, 0, TimeSpan.Zero), out _));
 		}
 
 		[TestMethod]
@@ -169,8 +182,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			var builder = new OrchestrationInputBuilder()
 				.AddDateTime("Start", field =>
 				{
-					field.Minimum = new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc);
-					field.Maximum = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+					field.Minimum = new DateTimeOffset(2026, 2, 1, 0, 0, 0, TimeSpan.Zero);
+					field.Maximum = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
 				});
 
 			Assert.ThrowsExactly<InvalidOperationException>(() => builder.Build());
@@ -209,14 +222,15 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		[TestMethod]
 		public void OrchestrationInputValue_FromDateTime_IsHeldAsUtcText()
 		{
-			var local = new DateTime(2026, 9, 24, 14, 30, 0, DateTimeKind.Local);
+			var withOffset = new DateTimeOffset(2026, 9, 24, 14, 30, 0, TimeSpan.FromHours(2));
 
-			OrchestrationInputValue value = local;
+			OrchestrationInputValue value = withOffset;
 
 			Assert.IsTrue(value.IsText);
+			Assert.AreEqual("2026-09-24T12:30:00.0000000Z", value.Text);
 			Assert.IsTrue(value.TryGetDateTime(out var dateTime));
-			Assert.AreEqual(DateTimeKind.Utc, dateTime.Kind);
-			Assert.AreEqual(local.ToUniversalTime(), dateTime);
+			Assert.AreEqual(TimeSpan.Zero, dateTime.Offset);
+			Assert.AreEqual(withOffset, dateTime);
 		}
 
 		[TestMethod]
@@ -257,7 +271,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		[TestMethod]
 		public void OrchestrationProfile_SetInputValues_RoundTripsDateTimeAndTimeSpan()
 		{
-			var start = new DateTime(2026, 9, 24, 12, 0, 0, DateTimeKind.Utc);
+			var start = new DateTimeOffset(2026, 9, 24, 12, 0, 0, TimeSpan.Zero);
 			var profile = new OrchestrationProfile();
 
 			profile.SetInputValues(new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
@@ -293,7 +307,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		[TestMethod]
 		public void OrchestrationInputValues_GetDateTimeAndGetTimeSpan_ReadTypedValues()
 		{
-			var start = new DateTime(2026, 9, 24, 12, 0, 0, DateTimeKind.Utc);
+			var start = new DateTimeOffset(2026, 9, 24, 12, 0, 0, TimeSpan.Zero);
 			var values = new OrchestrationInputValues(new Dictionary<string, OrchestrationInputValue>
 			{
 				["Start"] = start,
@@ -350,7 +364,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		[TestMethod]
 		public void OrchestrationInputDefinition_Serialization_RoundTripsTheNewFieldProperties()
 		{
-			var start = new DateTime(2026, 9, 24, 12, 0, 0, DateTimeKind.Utc);
+			var start = new DateTimeOffset(2026, 9, 24, 12, 0, 0, TimeSpan.Zero);
 			var definition = new OrchestrationInputBuilder()
 				.AddDateTime("Start", field =>
 				{
@@ -376,7 +390,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			Assert.IsTrue(restored.TryGetField("Start", out var startField));
 			var restoredStart = (OrchestrationDateTimeInputField)startField;
-			Assert.AreEqual(start, restoredStart.Minimum.Value.ToUniversalTime());
+			Assert.AreEqual(start, restoredStart.Minimum.Value);
 			Assert.AreEqual(OrchestrationTimePrecision.Hour, restoredStart.Precision);
 			Assert.IsTrue(restoredStart.Value.TryGetDateTime(out var restoredValue));
 			Assert.AreEqual(start.AddHours(1), restoredValue);

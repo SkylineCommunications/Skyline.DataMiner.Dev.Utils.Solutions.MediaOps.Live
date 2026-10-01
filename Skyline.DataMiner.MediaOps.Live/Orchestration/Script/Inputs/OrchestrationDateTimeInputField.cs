@@ -21,13 +21,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// Gets or sets the earliest accepted date and time, or <see langword="null"/> when there is no lower bound.
 		/// </summary>
 		[JsonProperty("minimum", NullValueHandling = NullValueHandling.Ignore)]
-		public DateTime? Minimum { get; set; }
+		public DateTimeOffset? Minimum { get; set; }
 
 		/// <summary>
 		/// Gets or sets the latest accepted date and time, or <see langword="null"/> when there is no upper bound.
 		/// </summary>
 		[JsonProperty("maximum", NullValueHandling = NullValueHandling.Ignore)]
-		public DateTime? Maximum { get; set; }
+		public DateTimeOffset? Maximum { get; set; }
 
 		/// <summary>
 		/// Gets or sets the smallest unit the operator picks.
@@ -55,13 +55,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 				return false;
 			}
 
-			if (Minimum.HasValue && dateTime < OrchestrationInputValue.ToUniversal(Minimum.Value))
+			if (Minimum.HasValue && dateTime < Minimum.Value)
 			{
 				error = $"'{Name}' cannot be before {Format(Minimum.Value)}.";
 				return false;
 			}
 
-			if (Maximum.HasValue && dateTime > OrchestrationInputValue.ToUniversal(Maximum.Value))
+			if (Maximum.HasValue && dateTime > Maximum.Value)
 			{
 				error = $"'{Name}' cannot be after {Format(Maximum.Value)}.";
 				return false;
@@ -73,10 +73,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <inheritdoc/>
 		public override string FormatValue(OrchestrationInputValue value)
 		{
-			if (value == null || !value.TryGetDateTime(out var dateTime))
+			if (value == null || !value.TryGetDateTime(out var dateTimeOffset))
 			{
 				return base.FormatValue(value);
 			}
+
+			var dateTime = dateTimeOffset.UtcDateTime;
 
 			switch (Precision)
 			{
@@ -93,7 +95,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 		internal override void ValidateDefinition()
 		{
-			if (Minimum.HasValue && Maximum.HasValue && OrchestrationInputValue.ToUniversal(Minimum.Value) > OrchestrationInputValue.ToUniversal(Maximum.Value))
+			if (Minimum.HasValue && Maximum.HasValue && Minimum.Value > Maximum.Value)
 			{
 				ThrowUnusableDefinition(Path, $"the minimum {Format(Minimum.Value)} is later than the maximum {Format(Maximum.Value)}.");
 			}
@@ -101,9 +103,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 			base.ValidateDefinition();
 		}
 
-		private static string Format(DateTime dateTime)
+		private static string Format(DateTimeOffset dateTime)
 		{
-			return OrchestrationInputValue.ToUniversal(dateTime).ToString("u", CultureInfo.InvariantCulture);
+			return dateTime.UtcDateTime.ToString("u", CultureInfo.InvariantCulture);
 		}
 	}
 }
