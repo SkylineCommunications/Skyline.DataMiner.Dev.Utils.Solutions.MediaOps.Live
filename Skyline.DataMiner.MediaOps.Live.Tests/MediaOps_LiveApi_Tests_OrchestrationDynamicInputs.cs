@@ -96,6 +96,18 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
+		public void OrchestrationScriptInfoHelper_GetOrchestrationScriptInputInfo_PropagatesAFailingScript()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			simulation.Dms.AddScript(
+				ScriptName,
+				values => throw new InvalidOperationException("The script crashed."),
+				folder: "MediaOps/OrchestrationScripts");
+
+			Assert.Throws<Exception>(() => simulation.Api.Orchestration.Scripts.GetOrchestrationScriptInputInfo(ScriptName));
+		}
+
+		[TestMethod]
 		public void OrchestrationHelper_SaveOrchestrationJobConfiguration_RejectsAConfirmedEventWithAMissingRequiredInput()
 		{
 			var simulation = CreateSimulationWithDynamicScript();

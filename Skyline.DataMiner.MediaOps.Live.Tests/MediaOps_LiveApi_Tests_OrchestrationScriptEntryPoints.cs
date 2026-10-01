@@ -1,10 +1,16 @@
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
 	using Moq;
+	using Newtonsoft.Json;
 	using Skyline.DataMiner.Automation;
+	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
+
+	using OrchestrationScriptInput = Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects.OrchestrationScriptInput;
 
 	[TestClass]
 	public sealed class MediaOps_LiveApi_Tests_OrchestrationScriptEntryPoints
@@ -82,6 +88,25 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			Assert.IsEmpty(script.GetProfileParameters());
 		}
 
+		[TestMethod]
+		public void DynamicOrchestrationScript_OnRequestScriptInfoRequest_ProvidesTheMetadataToGetInputs()
+		{
+			var script = new DynamicScript();
+			var input = new OrchestrationScriptInput();
+			input.Metadata["Region"] = "EU";
+
+			var data = new Dictionary<string, string>
+			{
+				[OrchestrationScriptConstants.OrchestrationScriptActionRequestScriptInfoKey] = nameof(OrchestrationScriptAction.OrchestrationScriptInfo),
+				[OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey] = JsonConvert.SerializeObject(input),
+			};
+
+			var output = script.OnRequestScriptInfoRequest(Mock.Of<IEngine>(), new RequestScriptInfoInput { Data = data });
+
+			Assert.IsFalse(output.Data.ContainsKey(OrchestrationScriptConstants.ScriptOutputError));
+			Assert.AreEqual("EU", script.ReceivedRegion);
+		}
+
 		private sealed class LegacyScript : OrchestrationScript
 		{
 			public bool WasOrchestrated { get; private set; }
@@ -103,6 +128,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			public IEngine ReceivedEngine { get; private set; }
 
+			public string ReceivedRegion { get; private set; }
+
 			public override void Orchestrate(IEngine engine, OrchestrationInputValues inputs)
 			{
 				Endpoint = inputs.GetString("General/Endpoint");
@@ -111,6 +138,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			public override OrchestrationInputDefinition GetInputs(IEngine engine, OrchestrationInputValues providedValues)
 			{
 				ReceivedEngine = engine;
+
+				if (TryGetMetadataValue("Region", out var region))
+				{
+					ReceivedRegion = region;
+				}
 
 				return new OrchestrationInputBuilder()
 					.AddGroup("General", general => general.AddText("Endpoint", field =>

@@ -574,7 +574,7 @@ if (info.HasDynamicInputs)
 }
 ```
 
-`InputDefinition` is `null` for a classic script, and also when the script could not be executed, for example because it failed or timed out.
+`InputDefinition` is `null` for a classic script, which doesn't implement the orchestration script info entry point. When the script fails or times out while it determines its inputs, the request throws an exception instead, so a failing dynamic script is never mistaken for a classic one.
 
 ### Get a list of available script input profile instances
 

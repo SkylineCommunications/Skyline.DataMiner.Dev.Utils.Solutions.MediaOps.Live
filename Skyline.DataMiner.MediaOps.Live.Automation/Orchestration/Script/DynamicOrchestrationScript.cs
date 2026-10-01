@@ -115,9 +115,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			dialog.Completed += (sender, args) => controller.Stop();
 
+			// The dialog only completes once its latest evaluation, which is the one held by Inputs, is valid.
 			controller.ShowDialog(dialog);
-
-			EvaluateInputs(engine, dialog.ProvidedValues);
 		}
 
 		private OrchestrationInputDefinition GetRequiredInputs(IEngine engine, OrchestrationInputValues values)

@@ -44,6 +44,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 		/// <param name="evaluator">Produces the input definition for a set of values.</param>
 		/// <param name="providedValues">The values that were already provided.</param>
 		/// <returns>The settled input definition, or <see langword="null"/> when the evaluator returned none.</returns>
+		/// <exception cref="InvalidOperationException">Thrown when the effective values keep changing between evaluations.</exception>
 		public static OrchestrationInputDefinition Evaluate(Func<OrchestrationInputValues, OrchestrationInputDefinition> evaluator, OrchestrationInputValues providedValues)
 		{
 			if (evaluator == null)
@@ -53,11 +54,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 			var values = providedValues ?? OrchestrationInputValues.Empty;
 			var evaluationValues = values;
-			OrchestrationInputDefinition definition = null;
 
 			for (var iteration = 0; iteration < MaxEvaluations; iteration++)
 			{
-				definition = evaluator(evaluationValues);
+				var definition = evaluator(evaluationValues);
 
 				if (definition == null)
 				{
@@ -78,13 +78,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 
 				if (effectiveValues.HasSameValues(evaluationValues))
 				{
-					break;
+					return definition;
 				}
 
 				evaluationValues = new OrchestrationInputValues(effectiveValues.ToDictionary(), values.TriggeringInputPath);
 			}
 
-			return definition;
+			throw new InvalidOperationException($"The orchestration inputs did not settle after {MaxEvaluations} evaluations: their default values keep changing which inputs are relevant.");
 		}
 
 		/// <summary>

@@ -56,7 +56,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs
 				return true;
 			}
 
-			if (!value.TryGetNumber(out var number))
+			if (!value.TryGetNumber(out var number) || Double.IsNaN(number) || Double.IsInfinity(number))
 			{
 				error = $"'{Name}' requires a numeric value.";
 				return false;

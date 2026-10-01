@@ -210,7 +210,13 @@
 
 			List<OrchestrationProfileValue> profileValues = profile?.Values?.ToList() ?? new List<OrchestrationProfileValue>();
 
-			var scriptInfo = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo(scriptName, profile?.GetInputValues());
+			// The script gets the same metadata as during orchestration, as its inputs can depend on it.
+			var metadata = arguments
+				.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata)
+				.GroupBy(arg => arg.Name)
+				.ToDictionary(group => group.Key, group => group.Last().Value);
+
+			var scriptInfo = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo(scriptName, profile?.GetInputValues(), metadata);
 
 			foreach (var scriptInputParam in scriptInfo.Parameters)
 			{

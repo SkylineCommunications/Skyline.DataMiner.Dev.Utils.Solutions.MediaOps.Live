@@ -16,6 +16,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 	using Skyline.DataMiner.Net.Messages.Advanced;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Connection;
@@ -674,7 +675,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 		{
 			SimulatedAutomationScript script = Scripts.First(s => s.Name == msg.ScriptName);
 
-			int returnCode = msg.ScriptName == "Script_Fail" ? -1 : 0;
+			// Like a real orchestration script, Script_Fail only fails when it orchestrates, not when it describes its inputs.
+			int returnCode = msg.ScriptName == "Script_Fail" && !IsScriptInfoRequest(msg) ? -1 : 0;
 
 			var scriptInfo = script.GetOrchestrationScriptInfo(GetProvidedInputValues(msg));
 
@@ -691,6 +693,15 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 			};
 
 			_executedScripts.Add(msg);
+		}
+
+		private static bool IsScriptInfoRequest(ExecuteScriptMessage msg)
+		{
+			var metaData = msg.CustomEntryPoint?.Parameters?.OfType<RequestScriptInfoInput>().FirstOrDefault()?.Data;
+
+			return metaData != null
+				&& metaData.TryGetValue(nameof(OrchestrationScriptAction), out var action)
+				&& action == nameof(OrchestrationScriptAction.OrchestrationScriptInfo);
 		}
 
 		private static OrchestrationInputValues GetProvidedInputValues(ExecuteScriptMessage msg)

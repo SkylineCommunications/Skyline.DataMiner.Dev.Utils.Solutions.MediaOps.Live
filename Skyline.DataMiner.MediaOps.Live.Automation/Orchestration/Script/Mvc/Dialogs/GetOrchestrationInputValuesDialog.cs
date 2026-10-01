@@ -42,8 +42,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 		public event EventHandler Completed;
 
-		public OrchestrationInputValues ProvidedValues => new OrchestrationInputValues(_providedValues);
-
 		private void Apply()
 		{
 			CollectValues();
@@ -91,6 +89,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		{
 			foreach (var editor in _editors)
 			{
+				if (editor.ShowsPlaceholder)
+				{
+					continue;
+				}
+
 				var value = editor.Read();
 
 				if (value == editor.ShownValue)
@@ -222,14 +225,25 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				numeric.Maximum = field.Maximum.Value;
 			}
 
-			numeric.Value = shownValue != null && shownValue.TryGetNumber(out var number) ? number : field.Minimum ?? 0;
+			var editor = new FieldEditor(field, numeric, shownValue, () => OrchestrationInputValue.FromNumber(numeric.Value)) { Unit = field.Unit };
+
+			if (shownValue != null && shownValue.TryGetNumber(out var number))
+			{
+				numeric.Value = number;
+			}
+			else
+			{
+				numeric.Value = field.Minimum ?? 0;
+				editor.ShowsPlaceholder = true;
+				numeric.Changed += (sender, args) => editor.ShowsPlaceholder = false;
+			}
 
 			if (field.TriggersReevaluation)
 			{
 				numeric.Changed += (sender, args) => OnValueChanged(field.Path);
 			}
 
-			return new FieldEditor(field, numeric, shownValue, () => OrchestrationInputValue.FromNumber(numeric.Value)) { Unit = field.Unit };
+			return editor;
 		}
 
 		private FieldEditor CreateDiscreteEditor(OrchestrationDiscreteInputField field)
@@ -272,16 +286,25 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				picker.Maximum = OrchestrationInputValue.ToUniversal(field.Maximum.Value).ToLocalTime();
 			}
 
-			picker.DateTime = shownValue != null && shownValue.TryGetDateTime(out var dateTime)
-				? dateTime.ToLocalTime()
-				: Truncate(DateTime.Now, field.Precision);
+			var editor = new FieldEditor(field, picker, shownValue, () => OrchestrationInputValue.FromDateTime(ToUniversal(Truncate(picker.DateTime, field.Precision))));
+
+			if (shownValue != null && shownValue.TryGetDateTime(out var dateTime))
+			{
+				picker.DateTime = dateTime.ToLocalTime();
+			}
+			else
+			{
+				picker.DateTime = Truncate(DateTime.Now, field.Precision);
+				editor.ShowsPlaceholder = true;
+				picker.Changed += (sender, args) => editor.ShowsPlaceholder = false;
+			}
 
 			if (field.TriggersReevaluation)
 			{
 				picker.Changed += (sender, args) => OnValueChanged(field.Path);
 			}
 
-			return new FieldEditor(field, picker, shownValue, () => OrchestrationInputValue.FromDateTime(ToUniversal(Truncate(picker.DateTime, field.Precision))));
+			return editor;
 		}
 
 		private FieldEditor CreateTimeSpanEditor(OrchestrationTimeSpanInputField field)
@@ -302,14 +325,25 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				time.Maximum = field.Maximum.Value;
 			}
 
-			time.TimeSpan = shownValue != null && shownValue.TryGetTimeSpan(out var timeSpan) ? timeSpan : field.Minimum ?? TimeSpan.Zero;
+			var editor = new FieldEditor(field, time, shownValue, () => OrchestrationInputValue.FromTimeSpan(Truncate(time.TimeSpan, field.Precision)));
+
+			if (shownValue != null && shownValue.TryGetTimeSpan(out var timeSpan))
+			{
+				time.TimeSpan = timeSpan;
+			}
+			else
+			{
+				time.TimeSpan = field.Minimum ?? TimeSpan.Zero;
+				editor.ShowsPlaceholder = true;
+				time.Changed += (sender, args) => editor.ShowsPlaceholder = false;
+			}
 
 			if (field.TriggersReevaluation)
 			{
 				time.Changed += (sender, args) => OnValueChanged(field.Path);
 			}
 
-			return new FieldEditor(field, time, shownValue, () => OrchestrationInputValue.FromTimeSpan(time.TimeSpan));
+			return editor;
 		}
 
 		// The picker works in the time zone of the server; a value without a kind is taken as such.
@@ -338,6 +372,25 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			}
 		}
 
+		// The time widget can only hide seconds, so coarser precisions are applied to the value that is read.
+		private static TimeSpan Truncate(TimeSpan timeSpan, OrchestrationTimePrecision precision)
+		{
+			switch (precision)
+			{
+				case OrchestrationTimePrecision.Day:
+					return TimeSpan.FromTicks(timeSpan.Ticks - (timeSpan.Ticks % TimeSpan.TicksPerDay));
+
+				case OrchestrationTimePrecision.Hour:
+					return TimeSpan.FromTicks(timeSpan.Ticks - (timeSpan.Ticks % TimeSpan.TicksPerHour));
+
+				case OrchestrationTimePrecision.Minute:
+					return TimeSpan.FromTicks(timeSpan.Ticks - (timeSpan.Ticks % TimeSpan.TicksPerMinute));
+
+				default:
+					return TimeSpan.FromTicks(timeSpan.Ticks - (timeSpan.Ticks % TimeSpan.TicksPerSecond));
+			}
+		}
+
 		private sealed class FieldEditor
 		{
 			public FieldEditor(OrchestrationInputField field, InteractiveWidget widget, OrchestrationInputValue shownValue, Func<OrchestrationInputValue> read)
@@ -356,6 +409,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			public OrchestrationInputValue ShownValue { get; }
 
 			public Func<OrchestrationInputValue> Read { get; }
+
+			// A widget without an empty state shows a placeholder, which only becomes a value once the operator edits it.
+			// Cleared by a handler subscribed before the reevaluation handler, so a reevaluation already sees the edit.
+			public bool ShowsPlaceholder { get; set; }
 
 			public string Unit { get; set; }
 		}

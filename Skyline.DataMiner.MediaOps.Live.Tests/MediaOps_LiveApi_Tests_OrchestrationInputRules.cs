@@ -111,6 +111,18 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
+		[DataRow(Double.NaN)]
+		[DataRow(Double.PositiveInfinity)]
+		[DataRow(Double.NegativeInfinity)]
+		public void OrchestrationNumberInputField_IsValidValue_RejectsANonFiniteNumber(double number)
+		{
+			var field = new OrchestrationNumberInputField { Name = "Count" };
+
+			Assert.IsFalse(field.IsValidValue(OrchestrationInputValue.FromNumber(number), out var error));
+			StringAssert.Contains(error, "requires a numeric value");
+		}
+
+		[TestMethod]
 		public void OrchestrationDiscreteInputField_ValidateStructure_RejectsAFieldWithoutOptions()
 		{
 			var builder = new OrchestrationInputBuilder()

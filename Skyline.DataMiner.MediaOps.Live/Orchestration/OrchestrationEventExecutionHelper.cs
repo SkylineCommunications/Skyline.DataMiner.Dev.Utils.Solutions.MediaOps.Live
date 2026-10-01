@@ -620,7 +620,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 
 					result = OrchestrationAutomationHelper.ExecuteOrchestrationScript(connection, scriptName, scriptParams, scriptDummies, input);
 				}
-				catch (ScriptExecutionFailedException ex) when (Regex.IsMatch(ex.Message, @"No method found in assembly (.+?) matching the specified entrypoint"))
+				catch (ScriptExecutionFailedException ex) when (OrchestrationAutomationHelper.IsMissingEntryPointError(ex))
 				{
 					// If the script does not contain the expected entry point, try executing without it for backward compatibility with older scripts.
 					result = OrchestrationAutomationHelper.ExecuteScript(connection, scriptName, scriptParams, scriptDummies);

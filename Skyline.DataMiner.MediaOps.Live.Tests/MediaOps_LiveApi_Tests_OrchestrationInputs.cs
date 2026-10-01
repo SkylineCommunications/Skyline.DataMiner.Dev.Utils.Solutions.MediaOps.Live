@@ -373,7 +373,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
-		public void OrchestrationInputDefinition_Evaluate_StopsWhenTheStructureKeepsChanging()
+		public void OrchestrationInputDefinition_Evaluate_ThrowsWhenTheStructureKeepsChanging()
 		{
 			var evaluations = 0;
 
@@ -395,10 +395,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 					.Build();
 			}
 
-			var definition = OrchestrationInputDefinition.Evaluate(Unstable, OrchestrationInputValues.Empty);
-
-			Assert.IsNotNull(definition);
-			Assert.IsLessThanOrEqualTo(5, evaluations);
+			Assert.ThrowsExactly<InvalidOperationException>(() => OrchestrationInputDefinition.Evaluate(Unstable, OrchestrationInputValues.Empty));
+			Assert.AreEqual(5, evaluations);
 		}
 
 		private static OrchestrationInputDefinition BuildDefinitionWithDefaultCount(OrchestrationInputValues providedValues)
