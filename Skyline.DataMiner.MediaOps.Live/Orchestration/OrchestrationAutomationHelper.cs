@@ -3,6 +3,7 @@
 	using System;
 	using System.Collections.Generic;
 	using System.Linq;
+	using System.Text.RegularExpressions;
 
 	using Newtonsoft.Json;
 
@@ -10,14 +11,30 @@
 	using Skyline.DataMiner.Net;
 	using Skyline.DataMiner.Net.Automation;
 	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Tools;
 
 	internal static class OrchestrationAutomationHelper
 	{
 		public static ExecuteScriptResponseMessage ExecuteGetOrchestrationScriptInfo(IConnection connection, string scriptName)
+		{
+			return ExecuteGetOrchestrationScriptInfo(connection, scriptName, null);
+		}
+
+		public static ExecuteScriptResponseMessage ExecuteGetOrchestrationScriptInfo(IConnection connection, string scriptName, OrchestrationInputValues providedValues)
+		{
+			return ExecuteGetOrchestrationScriptInfo(connection, scriptName, providedValues, null);
+		}
+
+		public static ExecuteScriptResponseMessage ExecuteGetOrchestrationScriptInfo(
+			IConnection connection,
+			string scriptName,
+			OrchestrationInputValues providedValues,
+			IReadOnlyDictionary<string, string> metadata)
 		{
 			if (connection is null)
 			{
@@ -33,6 +50,21 @@
 			{
 				[nameof(OrchestrationScriptAction)] = nameof(OrchestrationScriptAction.OrchestrationScriptInfo),
 			};
+
+			var hasProvidedValues = providedValues != null && (providedValues.Count > 0 || !String.IsNullOrEmpty(providedValues.TriggeringInputPath));
+			var hasMetadata = metadata != null && metadata.Count > 0;
+
+			if (hasProvidedValues || hasMetadata)
+			{
+				var input = new OrchestrationScriptInput
+				{
+					InputValues = providedValues?.ToDictionary() ?? new Dictionary<string, OrchestrationInputValue>(),
+					TriggeringInputPath = providedValues?.TriggeringInputPath,
+					Metadata = metadata?.ToDictionary(x => x.Key, x => x.Value) ?? new Dictionary<string, string>(),
+				};
+
+				metaData[OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey] = JsonConvert.SerializeObject(input);
+			}
 
 			var messageBuilder = new ExecuteScriptMessageBuilder(scriptName);
 			messageBuilder.SetCheckSets(false);
@@ -137,6 +169,12 @@
 			messageBuilder.SetDummies(scriptDummies.ToDictionary(dummy => dummy.Description, dummy => dummy.Value));
 
 			return AutomationHelper.ExecuteAutomationScript(connection, messageBuilder.Build());
+		}
+
+		// Older scripts don't implement the OnRequestScriptInfo entry point.
+		public static bool IsMissingEntryPointError(ScriptExecutionFailedException exception)
+		{
+			return exception != null && Regex.IsMatch(exception.Message, @"No method found in assembly (.+?) matching the specified entrypoint");
 		}
 
 		/// <summary>

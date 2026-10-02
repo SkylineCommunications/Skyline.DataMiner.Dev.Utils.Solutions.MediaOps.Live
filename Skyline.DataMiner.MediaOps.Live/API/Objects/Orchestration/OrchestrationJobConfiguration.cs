@@ -100,7 +100,7 @@
 					api,
 					orchestrationEvent.GlobalOrchestrationScript,
 					orchestrationEvent.GlobalOrchestrationScriptArguments.ToList(),
-					orchestrationEvent.Profile.Values.ToList());
+					orchestrationEvent.Profile);
 
 				foreach (NodeConfiguration configurationNodeConfiguration in orchestrationEvent.Configuration.NodeConfigurations)
 				{
@@ -108,7 +108,7 @@
 						api,
 						configurationNodeConfiguration.OrchestrationScriptName,
 						configurationNodeConfiguration.OrchestrationScriptArguments.ToList(),
-						configurationNodeConfiguration.Profile.Values.ToList());
+						configurationNodeConfiguration.Profile);
 				}
 			}
 		}
