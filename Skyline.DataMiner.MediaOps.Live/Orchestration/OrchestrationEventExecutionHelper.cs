@@ -692,9 +692,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 				}
 
 				var profileInstanceParameter = profileInstance.Value.Values.FirstOrDefault(value => value.Parameter.Name == requiredParameter.Description);
-				if (profileInstanceParameter != null)
+				if (profileInstanceParameter != null && TryGetProfileInstanceParameterValue(profileInstanceParameter, out object profileInstanceValue))
 				{
-					scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, GetProfileParameterValue(profileInstanceParameter.Value).ToString()));
+					scriptParams.Add(new DmsAutomationScriptParamValue(profileInstanceParameter.Parameter.Name, profileInstanceValue.ToString()));
 					continue;
 				}
 
@@ -702,6 +702,30 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			}
 
 			return scriptParams;
+		}
+
+		// Capability and capacity parameters store their value in a usage value instead of Value.
+		private static bool TryGetProfileInstanceParameterValue(ProfileParameterEntry entry, out object value)
+		{
+			if (entry.Value != null)
+			{
+				value = GetProfileParameterValue(entry.Value);
+				return true;
+			}
+
+			value = entry.CapabilityUsageValue?.RequiredDiscreet ?? entry.CapabilityUsageValue?.RequiredString;
+			if (value != null)
+			{
+				return true;
+			}
+
+			if (entry.CapacityUsageValue != null)
+			{
+				value = (double)entry.CapacityUsageValue.DecimalQuantity;
+				return true;
+			}
+
+			return false;
 		}
 
 		private static object GetProfileParameterValue(ParameterValue value)
