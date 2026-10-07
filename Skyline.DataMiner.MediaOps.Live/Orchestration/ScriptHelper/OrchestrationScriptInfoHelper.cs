@@ -12,7 +12,9 @@
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 
 	/// <summary>
@@ -46,6 +48,24 @@
 		/// <returns>Returns the orchestration script input information for the specified script.</returns>
 		public OrchestrationScriptInputInfo GetOrchestrationScriptInputInfo(string scriptName)
 		{
+			return GetOrchestrationScriptInputInfo(scriptName, null);
+		}
+
+		/// <summary>
+		/// Request the orchestration script input information for the specified script, based on the input values that were already provided.
+		/// Call this again whenever a value changes that the script uses to decide which input items are relevant, so that items can appear
+		/// or disappear, options and ranges can change, and groups can be repeated.
+		/// </summary>
+		/// <param name="scriptName">Name of the orchestration script.</param>
+		/// <param name="providedValues">The input values that were already provided, keyed by the path of the field they belong to.</param>
+		/// <returns>Returns the orchestration script input information for the specified script.</returns>
+		public OrchestrationScriptInputInfo GetOrchestrationScriptInputInfo(string scriptName, OrchestrationInputValues providedValues)
+		{
+			return GetOrchestrationScriptInputInfo(scriptName, providedValues, null);
+		}
+
+		internal OrchestrationScriptInputInfo GetOrchestrationScriptInputInfo(string scriptName, OrchestrationInputValues providedValues, IReadOnlyDictionary<string, string> metadata)
+		{
 			var script = _connection.GetDms().GetScript(scriptName)
 				?? throw new InvalidOperationException("The specified script was not found.");
 
@@ -73,7 +93,7 @@
 				return result;
 			}
 
-			if (TryGetScriptOrchestrationInfo(scriptName, out var scriptOrchestrationInfo))
+			if (TryGetScriptOrchestrationInfo(scriptName, providedValues, metadata, out var scriptOrchestrationInfo))
 			{
 				if (scriptOrchestrationInfo.ProfileDefinitions.Any())
 				{
@@ -88,6 +108,8 @@
 					orchestrationParam.LoadLinkedProfileParameter(_profileHelper);
 					result.Parameters.Add(orchestrationParam);
 				}
+
+				result.InputDefinition = scriptOrchestrationInfo.InputDefinition;
 			}
 
 			return result;
@@ -149,13 +171,17 @@
 			return true;
 		}
 
-		private bool TryGetScriptOrchestrationInfo(string scriptName, out OrchestrationScriptInfo orchestrationScriptInfo)
+		private bool TryGetScriptOrchestrationInfo(
+			string scriptName,
+			OrchestrationInputValues providedValues,
+			IReadOnlyDictionary<string, string> metadata,
+			out OrchestrationScriptInfo orchestrationScriptInfo)
 		{
 			RequestScriptInfoOutput scriptInfoOutput;
 
 			try
 			{
-				var response = OrchestrationAutomationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName);
+				var response = OrchestrationAutomationHelper.ExecuteGetOrchestrationScriptInfo(_connection, scriptName, providedValues, metadata);
 
 				if (response != null &&
 					!response.HadError &&
@@ -169,10 +195,9 @@
 					return false;
 				}
 			}
-			catch (Exception)
+			catch (ScriptExecutionFailedException ex) when (OrchestrationAutomationHelper.IsMissingEntryPointError(ex))
 			{
-				// Swallow exception and return false.
-				// This can happen when the OnRequestScriptInfo entry point doesn't exist.
+				// Only a classic script without the entry point has no info; other failures must not pass for that.
 				orchestrationScriptInfo = null;
 				return false;
 			}
