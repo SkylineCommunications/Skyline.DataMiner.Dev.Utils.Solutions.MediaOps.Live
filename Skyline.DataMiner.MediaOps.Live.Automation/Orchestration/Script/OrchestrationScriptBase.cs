@@ -417,16 +417,25 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			ProfileInstance instance = instances.First();
 
-			foreach (ProfileParameterEntry profileParameterEntry in instance.Values)
+			foreach (ProfileParameterEntry profileParameterEntry in instance.Values ?? Array.Empty<ProfileParameterEntry>())
 			{
 				ParameterInfo matchInfo = parameterInfos
 					.FirstOrDefault(x => (x.Reference as ProfileParameterID).Id == profileParameterEntry.ParameterID);
 
-				if (matchInfo != null)
+				if (matchInfo == null)
+				{
+					continue;
+				}
+
+				if (profileParameterEntry.Value != null)
 				{
 					matchInfo.Value = profileParameterEntry.Value.Type == ParameterValue.ValueType.Double
 						? profileParameterEntry.Value.DoubleValue
 						: profileParameterEntry.Value.StringValue;
+				}
+				else if (TryGetUsageValue(profileParameterEntry, out object usageValue))
+				{
+					matchInfo.Value = usageValue;
 				}
 			}
 		}
@@ -558,10 +567,20 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 					// Tip: add a check if the option names are unique
 					presets.Add(new GroupPresetOption(instance.Name, presetInfo));
 
-					foreach (ProfileParameterEntry value in instance.Values)
+					foreach (ProfileParameterEntry value in instance.Values ?? Array.Empty<ProfileParameterEntry>())
 					{
 						if (!parameters.TryGetValue(value.ParameterID, out ParameterInfo parameter))
 						{
+							continue;
+						}
+
+						if (value.Value is null)
+						{
+							if (TryGetUsageValue(value, out object usageValue))
+							{
+								presetInfo.ParameterValues.Add((parameter, usageValue));
+							}
+
 							continue;
 						}
 
@@ -603,6 +622,24 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 					parameter.Group = group;
 				}
 			}
+		}
+
+		// Capability and capacity parameters store their value in a usage value instead of Value.
+		private static bool TryGetUsageValue(ProfileParameterEntry entry, out object value)
+		{
+			value = entry.CapabilityUsageValue?.RequiredDiscreet ?? entry.CapabilityUsageValue?.RequiredString;
+			if (value != null)
+			{
+				return true;
+			}
+
+			if (entry.CapacityUsageValue != null)
+			{
+				value = (double)entry.CapacityUsageValue.DecimalQuantity;
+				return true;
+			}
+
+			return false;
 		}
 
 		private IEnumerable<ParameterInfo> GetIncompleteInfos(IEnumerable<ParameterInfo> infos) => infos.Where(x => x.Value is null);
