@@ -22,19 +22,18 @@
 			// Init widgets
 			Value = new Numeric();
 
-			if (!Double.IsNaN(info.Step) && info.Step > 0)
-			{
-				Value.StepSize = info.Step;
-			}
+			var decimals = info.Decimals >= 0 && info.Decimals != Int32.MaxValue ? info.Decimals : 0;
+			Value.Decimals = decimals;
 
-			Value.Decimals = !Double.IsNaN(info.Decimals) && info.Decimals >= 0 ? info.Decimals : 3;
+			// Without an explicit step size, the number of decimals determines the smallest allowed increment.
+			Value.StepSize = !Double.IsNaN(info.Step) && info.Step > 0 ? info.Step : Math.Pow(10, -decimals);
 
-			if (!Double.IsNaN(info.Min) && info.Min != double.MinValue)
+			if (!Double.IsNaN(info.Min) && info.Min != Double.MinValue)
 			{
 				Value.Minimum = info.Min;
 			}
 
-			if (!Double.IsNaN(info.Max) && info.Max != double.MaxValue)
+			if (!Double.IsNaN(info.Max) && info.Max != Double.MaxValue)
 			{
 				Value.Maximum = info.Max;
 			}

@@ -422,12 +422,20 @@
 			var pagingHelper = Helper.DomInstances.PreparePaging(domQuery, pageSize);
 			var pageNumber = 0;
 
-			while (pagingHelper.MoveToNextPage())
+			try
 			{
-				var items = pagingHelper.GetCurrentPage().Select(CreateInstance).ToList();
-				var hasNextPage = pagingHelper.HasNextPage();
+				while (pagingHelper.MoveToNextPage())
+				{
+					var items = pagingHelper.GetCurrentPage().Select(CreateInstance).ToList();
+					var hasNextPage = pagingHelper.HasNextPage();
 
-				yield return new RepositoryPage<T>(items, pageNumber++, hasNextPage);
+					yield return new RepositoryPage<T>(items, pageNumber++, hasNextPage);
+				}
+			}
+			finally
+			{
+				// PagingHelper<DomInstance> is expected to implement IDisposable in a future release.
+				(pagingHelper as IDisposable)?.Dispose();
 			}
 		}
 
