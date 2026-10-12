@@ -196,19 +196,27 @@
 						api,
 						orchestrationEvent.GlobalOrchestrationScript,
 						orchestrationEvent.GlobalOrchestrationScriptArguments.ToList(),
-						orchestrationEvent.Profile.Values.ToList());
+						orchestrationEvent.Profile);
 				}
 			}
 		}
 
-		internal static void ValidateOrchestrationScriptInput(MediaOpsLiveApi api, string scriptName, List<OrchestrationScriptArgument> arguments, List<OrchestrationProfileValue> profileValues)
+		internal static void ValidateOrchestrationScriptInput(MediaOpsLiveApi api, string scriptName, List<OrchestrationScriptArgument> arguments, OrchestrationProfile profile)
 		{
 			if (String.IsNullOrEmpty(scriptName))
 			{
 				return;
 			}
 
-			var scriptInfo = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo(scriptName);
+			List<OrchestrationProfileValue> profileValues = profile?.Values?.ToList() ?? new List<OrchestrationProfileValue>();
+
+			// The script gets the same metadata as during orchestration, as its inputs can depend on it.
+			var metadata = arguments
+				.Where(arg => arg.Type == OrchestrationScriptArgumentType.Metadata)
+				.GroupBy(arg => arg.Name)
+				.ToDictionary(group => group.Key, group => group.Last().Value);
+
+			var scriptInfo = api.Orchestration.Scripts.GetOrchestrationScriptInputInfo(scriptName, profile?.GetInputValues(), metadata);
 
 			foreach (var scriptInputParam in scriptInfo.Parameters)
 			{
@@ -237,6 +245,17 @@
 			}
 
 			ValidateProfileValueTypes(scriptInfo, profileValues);
+			ValidateInputValues(scriptName, scriptInfo);
+		}
+
+		private static void ValidateInputValues(string scriptName, OrchestrationScriptInputInfo scriptInfo)
+		{
+			if (!scriptInfo.HasDynamicInputs || scriptInfo.InputDefinition.TryValidateValues(out var errors))
+			{
+				return;
+			}
+
+			throw new InvalidOperationException($"Invalid script inputs for confirmed event. Script: {scriptName}. {String.Join(" ", errors)}");
 		}
 
 		private static void ValidateProfileValueTypes(OrchestrationScriptInputInfo scriptInfo, List<OrchestrationProfileValue> profileValues)

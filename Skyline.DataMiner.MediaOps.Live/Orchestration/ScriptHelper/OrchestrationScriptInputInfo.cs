@@ -6,6 +6,7 @@
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Net.Profiles;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
 
 	public class OrchestrationScriptInputInfo
 	{
@@ -27,6 +28,17 @@
 		public ICollection<OrchestrationScriptInputParameter> Parameters { get; }
 
 		public ICollection<OrchestrationScriptInputElement> Elements { get; }
+
+		/// <summary>
+		/// Gets or sets the dynamic input items of the script, evaluated for the values that were provided when this information was requested.
+		/// This is <see langword="null"/> for scripts that do not declare dynamic inputs.
+		/// </summary>
+		public OrchestrationInputDefinition InputDefinition { get; set; }
+
+		/// <summary>
+		/// Gets a value indicating whether the script declares dynamic input items.
+		/// </summary>
+		public bool HasDynamicInputs => InputDefinition != null;
 
 		public ICollection<ProfileInstance> GetApplicableProfileInstances(ProfileHelper profileHelper)
 		{
