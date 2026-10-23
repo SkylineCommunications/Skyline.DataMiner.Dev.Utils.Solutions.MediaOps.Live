@@ -4,6 +4,7 @@ using Skyline.DataMiner.Net.Messages.SLDataGateway;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+using Skyline.DataMiner.Solutions.MediaOps.Live.GQI.Metrics;
 using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
 
 [TestClass]
@@ -75,6 +76,39 @@ public class MediaOps_LiveApi_Tests_OrchestrationEvent
 
 		Assert.HasCount(5, pagedIds);
 		CollectionAssert.AreEqual(expectedIds, pagedIds);
+	}
+
+	[TestMethod]
+	public void MediaOps_Live_Api_Tests_OrchestrationEvent_ReadEventsPaged_FirstPageOnlyRetrievesOnePage()
+	{
+		var simulation = new MediaOpsLiveSimulation();
+		var connection = new ConnectionInterceptor(simulation.Dms.CreateConnection());
+		var api = new MediaOpsLiveApi(connection);
+
+		const string eventName = "Paged Test Event";
+
+		var job = api.Orchestration.GetOrCreateNewOrchestrationJob(Guid.NewGuid().ToString());
+		for (int i = 0; i < 5; i++)
+		{
+			job.OrchestrationEvents.Add(new OrchestrationEvent
+			{
+				EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1),
+				EventType = EventType.Other,
+				Name = eventName,
+			});
+		}
+
+		api.Orchestration.SaveOrchestrationJob(job);
+
+		using (var metrics = new ConnectionMetrics(connection))
+		{
+			var firstPage = api.Orchestration.ReadEventsPaged(OrchestrationEventExposers.Name.Equal(eventName), pageSize: 2).First();
+
+			Assert.HasCount(2, firstPage);
+			Assert.IsTrue(firstPage.HasNextPage);
+			Assert.AreEqual(1UL, metrics.NumberOfDomRequests);
+			Assert.AreEqual(2UL, metrics.NumberOfDomInstancesRetrieved);
+		}
 	}
 
 	[TestMethod]
