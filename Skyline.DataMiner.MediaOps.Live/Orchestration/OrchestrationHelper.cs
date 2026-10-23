@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions;
 using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Helpers;
@@ -703,6 +704,27 @@ public class OrchestrationHelper
 	public IEnumerable<OrchestrationEvent> ReadEvents(FilterElement<OrchestrationEvent> filter)
 	{
 		return _orchestrationEventRepository.Read(filter);
+	}
+
+	/// <summary>
+	/// Reads the events matching the provided filter page by page. The filter can be built using the OrchestrationEventExposers class.
+	/// </summary>
+	/// <param name="filter">A filter (or combination of filters) to get a set of events.</param>
+	/// <param name="pageSize">The maximum number of events per page.</param>
+	/// <returns>The pages of events matching the provided filter.</returns>
+	public IEnumerable<RepositoryPage<OrchestrationEvent>> ReadEventsPaged(FilterElement<OrchestrationEvent> filter, int pageSize = 500)
+	{
+		if (filter is null)
+		{
+			throw new ArgumentNullException(nameof(filter));
+		}
+
+		if (pageSize <= 0)
+		{
+			throw new ArgumentOutOfRangeException(nameof(pageSize), "Page size must be greater than zero.");
+		}
+
+		return _orchestrationEventRepository.ReadPaged(filter, pageSize);
 	}
 
 	/// <summary>
