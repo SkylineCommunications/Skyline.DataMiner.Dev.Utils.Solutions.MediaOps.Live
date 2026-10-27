@@ -69,9 +69,11 @@
 			}
 
 			TaskName = generalInfo[0];
-			StartTime = DateTime.SpecifyKind(DateTime.ParseExact(generalInfo[1], "yyyy-MM-dd", CultureInfo.InvariantCulture), DateTimeKind.Local) +
+
+			// Recurring tasks can omit their dates: an empty start date starts today, an empty end date never ends.
+			StartTime = ParseDate(generalInfo[1], DateTime.Today) +
 			            TimeSpan.ParseExact(generalInfo[3], @"hh\:mm\:ss", CultureInfo.InvariantCulture);
-			EndTime = DateTime.SpecifyKind(DateTime.ParseExact(generalInfo[2], "yyyy-MM-dd", CultureInfo.InvariantCulture), DateTimeKind.Local);
+			EndTime = ParseDate(generalInfo[2], DateTime.MinValue);
 			RepetitionType = ParseTaskType(generalInfo[4]);
 			RepetitionInterval = generalInfo[5];
 			Repetitions = String.IsNullOrEmpty(generalInfo[6]) ? 0 : Convert.ToInt32(generalInfo[6]);
@@ -84,6 +86,15 @@
 
 				Actions.Add(ParseAction(actionsInfo));
 			}
+		}
+
+		/// <summary>
+		/// Marks the task as run, like an agent does once the scheduled time is reached.
+		/// </summary>
+		public void MarkAsRun()
+		{
+			HasRun = 1;
+			IsFinished = true;
 		}
 
 		public List<Guid> GetOrchestrationSchedulingInputList()
@@ -183,6 +194,16 @@
 			}
 		}
 
+		private static DateTime ParseDate(string date, DateTime defaultDate)
+		{
+			if (String.IsNullOrEmpty(date))
+			{
+				return defaultDate;
+			}
+
+			return DateTime.SpecifyKind(DateTime.ParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture), DateTimeKind.Local);
+		}
+
 		private SchedulerRepeatType ParseTaskType(string type)
 		{
 			return type switch
@@ -203,9 +224,9 @@
 
 		public DateTime EndTime { get; }
 
-		public int HasRun { get; }
+		public int HasRun { get; private set; }
 
-		public bool IsFinished { get; }
+		public bool IsFinished { get; private set; }
 
 		public int HandlingAgentId { get; }
 
@@ -243,7 +264,7 @@
 				Description = Description,
 				Enabled = IsEnabled,
 				EndTime = EndTime,
-				Executed = 0,
+				Executed = HasRun,
 				Repeat = Repetitions,
 				TaskName = TaskName,
 				HandlingDMA = HandlingAgentId,

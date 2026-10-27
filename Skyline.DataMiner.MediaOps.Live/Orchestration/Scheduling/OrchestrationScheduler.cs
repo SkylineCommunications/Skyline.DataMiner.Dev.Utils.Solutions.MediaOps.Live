@@ -148,9 +148,15 @@
 			// The task is resolved through the event's scheduler reference rather than through its time, so an event whose
 			// time changed after it was scheduled (for example when it is moved into the past to execute immediately) still
 			// has its original task removed.
+			DateTimeOffset now = DateTimeOffset.UtcNow;
+
 			foreach (OrchestrationEvent orchestrationEvent in events)
 			{
-				DeleteEventTaskForEvent(orchestrationEvent);
+				if (DeleteEventTaskForEvent(orchestrationEvent) && orchestrationEvent.EventTime <= now && !(orchestrationEvent.ActualStartTime >= orchestrationEvent.EventTime))
+				{
+					// Marks the event as started, so it is not executed again next to its scheduler task.
+					orchestrationEvent.ActualStartTime = now;
+				}
 			}
 		}
 
@@ -225,20 +231,21 @@
 			}
 		}
 
-		private void DeleteEventTaskForEvent(OrchestrationEvent orchestrationEvent)
+		// Returns whether the scheduler task already started executing the event.
+		private bool DeleteEventTaskForEvent(OrchestrationEvent orchestrationEvent)
 		{
 			if (orchestrationEvent.SchedulerReference == null)
 			{
-				return;
+				return false;
 			}
 
 			OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.SchedulerReference);
 			if (task == null)
 			{
-				// The task no longer exists (for example because the sliding window already cleaned it up), so only the
-				// dangling reference on the event has to be cleared.
+				// The orchestration script removes the task once it starts executing the event (and the sliding window
+				// cleans up old tasks), so only the dangling reference on the event has to be cleared.
 				orchestrationEvent.SchedulerReference = null;
-				return;
+				return true;
 			}
 
 			task.OrchestrationEventIds.Remove(orchestrationEvent.ID);
@@ -254,6 +261,7 @@
 			}
 
 			orchestrationEvent.SchedulerReference = null;
+			return task.HasRun;
 		}
 
 		private IDma SelectRandomDma()

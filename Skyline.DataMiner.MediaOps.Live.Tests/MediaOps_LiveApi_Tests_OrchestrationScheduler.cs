@@ -1,5 +1,8 @@
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
+	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Net.Messages.Advanced;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
@@ -615,14 +618,95 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_SetupSlidingWindowSchedulerTasks_CreatesSingleTask()
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_SetupSlidingWindowSchedulerTasks_FindsTaskOnOtherAgent()
 		{
 			var simulation = new MediaOpsLiveSimulation();
+			var taskName = Constants.OrchestrationSlidingWindowSchedulerTaskNaming;
 
-			simulation.Api.Orchestration.SetupSlidingWindowSchedulerTasks();
+			// The existing task is placed on an agent that a lookup on the local agent only would not see.
+			var taskData = new object[]
+			{
+				new object[] { new[] { taskName, String.Empty, String.Empty, "00:00:00", "daily", "360", String.Empty, taskName, "TRUE", String.Empty, String.Empty } },
+				new object[] { new[] { "automation", Constants.OrchestrationSlidingWindowSchedulerScriptName, "CHECKSETS:FALSE", "DEFER:TRUE" } },
+				new object[] { },
+			};
+
+			simulation.Dms.CreateConnection().HandleMessage(new SetSchedulerInfoMessage
+			{
+				DataMinerID = simulation.Dms.Agents.Keys.Max(),
+				What = 1,
+				Info = Int32.MaxValue,
+				Ppsa = new PPSA(taskData),
+			});
+
 			new MediaOpsLiveApi(simulation.Dms.CreateConnection()).Orchestration.SetupSlidingWindowSchedulerTasks();
 
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count(task => task.TaskName == Constants.OrchestrationSlidingWindowSchedulerTaskNaming));
+			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count(task => task.TaskName == taskName));
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskRan_IsNotLaunchedAgain()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+
+			simulation.Dms.GetAllDmsSchedulerTasks().Single().MarkAsRun();
+
+			MakeDueAndExecuteInBackground(simulation, jobReference);
+
+			Assert.AreEqual(0, GetLaunchCount(simulation), "Expected an event that its scheduler task executes not to be launched a second time.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskWasRemovedByTheOrchestrationScript_IsNotLaunchedAgain()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+
+			var task = simulation.Dms.GetAllDmsSchedulerTasks().Single();
+			simulation.Dms.Agents[task.HandlingAgentId].Scheduler.Tasks.Remove(task.Id);
+
+			MakeDueAndExecuteInBackground(simulation, jobReference);
+
+			Assert.AreEqual(0, GetLaunchCount(simulation), "Expected an event that the orchestration script is executing not to be launched a second time.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskDidNotRun_IsLaunchedOnce()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+
+			var (api, ev) = MakeDueAndExecuteInBackground(simulation, jobReference);
+			api.Orchestration.ExecuteEventsNowInBackground([ev]);
+
+			Assert.AreEqual(1, GetLaunchCount(simulation), "Expected an event that its scheduler task missed to be launched exactly once.");
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
+		}
+
+		// Mirrors a caller that finds the event due, puts it in Draft and executes it immediately, as MediaOps Plan does.
+		private static (MediaOpsLiveApi Api, OrchestrationEvent Event) MakeDueAndExecuteInBackground(MediaOpsLiveSimulation simulation, string jobReference)
+		{
+			// A new API instance has no cached tasks, like the script that performs the synchronization.
+			var api = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
+			var ev = job.OrchestrationEvents.Single();
+
+			ev.EventTime = DateTimeOffset.UtcNow - TimeSpan.FromSeconds(1);
+			ev.EventState = EventState.Draft;
+			api.Orchestration.SaveOrchestrationJob(job);
+
+			api.Orchestration.ExecuteEventsNowInBackground([ev]);
+
+			return (api, ev);
+		}
+
+		private static int GetLaunchCount(MediaOpsLiveSimulation simulation)
+		{
+			return simulation.Dms.ExecutedScripts.Count(script => script.ScriptName == Constants.OrchestrationScriptName);
 		}
 
 		private static List<OrchestrationEvent> SaveJobWithConfirmedEvents(MediaOpsLiveApi api, string jobReference, int count)
