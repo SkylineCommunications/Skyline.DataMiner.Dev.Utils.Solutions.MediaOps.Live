@@ -567,7 +567,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 			switch (msg.Type)
 			{
 				case InfoType.SchedulerTasks:
-					return HandleSchedulerTaskInfoMessage();
+					return HandleSchedulerTaskInfoMessage(msg);
 
 				case InfoType.DataMinerInfo:
 					return HandleDataMinerInfoMessage();
@@ -772,17 +772,19 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 			};
 		}
 
-		private IEnumerable<DMSMessage> HandleSchedulerTaskInfoMessage()
+		private IEnumerable<DMSMessage> HandleSchedulerTaskInfoMessage(GetInfoMessage msg)
 		{
-			List<SimulatedSchedulerTask> allDmsTasks = [];
-			foreach (KeyValuePair<int, SimulatedDma> dma in Agents)
+			// Like a real agent, only the tasks of the requested agent are returned (the first agent when none is specified).
+			if (!Agents.TryGetValue(msg.DataMinerID, out SimulatedDma dma))
 			{
-				allDmsTasks.AddRange(dma.Value.Scheduler.Tasks.Values);
+				dma = Agents.OrderBy(agent => agent.Key).Select(agent => agent.Value).FirstOrDefault();
 			}
+
+			IEnumerable<SimulatedSchedulerTask> tasks = dma?.Scheduler.Tasks.Values ?? Enumerable.Empty<SimulatedSchedulerTask>();
 
 			yield return new GetSchedulerTasksResponseMessage
 			{
-				Tasks = new ArrayList(allDmsTasks.Select(task => task.ToSchedulerTaskInfo()).ToList()),
+				Tasks = new ArrayList(tasks.Select(task => task.ToSchedulerTaskInfo()).ToList()),
 			};
 		}
 

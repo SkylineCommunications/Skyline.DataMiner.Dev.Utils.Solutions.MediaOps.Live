@@ -570,5 +570,80 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 				simulation.Dms.ExecutedScripts,
 				"No orchestration script should be launched when there are no events to execute.");
 		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ResaveFromNewApi_DoesNotDuplicateTasksOnOtherAgents()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			var events = SaveJobWithConfirmedEvents(simulation.Api, jobReference, 8);
+
+			Assert.HasCount(8, simulation.Dms.GetAllDmsSchedulerTasks());
+
+			// A new API instance has no cached tasks, like a script that runs on another agent.
+			var otherApi = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			var job = otherApi.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
+			otherApi.Orchestration.SaveOrchestrationJob(job);
+
+			var tasks = simulation.Dms.GetAllDmsSchedulerTasks().ToList();
+			Assert.HasCount(8, tasks);
+
+			foreach (var ev in events)
+			{
+				Assert.AreEqual(1, tasks.Count(task => task.GetOrchestrationSchedulingInputList().Contains(ev.ID)), $"Event {ev.Name} should be in exactly one task.");
+			}
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_CancelFromNewApi_RemovesTasksOnAllAgents()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 8);
+
+			var otherApi = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			var job = otherApi.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
+
+			foreach (var ev in job.OrchestrationEvents)
+			{
+				ev.EventState = EventState.Cancelled;
+			}
+
+			otherApi.Orchestration.SaveOrchestrationJob(job);
+
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_SetupSlidingWindowSchedulerTasks_CreatesSingleTask()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+
+			simulation.Api.Orchestration.SetupSlidingWindowSchedulerTasks();
+			new MediaOpsLiveApi(simulation.Dms.CreateConnection()).Orchestration.SetupSlidingWindowSchedulerTasks();
+
+			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count(task => task.TaskName == Constants.OrchestrationSlidingWindowSchedulerTaskNaming));
+		}
+
+		private static List<OrchestrationEvent> SaveJobWithConfirmedEvents(MediaOpsLiveApi api, string jobReference, int count)
+		{
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
+			var baseTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1);
+
+			for (int i = 0; i < count; i++)
+			{
+				job.OrchestrationEvents.Add(new OrchestrationEvent
+				{
+					EventTime = baseTime + TimeSpan.FromMinutes(i),
+					EventState = EventState.Confirmed,
+					EventType = EventType.Other,
+					Name = $"Test Event {i}",
+				});
+			}
+
+			api.Orchestration.SaveOrchestrationJob(job);
+
+			return job.OrchestrationEvents.ToList();
+		}
 	}
 }
