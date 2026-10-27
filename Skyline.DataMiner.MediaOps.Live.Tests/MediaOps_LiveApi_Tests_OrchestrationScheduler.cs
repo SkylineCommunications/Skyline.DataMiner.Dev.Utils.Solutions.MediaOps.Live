@@ -1,7 +1,5 @@
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
-	using Skyline.DataMiner.Net.Messages;
-	using Skyline.DataMiner.Net.Messages.Advanced;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
@@ -572,76 +570,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 				script => script.ScriptName == Constants.OrchestrationScriptName,
 				simulation.Dms.ExecutedScripts,
 				"No orchestration script should be launched when there are no events to execute.");
-		}
-
-		[TestMethod]
-		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ResaveFromNewApi_DoesNotDuplicateTasksOnOtherAgents()
-		{
-			var simulation = new MediaOpsLiveSimulation();
-			var jobReference = Guid.NewGuid().ToString();
-			var events = SaveJobWithConfirmedEvents(simulation.Api, jobReference, 8);
-
-			Assert.HasCount(8, simulation.Dms.GetAllDmsSchedulerTasks());
-
-			// A new API instance has no cached tasks, like a script that runs on another agent.
-			var otherApi = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
-			var job = otherApi.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
-			otherApi.Orchestration.SaveOrchestrationJob(job);
-
-			var tasks = simulation.Dms.GetAllDmsSchedulerTasks().ToList();
-			Assert.HasCount(8, tasks);
-
-			foreach (var ev in events)
-			{
-				Assert.AreEqual(1, tasks.Count(task => task.GetOrchestrationSchedulingInputList().Contains(ev.ID)), $"Event {ev.Name} should be in exactly one task.");
-			}
-		}
-
-		[TestMethod]
-		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_CancelFromNewApi_RemovesTasksOnAllAgents()
-		{
-			var simulation = new MediaOpsLiveSimulation();
-			var jobReference = Guid.NewGuid().ToString();
-			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 8);
-
-			var otherApi = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
-			var job = otherApi.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
-
-			foreach (var ev in job.OrchestrationEvents)
-			{
-				ev.EventState = EventState.Cancelled;
-			}
-
-			otherApi.Orchestration.SaveOrchestrationJob(job);
-
-			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
-		}
-
-		[TestMethod]
-		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_SetupSlidingWindowSchedulerTasks_FindsTaskOnOtherAgent()
-		{
-			var simulation = new MediaOpsLiveSimulation();
-			var taskName = Constants.OrchestrationSlidingWindowSchedulerTaskNaming;
-
-			// The existing task is placed on an agent that a lookup on the local agent only would not see.
-			var taskData = new object[]
-			{
-				new object[] { new[] { taskName, String.Empty, String.Empty, "00:00:00", "daily", "360", String.Empty, taskName, "TRUE", String.Empty, String.Empty } },
-				new object[] { new[] { "automation", Constants.OrchestrationSlidingWindowSchedulerScriptName, "CHECKSETS:FALSE", "DEFER:TRUE" } },
-				new object[] { },
-			};
-
-			simulation.Dms.CreateConnection().HandleMessage(new SetSchedulerInfoMessage
-			{
-				DataMinerID = simulation.Dms.Agents.Keys.Max(),
-				What = 1,
-				Info = Int32.MaxValue,
-				Ppsa = new PPSA(taskData),
-			});
-
-			new MediaOpsLiveApi(simulation.Dms.CreateConnection()).Orchestration.SetupSlidingWindowSchedulerTasks();
-
-			Assert.AreEqual(1, simulation.Dms.GetAllDmsSchedulerTasks().Count(task => task.TaskName == taskName));
 		}
 
 		[TestMethod]

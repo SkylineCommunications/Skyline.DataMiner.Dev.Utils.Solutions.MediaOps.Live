@@ -6,6 +6,7 @@
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Async;
 	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Solutions.MediaOps.Live;
@@ -35,45 +36,38 @@
 			_internalTaskList = new Lazy<HashSet<OrchestrationSchedulerTask>>(LoadInternalTaskList);
 		}
 
-		/// <summary>
-		/// Retrieves the scheduler tasks of all agents in the DataMiner system.
-		/// </summary>
-		/// <param name="connection">DataMiner user connection.</param>
-		/// <param name="dms">The DataMiner system to retrieve the tasks from.</param>
-		/// <returns>The scheduler tasks of all agents.</returns>
-		/// <exception cref="DataMinerException">The scheduler tasks of an agent could not be retrieved.</exception>
-		internal static List<SchedulerTask> GetAllSchedulerTasks(IConnection connection, IDms dms)
+		private HashSet<OrchestrationSchedulerTask> LoadInternalTaskList()
 		{
-			// Scheduler tasks are stored per agent, so every agent has to be queried.
-			GetInfoMessage[] requests = dms.GetAgents()
-				.Select(agent => new GetInfoMessage(InfoType.SchedulerTasks) { DataMinerID = agent.Id })
-				.ToArray();
+			HashSet<OrchestrationSchedulerTask> list = [];
+			GetInfoMessage getSchedulerTaskInfoMessage = new(InfoType.SchedulerTasks);
 
-			if (requests.Length == 0)
-			{
-				return [];
-			}
+			AsyncProgress progress = _connection.Async.Launch(getSchedulerTaskInfoMessage);
 
-			DMSMessage[] responses = connection.HandleMessages(requests);
+			/*var pool = AsyncResponseHandler*/
 
-			if (responses == null || responses.Length == 0)
+			AsyncResponseEvent result = progress.WaitForAsyncResponse(/*5 * 60*/5);
+
+			if (result == null || !result.Messages.Any())
 			{
 				throw new DataMinerException("Scheduler task information could not be retrieved");
 			}
 
-			return responses
-				.OfType<GetSchedulerTasksResponseMessage>()
-				.Where(response => response.Tasks != null)
-				.SelectMany(response => response.Tasks.OfType<SchedulerTask>())
-				.ToList();
-		}
-
-		private HashSet<OrchestrationSchedulerTask> LoadInternalTaskList()
-		{
-			HashSet<OrchestrationSchedulerTask> list = [];
-
-			foreach (SchedulerTask task in GetAllSchedulerTasks(_connection, _dms))
+			if (result.Failure != null)
 			{
+				throw result.Failure;
+			}
+
+			GetSchedulerTasksResponseMessage getSchedulerTasksResponse = (GetSchedulerTasksResponseMessage)result.Messages.FirstOrDefault();
+
+			if (getSchedulerTasksResponse == null)
+			{
+				throw new InvalidOperationException("Scheduler task could not be retrieved.");
+			}
+
+			foreach (object taskObject in getSchedulerTasksResponse.Tasks)
+			{
+				SchedulerTask task = (SchedulerTask)taskObject;
+
 				if (OrchestrationSchedulerTask.TryParseFromSchedulerTask(task, out OrchestrationSchedulerTask orchestrationTask))
 				{
 					list.Add(orchestrationTask);

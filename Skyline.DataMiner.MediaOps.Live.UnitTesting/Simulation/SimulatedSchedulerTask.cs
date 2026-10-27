@@ -69,11 +69,9 @@
 			}
 
 			TaskName = generalInfo[0];
-
-			// Recurring tasks can omit their dates: an empty start date starts today, an empty end date never ends.
-			StartTime = ParseDate(generalInfo[1], DateTime.Today) +
+			StartTime = DateTime.SpecifyKind(DateTime.ParseExact(generalInfo[1], "yyyy-MM-dd", CultureInfo.InvariantCulture), DateTimeKind.Local) +
 			            TimeSpan.ParseExact(generalInfo[3], @"hh\:mm\:ss", CultureInfo.InvariantCulture);
-			EndTime = ParseDate(generalInfo[2], DateTime.MinValue);
+			EndTime = DateTime.SpecifyKind(DateTime.ParseExact(generalInfo[2], "yyyy-MM-dd", CultureInfo.InvariantCulture), DateTimeKind.Local);
 			RepetitionType = ParseTaskType(generalInfo[4]);
 			RepetitionInterval = generalInfo[5];
 			Repetitions = String.IsNullOrEmpty(generalInfo[6]) ? 0 : Convert.ToInt32(generalInfo[6]);
@@ -192,16 +190,6 @@
 				default:
 					return;
 			}
-		}
-
-		private static DateTime ParseDate(string date, DateTime defaultDate)
-		{
-			if (String.IsNullOrEmpty(date))
-			{
-				return defaultDate;
-			}
-
-			return DateTime.SpecifyKind(DateTime.ParseExact(date, "yyyy-MM-dd", CultureInfo.InvariantCulture), DateTimeKind.Local);
 		}
 
 		private SchedulerRepeatType ParseTaskType(string type)

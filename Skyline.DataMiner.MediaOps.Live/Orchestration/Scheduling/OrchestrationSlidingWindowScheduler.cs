@@ -4,6 +4,8 @@
 	using System.Collections.Generic;
 	using System.Linq;
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
+	using Skyline.DataMiner.Net.Async;
+	using Skyline.DataMiner.Net.Exceptions;
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
@@ -71,8 +73,30 @@
 
 		private bool SchedulerTaskExists()
 		{
-			return OrchestrationScheduler.GetAllSchedulerTasks(_repository.Connection, _repository.Connection.GetDms())
-				.Any(task => task.TaskName == Constants.OrchestrationSlidingWindowSchedulerTaskNaming);
+			GetInfoMessage getSchedulerTaskInfoMessage = new GetInfoMessage(InfoType.SchedulerTasks);
+
+			AsyncProgress progress = _repository.Connection.Async.Launch(getSchedulerTaskInfoMessage);
+
+			AsyncResponseEvent result = progress.WaitForAsyncResponse(5 * 60);
+
+			if (result == null || !result.Messages.Any())
+			{
+				throw new DataMinerException("Scheduler task information could not be retrieved");
+			}
+
+			if (result.Failure != null)
+			{
+				throw result.Failure;
+			}
+
+			GetSchedulerTasksResponseMessage getSchedulerTasksResponse = (GetSchedulerTasksResponseMessage)result.Messages.FirstOrDefault();
+
+			if (getSchedulerTasksResponse == null)
+			{
+				throw new InvalidOperationException("Scheduler task could not be retrieved.");
+			}
+
+			return getSchedulerTasksResponse.Tasks.ToArray().Any(task => ((SchedulerTask)task).TaskName == Constants.OrchestrationSlidingWindowSchedulerTaskNaming);
 		}
 
 		public void SetupSchedulerTasks()
