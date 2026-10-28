@@ -86,15 +86,6 @@
 			}
 		}
 
-		/// <summary>
-		/// Marks the task as run, like an agent does once the scheduled time is reached.
-		/// </summary>
-		public void MarkAsRun()
-		{
-			HasRun = 1;
-			IsFinished = true;
-		}
-
 		public List<Guid> GetOrchestrationSchedulingInputList()
 		{
 			if (Description != Constants.OrchestrationTaskNaming)
@@ -212,9 +203,9 @@
 
 		public DateTime EndTime { get; }
 
-		public int HasRun { get; private set; }
+		public int HasRun { get; }
 
-		public bool IsFinished { get; private set; }
+		public bool IsFinished { get; }
 
 		public int HandlingAgentId { get; }
 
@@ -252,7 +243,7 @@
 				Description = Description,
 				Enabled = IsEnabled,
 				EndTime = EndTime,
-				Executed = HasRun,
+				Executed = 0,
 				Repeat = Repetitions,
 				TaskName = TaskName,
 				HandlingDMA = HandlingAgentId,

@@ -1,8 +1,11 @@
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
+	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Net.Messages.Advanced;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation;
@@ -573,17 +576,33 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskRan_IsNotLaunchedAgain()
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskIsDue_IsLeftToItsTask()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var jobReference = Guid.NewGuid().ToString();
 			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
 
-			simulation.Dms.GetAllDmsSchedulerTasks().Single().MarkAsRun();
+			var dueTask = MakeTaskDue(simulation);
 
 			MakeDueAndExecuteInBackground(simulation, jobReference);
 
 			Assert.AreEqual(0, GetLaunchCount(simulation), "Expected an event that its scheduler task executes not to be launched a second time.");
+			Assert.AreSame(dueTask, simulation.Dms.GetAllDmsSchedulerTasks().Single(), "Expected the due task not to be updated or deleted, as that makes the scheduler run it again.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNow_SharedDueTask_IsNotUpdated()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var events = SaveJobWithConfirmedEvents(simulation.Api, Guid.NewGuid().ToString(), 2, atSameTime: true);
+
+			var dueTask = MakeTaskDue(simulation);
+
+			// Mirrors the orchestration script that the due task launched.
+			var api = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			api.Orchestration.ExecuteEventsNow([events[0].ID], api.GetMediaOpsPlanHelper());
+
+			Assert.AreSame(dueTask, simulation.Dms.GetAllDmsSchedulerTasks().Single(), "Expected the due task not to be updated, as that makes the scheduler run it again.");
 		}
 
 		[TestMethod]
@@ -602,7 +621,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskDidNotRun_IsLaunchedOnce()
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskIsNotDue_IsLaunchedOnce()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var jobReference = Guid.NewGuid().ToString();
@@ -611,8 +630,28 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			var (api, ev) = MakeDueAndExecuteInBackground(simulation, jobReference);
 			api.Orchestration.ExecuteEventsNowInBackground([ev]);
 
-			Assert.AreEqual(1, GetLaunchCount(simulation), "Expected an event that its scheduler task missed to be launched exactly once.");
+			Assert.AreEqual(1, GetLaunchCount(simulation), "Expected an event whose task is not due yet to be launched exactly once.");
 			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
+		}
+
+		// Moves the single scheduler task to a time that has just passed, like a task that the scheduler is running.
+		private static SimulatedSchedulerTask MakeTaskDue(MediaOpsLiveSimulation simulation)
+		{
+			var task = simulation.Dms.GetAllDmsSchedulerTasks().Single();
+			var dueTask = new OrchestrationSchedulerTask(DateTimeOffset.UtcNow - TimeSpan.FromSeconds(1), task.GetOrchestrationSchedulingInputList())
+			{
+				ScheduledTaskId = new ScheduledTaskId(task.HandlingAgentId, task.Id),
+			};
+
+			simulation.Dms.CreateConnection().HandleMessage(new SetSchedulerInfoMessage
+			{
+				DataMinerID = task.HandlingAgentId,
+				What = 2,
+				Info = Int32.MaxValue,
+				Ppsa = new PPSA(dueTask.GenerateSchedulerTaskData()),
+			});
+
+			return simulation.Dms.GetAllDmsSchedulerTasks().Single();
 		}
 
 		// Mirrors a caller that finds the event due, puts it in Draft and executes it immediately, as MediaOps Plan does.
@@ -637,7 +676,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			return simulation.Dms.ExecutedScripts.Count(script => script.ScriptName == Constants.OrchestrationScriptName);
 		}
 
-		private static List<OrchestrationEvent> SaveJobWithConfirmedEvents(MediaOpsLiveApi api, string jobReference, int count)
+		private static List<OrchestrationEvent> SaveJobWithConfirmedEvents(MediaOpsLiveApi api, string jobReference, int count, bool atSameTime = false)
 		{
 			var job = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
 			var baseTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1);
@@ -646,7 +685,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			{
 				job.OrchestrationEvents.Add(new OrchestrationEvent
 				{
-					EventTime = baseTime + TimeSpan.FromMinutes(i),
+					EventTime = atSameTime ? baseTime : baseTime + TimeSpan.FromMinutes(i),
 					EventState = EventState.Confirmed,
 					EventType = EventType.Other,
 					Name = $"Test Event {i}",

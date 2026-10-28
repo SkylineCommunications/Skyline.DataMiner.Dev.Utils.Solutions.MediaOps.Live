@@ -39,16 +39,10 @@
 		/// <param name="dateTimeOffset">Timestamp for the task.</param>
 		/// <param name="orchestrationEventIds">IDs of the events to be orchestrated by the task.</param>
 		/// <param name="taskId">The task ID.</param>
-		private OrchestrationSchedulerTask(DateTimeOffset dateTimeOffset, IEnumerable<Guid> orchestrationEventIds, ScheduledTaskId taskId, bool hasRun) : this(dateTimeOffset, orchestrationEventIds)
+		private OrchestrationSchedulerTask(DateTimeOffset dateTimeOffset, IEnumerable<Guid> orchestrationEventIds, ScheduledTaskId taskId) : this(dateTimeOffset, orchestrationEventIds)
 		{
 			ScheduledTaskId = taskId;
-			HasRun = hasRun;
 		}
-
-		/// <summary>
-		/// Gets a value indicating whether the scheduler already ran the task.
-		/// </summary>
-		internal bool HasRun { get; }
 
 		/// <summary>
 		/// Gets or sets Unique identifier of the scheduled task in the DataMiner system.
@@ -99,7 +93,7 @@
 			AutomationScriptInstanceInfo automationScriptInfo = (AutomationScriptInstanceInfo)eventOrchestrationTask.ScriptInstance.ParameterIdToValue[0];
 
 			List<Guid> eventGuidsInput = JsonConvert.DeserializeObject<List<Guid>>(automationScriptInfo.Value);
-			orchestrationTask = new(System.DateTime.SpecifyKind(task.StartTime, DateTimeKind.Local), eventGuidsInput, new ScheduledTaskId(task.HandlingDMA, task.Id), task.Executed > 0 || task.Finished);
+			orchestrationTask = new(System.DateTime.SpecifyKind(task.StartTime, DateTimeKind.Local), eventGuidsInput, new ScheduledTaskId(task.HandlingDMA, task.Id));
 
 			return true;
 		}

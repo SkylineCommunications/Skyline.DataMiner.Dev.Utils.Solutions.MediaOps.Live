@@ -225,7 +225,7 @@
 			}
 		}
 
-		// Returns whether the scheduler task already started executing the event.
+		// Returns whether the scheduler task executes, or already executed, the event.
 		private bool DeleteEventTaskForEvent(OrchestrationEvent orchestrationEvent)
 		{
 			if (orchestrationEvent.SchedulerReference == null)
@@ -234,11 +234,12 @@
 			}
 
 			OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.SchedulerReference);
-			if (task == null)
+			orchestrationEvent.SchedulerReference = null;
+
+			// A task that no longer exists was cleaned up after it ran; the scheduler runs a due task again when it is
+			// updated, so a due task is left to the sliding window cleanup.
+			if (task == null || task.DateTime <= DateTimeOffset.UtcNow)
 			{
-				// The orchestration script removes the task once it starts executing the event (and the sliding window
-				// cleans up old tasks), so only the dangling reference on the event has to be cleared.
-				orchestrationEvent.SchedulerReference = null;
 				return true;
 			}
 
@@ -254,8 +255,7 @@
 				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.UpdateTask(task.GenerateSchedulerTaskData());
 			}
 
-			orchestrationEvent.SchedulerReference = null;
-			return task.HasRun;
+			return false;
 		}
 
 		private IDma SelectRandomDma()
