@@ -609,7 +609,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_Scheduling_DueTime_DoesNotUpdateTheDueTask()
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_Scheduling_DueTime_CreatesNewTaskInsteadOfUpdatingTheDueTask()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var jobReference = Guid.NewGuid().ToString();
@@ -617,14 +617,17 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			var dueTask = MakeTaskDue(simulation);
 
-			// Mirrors a sliding window that still includes a due event whose reference was already cleared.
+			// An event that still needs scheduling at a due time, for example after the save validation took long.
 			var ev = simulation.Api.Orchestration.GetOrchestrationJob(jobReference).OrchestrationEvents.First();
 			ev.EventTime = new DateTimeOffset(dueTask.StartTime);
 			ev.SchedulerReference = null;
 
 			new OrchestrationScheduler(simulation.Dms.CreateConnection()).CreateOrUpdateEventScheduling([ev]);
 
-			Assert.AreSame(dueTask, simulation.Dms.GetAllDmsSchedulerTasks().Single(), "Expected no task to be created or updated for a time that has passed.");
+			var tasks = simulation.Dms.GetAllDmsSchedulerTasks().ToList();
+			Assert.Contains(dueTask, tasks, "Expected the due task not to be updated.");
+			Assert.HasCount(2, tasks, "Expected the event to get a task of its own.");
+			Assert.AreNotEqual(new ScheduledTaskId(dueTask.HandlingAgentId, dueTask.Id), ev.SchedulerReference);
 		}
 
 		[TestMethod]
@@ -669,7 +672,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
-		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskWasRemovedByTheOrchestrationScript_IsNotLaunchedAgain()
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskNoLongerExists_IsLaunched()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var jobReference = Guid.NewGuid().ToString();
@@ -680,7 +683,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			MakeDueAndExecuteInBackground(simulation, jobReference);
 
-			Assert.AreEqual(0, GetLaunchCount(simulation), "Expected an event that the orchestration script is executing not to be launched a second time.");
+			Assert.AreEqual(1, GetLaunchCount(simulation), "Expected an event without a task to be launched.");
 		}
 
 		[TestMethod]
