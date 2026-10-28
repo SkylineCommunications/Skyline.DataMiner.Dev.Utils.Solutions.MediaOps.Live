@@ -18,10 +18,13 @@
 	/// </summary>
 	internal class OrchestrationScheduler
 	{
+		// A task this close to its time may already be running when a change reaches the scheduler.
+		private static readonly TimeSpan DueMargin = TimeSpan.FromSeconds(5);
+
 		private readonly IDms _dms;
 		private readonly IConnection _connection;
 
-		private readonly Lazy<HashSet<OrchestrationSchedulerTask>> _internalTaskList;
+		private HashSet<OrchestrationSchedulerTask> _taskList;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationScheduler"/> class.
@@ -32,9 +35,9 @@
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			_dms = connection.GetDms();
-
-			_internalTaskList = new Lazy<HashSet<OrchestrationSchedulerTask>>(LoadInternalTaskList);
 		}
+
+		private HashSet<OrchestrationSchedulerTask> TaskList => _taskList ??= LoadInternalTaskList();
 
 		private HashSet<OrchestrationSchedulerTask> LoadInternalTaskList()
 		{
@@ -84,7 +87,7 @@
 		/// <returns>A collection of tasks scheduled before the give time.</returns>
 		internal IEnumerable<OrchestrationSchedulerTask> GetEventTasksBeforeTime(DateTimeOffset time)
 		{
-			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime < time.ToUniversalTime());
+			return TaskList.Where(task => task.DateTime.UtcDateTime < time.ToUniversalTime());
 		}
 
 		/// <summary>
@@ -94,7 +97,7 @@
 		/// <returns>A collection of tasks scheduled after the give time.</returns>
 		internal IEnumerable<OrchestrationSchedulerTask> GetEventTasksAfterTime(DateTimeOffset time)
 		{
-			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime > time.ToUniversalTime());
+			return TaskList.Where(task => task.DateTime.UtcDateTime > time.ToUniversalTime());
 		}
 
 		/// <summary>
@@ -105,7 +108,7 @@
 		/// <returns>A collection of task in given time range.</returns>
 		internal IEnumerable<OrchestrationSchedulerTask> GetEventTasksInTimeRange(DateTimeOffset from, DateTimeOffset to)
 		{
-			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime <= to.ToUniversalTime() && task.DateTime.UtcDateTime >= from.ToUniversalTime());
+			return TaskList.Where(task => task.DateTime.UtcDateTime <= to.ToUniversalTime() && task.DateTime.UtcDateTime >= from.ToUniversalTime());
 		}
 
 		/// <summary>
@@ -142,14 +145,19 @@
 			// The task is resolved through the event's scheduler reference rather than through its time, so an event whose
 			// time changed after it was scheduled (for example when it is moved into the past to execute immediately) still
 			// has its original task removed.
+			_ = TaskList;
 			DateTimeOffset now = DateTimeOffset.UtcNow;
+			bool reloaded = false;
 
 			foreach (OrchestrationEvent orchestrationEvent in events)
 			{
-				if (DeleteEventTaskForEvent(orchestrationEvent) && orchestrationEvent.EventTime <= now && !(orchestrationEvent.ActualStartTime >= orchestrationEvent.EventTime))
+				if (DeleteEventTaskForEvent(orchestrationEvent, now, ref reloaded)
+					&& orchestrationEvent.EventState != EventState.Cancelled
+					&& orchestrationEvent.EventTime <= now + DueMargin
+					&& !(orchestrationEvent.ActualStartTime >= orchestrationEvent.EventTime))
 				{
-					// Marks the event as started, so it is not executed again next to its scheduler task.
-					orchestrationEvent.ActualStartTime = now;
+					// The scheduled time keeps the event order valid while marking the event as started by its task.
+					orchestrationEvent.ActualStartTime = orchestrationEvent.EventTime;
 				}
 			}
 		}
@@ -161,7 +169,7 @@
 			{
 				if (_dms.GetAgent(taskId.DmaId).Scheduler.DeleteTask(taskId.TaskId) == 0)
 				{
-					_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(taskId));
+					TaskList.RemoveWhere(t => t.ScheduledTaskId.Equals(taskId));
 					deletedTaskIds.Add(taskId);
 				}
 			}
@@ -172,24 +180,29 @@
 		private void CreateOrUpdateEventTasks(IEnumerable<OrchestrationEvent> orchestrationEvents)
 		{
 			IEnumerable<IGrouping<DateTimeOffset?, OrchestrationEvent>> groupedByTimeEvents = orchestrationEvents.GroupBy(e => e.EventTime).OrderBy(g => g.Key);
+			_ = TaskList;
+			DateTimeOffset now = DateTimeOffset.UtcNow;
 
 			foreach (IGrouping<DateTimeOffset?, OrchestrationEvent> groupedByTimeEvent in groupedByTimeEvents)
 			{
-				if (groupedByTimeEvent.Key.HasValue)
+				// A task for a time that is (nearly) due could already be running, so it is neither created nor updated.
+				if (groupedByTimeEvent.Key.HasValue && groupedByTimeEvent.Key.Value > now + DueMargin)
 				{
-					CreateOrUpdateEventTasksForTimeStamp(groupedByTimeEvent.Key.Value, groupedByTimeEvent.ToList());
+					CreateOrUpdateEventTasksForTimeStamp(groupedByTimeEvent.Key.Value, groupedByTimeEvent.ToList(), now);
 				}
 			}
 		}
 
-		private void CreateOrUpdateEventTasksForTimeStamp(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents)
+		private void CreateOrUpdateEventTasksForTimeStamp(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents, DateTimeOffset now)
 		{
 			OrchestrationSchedulerTask taskForTimeStamp = FindExistingTaskForTimeStamp(timestamp);
 			bool taskUpdated = false;
+			bool reloaded = false;
 
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
-				if (_internalTaskList.Value.Count >= Constants.SchedulerMaxTotalOrchestrationEvents)
+				// Tasks that already ran are kept until the sliding window removes them, so only upcoming tasks count.
+				if (TaskList.Count(task => task.DateTime > now) >= Constants.SchedulerMaxTotalOrchestrationEvents)
 				{
 					throw new InvalidOperationException($"Orchestration task limit: {Constants.SchedulerMaxTotalOrchestrationEvents} has been reached. Likely some events have not been scheduled");
 				}
@@ -197,13 +210,13 @@
 				// Create new task for timestamp during first iteration if none exist yet
 				if (taskForTimeStamp == null)
 				{
-					DeleteEventTaskForEvent(orchestrationEvent);
+					DeleteEventTaskForEvent(orchestrationEvent, now, ref reloaded);
 					taskForTimeStamp = new OrchestrationSchedulerTask(timestamp, new List<Guid> { orchestrationEvent.ID });
 					IDma dma = SelectRandomDma();
 					int newTaskId = dma.Scheduler.CreateTask(taskForTimeStamp.GenerateSchedulerTaskData());
 					taskForTimeStamp.ScheduledTaskId = new ScheduledTaskId(dma.Id, newTaskId);
 					orchestrationEvent.SchedulerReference = taskForTimeStamp.ScheduledTaskId;
-					_internalTaskList.Value.Add(taskForTimeStamp);
+					TaskList.Add(taskForTimeStamp);
 					continue;
 				}
 
@@ -213,7 +226,7 @@
 					continue;
 				}
 
-				DeleteEventTaskForEvent(orchestrationEvent);
+				DeleteEventTaskForEvent(orchestrationEvent, now, ref reloaded);
 				taskForTimeStamp.OrchestrationEventIds.Add(orchestrationEvent.ID);
 				orchestrationEvent.SchedulerReference = taskForTimeStamp.ScheduledTaskId;
 				taskUpdated = true;
@@ -226,7 +239,7 @@
 		}
 
 		// Returns whether the scheduler task executes, or already executed, the event.
-		private bool DeleteEventTaskForEvent(OrchestrationEvent orchestrationEvent)
+		private bool DeleteEventTaskForEvent(OrchestrationEvent orchestrationEvent, DateTimeOffset now, ref bool reloaded)
 		{
 			if (orchestrationEvent.SchedulerReference == null)
 			{
@@ -234,12 +247,19 @@
 			}
 
 			OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.SchedulerReference);
-			orchestrationEvent.SchedulerReference = null;
-
-			// A task that no longer exists was cleaned up after it ran; the scheduler runs a due task again when it is
-			// updated, so a due task is left to the sliding window cleanup.
-			if (task == null || task.DateTime <= DateTimeOffset.UtcNow)
+			if (task == null && !reloaded)
 			{
+				// The task list is a snapshot, so a task created by another process after it was loaded can be missing.
+				_taskList = LoadInternalTaskList();
+				reloaded = true;
+				task = FindExistingTaskByTaskId(orchestrationEvent.SchedulerReference);
+			}
+
+			// A task that no longer exists was cleaned up after it ran; the scheduler runs a (nearly) due task again when
+			// it is updated, so such a task is left to the sliding window cleanup.
+			if (task == null || task.DateTime <= now + DueMargin)
+			{
+				orchestrationEvent.SchedulerReference = null;
 				return true;
 			}
 
@@ -248,13 +268,14 @@
 			if (!task.OrchestrationEventIds.Any())
 			{
 				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.DeleteTask(task.ScheduledTaskId.TaskId);
-				_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(task.ScheduledTaskId));
+				TaskList.RemoveWhere(t => t.ScheduledTaskId.Equals(task.ScheduledTaskId));
 			}
 			else
 			{
 				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.UpdateTask(task.GenerateSchedulerTaskData());
 			}
 
+			orchestrationEvent.SchedulerReference = null;
 			return false;
 		}
 
@@ -266,12 +287,12 @@
 
 		private OrchestrationSchedulerTask FindExistingTaskForTimeStamp(DateTimeOffset timestamp)
 		{
-			return _internalTaskList.Value.FirstOrDefault(task => task.DateTime == timestamp);
+			return TaskList.FirstOrDefault(task => task.DateTime == timestamp);
 		}
 
 		private OrchestrationSchedulerTask FindExistingTaskByTaskId(ScheduledTaskId taskId)
 		{
-			return _internalTaskList.Value.FirstOrDefault(task => task.ScheduledTaskId.Equals(taskId));
+			return TaskList.FirstOrDefault(task => task.ScheduledTaskId.Equals(taskId));
 		}
 	}
 }

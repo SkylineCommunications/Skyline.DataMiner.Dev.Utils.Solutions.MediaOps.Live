@@ -588,6 +588,69 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 
 			Assert.AreEqual(0, GetLaunchCount(simulation), "Expected an event that its scheduler task executes not to be launched a second time.");
 			Assert.AreSame(dueTask, simulation.Dms.GetAllDmsSchedulerTasks().Single(), "Expected the due task not to be updated or deleted, as that makes the scheduler run it again.");
+
+			var storedEvent = simulation.Api.Orchestration.GetOrchestrationJob(jobReference).OrchestrationEvents.Single();
+			Assert.AreEqual(storedEvent.EventTime, storedEvent.ActualStartTime, "Expected the event to be marked as started at its scheduled time, so the event order stays valid.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNow_SharedNearlyDueTask_IsNotUpdated()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var events = SaveJobWithConfirmedEvents(simulation.Api, Guid.NewGuid().ToString(), 2, atSameTime: true);
+
+			// An update this close to the task's time can reach the scheduler after the task already started.
+			var dueTask = MakeTaskDue(simulation, TimeSpan.FromSeconds(2));
+
+			var api = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			api.Orchestration.ExecuteEventsNow([events[0].ID], api.GetMediaOpsPlanHelper());
+
+			Assert.AreSame(dueTask, simulation.Dms.GetAllDmsSchedulerTasks().Single(), "Expected the nearly due task not to be updated.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_Scheduling_DueTime_DoesNotUpdateTheDueTask()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 2, atSameTime: true);
+
+			var dueTask = MakeTaskDue(simulation);
+
+			// Mirrors a sliding window that still includes a due event whose reference was already cleared.
+			var ev = simulation.Api.Orchestration.GetOrchestrationJob(jobReference).OrchestrationEvents.First();
+			ev.EventTime = new DateTimeOffset(dueTask.StartTime);
+			ev.SchedulerReference = null;
+
+			new OrchestrationScheduler(simulation.Dms.CreateConnection()).CreateOrUpdateEventScheduling([ev]);
+
+			Assert.AreSame(dueTask, simulation.Dms.GetAllDmsSchedulerTasks().Single(), "Expected no task to be created or updated for a time that has passed.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_TaskCreatedAfterTheTaskListWasLoaded_IsFound()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+
+			// Loads the task list of this API instance before the event below is scheduled by another instance.
+			var api = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			SaveJobWithConfirmedEvents(api, Guid.NewGuid().ToString(), 1, firstEventTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(2));
+
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
+			var ev = job.OrchestrationEvents.Single();
+			ev.EventTime = DateTimeOffset.UtcNow - TimeSpan.FromSeconds(1);
+			ev.EventState = EventState.Draft;
+			api.Orchestration.SaveOrchestrationJob(job);
+
+			Assert.IsNull(simulation.Api.Orchestration.GetOrchestrationJob(jobReference).OrchestrationEvents.Single().ActualStartTime, "Expected the event not to be marked as started by a task that was only missing from the cached task list.");
+
+			api.Orchestration.ExecuteEventsNowInBackground([ev]);
+
+			Assert.AreEqual(1, GetLaunchCount(simulation), "Expected the event to be launched, as its future task was found and removed.");
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks(), "Expected only the task of the other job to remain.");
 		}
 
 		[TestMethod]
@@ -634,11 +697,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
 		}
 
-		// Moves the single scheduler task to a time that has just passed, like a task that the scheduler is running.
-		private static SimulatedSchedulerTask MakeTaskDue(MediaOpsLiveSimulation simulation)
+		// Moves the single scheduler task to a time around now, like a task that the scheduler is about to run or is running.
+		private static SimulatedSchedulerTask MakeTaskDue(MediaOpsLiveSimulation simulation, TimeSpan? offset = null)
 		{
 			var task = simulation.Dms.GetAllDmsSchedulerTasks().Single();
-			var dueTask = new OrchestrationSchedulerTask(DateTimeOffset.UtcNow - TimeSpan.FromSeconds(1), task.GetOrchestrationSchedulingInputList())
+			var dueTask = new OrchestrationSchedulerTask(DateTimeOffset.UtcNow + (offset ?? TimeSpan.FromSeconds(-1)), task.GetOrchestrationSchedulingInputList())
 			{
 				ScheduledTaskId = new ScheduledTaskId(task.HandlingAgentId, task.Id),
 			};
@@ -676,10 +739,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			return simulation.Dms.ExecutedScripts.Count(script => script.ScriptName == Constants.OrchestrationScriptName);
 		}
 
-		private static List<OrchestrationEvent> SaveJobWithConfirmedEvents(MediaOpsLiveApi api, string jobReference, int count, bool atSameTime = false)
+		private static List<OrchestrationEvent> SaveJobWithConfirmedEvents(MediaOpsLiveApi api, string jobReference, int count, bool atSameTime = false, DateTimeOffset? firstEventTime = null)
 		{
 			var job = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
-			var baseTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(1);
+			var baseTime = firstEventTime ?? DateTimeOffset.UtcNow + TimeSpan.FromHours(1);
 
 			for (int i = 0; i < count; i++)
 			{
