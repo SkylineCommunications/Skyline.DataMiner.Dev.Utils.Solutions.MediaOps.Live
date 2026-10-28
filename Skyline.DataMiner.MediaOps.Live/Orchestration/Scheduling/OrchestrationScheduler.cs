@@ -151,12 +151,13 @@
 			// The task is resolved through the event's scheduler reference rather than through its time, so an event whose
 			// time changed after it was scheduled (for example when it is moved into the past to execute immediately) still
 			// has its original task removed.
-			bool reloaded = false;
+			bool refreshed = false;
 
 			foreach (OrchestrationEvent orchestrationEvent in scheduledEvents)
 			{
-				if (!DeleteEventTaskForEvent(orchestrationEvent, ref reloaded)
+				if (!DeleteEventTaskForEvent(orchestrationEvent, ref refreshed)
 					|| orchestrationEvent.EventState == EventState.Cancelled
+					|| !orchestrationEvent.EventTime.HasValue
 					|| orchestrationEvent.ActualStartTime >= orchestrationEvent.EventTime)
 				{
 					continue;
@@ -197,9 +198,12 @@
 
 		private void CreateOrUpdateEventTasksForTimeStamp(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents)
 		{
-			OrchestrationSchedulerTask taskForTimeStamp = FindExistingTaskForTimeStamp(timestamp);
+			// Since a due task is never updated, several tasks can exist for the same time.
+			List<OrchestrationSchedulerTask> tasksForTimeStamp = TaskList.Where(task => task.DateTime == timestamp).ToList();
+			OrchestrationSchedulerTask upcomingTask = tasksForTimeStamp.FirstOrDefault(task => !IsDue(task));
 			var addedEvents = new List<OrchestrationEvent>();
-			bool reloaded = false;
+			var eventsForNewTask = new List<OrchestrationEvent>();
+			bool refreshed = false;
 
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
@@ -209,9 +213,10 @@
 					throw new InvalidOperationException($"Orchestration task limit: {Constants.SchedulerMaxTotalOrchestrationEvents} has been reached. Likely some events have not been scheduled");
 				}
 
-				// Event already added to correct task
-				if (taskForTimeStamp != null && orchestrationEvent.SchedulerReference == taskForTimeStamp.ScheduledTaskId)
+				OrchestrationSchedulerTask owningTask = tasksForTimeStamp.FirstOrDefault(task => task.OrchestrationEventIds.Contains(orchestrationEvent.ID));
+				if (owningTask != null)
 				{
+					orchestrationEvent.SchedulerReference = owningTask.ScheduledTaskId;
 					continue;
 				}
 
@@ -221,34 +226,38 @@
 					continue;
 				}
 
-				// A due task is never updated, so an event that still needs scheduling gets a task of its own.
-				if (taskForTimeStamp == null || IsDue(taskForTimeStamp))
+				DeleteEventTaskForEvent(orchestrationEvent, ref refreshed);
+
+				if (upcomingTask == null)
 				{
-					DeleteEventTaskForEvent(orchestrationEvent, ref reloaded);
-					taskForTimeStamp = CreateTask(timestamp, [orchestrationEvent]);
+					eventsForNewTask.Add(orchestrationEvent);
 					continue;
 				}
 
-				DeleteEventTaskForEvent(orchestrationEvent, ref reloaded);
-				taskForTimeStamp.OrchestrationEventIds.Add(orchestrationEvent.ID);
-				orchestrationEvent.SchedulerReference = taskForTimeStamp.ScheduledTaskId;
+				upcomingTask.OrchestrationEventIds.Add(orchestrationEvent.ID);
+				orchestrationEvent.SchedulerReference = upcomingTask.ScheduledTaskId;
 				addedEvents.Add(orchestrationEvent);
 			}
 
-			if (!addedEvents.Any())
+			if (addedEvents.Any())
 			{
-				return;
+				if (IsDue(upcomingTask))
+				{
+					// The task became due while the events were added, so they move to a new task instead.
+					upcomingTask.OrchestrationEventIds.RemoveAll(id => addedEvents.Any(e => e.ID == id));
+					eventsForNewTask.AddRange(addedEvents);
+				}
+				else
+				{
+					_dms.GetAgent(upcomingTask.ScheduledTaskId.DmaId).Scheduler.UpdateTask(upcomingTask.GenerateSchedulerTaskData());
+				}
 			}
 
-			if (IsDue(taskForTimeStamp))
+			// One task for all of them, so events at the same time keep running in event type order.
+			if (eventsForNewTask.Any())
 			{
-				// The task became due while the events were added, so they move to a task of their own instead.
-				taskForTimeStamp.OrchestrationEventIds.RemoveAll(id => addedEvents.Any(e => e.ID == id));
-				CreateTask(timestamp, addedEvents);
-				return;
+				CreateTask(timestamp, eventsForNewTask);
 			}
-
-			_dms.GetAgent(taskForTimeStamp.ScheduledTaskId.DmaId).Scheduler.UpdateTask(taskForTimeStamp.GenerateSchedulerTaskData());
 		}
 
 		private OrchestrationSchedulerTask CreateTask(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents)
@@ -269,7 +278,7 @@
 
 		// Removes the event from its task, unless that task is due: the scheduler runs a (nearly) due task again when it is
 		// updated, so such a task keeps the event and is left to the sliding window cleanup. Returns whether a due task kept it.
-		private bool DeleteEventTaskForEvent(OrchestrationEvent orchestrationEvent, ref bool reloaded)
+		private bool DeleteEventTaskForEvent(OrchestrationEvent orchestrationEvent, ref bool refreshed)
 		{
 			if (orchestrationEvent.SchedulerReference == null)
 			{
@@ -277,10 +286,12 @@
 			}
 
 			OrchestrationSchedulerTask task = FindExistingTaskByTaskId(orchestrationEvent.SchedulerReference);
-			if (task == null && !reloaded)
+
+			// A missing task can have been created, and a due task deleted, by another process after the list was loaded.
+			if ((task == null || IsDue(task)) && !refreshed)
 			{
-				MergeNewTasksIntoTaskList();
-				reloaded = true;
+				RefreshTaskList();
+				refreshed = true;
 				task = FindExistingTaskByTaskId(orchestrationEvent.SchedulerReference);
 			}
 
@@ -311,11 +322,16 @@
 			return false;
 		}
 
-		// The task list is a snapshot, so tasks created by another process after it was loaded are added, while the
-		// cached tasks are kept because they may have pending changes.
-		private void MergeNewTasksIntoTaskList()
+		// Brings the cached task list in line with the scheduler, keeping the cached task objects because they may have
+		// pending changes.
+		private void RefreshTaskList()
 		{
-			foreach (OrchestrationSchedulerTask task in LoadInternalTaskList())
+			List<OrchestrationSchedulerTask> currentTasks = LoadInternalTaskList().ToList();
+			var currentTaskIds = new HashSet<ScheduledTaskId>(currentTasks.Select(task => task.ScheduledTaskId));
+
+			TaskList.RemoveWhere(task => !currentTaskIds.Contains(task.ScheduledTaskId));
+
+			foreach (OrchestrationSchedulerTask task in currentTasks)
 			{
 				if (FindExistingTaskByTaskId(task.ScheduledTaskId) == null)
 				{
@@ -333,11 +349,6 @@
 		{
 			List<IDma> agents = _dms.GetAgents().ToList();
 			return agents[new Random().Next(agents.Count)];
-		}
-
-		private OrchestrationSchedulerTask FindExistingTaskForTimeStamp(DateTimeOffset timestamp)
-		{
-			return TaskList.FirstOrDefault(task => task.DateTime == timestamp);
 		}
 
 		private OrchestrationSchedulerTask FindExistingTaskByTaskId(ScheduledTaskId taskId)
