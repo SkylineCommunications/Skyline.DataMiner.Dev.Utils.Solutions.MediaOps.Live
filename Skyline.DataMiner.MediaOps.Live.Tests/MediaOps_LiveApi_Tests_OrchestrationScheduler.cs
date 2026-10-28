@@ -768,6 +768,28 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 		}
 
 		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_EventExecutedByItsDueTask_CanBeConfirmedAgain()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			var events = SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+			MakeTaskDue(simulation);
+
+			// Mirrors the orchestration script that the due task launched.
+			var api = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			api.Orchestration.ExecuteEventsNow([events[0].ID], api.GetMediaOpsPlanHelper());
+
+			var job = simulation.Api.Orchestration.GetOrchestrationJob(jobReference);
+			var ev = job.OrchestrationEvents.Single();
+			ev.EventState = EventState.Confirmed;
+			ev.EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(2);
+			simulation.Api.Orchestration.SaveOrchestrationJob(job);
+
+			Assert.HasCount(2, simulation.Dms.GetAllDmsSchedulerTasks(), "Expected a new task next to the task that already executed the event.");
+			Assert.IsTrue(simulation.Dms.GetAllDmsSchedulerTasks().Any(task => new DateTimeOffset(task.StartTime) == ev.EventTime && task.GetOrchestrationSchedulingInputList().Contains(ev.ID)));
+		}
+
+		[TestMethod]
 		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_Scheduling_StaleCachedTaskContents_DoNotOverrideTheReference()
 		{
 			var simulation = new MediaOpsLiveSimulation();
