@@ -213,7 +213,10 @@
 					throw new InvalidOperationException($"Orchestration task limit: {Constants.SchedulerMaxTotalOrchestrationEvents} has been reached. Likely some events have not been scheduled");
 				}
 
-				OrchestrationSchedulerTask owningTask = tasksForTimeStamp.FirstOrDefault(task => task.OrchestrationEventIds.Contains(orchestrationEvent.ID));
+				// Cached task contents can be stale, so a reference to another task takes precedence.
+				OrchestrationSchedulerTask owningTask = tasksForTimeStamp.FirstOrDefault(task =>
+					task.OrchestrationEventIds.Contains(orchestrationEvent.ID)
+					&& (orchestrationEvent.SchedulerReference == null || orchestrationEvent.SchedulerReference.Equals(task.ScheduledTaskId)));
 				if (owningTask != null)
 				{
 					orchestrationEvent.SchedulerReference = owningTask.ScheduledTaskId;
@@ -226,7 +229,11 @@
 					continue;
 				}
 
-				DeleteEventTaskForEvent(orchestrationEvent, ref refreshed);
+				// A due task executes the event itself, so it must not be added to another task.
+				if (DeleteEventTaskForEvent(orchestrationEvent, ref refreshed))
+				{
+					continue;
+				}
 
 				if (upcomingTask == null)
 				{
@@ -234,7 +241,11 @@
 					continue;
 				}
 
-				upcomingTask.OrchestrationEventIds.Add(orchestrationEvent.ID);
+				if (!upcomingTask.OrchestrationEventIds.Contains(orchestrationEvent.ID))
+				{
+					upcomingTask.OrchestrationEventIds.Add(orchestrationEvent.ID);
+				}
+
 				orchestrationEvent.SchedulerReference = upcomingTask.ScheduledTaskId;
 				addedEvents.Add(orchestrationEvent);
 			}
