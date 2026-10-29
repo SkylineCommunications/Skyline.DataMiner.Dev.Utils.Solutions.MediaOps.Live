@@ -574,18 +574,25 @@ public class OrchestrationHelper
 		// An event is only allowed to execute once, so any task that would run it again is removed.
 		_slidingWindowScheduler.DeleteEvents(orchestrationEvents);
 
+		// An event that its scheduler task or an earlier hand-off already started is not launched a second time, nor is an
+		// event that still references a task: only a due task keeps its events, and it executes them itself.
+		List<OrchestrationEventConfiguration> eventsToLaunch = orchestrationEvents.Where(e => e.SchedulerReference == null && !(e.ActualStartTime >= e.EventTime)).ToList();
+
 		// The launched script is deferred, so the events only reach the Configuring state once it actually starts. Record
-		// the moment execution was requested and persist it, so a caller that synchronizes again in the meantime can see
-		// that these events were already handed off and does not launch them a second time.
+		// the hand-off, so a caller that synchronizes again in the meantime does not launch them a second time. The
+		// scheduled time keeps the event order consistent with events that are started by their due task.
 		var requestTime = DateTimeOffset.UtcNow;
-		foreach (OrchestrationEventConfiguration orchestrationEvent in orchestrationEvents)
+		foreach (OrchestrationEventConfiguration orchestrationEvent in eventsToLaunch)
 		{
-			orchestrationEvent.ActualStartTime = requestTime;
+			orchestrationEvent.ActualStartTime = orchestrationEvent.EventTime ?? requestTime;
 		}
 
 		_orchestrationEventRepository.CreateOrUpdate(orchestrationEvents);
 
-		OrchestrationAutomationHelper.ExecuteEventsInBackground(_api.Connection, eventIds);
+		if (eventsToLaunch.Any())
+		{
+			OrchestrationAutomationHelper.ExecuteEventsInBackground(_api.Connection, eventsToLaunch.Select(e => e.ID).ToList());
+		}
 	}
 
 	/// <summary>

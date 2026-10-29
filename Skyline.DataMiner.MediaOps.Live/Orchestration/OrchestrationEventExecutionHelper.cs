@@ -215,6 +215,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			orchestrationEvent.InternalSetState(EventState.Configuring);
 			orchestrationEvent.ActualStartTime = DateTimeOffset.UtcNow;
 
+			// A due task keeps its reference until the event runs; once it runs, a new confirmation must schedule it again.
+			orchestrationEvent.SchedulerReference = null;
+
 			writeBuffer.Enqueue(orchestrationEvent);
 		}
 
