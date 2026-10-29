@@ -24,7 +24,7 @@
 		private readonly IDms _dms;
 		private readonly IConnection _connection;
 
-		private HashSet<OrchestrationSchedulerTask> _taskList;
+		private readonly Lazy<HashSet<OrchestrationSchedulerTask>> _internalTaskList;
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationScheduler"/> class.
@@ -35,9 +35,9 @@
 		{
 			_connection = connection ?? throw new ArgumentNullException(nameof(connection));
 			_dms = connection.GetDms();
-		}
 
-		private HashSet<OrchestrationSchedulerTask> TaskList => _taskList ??= LoadInternalTaskList();
+			_internalTaskList = new Lazy<HashSet<OrchestrationSchedulerTask>>(LoadInternalTaskList);
+		}
 
 		private HashSet<OrchestrationSchedulerTask> LoadInternalTaskList()
 		{
@@ -87,7 +87,7 @@
 		/// <returns>A collection of tasks scheduled before the give time.</returns>
 		internal IEnumerable<OrchestrationSchedulerTask> GetEventTasksBeforeTime(DateTimeOffset time)
 		{
-			return TaskList.Where(task => task.DateTime.UtcDateTime < time.ToUniversalTime());
+			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime < time.ToUniversalTime());
 		}
 
 		/// <summary>
@@ -97,7 +97,7 @@
 		/// <returns>A collection of tasks scheduled after the give time.</returns>
 		internal IEnumerable<OrchestrationSchedulerTask> GetEventTasksAfterTime(DateTimeOffset time)
 		{
-			return TaskList.Where(task => task.DateTime.UtcDateTime > time.ToUniversalTime());
+			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime > time.ToUniversalTime());
 		}
 
 		/// <summary>
@@ -108,7 +108,7 @@
 		/// <returns>A collection of task in given time range.</returns>
 		internal IEnumerable<OrchestrationSchedulerTask> GetEventTasksInTimeRange(DateTimeOffset from, DateTimeOffset to)
 		{
-			return TaskList.Where(task => task.DateTime.UtcDateTime <= to.ToUniversalTime() && task.DateTime.UtcDateTime >= from.ToUniversalTime());
+			return _internalTaskList.Value.Where(task => task.DateTime.UtcDateTime <= to.ToUniversalTime() && task.DateTime.UtcDateTime >= from.ToUniversalTime());
 		}
 
 		/// <summary>
@@ -175,7 +175,7 @@
 			{
 				if (_dms.GetAgent(taskId.DmaId).Scheduler.DeleteTask(taskId.TaskId) == 0)
 				{
-					TaskList.RemoveWhere(t => t.ScheduledTaskId.Equals(taskId));
+					_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(taskId));
 					deletedTaskIds.Add(taskId);
 				}
 			}
@@ -199,7 +199,7 @@
 		private void CreateOrUpdateEventTasksForTimeStamp(DateTimeOffset timestamp, List<OrchestrationEvent> orchestrationEvents)
 		{
 			// Since a due task is never updated, several tasks can exist for the same time.
-			List<OrchestrationSchedulerTask> tasksForTimeStamp = TaskList.Where(task => task.DateTime == timestamp).ToList();
+			List<OrchestrationSchedulerTask> tasksForTimeStamp = _internalTaskList.Value.Where(task => task.DateTime == timestamp).ToList();
 			OrchestrationSchedulerTask upcomingTask = tasksForTimeStamp.FirstOrDefault(task => !IsDue(task));
 			var addedEvents = new List<OrchestrationEvent>();
 			var eventsForNewTask = new List<OrchestrationEvent>();
@@ -208,7 +208,7 @@
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
 				// Tasks that already ran are kept until the sliding window removes them, so only upcoming tasks count.
-				if (TaskList.Count(task => task.DateTime > DateTimeOffset.UtcNow) >= Constants.SchedulerMaxTotalOrchestrationEvents)
+				if (_internalTaskList.Value.Count(task => task.DateTime > DateTimeOffset.UtcNow) >= Constants.SchedulerMaxTotalOrchestrationEvents)
 				{
 					throw new InvalidOperationException($"Orchestration task limit: {Constants.SchedulerMaxTotalOrchestrationEvents} has been reached. Likely some events have not been scheduled");
 				}
@@ -277,7 +277,7 @@
 			IDma dma = SelectRandomDma();
 			int newTaskId = dma.Scheduler.CreateTask(task.GenerateSchedulerTaskData());
 			task.ScheduledTaskId = new ScheduledTaskId(dma.Id, newTaskId);
-			TaskList.Add(task);
+			_internalTaskList.Value.Add(task);
 
 			foreach (OrchestrationEvent orchestrationEvent in orchestrationEvents)
 			{
@@ -322,7 +322,7 @@
 			if (!task.OrchestrationEventIds.Any())
 			{
 				_dms.GetAgent(task.ScheduledTaskId.DmaId).Scheduler.DeleteTask(task.ScheduledTaskId.TaskId);
-				TaskList.RemoveWhere(t => t.ScheduledTaskId.Equals(task.ScheduledTaskId));
+				_internalTaskList.Value.RemoveWhere(t => t.ScheduledTaskId.Equals(task.ScheduledTaskId));
 			}
 			else
 			{
@@ -340,13 +340,13 @@
 			List<OrchestrationSchedulerTask> currentTasks = LoadInternalTaskList().ToList();
 			var currentTaskIds = new HashSet<ScheduledTaskId>(currentTasks.Select(task => task.ScheduledTaskId));
 
-			TaskList.RemoveWhere(task => !currentTaskIds.Contains(task.ScheduledTaskId));
+			_internalTaskList.Value.RemoveWhere(task => !currentTaskIds.Contains(task.ScheduledTaskId));
 
 			foreach (OrchestrationSchedulerTask task in currentTasks)
 			{
 				if (FindExistingTaskByTaskId(task.ScheduledTaskId) == null)
 				{
-					TaskList.Add(task);
+					_internalTaskList.Value.Add(task);
 				}
 			}
 		}
@@ -364,7 +364,7 @@
 
 		private OrchestrationSchedulerTask FindExistingTaskByTaskId(ScheduledTaskId taskId)
 		{
-			return TaskList.FirstOrDefault(task => task.ScheduledTaskId.Equals(taskId));
+			return _internalTaskList.Value.FirstOrDefault(task => task.ScheduledTaskId.Equals(taskId));
 		}
 	}
 }
