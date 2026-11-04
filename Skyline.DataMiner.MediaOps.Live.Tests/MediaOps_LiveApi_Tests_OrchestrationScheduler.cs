@@ -1,7 +1,11 @@
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
+	using Skyline.DataMiner.Net.Messages;
+	using Skyline.DataMiner.Net.Messages.Advanced;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation;
@@ -569,6 +573,309 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 				script => script.ScriptName == Constants.OrchestrationScriptName,
 				simulation.Dms.ExecutedScripts,
 				"No orchestration script should be launched when there are no events to execute.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskIsDue_IsLeftToItsTask()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+
+			var dueTask = MakeTaskDue(simulation);
+
+			MakeDueAndExecuteInBackground(simulation, jobReference);
+
+			Assert.AreEqual(0, GetLaunchCount(simulation), "Expected an event that its scheduler task executes not to be launched a second time.");
+			Assert.AreSame(dueTask, simulation.Dms.GetAllDmsSchedulerTasks().Single(), "Expected the due task not to be updated or deleted, as that makes the scheduler run it again.");
+
+			var storedEvent = simulation.Api.Orchestration.GetOrchestrationJob(jobReference).OrchestrationEvents.Single();
+			Assert.AreEqual(storedEvent.EventTime, storedEvent.ActualStartTime, "Expected the event to be marked as started at its scheduled time, so the event order stays valid.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNow_SharedNearlyDueTask_IsNotUpdated()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var events = SaveJobWithConfirmedEvents(simulation.Api, Guid.NewGuid().ToString(), 2, atSameTime: true);
+
+			// An update this close to the task's time can reach the scheduler after the task already started.
+			var dueTask = MakeTaskDue(simulation, TimeSpan.FromSeconds(2));
+
+			var api = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			api.Orchestration.ExecuteEventsNow([events[0].ID], api.GetMediaOpsPlanHelper());
+
+			Assert.AreSame(dueTask, simulation.Dms.GetAllDmsSchedulerTasks().Single(), "Expected the nearly due task not to be updated.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_Scheduling_DueTime_CreatesOneNewTaskInsteadOfUpdatingTheDueTask()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			SaveJobWithConfirmedEvents(simulation.Api, Guid.NewGuid().ToString(), 1);
+
+			var dueTask = MakeTaskDue(simulation);
+			var dueTime = new DateTimeOffset(dueTask.StartTime);
+
+			// Events that still need scheduling at a due time, for example after the save validation took long.
+			var events = new List<OrchestrationEvent>
+			{
+				new() { EventTime = dueTime, EventState = EventState.Confirmed, EventType = EventType.Other, Name = "Test Event A" },
+				new() { EventTime = dueTime, EventState = EventState.Confirmed, EventType = EventType.Other, Name = "Test Event B" },
+			};
+
+			new OrchestrationScheduler(simulation.Dms.CreateConnection()).CreateOrUpdateEventScheduling(events);
+
+			var tasks = simulation.Dms.GetAllDmsSchedulerTasks().ToList();
+			Assert.Contains(dueTask, tasks, "Expected the due task not to be updated.");
+			Assert.HasCount(2, tasks, "Expected the events to share one new task, so they keep running in event type order.");
+			CollectionAssert.AreEquivalent(events.Select(e => e.ID).ToList(), tasks.Single(task => !ReferenceEquals(task, dueTask)).GetOrchestrationSchedulingInputList());
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_Scheduling_EventInDueTaskWithoutReference_IsNotScheduledAgain()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 2, atSameTime: true);
+
+			var dueTask = MakeTaskDue(simulation);
+
+			var ev = simulation.Api.Orchestration.GetOrchestrationJob(jobReference).OrchestrationEvents.First();
+			ev.EventTime = new DateTimeOffset(dueTask.StartTime);
+			ev.SchedulerReference = null;
+
+			new OrchestrationScheduler(simulation.Dms.CreateConnection()).CreateOrUpdateEventScheduling([ev]);
+
+			Assert.AreSame(dueTask, simulation.Dms.GetAllDmsSchedulerTasks().Single(), "Expected no other task for an event that a task already contains.");
+			Assert.AreEqual(new ScheduledTaskId(dueTask.HandlingAgentId, dueTask.Id), ev.SchedulerReference, "Expected the reference to the owning task to be restored.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_CachedDueTaskThatWasDeleted_IsLaunched()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+			var dueTask = MakeTaskDue(simulation);
+
+			// Loads the task list of this API instance while the due task still exists.
+			var api = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			SaveJobWithConfirmedEvents(api, Guid.NewGuid().ToString(), 1, firstEventTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(2));
+
+			simulation.Dms.Agents[dueTask.HandlingAgentId].Scheduler.Tasks.Remove(dueTask.Id);
+
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
+			var ev = job.OrchestrationEvents.Single();
+			ev.EventTime = DateTimeOffset.UtcNow - TimeSpan.FromSeconds(1);
+			ev.EventState = EventState.Draft;
+			api.Orchestration.SaveOrchestrationJob(job);
+
+			api.Orchestration.ExecuteEventsNowInBackground([ev]);
+
+			Assert.AreEqual(1, GetLaunchCount(simulation), "Expected the event to be launched, as the cached due task no longer exists.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_TaskCreatedAfterTheTaskListWasLoaded_IsFound()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+
+			// Loads the task list of this API instance before the event below is scheduled by another instance.
+			var api = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			SaveJobWithConfirmedEvents(api, Guid.NewGuid().ToString(), 1, firstEventTime: DateTimeOffset.UtcNow + TimeSpan.FromHours(2));
+
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
+			var ev = job.OrchestrationEvents.Single();
+			ev.EventTime = DateTimeOffset.UtcNow - TimeSpan.FromSeconds(1);
+			ev.EventState = EventState.Draft;
+			api.Orchestration.SaveOrchestrationJob(job);
+
+			Assert.IsNull(simulation.Api.Orchestration.GetOrchestrationJob(jobReference).OrchestrationEvents.Single().ActualStartTime, "Expected the event not to be marked as started by a task that was only missing from the cached task list.");
+
+			api.Orchestration.ExecuteEventsNowInBackground([ev]);
+
+			Assert.AreEqual(1, GetLaunchCount(simulation), "Expected the event to be launched, as its future task was found and removed.");
+			Assert.HasCount(1, simulation.Dms.GetAllDmsSchedulerTasks(), "Expected only the task of the other job to remain.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNow_SharedDueTask_IsNotUpdated()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var events = SaveJobWithConfirmedEvents(simulation.Api, Guid.NewGuid().ToString(), 2, atSameTime: true);
+
+			var dueTask = MakeTaskDue(simulation);
+
+			// Mirrors the orchestration script that the due task launched.
+			var api = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			api.Orchestration.ExecuteEventsNow([events[0].ID], api.GetMediaOpsPlanHelper());
+
+			Assert.AreSame(dueTask, simulation.Dms.GetAllDmsSchedulerTasks().Single(), "Expected the due task not to be updated, as that makes the scheduler run it again.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskNoLongerExists_IsLaunched()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+
+			var task = simulation.Dms.GetAllDmsSchedulerTasks().Single();
+			simulation.Dms.Agents[task.HandlingAgentId].Scheduler.Tasks.Remove(task.Id);
+
+			MakeDueAndExecuteInBackground(simulation, jobReference);
+
+			Assert.AreEqual(1, GetLaunchCount(simulation), "Expected an event without a task to be launched.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_ExecuteEventsNowInBackground_EventWhoseTaskIsNotDue_IsLaunchedOnce()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+
+			var (api, ev) = MakeDueAndExecuteInBackground(simulation, jobReference);
+			api.Orchestration.ExecuteEventsNowInBackground([ev]);
+
+			Assert.AreEqual(1, GetLaunchCount(simulation), "Expected an event whose task is not due yet to be launched exactly once.");
+			Assert.IsEmpty(simulation.Dms.GetAllDmsSchedulerTasks());
+
+			var storedEvent = simulation.Api.Orchestration.GetOrchestrationJob(jobReference).OrchestrationEvents.Single();
+			Assert.AreEqual(storedEvent.EventTime, storedEvent.ActualStartTime, "Expected the hand-off to be recorded at the scheduled time, so the event order stays consistent.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_Scheduling_EventMovedAwayFromItsDueTask_IsNotScheduledAgain()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+
+			var dueTask = MakeTaskDue(simulation);
+
+			var ev = simulation.Api.Orchestration.GetOrchestrationJob(jobReference).OrchestrationEvents.Single();
+			ev.EventTime = DateTimeOffset.UtcNow + TimeSpan.FromMinutes(30);
+
+			new OrchestrationScheduler(simulation.Dms.CreateConnection()).CreateOrUpdateEventScheduling([ev]);
+
+			Assert.AreSame(dueTask, simulation.Dms.GetAllDmsSchedulerTasks().Single(), "Expected no other task, as the due task executes the event.");
+			Assert.AreEqual(new ScheduledTaskId(dueTask.HandlingAgentId, dueTask.Id), ev.SchedulerReference, "Expected the reference to the due task to be kept.");
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_EventExecutedByItsDueTask_CanBeConfirmedAgain()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			var events = SaveJobWithConfirmedEvents(simulation.Api, jobReference, 1);
+			MakeTaskDue(simulation);
+
+			// Mirrors the orchestration script that the due task launched.
+			var api = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			api.Orchestration.ExecuteEventsNow([events[0].ID], api.GetMediaOpsPlanHelper());
+
+			var job = simulation.Api.Orchestration.GetOrchestrationJob(jobReference);
+			var ev = job.OrchestrationEvents.Single();
+			ev.EventState = EventState.Confirmed;
+			ev.EventTime = DateTimeOffset.UtcNow + TimeSpan.FromHours(2);
+			simulation.Api.Orchestration.SaveOrchestrationJob(job);
+
+			Assert.HasCount(2, simulation.Dms.GetAllDmsSchedulerTasks(), "Expected a new task next to the task that already executed the event.");
+			Assert.IsTrue(simulation.Dms.GetAllDmsSchedulerTasks().Any(task => new DateTimeOffset(task.StartTime) == ev.EventTime && task.GetOrchestrationSchedulingInputList().Contains(ev.ID)));
+		}
+
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationScheduler_Scheduling_StaleCachedTaskContents_DoNotOverrideTheReference()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var jobReference = Guid.NewGuid().ToString();
+			var events = SaveJobWithConfirmedEvents(simulation.Api, jobReference, 2, atSameTime: true);
+			var originalTime = events[0].EventTime.Value;
+
+			// Loads the task list of this scheduler while both events share the task.
+			var scheduler = new OrchestrationScheduler(simulation.Dms.CreateConnection());
+			scheduler.CreateOrUpdateEventScheduling([new OrchestrationEvent { EventTime = originalTime + TimeSpan.FromHours(2), EventState = EventState.Confirmed, EventType = EventType.Other, Name = "Other Event" }]);
+
+			// Another API instance moves the first event to its own task.
+			var job = simulation.Api.Orchestration.GetOrchestrationJob(jobReference);
+			job.OrchestrationEvents.Single(e => e.ID == events[0].ID).EventTime = originalTime + TimeSpan.FromMinutes(30);
+			simulation.Api.Orchestration.SaveOrchestrationJob(job);
+
+			var ev = simulation.Api.Orchestration.GetOrchestrationJob(jobReference).OrchestrationEvents.Single(e => e.ID == events[0].ID);
+			ev.EventTime = originalTime;
+			scheduler.CreateOrUpdateEventScheduling([ev]);
+
+			var owningTask = simulation.Dms.GetAllDmsSchedulerTasks().Single(task => task.GetOrchestrationSchedulingInputList().Contains(ev.ID));
+			Assert.AreEqual(originalTime, new DateTimeOffset(owningTask.StartTime), "Expected the event to be back in the task at its original time only.");
+			Assert.AreEqual(new ScheduledTaskId(owningTask.HandlingAgentId, owningTask.Id), ev.SchedulerReference);
+		}
+
+		// Moves the single scheduler task to a time around now, like a task that the scheduler is about to run or is running.
+		private static SimulatedSchedulerTask MakeTaskDue(MediaOpsLiveSimulation simulation, TimeSpan? offset = null)
+		{
+			var task = simulation.Dms.GetAllDmsSchedulerTasks().Single();
+			var dueTask = new OrchestrationSchedulerTask(DateTimeOffset.UtcNow + (offset ?? TimeSpan.FromSeconds(-1)), task.GetOrchestrationSchedulingInputList())
+			{
+				ScheduledTaskId = new ScheduledTaskId(task.HandlingAgentId, task.Id),
+			};
+
+			simulation.Dms.CreateConnection().HandleMessage(new SetSchedulerInfoMessage
+			{
+				DataMinerID = task.HandlingAgentId,
+				What = 2,
+				Info = Int32.MaxValue,
+				Ppsa = new PPSA(dueTask.GenerateSchedulerTaskData()),
+			});
+
+			return simulation.Dms.GetAllDmsSchedulerTasks().Single();
+		}
+
+		// Mirrors a caller that finds the event due, puts it in Draft and executes it immediately, as MediaOps Plan does.
+		private static (MediaOpsLiveApi Api, OrchestrationEvent Event) MakeDueAndExecuteInBackground(MediaOpsLiveSimulation simulation, string jobReference)
+		{
+			// A new API instance has no cached tasks, like the script that performs the synchronization.
+			var api = new MediaOpsLiveApi(simulation.Dms.CreateConnection());
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
+			var ev = job.OrchestrationEvents.Single();
+
+			ev.EventTime = DateTimeOffset.UtcNow - TimeSpan.FromSeconds(1);
+			ev.EventState = EventState.Draft;
+			api.Orchestration.SaveOrchestrationJob(job);
+
+			api.Orchestration.ExecuteEventsNowInBackground([ev]);
+
+			return (api, ev);
+		}
+
+		private static int GetLaunchCount(MediaOpsLiveSimulation simulation)
+		{
+			return simulation.Dms.ExecutedScripts.Count(script => script.ScriptName == Constants.OrchestrationScriptName);
+		}
+
+		private static List<OrchestrationEvent> SaveJobWithConfirmedEvents(MediaOpsLiveApi api, string jobReference, int count, bool atSameTime = false, DateTimeOffset? firstEventTime = null)
+		{
+			var job = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference);
+			var baseTime = firstEventTime ?? DateTimeOffset.UtcNow + TimeSpan.FromHours(1);
+
+			for (int i = 0; i < count; i++)
+			{
+				job.OrchestrationEvents.Add(new OrchestrationEvent
+				{
+					EventTime = atSameTime ? baseTime : baseTime + TimeSpan.FromMinutes(i),
+					EventState = EventState.Confirmed,
+					EventType = EventType.Other,
+					Name = $"Test Event {i}",
+				});
+			}
+
+			api.Orchestration.SaveOrchestrationJob(job);
+
+			return job.OrchestrationEvents.ToList();
 		}
 	}
 }
