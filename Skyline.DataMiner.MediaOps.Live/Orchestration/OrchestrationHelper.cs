@@ -27,6 +27,8 @@ public class OrchestrationHelper
 	private readonly ConfigurationRepository _configurationRepository;
 	private readonly OrchestrationEventRepository _orchestrationEventRepository;
 	private readonly JobInfoRepository _jobInfoRepository;
+	private readonly NodePhasesRepository _nodePhasesRepository;
+	private readonly NodeContextValueRepository _nodeContextValueRepository;
 	private readonly OrchestrationSlidingWindowScheduler _slidingWindowScheduler;
 
 	/// <summary>
@@ -41,6 +43,8 @@ public class OrchestrationHelper
 		_orchestrationEventRepository = new OrchestrationEventRepository(api);
 		_configurationRepository = new ConfigurationRepository(api);
 		_jobInfoRepository = new JobInfoRepository(api);
+		_nodePhasesRepository = new NodePhasesRepository(api);
+		_nodeContextValueRepository = new NodeContextValueRepository(api);
 
 		_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(
 			_orchestrationEventRepository,
@@ -53,6 +57,10 @@ public class OrchestrationHelper
 	public OrchestrationScriptInfoHelper Scripts { get; }
 
 	internal JobInfoRepository JobInfos => _jobInfoRepository;
+
+	internal NodePhasesRepository NodePhases => _nodePhasesRepository;
+
+	internal NodeContextValueRepository NodeContextValues => _nodeContextValueRepository;
 
 	/// <summary>
 	///     Executes a sync for the current timing window (default 1 hour in the past and 12 hours into the future).
@@ -399,6 +407,7 @@ public class OrchestrationHelper
 		{
 			DeleteOrchestrationEvents(job.OrchestrationEvents, performanceTracker);
 
+			_nodeContextValueRepository.DeleteForJobs([job.JobInfo.ID]);
 			_jobInfoRepository.Delete(job.JobInfo);
 		}
 	}
@@ -415,6 +424,7 @@ public class OrchestrationHelper
 			IEnumerable<OrchestrationJob> orchestrationJobs = jobs.ToList();
 			DeleteOrchestrationEvents(orchestrationJobs.SelectMany(job => job.OrchestrationEvents), performanceTracker);
 
+			_nodeContextValueRepository.DeleteForJobs(orchestrationJobs.Select(job => job.JobInfo.ID));
 			_jobInfoRepository.Delete(orchestrationJobs.Select(job => job.JobInfo));
 		}
 	}
@@ -430,6 +440,7 @@ public class OrchestrationHelper
 		{
 			DeleteOrchestrationEvents(job.OrchestrationEvents, performanceTracker);
 
+			_nodeContextValueRepository.DeleteForJobs([job.JobInfo.ID]);
 			_jobInfoRepository.Delete(job.JobInfo);
 		}
 	}
@@ -446,6 +457,7 @@ public class OrchestrationHelper
 			IEnumerable<OrchestrationJobConfiguration> orchestrationJobs = jobs.ToList();
 			DeleteOrchestrationEvents(orchestrationJobs.SelectMany(job => job.OrchestrationEvents), performanceTracker);
 
+			_nodeContextValueRepository.DeleteForJobs(orchestrationJobs.Select(job => job.JobInfo.ID));
 			_jobInfoRepository.Delete(orchestrationJobs.Select(job => job.JobInfo));
 		}
 	}
@@ -795,6 +807,12 @@ public class OrchestrationHelper
 		_slidingWindowScheduler.DeleteEvents(orchestrationEvents);
 
 		_configurationRepository.Delete(_configurationRepository.Read(configurationsToDelete).Values);
+
+		var resumeScheduler = new OrchestrationResumeScheduler(_api.Connection);
+		foreach (OrchestrationNodePhases deletedPhases in _nodePhasesRepository.DeleteForEvents(orchestrationEvents.Select(e => e.ID)))
+		{
+			resumeScheduler.DeleteResumeTask(deletedPhases.ResumeSchedulerReference);
+		}
 
 		_orchestrationEventRepository.Delete(orchestrationEvents);
 	}

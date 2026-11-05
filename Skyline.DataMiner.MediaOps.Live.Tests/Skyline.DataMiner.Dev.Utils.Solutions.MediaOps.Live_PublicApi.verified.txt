@@ -300,6 +300,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums
         Preset = 2,
         Metadata = 3,
     }
+    public enum PhaseState
+    {
+        NotStarted = 0,
+        InProgress = 1,
+        Completed = 2,
+        Failed = 3,
+    }
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
 {

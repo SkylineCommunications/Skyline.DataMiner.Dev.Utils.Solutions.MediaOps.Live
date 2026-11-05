@@ -24,6 +24,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
@@ -39,15 +40,20 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 
 	internal class OrchestrationEventExecutionHelper
 	{
+		// A resume task can fire slightly before the stored resume time.
+		private static readonly TimeSpan ResumeDueMargin = TimeSpan.FromSeconds(5);
+
 		private readonly MediaOpsLiveApi _api;
 		private readonly IMediaOpsPlanHelper _planHelper;
 		private readonly OrchestrationSettings _settings;
+		private readonly NodePhasesRepository _nodePhasesRepository;
 
 		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, IMediaOpsPlanHelper planHelper, OrchestrationSettings settings)
 		{
 			_api = api ?? throw new ArgumentNullException(nameof(api));
 			_planHelper = planHelper ?? throw new ArgumentNullException(nameof(planHelper));
 			_settings = settings ?? new OrchestrationSettings();
+			_nodePhasesRepository = new NodePhasesRepository(api);
 		}
 
 		internal void ExecuteEventsNow(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents, PerformanceTracker performanceTracker)
@@ -59,18 +65,25 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				// Only allow execution of events that are in Draft or Confirmed state.
-				// Configuring events are already being executed, and Cancelled, Completed or Failed events should not be executed.
+				// Only Draft and Confirmed events are executed. Events that already started are only revisited
+				// to resume the nodes that wait for a scheduled resume.
 				var eventsToExecute = orchestrationEvents
 					.Where(e => e.EventState == EventState.Draft || e.EventState == EventState.Confirmed)
 					.ToList();
 
-				if (!eventsToExecute.Any())
+				var eventsToResume = orchestrationEvents
+					.Except(eventsToExecute)
+					.ToList();
+
+				if (eventsToExecute.Any())
 				{
-					return;
+					await ExecuteEventsAsync(eventsToExecute, performanceTracker);
 				}
 
-				await ExecuteEventsAsync(eventsToExecute, performanceTracker);
+				if (eventsToResume.Any())
+				{
+					await ResumeEventsAsync(eventsToResume, performanceTracker);
+				}
 			}
 		}
 
@@ -225,20 +238,119 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				if (orchestrationEventConfiguration.ActualStartTime != null)
+				// The event stays Configuring while a node waits for a resume; the last resume completes it.
+				if (orchestrationEventConfiguration.EventState != EventState.Failed && HasPendingResumes(orchestrationEventConfiguration))
 				{
-					orchestrationEventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - orchestrationEventConfiguration.ActualStartTime;
+					writeBuffer.Enqueue(orchestrationEventConfiguration);
+					return;
 				}
 
-				if (orchestrationEventConfiguration.EventState != EventState.Failed)
-				{
-					orchestrationEventConfiguration.InternalSetState(EventState.Completed);
-				}
-
-				orchestrationEventConfiguration.SendPlanJobStateUpdate(_planHelper);
-
-				writeBuffer.Enqueue(orchestrationEventConfiguration);
+				CompleteEvent(orchestrationEventConfiguration, writeBuffer);
 			}
+		}
+
+		private void CompleteEvent(OrchestrationEventConfiguration orchestrationEventConfiguration, WriteBuffer<OrchestrationEvent> writeBuffer)
+		{
+			if (orchestrationEventConfiguration.ActualStartTime != null)
+			{
+				orchestrationEventConfiguration.OrchestrationDuration = DateTimeOffset.UtcNow - orchestrationEventConfiguration.ActualStartTime;
+			}
+
+			if (orchestrationEventConfiguration.EventState != EventState.Failed)
+			{
+				orchestrationEventConfiguration.InternalSetState(EventState.Completed);
+			}
+
+			orchestrationEventConfiguration.SendPlanJobStateUpdate(_planHelper);
+
+			writeBuffer.Enqueue(orchestrationEventConfiguration);
+		}
+
+		private bool HasPendingResumes(OrchestrationEventConfiguration orchestrationEventConfiguration)
+		{
+			if (!orchestrationEventConfiguration.HasGlobalOrchestrationScript && !orchestrationEventConfiguration.HasScripts)
+			{
+				return false;
+			}
+
+			return _nodePhasesRepository.GetPendingResumes(orchestrationEventConfiguration.ID).Any();
+		}
+
+		private async Task ResumeEventsAsync(List<OrchestrationEventConfiguration> eventConfigurations, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ResumeEventsAsync)))
+			using (var taskScheduler = new MediaOpsTaskScheduler())
+			using (var writeBuffer = new WriteBuffer<OrchestrationEvent>(new OrchestrationEventRepository(_api)))
+			{
+				foreach (OrchestrationEventConfiguration orchestrationEvent in eventConfigurations)
+				{
+					await ResumeEventAsync(orchestrationEvent, taskScheduler, writeBuffer, performanceTracker);
+				}
+			}
+		}
+
+		private async Task ResumeEventAsync(OrchestrationEventConfiguration orchestrationEvent, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
+		{
+			DateTimeOffset dueBefore = DateTimeOffset.UtcNow + ResumeDueMargin;
+			List<OrchestrationNodePhases> dueResumes = _nodePhasesRepository.GetPendingResumes(orchestrationEvent.ID)
+				.Where(x => x.ResumeTime == null || x.ResumeTime <= dueBefore)
+				.ToList();
+
+			if (!dueResumes.Any())
+			{
+				return;
+			}
+
+			EventState stateBefore = orchestrationEvent.EventState;
+
+			try
+			{
+				var nodes = new List<NodeConfiguration>();
+
+				foreach (OrchestrationNodePhases resume in dueResumes)
+				{
+					NodeConfiguration node = orchestrationEvent.Configuration?.NodeConfigurations
+						.FirstOrDefault(x => x.NodeId == resume.NodeId && !String.IsNullOrEmpty(x.OrchestrationScriptName));
+
+					if (node != null)
+					{
+						nodes.Add(node);
+						continue;
+					}
+
+					CancelResume(resume);
+					orchestrationEvent.InternalSetState(EventState.Failed);
+					orchestrationEvent.AppendFailureInfo($"The orchestration of node '{resume.NodeId}' could not be resumed: the node no longer has an orchestration script in this event.");
+				}
+
+				await ExecuteNodeScriptsAsync(orchestrationEvent, nodes, resume: true, taskScheduler, performanceTracker);
+			}
+			catch (Exception ex)
+			{
+				orchestrationEvent.InternalSetState(EventState.Failed);
+				orchestrationEvent.AppendFailureInfo($"An unexpected error occurred while resuming the orchestration: {ex.Message}");
+			}
+
+			if (stateBefore != EventState.Configuring)
+			{
+				// Only an event that is still being orchestrated changes state; the failure info is kept.
+				orchestrationEvent.InternalSetState(stateBefore);
+				writeBuffer.Enqueue(orchestrationEvent);
+				return;
+			}
+
+			SaveOrchestrationResult(orchestrationEvent, writeBuffer, performanceTracker);
+		}
+
+		private void CancelResume(OrchestrationNodePhases nodePhases)
+		{
+			new OrchestrationResumeScheduler(_api.Connection).DeleteResumeTask(nodePhases.ResumeSchedulerReference);
+
+			nodePhases.ResumeSchedulerReference = null;
+			nodePhases.ResumePhaseIndex = null;
+			nodePhases.ResumeTime = null;
+			nodePhases.WaitStarted = null;
+			_nodePhasesRepository.CreateOrUpdate(nodePhases);
 		}
 
 		internal void ExecuteConnections(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
@@ -528,57 +640,62 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteNodesConfigurationAsync)))
 			{
-				ConcurrentHashSet<string> errors = new();
+				IEnumerable<NodeConfiguration> nodes = orchestrationEventConfiguration.Configuration.NodeConfigurations
+					.Where(x => !String.IsNullOrEmpty(x.OrchestrationScriptName));
 
-				try
+				await ExecuteNodeScriptsAsync(orchestrationEventConfiguration, nodes, resume: false, taskScheduler, performanceTracker);
+			}
+		}
+
+		private async Task ExecuteNodeScriptsAsync(OrchestrationEventConfiguration orchestrationEventConfiguration, IEnumerable<NodeConfiguration> nodes, bool resume, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
+		{
+			ConcurrentHashSet<string> errors = new();
+
+			try
+			{
+				List<Task> nodeOrchestrationTasks = [];
+
+				foreach (NodeConfiguration nodeConfiguration in nodes)
 				{
-					List<Task> nodeOrchestrationTasks = [];
-
-					foreach (NodeConfiguration nodeConfiguration in orchestrationEventConfiguration.Configuration.NodeConfigurations)
-					{
-						if (String.IsNullOrEmpty(nodeConfiguration.OrchestrationScriptName))
+					Task nodeOrchestrationTask = Task.Factory.StartNew(
+						() =>
 						{
-							continue;
-						}
+							IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(orchestrationEventConfiguration.ID, OrchestrationLevel.Node, nodeConfiguration.NodeId, resume).ToMetadataArguments();
 
-						Task nodeOrchestrationTask = Task.Factory.StartNew(
-							() =>
+							OrchestrationScriptResult nodeScriptResult = ExecuteOrchestrationScript(
+								nodeConfiguration.OrchestrationScriptName,
+								nodeConfiguration.OrchestrationScriptArguments.Union(addedInputParams).ToList(),
+								nodeConfiguration.Profile,
+								performanceTracker);
+
+							if (nodeScriptResult.HadError)
 							{
-								IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(orchestrationEventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
+								errors.TryAdd($"\nError during orchestration for node {DescribeNode(nodeConfiguration)}: " +
+									$"{String.Join("\n", nodeScriptResult.ErrorMessages)}");
+							}
+						},
+						CancellationToken.None,
+						TaskCreationOptions.None,
+						taskScheduler);
 
-								OrchestrationScriptResult nodeScriptResult = ExecuteOrchestrationScript(
-									nodeConfiguration.OrchestrationScriptName,
-									nodeConfiguration.OrchestrationScriptArguments.Union(addedInputParams).ToList(),
-									nodeConfiguration.Profile,
-									performanceTracker);
-
-								if (nodeScriptResult.HadError)
-								{
-									string nodeLabel = nodeConfiguration.NodeLabel;
-									string nodeDescription = !String.IsNullOrWhiteSpace(nodeLabel) ? $"'{nodeLabel}'" : nodeConfiguration.NodeId;
-
-									errors.TryAdd($"\nError during orchestration for node {nodeDescription}: " +
-										$"{String.Join("\n", nodeScriptResult.ErrorMessages)}");
-								}
-							},
-							CancellationToken.None,
-							TaskCreationOptions.None,
-							taskScheduler);
-
-						nodeOrchestrationTasks.Add(nodeOrchestrationTask);
-					}
-
-					await Task.WhenAll(nodeOrchestrationTasks);
+					nodeOrchestrationTasks.Add(nodeOrchestrationTask);
 				}
-				finally
+
+				await Task.WhenAll(nodeOrchestrationTasks);
+			}
+			finally
+			{
+				if (errors.Count > 0)
 				{
-					if (errors.Count > 0)
-					{
-						orchestrationEventConfiguration.InternalSetState(EventState.Failed);
-						orchestrationEventConfiguration.AppendFailureInfo($"Errors occurred during node orchestration: {String.Join("\n", errors)}");
-					}
+					orchestrationEventConfiguration.InternalSetState(EventState.Failed);
+					orchestrationEventConfiguration.AppendFailureInfo($"Errors occurred during node orchestration: {String.Join("\n", errors)}");
 				}
 			}
+		}
+
+		private static string DescribeNode(NodeConfiguration nodeConfiguration)
+		{
+			return !String.IsNullOrWhiteSpace(nodeConfiguration.NodeLabel) ? $"'{nodeConfiguration.NodeLabel}'" : nodeConfiguration.NodeId;
 		}
 
 		private OrchestrationScriptResult ExecuteOrchestrationScript(string scriptName, ICollection<OrchestrationScriptArgument> arguments, OrchestrationProfile profile, PerformanceTracker performanceTracker)

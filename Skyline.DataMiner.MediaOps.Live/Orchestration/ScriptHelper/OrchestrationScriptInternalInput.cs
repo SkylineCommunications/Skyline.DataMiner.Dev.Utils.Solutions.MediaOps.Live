@@ -9,15 +9,26 @@
 
 	internal class OrchestrationScriptInternalInput
 	{
-		public OrchestrationScriptInternalInput(Guid eventId, OrchestrationLevel level = OrchestrationLevel.Unknown)
+		internal const string OrchestrationLevelMetadataKey = "{Orchestration Level}";
+		internal const string EventIdMetadataKey = "{Event ID}";
+		internal const string NodeIdMetadataKey = "{Node ID}";
+		internal const string ResumeMetadataKey = "{Resume}";
+
+		public OrchestrationScriptInternalInput(Guid eventId, OrchestrationLevel level = OrchestrationLevel.Unknown, string nodeId = null, bool resume = false)
 		{
 			EventId = eventId;
 			Level = level;
+			NodeId = nodeId;
+			Resume = resume;
 		}
 
 		public Guid EventId { get; set; }
 
 		public OrchestrationLevel Level { get; set; }
+
+		public string NodeId { get; set; }
+
+		public bool Resume { get; set; }
 
 		public IEnumerable<OrchestrationScriptArgument> ToMetadataArguments()
 		{
@@ -25,12 +36,22 @@
 
 			if (Level != OrchestrationLevel.Unknown)
 			{
-				arguments.Add(new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Metadata, "{Orchestration Level}", Level.ToString()));
+				arguments.Add(new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Metadata, OrchestrationLevelMetadataKey, Level.ToString()));
 			}
 
 			if (EventId != Guid.Empty)
 			{
-				arguments.Add(new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Metadata, "{Event ID}", EventId.ToString()));
+				arguments.Add(new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Metadata, EventIdMetadataKey, EventId.ToString()));
+			}
+
+			if (!String.IsNullOrEmpty(NodeId))
+			{
+				arguments.Add(new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Metadata, NodeIdMetadataKey, NodeId));
+			}
+
+			if (Resume)
+			{
+				arguments.Add(new OrchestrationScriptArgument(OrchestrationScriptArgumentType.Metadata, ResumeMetadataKey, Boolean.TrueString));
 			}
 
 			return arguments;

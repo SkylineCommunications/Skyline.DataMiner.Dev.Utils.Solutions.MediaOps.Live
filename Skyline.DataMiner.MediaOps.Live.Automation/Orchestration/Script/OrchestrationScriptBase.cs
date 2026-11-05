@@ -17,8 +17,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Objects;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Enums;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs;
@@ -72,6 +74,16 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		public virtual void TearDownService(IEngine engine)
 		{
 			// No base logic.
+		}
+
+		/// <summary>
+		/// Gets the ordered phases of this script. When phases are defined, they are executed instead of <c>Orchestrate</c>.
+		/// The set of phases must be fixed: it cannot depend on the input values.
+		/// </summary>
+		/// <returns>The phases, or none to execute <c>Orchestrate</c> instead.</returns>
+		public virtual IEnumerable<OrchestrationPhase> GetPhases()
+		{
+			return Enumerable.Empty<OrchestrationPhase>();
 		}
 
 		public DmsServiceId GetEventMonitoringService()
@@ -187,7 +199,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				return;
 			}
 
-			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node).ToMetadataArguments();
+			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node, nodeConfig.NodeId).ToMetadataArguments();
 
 			OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(
 				_engine.GetUserConnection(),
@@ -232,6 +244,92 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 		internal abstract void ExecuteOrchestration(IEngine engine, bool askMissingValues);
 
+		/// <summary>
+		/// Executes the phases of this script, if it defines any.
+		/// </summary>
+		/// <param name="engine">Link with SLAutomation process.</param>
+		/// <returns><see langword="false"/> when the script defines no phases.</returns>
+		internal bool TryExecutePhases(IEngine engine)
+		{
+			List<OrchestrationPhase> phases = GetPhases()?.ToList();
+			if (phases == null || phases.Count == 0)
+			{
+				return false;
+			}
+
+			PhaseRunResult result = RunPhases(engine, phases);
+			if (!result.IsSuccess)
+			{
+				throw new InvalidOperationException(result.FailureMessage);
+			}
+
+			return true;
+		}
+
+		internal InvalidOperationException CreateNothingToOrchestrateException()
+		{
+			return new InvalidOperationException($"Orchestration script '{GetType().Name}' must either override Orchestrate or define phases in {nameof(GetPhases)}.");
+		}
+
+		private PhaseRunResult RunPhases(IEngine engine, IReadOnlyCollection<OrchestrationPhase> phases)
+		{
+			// Statuses are only persisted for a node of an event; other executions keep them in memory.
+			if (!TryGetNodeScope(out Guid jobInfoId, out Guid eventId, out string nodeId))
+			{
+				return new PhaseRunner(phases, new OrchestrationPhaseContext(engine), new InMemoryPhaseStatusStore()).Run();
+			}
+
+			if (!PhaseExecutionGuard.TryAcquire(jobInfoId, eventId, nodeId, out PhaseExecutionGuard guard))
+			{
+				throw new InvalidOperationException($"The phases of node '{nodeId}' are already being executed for this event by another execution. This execution was stopped.");
+			}
+
+			using (guard)
+			{
+				var orchestration = engine.GetMediaOpsLiveApi().Orchestration;
+				IList<NodeConfiguration> nodes = EventConfiguration.Configuration?.NodeConfigurations;
+
+				// The statuses are loaded only after taking ownership, so they include what the previous owner recorded.
+				var store = new NodePhasesStatusStore(orchestration.NodePhases, jobInfoId, eventId, nodeId, phases);
+				var resumeScheduler = new OrchestrationResumeScheduler(engine.GetUserConnection());
+				var eventNodes = new StoredEventNodes(orchestration.NodePhases, eventId, nodeId, nodes);
+
+				var context = new OrchestrationPhaseContext(
+					engine,
+					new OrchestrationJobContext(OrchestrationJobValues.Create(orchestration.NodeContextValues, jobInfoId, nodeId, eventNodes)),
+					new OrchestrationNodeContext(nodeId, nodes?.FirstOrDefault(x => x.NodeId == nodeId)?.NodeLabel));
+
+				return NodePhasesExecution.Run(phases, context, store, resumeScheduler, eventId, IsResume(), eventNodes);
+			}
+		}
+
+		private bool IsResume()
+		{
+			return TryGetMetadataValue(OrchestrationScriptInternalInput.ResumeMetadataKey, out string resume)
+				&& Boolean.TryParse(resume, out bool isResume)
+				&& isResume;
+		}
+
+		private bool TryGetNodeScope(out Guid jobInfoId, out Guid eventId, out string nodeId)
+		{
+			jobInfoId = Guid.Empty;
+			eventId = Guid.Empty;
+			nodeId = null;
+
+			if (_context != OrchestrationScriptContext.Event
+				|| _orchestrationLevel != OrchestrationLevel.Node
+				|| !TryGetMetadataValue(OrchestrationScriptInternalInput.NodeIdMetadataKey, out nodeId)
+				|| String.IsNullOrEmpty(nodeId)
+				|| EventConfiguration?.JobInfoReference == null)
+			{
+				return false;
+			}
+
+			jobInfoId = EventConfiguration.JobInfoReference.Value.ID;
+			eventId = EventConfiguration.ID;
+			return true;
+		}
+
 		private void RunSafe(IEngine engine)
 		{
 			_engine = engine ?? throw new ArgumentNullException(nameof(engine));
@@ -252,7 +350,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		{
 			var api = engine.GetMediaOpsLiveApi();
 
-			if (!TryGetMetadataValue("{Event ID}", out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid) || eventGuid == Guid.Empty)
+			if (!TryGetMetadataValue(OrchestrationScriptInternalInput.EventIdMetadataKey, out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid) || eventGuid == Guid.Empty)
 			{
 				return null;
 			}
@@ -664,7 +762,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				}
 			}
 
-			TryGetMetadataValue("{Orchestration Level}", out string orchestrationLevel);
+			TryGetMetadataValue(OrchestrationScriptInternalInput.OrchestrationLevelMetadataKey, out string orchestrationLevel);
 			_orchestrationLevel = Enum.TryParse(orchestrationLevel, out OrchestrationLevel parsedLevel) ? parsedLevel : OrchestrationLevel.Unknown;
 
 			ExecuteOrchestration(_engine, askMissingValues);
