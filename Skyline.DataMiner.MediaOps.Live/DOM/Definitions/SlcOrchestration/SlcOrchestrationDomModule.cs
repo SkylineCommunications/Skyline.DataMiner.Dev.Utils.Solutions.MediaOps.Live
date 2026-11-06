@@ -30,6 +30,8 @@
 			new OrchestrationEventDefinition(),
 			new ConfigurationDefinition(),
 			new OrchestrationJobInfoDefinition(),
+			new OrchestrationNodePhasesDefinition(),
+			new OrchestrationNodeContextValueDefinition(),
 		];
 	}
 }

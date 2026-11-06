@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
@@ -27,6 +28,8 @@ public class OrchestrationHelper
 	private readonly ConfigurationRepository _configurationRepository;
 	private readonly OrchestrationEventRepository _orchestrationEventRepository;
 	private readonly JobInfoRepository _jobInfoRepository;
+	private readonly NodePhasesRepository _nodePhasesRepository;
+	private readonly NodeContextValueRepository _nodeContextValueRepository;
 	private readonly OrchestrationSlidingWindowScheduler _slidingWindowScheduler;
 
 	/// <summary>
@@ -41,6 +44,8 @@ public class OrchestrationHelper
 		_orchestrationEventRepository = new OrchestrationEventRepository(api);
 		_configurationRepository = new ConfigurationRepository(api);
 		_jobInfoRepository = new JobInfoRepository(api);
+		_nodePhasesRepository = new NodePhasesRepository(api);
+		_nodeContextValueRepository = new NodeContextValueRepository(api);
 
 		_slidingWindowScheduler = new OrchestrationSlidingWindowScheduler(
 			_orchestrationEventRepository,
@@ -54,6 +59,10 @@ public class OrchestrationHelper
 
 	internal JobInfoRepository JobInfos => _jobInfoRepository;
 
+	internal NodePhasesRepository NodePhases => _nodePhasesRepository;
+
+	internal NodeContextValueRepository NodeContextValues => _nodeContextValueRepository;
+
 	/// <summary>
 	///     Executes a sync for the current timing window (default 1 hour in the past and 12 hours into the future).
 	///     This consists of deleting past orchestration tasks and prepare tasks for upcoming events.
@@ -61,6 +70,22 @@ public class OrchestrationHelper
 	public void SyncCurrentSlidingWindow()
 	{
 		_slidingWindowScheduler.SyncSchedulerWithWindow();
+	}
+
+	/// <summary>
+	///     Executes a sync for the current timing window (default 1 hour in the past and 12 hours into the future).
+	///     Next to deleting past orchestration tasks and preparing tasks for upcoming events, it fails the events of which a resume of a waiting node
+	///     was due before the window but never ran, and reports them to MediaOps.PLAN.
+	/// </summary>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	public void SyncCurrentSlidingWindow(IMediaOpsPlanHelper mediaOpsPlanHelper)
+	{
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
+		_slidingWindowScheduler.SyncSchedulerWithWindow(mediaOpsPlanHelper);
 	}
 
 	/// <summary>
@@ -75,6 +100,27 @@ public class OrchestrationHelper
 			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
 			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future),
 			baseTime).SyncSchedulerWithWindow();
+	}
+
+	/// <summary>
+	///     Executes a sync for a timing window anchored at the given base time (1 hour in the past and 12 hours into the future from that base time).
+	///     Next to deleting orchestration tasks before the window start and preparing tasks for upcoming events, it fails the events of which a resume
+	///     of a waiting node was due before the window but never ran, and reports them to MediaOps.PLAN.
+	/// </summary>
+	/// <param name="baseTime">The base time to anchor the sliding window to.</param>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	public void SyncCurrentSlidingWindow(DateTimeOffset baseTime, IMediaOpsPlanHelper mediaOpsPlanHelper)
+	{
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
+		new OrchestrationSlidingWindowScheduler(
+			_orchestrationEventRepository,
+			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
+			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future),
+			baseTime).SyncSchedulerWithWindow(mediaOpsPlanHelper);
 	}
 
 	/// <summary>
@@ -399,6 +445,7 @@ public class OrchestrationHelper
 		{
 			DeleteOrchestrationEvents(job.OrchestrationEvents, performanceTracker);
 
+			_nodeContextValueRepository.DeleteForJobs([job.JobInfo.ID]);
 			_jobInfoRepository.Delete(job.JobInfo);
 		}
 	}
@@ -415,6 +462,7 @@ public class OrchestrationHelper
 			IEnumerable<OrchestrationJob> orchestrationJobs = jobs.ToList();
 			DeleteOrchestrationEvents(orchestrationJobs.SelectMany(job => job.OrchestrationEvents), performanceTracker);
 
+			_nodeContextValueRepository.DeleteForJobs(orchestrationJobs.Select(job => job.JobInfo.ID));
 			_jobInfoRepository.Delete(orchestrationJobs.Select(job => job.JobInfo));
 		}
 	}
@@ -430,6 +478,7 @@ public class OrchestrationHelper
 		{
 			DeleteOrchestrationEvents(job.OrchestrationEvents, performanceTracker);
 
+			_nodeContextValueRepository.DeleteForJobs([job.JobInfo.ID]);
 			_jobInfoRepository.Delete(job.JobInfo);
 		}
 	}
@@ -446,6 +495,7 @@ public class OrchestrationHelper
 			IEnumerable<OrchestrationJobConfiguration> orchestrationJobs = jobs.ToList();
 			DeleteOrchestrationEvents(orchestrationJobs.SelectMany(job => job.OrchestrationEvents), performanceTracker);
 
+			_nodeContextValueRepository.DeleteForJobs(orchestrationJobs.Select(job => job.JobInfo.ID));
 			_jobInfoRepository.Delete(orchestrationJobs.Select(job => job.JobInfo));
 		}
 	}
@@ -533,6 +583,80 @@ public class OrchestrationHelper
 
 		Dictionary<Guid, OrchestrationEventConfiguration> eventConfigs = GetEventsAsEventConfigurations(orchestrationEvents);
 		ExecuteEventsNow(eventConfigs.Values, mediaOpsPlanHelper);
+	}
+
+	/// <summary>
+	///     Runs events that already ran again, for example to retry a failed event or to apply an event again.
+	///     The event runs as a whole, but node scripts with phases continue where they stopped: phases whose status reports them as completed are skipped.
+	///     The failure info of the event is cleared and the event ends as <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.
+	/// </summary>
+	/// <param name="orchestrationIds">The IDs of the events to run again.</param>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
+	/// <exception cref="InvalidOperationException">An event is not <see cref="EventState.Configuring"/>, <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.</exception>
+	public void RetryEvents(IEnumerable<Guid> orchestrationIds, IMediaOpsPlanHelper mediaOpsPlanHelper, OrchestrationSettings settings = null)
+	{
+		if (orchestrationIds is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationIds));
+		}
+
+		List<Guid> eventIds = orchestrationIds.ToList();
+		if (!eventIds.Any())
+		{
+			return;
+		}
+
+		RetryEvents(GetEventConfigurationsById(eventIds).ToList(), mediaOpsPlanHelper, settings);
+	}
+
+	/// <summary>
+	///     Runs events that already ran again, for example to retry a failed event or to apply an event again.
+	///     The event runs as a whole, but node scripts with phases continue where they stopped: phases whose status reports them as completed are skipped.
+	///     The failure info of the event is cleared and the event ends as <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.
+	/// </summary>
+	/// <param name="orchestrationEvents">The events to run again.</param>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
+	/// <exception cref="InvalidOperationException">An event is not <see cref="EventState.Configuring"/>, <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.</exception>
+	public void RetryEvents(IEnumerable<OrchestrationEvent> orchestrationEvents, IMediaOpsPlanHelper mediaOpsPlanHelper, OrchestrationSettings settings = null)
+	{
+		if (orchestrationEvents is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationEvents));
+		}
+
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
+		List<OrchestrationEvent> events = orchestrationEvents.ToList();
+		if (!events.Any())
+		{
+			return;
+		}
+
+		// Draft and Confirmed events haven't run yet, and a cancelled event must not run.
+		OrchestrationEvent notRetryable = events.FirstOrDefault(x => x.EventState != EventState.Configuring && x.EventState != EventState.Completed && x.EventState != EventState.Failed);
+		if (notRetryable != null)
+		{
+			throw new InvalidOperationException($"Event '{notRetryable.Name}' ({notRetryable.ID}) is {notRetryable.EventState} and cannot be retried. Only events that already ran can be retried.");
+		}
+
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-RetryEvents")))
+		using (PerformanceTracker performanceTracker = new(collector))
+		{
+			List<OrchestrationEventConfiguration> configurations = events.OfType<OrchestrationEventConfiguration>().ToList();
+			List<OrchestrationEvent> withoutConfiguration = events.Where(x => !(x is OrchestrationEventConfiguration)).ToList();
+
+			if (withoutConfiguration.Any())
+			{
+				configurations.AddRange(GetEventsAsEventConfigurations(withoutConfiguration).Values);
+			}
+
+			new OrchestrationEventExecutionHelper(_api, mediaOpsPlanHelper, settings).RetryEventsNow(configurations, performanceTracker);
+		}
 	}
 
 	/// <summary>
@@ -693,6 +817,41 @@ public class OrchestrationHelper
 	}
 
 	/// <summary>
+	/// Gets the phases of several orchestration events at once, ordered by node ID and then by the order of the phases in the script.
+	/// Use this instead of <see cref="OrchestrationEvent.Phases"/> when reading the phases of many events.
+	/// </summary>
+	/// <param name="eventIds">The IDs of the events.</param>
+	/// <returns>The phases per event ID. An event without phases has an empty list.</returns>
+	public IReadOnlyDictionary<Guid, IReadOnlyList<OrchestrationEventPhase>> GetEventPhases(IEnumerable<Guid> eventIds)
+	{
+		return _nodePhasesRepository.GetEventPhases(eventIds);
+	}
+
+	/// <summary>
+	/// Provides a subscription to the phases of all orchestration events.
+	/// </summary>
+	/// <returns>A subscription that reports the current phases of every node whose phases changed. It must be disposed when no longer needed.</returns>
+	public OrchestrationEventPhasesSubscription SubscribeOnEventPhases()
+	{
+		return new OrchestrationEventPhasesSubscription(_nodePhasesRepository, null);
+	}
+
+	/// <summary>
+	/// Provides a subscription to the phases of one orchestration event.
+	/// </summary>
+	/// <param name="eventId">The ID of the event.</param>
+	/// <returns>A subscription that reports the current phases of every node of the event whose phases changed. It must be disposed when no longer needed.</returns>
+	public OrchestrationEventPhasesSubscription SubscribeOnEventPhases(Guid eventId)
+	{
+		if (eventId == Guid.Empty)
+		{
+			throw new ArgumentException("The event ID cannot be empty.", nameof(eventId));
+		}
+
+		return new OrchestrationEventPhasesSubscription(_nodePhasesRepository, eventId);
+	}
+
+	/// <summary>
 	/// Retrieve all events in the given time range.
 	/// </summary>
 	/// <param name="start">The start time.</param>
@@ -795,6 +954,12 @@ public class OrchestrationHelper
 		_slidingWindowScheduler.DeleteEvents(orchestrationEvents);
 
 		_configurationRepository.Delete(_configurationRepository.Read(configurationsToDelete).Values);
+
+		var resumeScheduler = new OrchestrationResumeScheduler(_api.Connection);
+		foreach (OrchestrationNodePhases deletedPhases in _nodePhasesRepository.DeleteForEvents(orchestrationEvents.Select(e => e.ID)))
+		{
+			resumeScheduler.DeleteResumeTask(deletedPhases.ResumeSchedulerReference);
+		}
 
 		_orchestrationEventRepository.Delete(orchestrationEvents);
 	}

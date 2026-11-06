@@ -13,7 +13,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 	/// </summary>
 	public abstract class OrchestrationScript : OrchestrationScriptBase
 	{
-		public abstract void Orchestrate(IEngine engine);
+		/// <summary>
+		/// Performs the orchestration. Not executed when the script defines phases in <see cref="OrchestrationScriptBase.GetPhases"/>.
+		/// </summary>
+		/// <param name="engine">Link with SLAutomation process.</param>
+		public virtual void Orchestrate(IEngine engine)
+		{
+			throw CreateNothingToOrchestrateException();
+		}
 
 		public abstract IEnumerable<IOrchestrationParameters> GetParameters();
 
@@ -41,7 +48,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 		internal override void ExecuteOrchestration(IEngine engine, bool askMissingValues)
 		{
-			Orchestrate(engine);
+			if (!TryExecutePhases(engine))
+			{
+				Orchestrate(engine);
+			}
 		}
 	}
 }

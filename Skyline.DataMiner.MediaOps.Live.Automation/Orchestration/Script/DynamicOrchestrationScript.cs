@@ -38,10 +38,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 		/// <summary>
 		/// Performs the orchestration with the values that were provided for the inputs of this script.
+		/// Not executed when the script defines phases in <see cref="OrchestrationScriptBase.GetPhases"/>; phases read the values through <see cref="InputValues"/>.
 		/// </summary>
 		/// <param name="engine">Link with SLAutomation process.</param>
 		/// <param name="inputs">The resolved values of the inputs of this script, addressed by path.</param>
-		public abstract void Orchestrate(IEngine engine, OrchestrationInputValues inputs);
+		public virtual void Orchestrate(IEngine engine, OrchestrationInputValues inputs)
+		{
+			throw CreateNothingToOrchestrateException();
+		}
 
 		/// <summary>
 		/// Attempts to get the value of the input field with the specified path.
@@ -105,7 +109,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				AskInputValues(engine);
 			}
 
-			Orchestrate(engine, InputValues);
+			if (!TryExecutePhases(engine))
+			{
+				Orchestrate(engine, InputValues);
+			}
 		}
 
 		private void AskInputValues(IEngine engine)

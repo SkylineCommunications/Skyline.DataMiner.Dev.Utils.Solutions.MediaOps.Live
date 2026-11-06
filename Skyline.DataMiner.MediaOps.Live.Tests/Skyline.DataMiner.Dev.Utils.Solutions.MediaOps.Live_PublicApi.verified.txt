@@ -300,6 +300,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums
         Preset = 2,
         Metadata = 3,
     }
+    public enum PhaseState
+    {
+        NotStarted = 0,
+        InProgress = 1,
+        Completed = 2,
+        Failed = 3,
+    }
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Exceptions
 {
@@ -878,6 +885,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
         public string FailureInfo { get; }
         public string Name { get; set; }
         public System.TimeSpan? OrchestrationDuration { get; }
+        public System.Collections.Generic.IReadOnlyList<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventPhase> Phases { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling.ScheduledTaskId SchedulerReference { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobInfo GetJobInfo(Skyline.DataMiner.Solutions.MediaOps.Live.API.IMediaOpsLiveApi api) { }
     }
@@ -896,6 +904,20 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent, System.Guid> ID;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent, System.Guid> JobInfoReference;
         public static readonly Skyline.DataMiner.Net.Messages.SLDataGateway.Exposer<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent, string> Name;
+    }
+    public sealed class OrchestrationEventPhase
+    {
+        public System.DateTimeOffset? Ended { get; }
+        public System.Guid EventId { get; }
+        public string FailureReason { get; }
+        public string Key { get; }
+        public System.DateTimeOffset? LastUpdated { get; }
+        public string Message { get; }
+        public string NodeId { get; }
+        public int Order { get; }
+        public System.DateTimeOffset? Started { get; }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums.PhaseState State { get; }
+        public override string ToString() { }
     }
     public class OrchestrationJob
     {
@@ -1178,6 +1200,19 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions
         public void LoadInitialData() { }
         public void Subscribe() { }
         public void Unsubscribe() { }
+    }
+    public sealed class OrchestrationEventPhasesSubscription : System.IDisposable
+    {
+        public event System.EventHandler<System.Collections.Generic.IReadOnlyList<Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions.OrchestrationNodePhasesChange>> Changed;
+        public void Dispose() { }
+    }
+    public sealed class OrchestrationNodePhasesChange
+    {
+        public System.Guid EventId { get; }
+        public bool IsRemoved { get; }
+        public string NodeId { get; }
+        public System.Collections.Generic.IReadOnlyList<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventPhase> Phases { get; }
+        public override string ToString() { }
     }
     public sealed class RepositorySubscription<T> : System.IDisposable
         where T : Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.ApiObject<T>
@@ -1628,6 +1663,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobConfiguration> GetAllJobConfigurations() { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJob> GetAllJobs() { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> GetAllOrchestrationEventsInTimeRange(System.DateTime start, System.DateTime end) { }
+        public System.Collections.Generic.IReadOnlyDictionary<System.Guid, System.Collections.Generic.IReadOnlyList<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventPhase>> GetEventPhases(System.Collections.Generic.IEnumerable<System.Guid> eventIds) { }
         public System.Collections.Generic.Dictionary<System.Guid, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventConfiguration> GetEventsAsEventConfigurations(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> events) { }
         public System.Collections.Generic.IDictionary<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobInfo> GetJobInfos(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> events) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJob GetOrCreateNewOrchestrationJob(string jobReference) { }
@@ -1639,12 +1675,18 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventConfiguration> ReadEventConfigurations(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> filter) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> ReadEvents(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> filter) { }
         public System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.RepositoryPage<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent>> ReadEventsPaged(Skyline.DataMiner.Net.Messages.SLDataGateway.FilterElement<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> filter, int pageSize = 500) { }
+        public void RetryEvents(System.Collections.Generic.IEnumerable<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> orchestrationEvents, Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationSettings settings = null) { }
+        public void RetryEvents(System.Collections.Generic.IEnumerable<System.Guid> orchestrationIds, Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper, Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationSettings settings = null) { }
         public void SaveOrchestrationJob(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJob job) { }
         public void SaveOrchestrationJobConfiguration(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobConfiguration job) { }
         public void SetupSlidingWindowSchedulerTasks() { }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions.OrchestrationEventPhasesSubscription SubscribeOnEventPhases() { }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions.OrchestrationEventPhasesSubscription SubscribeOnEventPhases(System.Guid eventId) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions.RepositorySubscription<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> SubscribeOnEvents() { }
         public void SyncCurrentSlidingWindow() { }
+        public void SyncCurrentSlidingWindow(Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper) { }
         public void SyncCurrentSlidingWindow(System.DateTimeOffset baseTime) { }
+        public void SyncCurrentSlidingWindow(System.DateTimeOffset baseTime, Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper) { }
     }
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling

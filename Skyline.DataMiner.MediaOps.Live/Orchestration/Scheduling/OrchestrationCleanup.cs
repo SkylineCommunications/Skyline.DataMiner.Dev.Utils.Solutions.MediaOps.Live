@@ -6,9 +6,11 @@
 
 	using Skyline.DataMiner.Net.Apps.DataMinerObjectModel;
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Tools;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 
 	/// <summary>
 	/// This class contains all logic to remove unnecessary objects from past orchestration events.
@@ -42,6 +44,75 @@
 
 			ICollection<ScheduledTaskId> deletedTaskIds = _scheduler.DeleteTasks(tasksToRemove.Select(t => t.ScheduledTaskId).ToArray());
 			UpdateEvents(tasksToRemove.Where(t => deletedTaskIds.Contains(t.ScheduledTaskId)));
+		}
+
+		/// <summary>
+		/// Removes the past resume tasks that no node waits for anymore, for example because the resumed execution failed before it removed its task.
+		/// With a plan helper, a resume that is still awaited but never ran fails its event.
+		/// </summary>
+		/// <param name="time">The reference time.</param>
+		/// <param name="planHelper">The MediaOps.PLAN helper to report failed events to, or <see langword="null"/> to keep missed resumes.</param>
+		internal void CleanupResumeTasksBeforeTime(DateTimeOffset time, IMediaOpsPlanHelper planHelper)
+		{
+			var resumeScheduler = new OrchestrationResumeScheduler(_repository.Connection);
+
+			if (planHelper != null)
+			{
+				FailMissedResumes(time, resumeScheduler, planHelper);
+			}
+
+			foreach (IGrouping<Guid, ScheduledTaskId> tasksOfEvent in resumeScheduler.GetResumeTasksBefore(time).GroupBy(x => x.Value, x => x.Key))
+			{
+				HashSet<ScheduledTaskId> referenced = _repository.NodePhases.GetPendingResumes(tasksOfEvent.Key)
+					.Select(x => x.ResumeSchedulerReference)
+					.ToHashSet();
+
+				foreach (ScheduledTaskId taskId in tasksOfEvent.Where(x => !referenced.Contains(x)))
+				{
+					resumeScheduler.DeleteResumeTask(taskId);
+				}
+			}
+		}
+
+		// A resumed execution clears the resume when it starts, so a resume that is still awaited this long after its time never ran.
+		private void FailMissedResumes(DateTimeOffset time, OrchestrationResumeScheduler resumeScheduler, IMediaOpsPlanHelper planHelper)
+		{
+			foreach (IGrouping<Guid, OrchestrationNodePhases> missedOfEvent in _repository.NodePhases.GetOverdueResumes(time).GroupBy(x => x.EventReference.ID))
+			{
+				var failures = new List<string>();
+
+				foreach (OrchestrationNodePhases missed in missedOfEvent)
+				{
+					failures.Add($"The orchestration of node '{missed.NodeId}' was not resumed: the resume that was due at {missed.ResumeTime:u} did not run.");
+					resumeScheduler.DeleteResumeTask(missed.ResumeSchedulerReference);
+
+					missed.ResumeSchedulerReference = null;
+					missed.ResumePhaseIndex = null;
+					missed.ResumeTime = null;
+					missed.WaitStarted = null;
+					_repository.NodePhases.CreateOrUpdate(missed);
+				}
+
+				OrchestrationEvent orchestrationEvent = _repository.Read(missedOfEvent.Key);
+				if (orchestrationEvent?.EventState != EventState.Configuring)
+				{
+					continue;
+				}
+
+				orchestrationEvent.InternalSetState(EventState.Failed);
+				foreach (string failure in failures)
+				{
+					orchestrationEvent.AppendFailureInfo(failure);
+				}
+
+				if (orchestrationEvent.ActualStartTime != null)
+				{
+					orchestrationEvent.OrchestrationDuration = DateTimeOffset.UtcNow - orchestrationEvent.ActualStartTime;
+				}
+
+				orchestrationEvent.SendPlanJobStateUpdate(planHelper);
+				_repository.CreateOrUpdate(orchestrationEvent);
+			}
 		}
 
 		private void UpdateEvents(IEnumerable<OrchestrationSchedulerTask> removedTasks)

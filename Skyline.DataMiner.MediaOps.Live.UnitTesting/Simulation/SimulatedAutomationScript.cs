@@ -40,6 +40,12 @@
 		public string Name { get; set; }
 
 		/// <summary>
+		/// Gets or sets what the script does when it orchestrates, for example storing the phases of a node. It receives the metadata of the script input
+		/// and returns additional entries for the script output, or <see langword="null"/> for none.
+		/// </summary>
+		public Func<IReadOnlyDictionary<string, string>, IReadOnlyDictionary<string, string>> OnOrchestrate { get; set; }
+
+		/// <summary>
 		/// Gets the script info for the specified input values, mimicking how a real orchestration script reevaluates its inputs.
 		/// </summary>
 		/// <param name="providedValues">The input values that were already provided.</param>

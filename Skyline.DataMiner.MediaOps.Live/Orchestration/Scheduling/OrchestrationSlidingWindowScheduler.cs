@@ -9,6 +9,7 @@
 	using Skyline.DataMiner.Net.Messages;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 
 	internal class OrchestrationSlidingWindowScheduler
 	{
@@ -36,15 +37,16 @@
 			WindowBaseTime = windowBaseTime;
 		}
 
-		public void SyncSchedulerWithWindow()
+		public void SyncSchedulerWithWindow(IMediaOpsPlanHelper planHelper = null)
 		{
-			RemoveEventsBeforeWindow();
+			RemoveEventsBeforeWindow(planHelper);
 			CreateOrUpdateAllEventsInWindow();
 		}
 
-		private void RemoveEventsBeforeWindow()
+		private void RemoveEventsBeforeWindow(IMediaOpsPlanHelper planHelper)
 		{
 			_orchestrationCleanup.CleanupSchedulerTasksBeforeTime(WindowStartTime);
+			_orchestrationCleanup.CleanupResumeTasksBeforeTime(WindowStartTime, planHelper);
 		}
 
 		private void CreateOrUpdateAllEventsInWindow()
