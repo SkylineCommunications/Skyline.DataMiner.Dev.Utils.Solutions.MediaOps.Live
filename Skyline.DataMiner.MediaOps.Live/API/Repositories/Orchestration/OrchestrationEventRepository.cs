@@ -15,15 +15,20 @@
 
 	internal class OrchestrationEventRepository : Repository<OrchestrationEvent>
 	{
+		private readonly NodePhasesRepository _nodePhasesRepository;
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEventRepository"/> class.
 		/// </summary>
 		/// <param name="api">Api that calls the repository.</param>
 		internal OrchestrationEventRepository(MediaOpsLiveApi api) : base(api, api.SlcOrchestrationHelper)
 		{
+			_nodePhasesRepository = new NodePhasesRepository(api);
 		}
 
 		protected internal override DomDefinitionId DomDefinition => OrchestrationEvent.DomDefinition;
+
+		internal NodePhasesRepository NodePhases => _nodePhasesRepository;
 
 		internal IEnumerable<OrchestrationEvent> GetOrchestrationEventsInTimeRange(DateTime start, DateTime end)
 		{
@@ -125,7 +130,11 @@
 
 		protected internal override OrchestrationEvent CreateInstance(DomInstance domInstance)
 		{
-			return new OrchestrationEvent(domInstance);
+			var orchestrationEvent = new OrchestrationEvent(domInstance);
+			Guid eventId = orchestrationEvent.ID;
+			orchestrationEvent.SetPhasesLoader(() => _nodePhasesRepository.GetEventPhases(eventId));
+
+			return orchestrationEvent;
 		}
 
 		protected override void ValidateBeforeSave(ICollection<OrchestrationEvent> instances)

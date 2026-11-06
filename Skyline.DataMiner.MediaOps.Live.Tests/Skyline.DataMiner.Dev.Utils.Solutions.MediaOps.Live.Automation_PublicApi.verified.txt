@@ -123,6 +123,18 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
         public virtual void Orchestrate(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValues inputs) { }
         public bool TryGetInputValue(string path, out Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.Inputs.OrchestrationInputValue value) { }
     }
+    public sealed class NodeOrchestrationResult
+    {
+        public string FailureReason { get; }
+        public bool IsExecuted { get; }
+        public bool IsSuccess { get; }
+        public string NodeId { get; }
+    }
+    public sealed class OrchestrationNodeFailedException : System.Exception
+    {
+        public string FailureReason { get; }
+        public string NodeId { get; }
+    }
     public abstract class OrchestrationScript : Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.OrchestrationScriptBase
     {
         protected OrchestrationScript() { }
@@ -144,6 +156,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
         public virtual void TearDownService(Skyline.DataMiner.Automation.IEngine engine) { }
         public bool TryGetMetadataValue(string metadataParam, out string metadataValue) { }
         public bool TryGetNodeConfiguration(string nodeLabel, out Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfiguration) { }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.NodeOrchestrationResult TryOrchestrateNode(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfig) { }
     }
 }
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.Dialogs
@@ -271,8 +284,31 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
         bool Remove(string key);
         void Set(string key, string value);
     }
+    public sealed class OrchestrationEventConnection
+    {
+        public string DestinationNodeId { get; }
+        public string SourceNodeId { get; }
+    }
+    public sealed class OrchestrationEventContext
+    {
+        public System.Collections.Generic.IReadOnlyList<Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.OrchestrationEventConnection> Connections { get; }
+        public System.Guid Id { get; }
+        public string Name { get; }
+        public System.Collections.Generic.IReadOnlyList<Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.OrchestrationEventNode> Nodes { get; }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums.EventType Type { get; }
+    }
+    public sealed class OrchestrationEventNode
+    {
+        public string Id { get; }
+        public string Label { get; }
+        public string OrchestrationScriptName { get; }
+        public override string ToString() { }
+    }
     public sealed class OrchestrationJobContext
     {
+        public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId MonitoringService { get; }
+        public string Name { get; }
+        public string Reference { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.OrchestrationJobValues Values { get; }
     }
     public sealed class OrchestrationJobValues : Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.IOrchestrationValues, Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.IOrchestrationWritableValues
@@ -293,6 +329,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
     public sealed class OrchestrationPhaseContext
     {
         public Skyline.DataMiner.Automation.IEngine Engine { get; }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.OrchestrationEventContext Event { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.OrchestrationJobContext Job { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.OrchestrationNodeContext Node { get; }
     }
@@ -304,11 +341,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
     }
     public sealed class PhaseStatus
     {
+        public string FailureReason { get; }
         public string Message { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums.PhaseState State { get; }
         public override string ToString() { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.PhaseStatus Completed(string message = null) { }
-        public static Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.PhaseStatus Failed(string message = null) { }
+        public static Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.PhaseStatus Failed(string reason = null) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.PhaseStatus InProgress(string message = null) { }
         public static Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.PhaseStatus NotStarted(string message = null) { }
     }

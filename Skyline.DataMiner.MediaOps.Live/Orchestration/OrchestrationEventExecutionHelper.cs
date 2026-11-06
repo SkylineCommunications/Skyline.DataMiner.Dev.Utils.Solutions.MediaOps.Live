@@ -87,7 +87,22 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			}
 		}
 
-		private async Task ExecuteEventsAsync(List<OrchestrationEventConfiguration> eventConfigurations, PerformanceTracker performanceTracker)
+		/// <summary>
+		/// Runs events that already ran again, as a whole. Node scripts with phases continue where they stopped.
+		/// </summary>
+		internal void RetryEventsNow(IEnumerable<OrchestrationEventConfiguration> orchestrationEvents, PerformanceTracker performanceTracker)
+		{
+			using (performanceTracker = new PerformanceTracker(performanceTracker))
+			{
+				List<OrchestrationEventConfiguration> events = orchestrationEvents.ToList();
+				if (events.Any())
+				{
+					ExecuteEventsAsync(events, performanceTracker, retry: true).GetAwaiter().GetResult();
+				}
+			}
+		}
+
+		private async Task ExecuteEventsAsync(List<OrchestrationEventConfiguration> eventConfigurations, PerformanceTracker performanceTracker, bool retry = false)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteEventsAsync)))
 			using (var taskScheduler = new MediaOpsTaskScheduler())
@@ -98,7 +113,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 				foreach (var groupedByJob in eventConfigurations.GroupBy(x => x.JobInfoReference))
 				{
 					var jobTask = Task.Factory.StartNew(
-						() => ExecuteJobEventsAsync(groupedByJob, taskScheduler, writeBuffer, performanceTracker),
+						() => ExecuteJobEventsAsync(groupedByJob, taskScheduler, writeBuffer, performanceTracker, retry),
 						CancellationToken.None,
 						TaskCreationOptions.None,
 						taskScheduler).Unwrap();
@@ -110,7 +125,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			}
 		}
 
-		private async Task ExecuteJobEventsAsync(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
+		private async Task ExecuteJobEventsAsync(IEnumerable<OrchestrationEventConfiguration> eventConfigurations, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker, bool retry)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteJobEventsAsync)))
 			{
@@ -126,7 +141,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 					foreach (var jobEvent in jobEvents)
 					{
 						var jobEventTask = Task.Factory.StartNew(
-							() => ExecuteJobEventAsync(jobEvent, taskScheduler, writeBuffer, performanceTracker),
+							() => ExecuteJobEventAsync(jobEvent, taskScheduler, writeBuffer, performanceTracker, retry),
 							CancellationToken.None,
 							TaskCreationOptions.None,
 							taskScheduler).Unwrap();
@@ -139,11 +154,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			}
 		}
 
-		private async Task ExecuteJobEventAsync(OrchestrationEventConfiguration orchestrationEvent, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
+		private async Task ExecuteJobEventAsync(OrchestrationEventConfiguration orchestrationEvent, MediaOpsTaskScheduler taskScheduler, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker, bool retry)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteJobEventAsync)))
 			{
-				SetConfiguringState(orchestrationEvent, writeBuffer);
+				SetConfiguringState(orchestrationEvent, writeBuffer, retry);
 
 				try
 				{
@@ -181,12 +196,18 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
 				IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(orchestrationEventConfiguration.ID, OrchestrationLevel.Global).ToMetadataArguments();
+				IReadOnlyDictionary<string, OrchestrationNodePhases> pendingResumes = GetPendingResumesByNode(orchestrationEventConfiguration.ID);
 
 				OrchestrationScriptResult globalScriptResult = ExecuteOrchestrationScript(
 					orchestrationEventConfiguration.GlobalOrchestrationScript,
 					orchestrationEventConfiguration.GlobalOrchestrationScriptArguments.Union(addedInputParams).ToList(),
 					orchestrationEventConfiguration.Profile,
 					performanceTracker);
+
+				foreach (OrchestrationNodePhases pendingResume in pendingResumes.Values)
+				{
+					CancelUnhandledResume(pendingResume);
+				}
 
 				if (globalScriptResult.HadError)
 				{
@@ -223,10 +244,21 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			}
 		}
 
-		private void SetConfiguringState(OrchestrationEventConfiguration orchestrationEvent, WriteBuffer<OrchestrationEvent> writeBuffer)
+		private void SetConfiguringState(OrchestrationEventConfiguration orchestrationEvent, WriteBuffer<OrchestrationEvent> writeBuffer, bool retry)
 		{
 			orchestrationEvent.InternalSetState(EventState.Configuring);
-			orchestrationEvent.ActualStartTime = DateTimeOffset.UtcNow;
+
+			if (retry)
+			{
+				orchestrationEvent.FailureInfo = null;
+
+				// The first start is kept: the order of the events of a job is validated on it.
+				orchestrationEvent.ActualStartTime ??= DateTimeOffset.UtcNow;
+			}
+			else
+			{
+				orchestrationEvent.ActualStartTime = DateTimeOffset.UtcNow;
+			}
 
 			// A due task keeps its reference until the event runs; once it runs, a new confirmation must schedule it again.
 			orchestrationEvent.SchedulerReference = null;
@@ -351,6 +383,24 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			nodePhases.ResumeTime = null;
 			nodePhases.WaitStarted = null;
 			_nodePhasesRepository.CreateOrUpdate(nodePhases);
+		}
+
+		private IReadOnlyDictionary<string, OrchestrationNodePhases> GetPendingResumesByNode(Guid eventId)
+		{
+			return _nodePhasesRepository.GetPendingResumes(eventId).ToDictionary(x => x.NodeId);
+		}
+
+		// A script that takes over a resume replaces or clears it; one that is left unchanged would otherwise stay behind, for example when the script failed to start.
+		private void CancelUnhandledResume(OrchestrationNodePhases before)
+		{
+			OrchestrationNodePhases current = _nodePhasesRepository.GetNodePhases(before.EventReference.ID, before.NodeId);
+
+			if (current?.ResumeSchedulerReference != null
+				&& current.ResumeSchedulerReference == before.ResumeSchedulerReference
+				&& current.ResumeTime == before.ResumeTime)
+			{
+				CancelResume(current);
+			}
 		}
 
 		internal void ExecuteConnections(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
@@ -653,6 +703,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 		private async Task ExecuteNodeScriptsAsync(OrchestrationEventConfiguration orchestrationEventConfiguration, IEnumerable<NodeConfiguration> nodes, bool resume, TaskScheduler taskScheduler, PerformanceTracker performanceTracker)
 		{
 			ConcurrentHashSet<string> errors = new();
+			IReadOnlyDictionary<string, OrchestrationNodePhases> pendingResumes = GetPendingResumesByNode(orchestrationEventConfiguration.ID);
 
 			try
 			{
@@ -670,6 +721,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 								nodeConfiguration.OrchestrationScriptArguments.Union(addedInputParams).ToList(),
 								nodeConfiguration.Profile,
 								performanceTracker);
+
+							if (pendingResumes.TryGetValue(nodeConfiguration.NodeId, out OrchestrationNodePhases pendingResume))
+							{
+								CancelUnhandledResume(pendingResume);
+							}
 
 							if (nodeScriptResult.HadError)
 							{

@@ -277,7 +277,15 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 					return PhaseRunResult.Suspended(new ResumePoint(index, started), _now() + untilNextPoll, next?.Key);
 				}
 
-				_sleep(untilNextPoll);
+				try
+				{
+					_sleep(untilNextPoll);
+				}
+				catch (ScriptTimeoutException)
+				{
+					RecordScriptTimeout(next?.Key, $"waiting on {target.Description}");
+					throw;
+				}
 			}
 		}
 
@@ -286,6 +294,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			try
 			{
 				return phase.ExecuteMethod(_context) ?? PhaseStatus.Failed($"Phase '{phase.Key}' did not return a status.");
+			}
+			catch (ScriptTimeoutException)
+			{
+				RecordScriptTimeout(phase.Key, $"executing phase '{phase.Key}'");
+				throw;
 			}
 			catch (Exception e) when (!IsAbort(e))
 			{
@@ -310,6 +323,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 					}
 
 					lastError = "the status method returned no status";
+				}
+				catch (ScriptTimeoutException)
+				{
+					RecordScriptTimeout(phase.Key, $"retrieving the status of phase '{phase.Key}'");
+					throw;
 				}
 				catch (Exception e) when (!IsAbort(e))
 				{
@@ -363,6 +381,18 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			_statuses[key] = status;
 			_store.Record(key, status, executionStarted);
+		}
+
+		private void RecordScriptTimeout(string key, string activity)
+		{
+			try
+			{
+				Record(key, PhaseStatus.Failed($"The script timed out while {activity}."));
+			}
+			catch (Exception e) when (!IsAbort(e))
+			{
+				// Best effort: the script timeout must still end the script.
+			}
 		}
 
 		private ExecutionPhase FindEarlierPhase(string key, int beforeIndex)

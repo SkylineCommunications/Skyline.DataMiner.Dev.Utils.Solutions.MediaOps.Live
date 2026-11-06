@@ -12,6 +12,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		bool TryResolveNode(string reference, out EventNode node, out string failure);
 
 		/// <summary>
+		/// Resolves a node of the event by ID or label, or a node of another event of the same job by ID.
+		/// </summary>
+		/// <returns><see langword="false"/> when the node is not part of the job, or the label is ambiguous.</returns>
+		bool TryResolveJobNode(string reference, out EventNode node, out string failure);
+
+		/// <summary>
 		/// Gets the status a node stored for one of its phases, or <see langword="null"/> when it stored none.
 		/// </summary>
 		PhaseStatus GetStoredStatus(string nodeId, string phaseKey);

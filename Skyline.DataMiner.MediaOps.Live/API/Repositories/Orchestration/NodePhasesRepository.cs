@@ -42,6 +42,31 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestrati
 		}
 
 		/// <summary>
+		/// Gets the nodes of all events that wait for a resume that was due before the given time.
+		/// </summary>
+		internal IReadOnlyCollection<OrchestrationNodePhases> GetOverdueResumes(DateTimeOffset before)
+		{
+			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationNodePhases.Id)
+				.AND(DomInstanceExposers.FieldValues.DomInstanceField(SlcOrchestrationIds.Sections.NodePhasesInfo.ResumeTime).LessThan(before.UtcDateTime));
+
+			// Only the newest instance of a node counts; an older duplicate can still carry a stale resume.
+			return ReadDom(filter)
+				.Select(x => new { EventId = x.EventReference.ID, x.NodeId })
+				.Distinct()
+				.Select(x => GetNodePhases(x.EventId, x.NodeId))
+				.Where(x => x?.ResumeSchedulerReference != null && x.ResumeTime < before)
+				.ToList();
+		}
+
+		internal IReadOnlyList<OrchestrationEventPhase> GetEventPhases(Guid eventId)
+		{
+			return GetNodePhasesForEvent(eventId).Values
+				.OrderBy(x => x.NodeId, StringComparer.Ordinal)
+				.SelectMany(node => node.Phases.OrderBy(x => x.Order).Select(phase => new OrchestrationEventPhase(node.NodeId, phase)))
+				.ToList();
+		}
+
+		/// <summary>
 		/// Returns the stored phases of the node for the event, or a new unsaved instance when none exist yet.
 		/// Duplicates left behind by concurrent creates are removed.
 		/// </summary>

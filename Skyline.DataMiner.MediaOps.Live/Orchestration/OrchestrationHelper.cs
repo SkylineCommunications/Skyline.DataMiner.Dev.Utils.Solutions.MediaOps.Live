@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories;
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
@@ -72,6 +73,22 @@ public class OrchestrationHelper
 	}
 
 	/// <summary>
+	///     Executes a sync for the current timing window (default 1 hour in the past and 12 hours into the future).
+	///     Next to deleting past orchestration tasks and preparing tasks for upcoming events, it fails the events of which a resume of a waiting node
+	///     was due before the window but never ran, and reports them to MediaOps.PLAN.
+	/// </summary>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	public void SyncCurrentSlidingWindow(IMediaOpsPlanHelper mediaOpsPlanHelper)
+	{
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
+		_slidingWindowScheduler.SyncSchedulerWithWindow(mediaOpsPlanHelper);
+	}
+
+	/// <summary>
 	///     Executes a sync for a timing window anchored at the given base time (1 hour in the past and 12 hours into the future from that base time).
 	///     This consists of deleting orchestration tasks before the window start and preparing tasks for upcoming events.
 	/// </summary>
@@ -83,6 +100,27 @@ public class OrchestrationHelper
 			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
 			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future),
 			baseTime).SyncSchedulerWithWindow();
+	}
+
+	/// <summary>
+	///     Executes a sync for a timing window anchored at the given base time (1 hour in the past and 12 hours into the future from that base time).
+	///     Next to deleting orchestration tasks before the window start and preparing tasks for upcoming events, it fails the events of which a resume
+	///     of a waiting node was due before the window but never ran, and reports them to MediaOps.PLAN.
+	/// </summary>
+	/// <param name="baseTime">The base time to anchor the sliding window to.</param>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	public void SyncCurrentSlidingWindow(DateTimeOffset baseTime, IMediaOpsPlanHelper mediaOpsPlanHelper)
+	{
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
+		new OrchestrationSlidingWindowScheduler(
+			_orchestrationEventRepository,
+			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Past),
+			TimeSpan.FromHours(Constants.SchedulerSlidingWindowRangeHours_Future),
+			baseTime).SyncSchedulerWithWindow(mediaOpsPlanHelper);
 	}
 
 	/// <summary>
@@ -545,6 +583,80 @@ public class OrchestrationHelper
 
 		Dictionary<Guid, OrchestrationEventConfiguration> eventConfigs = GetEventsAsEventConfigurations(orchestrationEvents);
 		ExecuteEventsNow(eventConfigs.Values, mediaOpsPlanHelper);
+	}
+
+	/// <summary>
+	///     Runs events that already ran again, for example to retry a failed event or to apply an event again.
+	///     The event runs as a whole, but node scripts with phases continue where they stopped: phases whose status reports them as completed are skipped.
+	///     The failure info of the event is cleared and the event ends as <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.
+	/// </summary>
+	/// <param name="orchestrationIds">The IDs of the events to run again.</param>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
+	/// <exception cref="InvalidOperationException">An event is not <see cref="EventState.Configuring"/>, <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.</exception>
+	public void RetryEvents(IEnumerable<Guid> orchestrationIds, IMediaOpsPlanHelper mediaOpsPlanHelper, OrchestrationSettings settings = null)
+	{
+		if (orchestrationIds is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationIds));
+		}
+
+		List<Guid> eventIds = orchestrationIds.ToList();
+		if (!eventIds.Any())
+		{
+			return;
+		}
+
+		RetryEvents(GetEventConfigurationsById(eventIds).ToList(), mediaOpsPlanHelper, settings);
+	}
+
+	/// <summary>
+	///     Runs events that already ran again, for example to retry a failed event or to apply an event again.
+	///     The event runs as a whole, but node scripts with phases continue where they stopped: phases whose status reports them as completed are skipped.
+	///     The failure info of the event is cleared and the event ends as <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.
+	/// </summary>
+	/// <param name="orchestrationEvents">The events to run again.</param>
+	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
+	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
+	/// <exception cref="InvalidOperationException">An event is not <see cref="EventState.Configuring"/>, <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.</exception>
+	public void RetryEvents(IEnumerable<OrchestrationEvent> orchestrationEvents, IMediaOpsPlanHelper mediaOpsPlanHelper, OrchestrationSettings settings = null)
+	{
+		if (orchestrationEvents is null)
+		{
+			throw new ArgumentNullException(nameof(orchestrationEvents));
+		}
+
+		if (mediaOpsPlanHelper is null)
+		{
+			throw new ArgumentNullException(nameof(mediaOpsPlanHelper));
+		}
+
+		List<OrchestrationEvent> events = orchestrationEvents.ToList();
+		if (!events.Any())
+		{
+			return;
+		}
+
+		// Draft and Confirmed events haven't run yet, and a cancelled event must not run.
+		OrchestrationEvent notRetryable = events.FirstOrDefault(x => x.EventState != EventState.Configuring && x.EventState != EventState.Completed && x.EventState != EventState.Failed);
+		if (notRetryable != null)
+		{
+			throw new InvalidOperationException($"Event '{notRetryable.Name}' ({notRetryable.ID}) is {notRetryable.EventState} and cannot be retried. Only events that already ran can be retried.");
+		}
+
+		using (PerformanceCollector collector = new(PerformanceLoggerFactory.Create("ORC-RetryEvents")))
+		using (PerformanceTracker performanceTracker = new(collector))
+		{
+			List<OrchestrationEventConfiguration> configurations = events.OfType<OrchestrationEventConfiguration>().ToList();
+			List<OrchestrationEvent> withoutConfiguration = events.Where(x => !(x is OrchestrationEventConfiguration)).ToList();
+
+			if (withoutConfiguration.Any())
+			{
+				configurations.AddRange(GetEventsAsEventConfigurations(withoutConfiguration).Values);
+			}
+
+			new OrchestrationEventExecutionHelper(_api, mediaOpsPlanHelper, settings).RetryEventsNow(configurations, performanceTracker);
+		}
 	}
 
 	/// <summary>

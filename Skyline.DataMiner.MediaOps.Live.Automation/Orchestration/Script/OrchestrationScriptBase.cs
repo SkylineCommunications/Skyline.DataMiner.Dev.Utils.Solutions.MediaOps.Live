@@ -117,7 +117,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			{
 				return new RequestScriptInfoOutput
 				{
-					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputError, e.ToString() } },
+					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputError, DescribeError(e) } },
 				};
 			}
 		}
@@ -155,8 +155,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			}
 			catch (Exception e)
 			{
-				engine.ExitFail("Run|Something went wrong: " + e);
+				engine.ExitFail("Run|Something went wrong: " + DescribeError(e));
 			}
+		}
+
+		// A failed phase is an expected outcome with a reason for the operator, not a defect to debug.
+		private static string DescribeError(Exception e)
+		{
+			return e is OrchestrationPhaseFailedException || e is OrchestrationNodeFailedException || e is ScriptTimeoutException ? e.Message : e.ToString();
 		}
 
 		public bool TryGetMetadataValue(string metadataParam, out string metadataValue)
@@ -182,11 +188,31 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			return nodeConfiguration != null;
 		}
 
+		/// <summary>
+		/// Runs the orchestration script of a node and waits until it completed or failed. Only has effect in the global script of an event.
+		/// </summary>
+		/// <param name="nodeConfig">The node to orchestrate.</param>
+		/// <exception cref="OrchestrationNodeFailedException">The orchestration of the node failed.</exception>
 		public void OrchestrateNode(NodeConfiguration nodeConfig)
+		{
+			NodeOrchestrationResult result = TryOrchestrateNode(nodeConfig);
+			if (!result.IsSuccess)
+			{
+				throw new OrchestrationNodeFailedException(nodeConfig.NodeId, DescribeNode(nodeConfig), result.FailureReason);
+			}
+		}
+
+		/// <summary>
+		/// Runs the orchestration script of a node and waits until it completed or failed, without throwing when it failed.
+		/// Only has effect in the global script of an event.
+		/// </summary>
+		/// <param name="nodeConfig">The node to orchestrate.</param>
+		/// <returns>The outcome of the orchestration of the node.</returns>
+		public NodeOrchestrationResult TryOrchestrateNode(NodeConfiguration nodeConfig)
 		{
 			if (_context != OrchestrationScriptContext.Event || _orchestrationLevel != OrchestrationLevel.Global)
 			{
-				return;
+				return NodeOrchestrationResult.NotExecuted(nodeConfig?.NodeId);
 			}
 
 			if (nodeConfig == null)
@@ -196,16 +222,29 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			if (String.IsNullOrEmpty(nodeConfig.OrchestrationScriptName))
 			{
-				return;
+				return NodeOrchestrationResult.NotExecuted(nodeConfig.NodeId);
 			}
 
-			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node, nodeConfig.NodeId).ToMetadataArguments();
+			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node, nodeConfig.NodeId, holdWaits: true).ToMetadataArguments();
 
-			OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(
+			OrchestrationScriptResult result = OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(
 				_engine.GetUserConnection(),
 				nodeConfig.OrchestrationScriptName,
 				nodeConfig.OrchestrationScriptArguments.Union(addedInputParams).ToList(),
 				nodeConfig.Profile);
+
+			if (!result.HadError)
+			{
+				return NodeOrchestrationResult.Succeeded(nodeConfig.NodeId);
+			}
+
+			string reason = String.Join("\n", result.ErrorMessages ?? Enumerable.Empty<string>());
+			return NodeOrchestrationResult.Failed(nodeConfig.NodeId, String.IsNullOrWhiteSpace(reason) ? "The orchestration script of the node failed." : reason);
+		}
+
+		private static string DescribeNode(NodeConfiguration nodeConfig)
+		{
+			return !String.IsNullOrWhiteSpace(nodeConfig.NodeLabel) ? $"'{nodeConfig.NodeLabel}'" : $"'{nodeConfig.NodeId}'";
 		}
 
 		/// <summary>
@@ -260,7 +299,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			PhaseRunResult result = RunPhases(engine, phases);
 			if (!result.IsSuccess)
 			{
-				throw new InvalidOperationException(result.FailureMessage);
+				throw new OrchestrationPhaseFailedException(result.FailureMessage);
 			}
 
 			return true;
@@ -276,7 +315,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			// Statuses are only persisted for a node of an event; other executions keep them in memory.
 			if (!TryGetNodeScope(out Guid jobInfoId, out Guid eventId, out string nodeId))
 			{
-				return new PhaseRunner(phases, new OrchestrationPhaseContext(engine), new InMemoryPhaseStatusStore()).Run();
+				var standaloneContext = new OrchestrationPhaseContext(
+					engine,
+					new OrchestrationJobContext(LoadJobInfo(engine), OrchestrationJobValues.Unavailable(OrchestrationPhaseContext.NoNodeOfEvent)),
+					orchestrationEvent: _context == OrchestrationScriptContext.Event ? OrchestrationEventContext.From(EventConfiguration) : null);
+
+				return new PhaseRunner(phases, standaloneContext, new InMemoryPhaseStatusStore()).Run();
 			}
 
 			if (!PhaseExecutionGuard.TryAcquire(jobInfoId, eventId, nodeId, out PhaseExecutionGuard guard))
@@ -292,22 +336,51 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				// The statuses are loaded only after taking ownership, so they include what the previous owner recorded.
 				var store = new NodePhasesStatusStore(orchestration.NodePhases, jobInfoId, eventId, nodeId, phases);
 				var resumeScheduler = new OrchestrationResumeScheduler(engine.GetUserConnection());
-				var eventNodes = new StoredEventNodes(orchestration.NodePhases, eventId, nodeId, nodes);
+				var eventNodes = new StoredEventNodes(orchestration.NodePhases, eventId, nodeId, nodes, () => LoadJobNodes(engine));
 
 				var context = new OrchestrationPhaseContext(
 					engine,
-					new OrchestrationJobContext(OrchestrationJobValues.Create(orchestration.NodeContextValues, jobInfoId, nodeId, eventNodes)),
-					new OrchestrationNodeContext(nodeId, nodes?.FirstOrDefault(x => x.NodeId == nodeId)?.NodeLabel));
+					new OrchestrationJobContext(LoadJobInfo(engine), OrchestrationJobValues.Create(orchestration.NodeContextValues, jobInfoId, nodeId, eventNodes)),
+					new OrchestrationNodeContext(nodeId, nodes?.FirstOrDefault(x => x.NodeId == nodeId)?.NodeLabel),
+					OrchestrationEventContext.From(EventConfiguration));
 
-				return NodePhasesExecution.Run(phases, context, store, resumeScheduler, eventId, IsResume(), eventNodes);
+				return NodePhasesExecution.Run(phases, context, store, resumeScheduler, eventId, IsResume(), eventNodes, canSuspend: !IsFlagSet(OrchestrationScriptInternalInput.HoldWaitsMetadataKey));
 			}
+		}
+
+		private Func<OrchestrationJobInfo> LoadJobInfo(IEngine engine)
+		{
+			if (_context != OrchestrationScriptContext.Event || EventConfiguration?.JobInfoReference == null)
+			{
+				return null;
+			}
+
+			return () => EventConfiguration.GetJobInfo(engine.GetMediaOpsLiveApi());
+		}
+
+		private IEnumerable<NodeConfiguration> LoadJobNodes(IEngine engine)
+		{
+			var api = engine.GetMediaOpsLiveApi();
+			OrchestrationJobInfo jobInfo = EventConfiguration.GetJobInfo(api);
+			if (jobInfo == null)
+			{
+				return Enumerable.Empty<NodeConfiguration>();
+			}
+
+			return api.Orchestration.GetOrCreateNewOrchestrationJobConfiguration(jobInfo.JobReference).OrchestrationEvents
+				.SelectMany(x => x.Configuration?.NodeConfigurations ?? Enumerable.Empty<NodeConfiguration>());
 		}
 
 		private bool IsResume()
 		{
-			return TryGetMetadataValue(OrchestrationScriptInternalInput.ResumeMetadataKey, out string resume)
-				&& Boolean.TryParse(resume, out bool isResume)
-				&& isResume;
+			return IsFlagSet(OrchestrationScriptInternalInput.ResumeMetadataKey);
+		}
+
+		private bool IsFlagSet(string metadataKey)
+		{
+			return TryGetMetadataValue(metadataKey, out string value)
+				&& Boolean.TryParse(value, out bool isSet)
+				&& isSet;
 		}
 
 		private bool TryGetNodeScope(out Guid jobInfoId, out Guid eventId, out string nodeId)
@@ -348,12 +421,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 		private OrchestrationEventConfiguration LoadEventFromMetaData(IEngine engine)
 		{
-			var api = engine.GetMediaOpsLiveApi();
-
 			if (!TryGetMetadataValue(OrchestrationScriptInternalInput.EventIdMetadataKey, out string eventId) || !Guid.TryParse(eventId, out Guid eventGuid) || eventGuid == Guid.Empty)
 			{
 				return null;
 			}
+
+			var api = engine.GetMediaOpsLiveApi();
 
 			List<OrchestrationEventConfiguration> events = api.Orchestration.GetEventConfigurationsById(new List<Guid> { eventGuid }).ToList();
 

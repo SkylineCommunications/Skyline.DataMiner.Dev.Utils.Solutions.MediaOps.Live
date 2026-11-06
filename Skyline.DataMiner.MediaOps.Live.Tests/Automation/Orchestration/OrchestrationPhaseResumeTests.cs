@@ -14,6 +14,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.ScriptHelper;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Plan;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation;
 
 	[TestClass]
 	public sealed class OrchestrationPhaseResumeTests
@@ -244,7 +245,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 			var ev = SaveEventWithNodeScript(api);
-			SuspendNode(simulation, ev, DateTimeOffset.UtcNow.AddMinutes(5));
+			SimulateNodeScript(simulation, ev, suspends: _ => true);
 
 			api.Orchestration.ExecuteEventsNow([ev.ID], api.GetMediaOpsPlanHelper());
 
@@ -269,7 +270,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 			var ev = SaveEventWithNodeScript(api);
-			SuspendNode(simulation, ev, DateTimeOffset.UtcNow.AddMinutes(5));
+			SimulateNodeScript(simulation, ev, suspends: resume => !resume);
 			api.Orchestration.ExecuteEventsNow([ev.ID], api.GetMediaOpsPlanHelper());
 
 			MakeResumeDue(api, ev.ID);
@@ -277,6 +278,115 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			api.Orchestration.ExecuteEventsNow([ev.ID], api.GetMediaOpsPlanHelper());
 
 			Assert.AreEqual(executedBefore + 1, CountNodeScriptExecutions(simulation, resume: true));
+			Assert.AreEqual(EventState.Completed, GetEvent(api, ev.ID).EventState);
+		}
+
+		[TestMethod]
+		public void OrchestrationPhaseResume_ResumedNodeScriptThatFails_RemovesItsResumeTask()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+			var ev = SaveEventWithNodeScript(api, out _, script: "Script_Fail");
+			SetEventState(api, ev.ID, EventState.Configuring);
+			SuspendNode(simulation, ev, DateTimeOffset.UtcNow.AddMinutes(5));
+			MakeResumeDue(api, ev.ID);
+
+			api.Orchestration.ExecuteEventsNow([ev.ID], api.GetMediaOpsPlanHelper());
+
+			Assert.AreEqual(EventState.Failed, GetEvent(api, ev.ID).EventState);
+			Assert.IsEmpty(GetResumeTasks(simulation));
+			Assert.IsEmpty(api.Orchestration.NodePhases.GetPendingResumes(ev.ID));
+		}
+
+		[TestMethod]
+		public void OrchestrationPhaseResume_NodeScriptThatDoesNotTakeOverItsResume_RemovesTheResume()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+			var ev = SaveEventWithNodeScript(api);
+			SuspendNode(simulation, ev, DateTimeOffset.UtcNow.AddMinutes(5));
+
+			api.Orchestration.ExecuteEventsNow([ev.ID], api.GetMediaOpsPlanHelper());
+
+			Assert.AreEqual(EventState.Completed, GetEvent(api, ev.ID).EventState);
+			Assert.IsEmpty(GetResumeTasks(simulation));
+		}
+
+		[TestMethod]
+		public void OrchestrationPhaseResume_GlobalScriptThatDoesNotTakeOverAResume_RemovesTheResume()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+			var ev = SaveEventWithNodeScript(api, out _, globalScript: "Script_Success");
+			SuspendNode(simulation, ev, DateTimeOffset.UtcNow.AddMinutes(5));
+
+			api.Orchestration.ExecuteEventsNow([ev.ID], api.GetMediaOpsPlanHelper());
+
+			Assert.AreEqual(EventState.Completed, GetEvent(api, ev.ID).EventState);
+			Assert.IsEmpty(GetResumeTasks(simulation));
+		}
+
+		[TestMethod]
+		public void OrchestrationPhaseResume_SlidingWindow_RemovesPastResumeTasksThatNoNodeWaitsFor()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+			var ev = SaveEventWithNodeScript(api);
+			var scheduler = new OrchestrationResumeScheduler(api.Connection, LocalAgentId);
+			var now = DateTimeOffset.Now;
+
+			scheduler.ScheduleResume(ev.ID, now.AddHours(-3));
+			SuspendNode(simulation, ev, now.AddHours(-2));
+			scheduler.ScheduleResume(ev.ID, now.AddMinutes(30));
+
+			api.Orchestration.SyncCurrentSlidingWindow();
+
+			var remaining = GetResumeTasks(simulation).Select(x => x.StartTime).OrderBy(x => x).ToList();
+			HasTimes(remaining, now.AddHours(-2), now.AddMinutes(30));
+		}
+
+		[TestMethod]
+		public void OrchestrationPhaseResume_SlidingWindowWithPlanHelper_FailsTheEventOfAResumeThatNeverRan()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+			var ev = SaveEventWithNodeScript(api);
+			SetEventState(api, ev.ID, EventState.Configuring);
+			var resumeTime = DateTimeOffset.UtcNow.AddHours(-2);
+			SuspendNode(simulation, ev, resumeTime);
+
+			api.Orchestration.SyncCurrentSlidingWindow(api.GetMediaOpsPlanHelper());
+
+			var stored = GetEvent(api, ev.ID);
+			Assert.AreEqual(EventState.Failed, stored.EventState);
+			Assert.AreEqual($"The orchestration of node '{NodeId}' was not resumed: the resume that was due at {resumeTime:u} did not run.", stored.FailureInfo);
+			Assert.IsNotNull(stored.OrchestrationDuration);
+			Assert.IsEmpty(GetResumeTasks(simulation));
+			Assert.IsEmpty(api.Orchestration.NodePhases.GetPendingResumes(ev.ID));
+		}
+
+		[TestMethod]
+		public void OrchestrationPhaseResume_SlidingWindowWithPlanHelper_KeepsAResumeThatIsNotOverdue()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+			var ev = SaveEventWithNodeScript(api);
+			SetEventState(api, ev.ID, EventState.Configuring);
+			SuspendNode(simulation, ev, DateTimeOffset.UtcNow.AddMinutes(-30));
+
+			api.Orchestration.SyncCurrentSlidingWindow(api.GetMediaOpsPlanHelper());
+
+			Assert.AreEqual(EventState.Configuring, GetEvent(api, ev.ID).EventState);
+			Assert.HasCount(1, GetResumeTasks(simulation));
+		}
+
+		private static void HasTimes(IReadOnlyList<DateTime> times, params DateTimeOffset[] expected)
+		{
+			Assert.HasCount(expected.Length, times);
+			for (int i = 0; i < expected.Length; i++)
+			{
+				Assert.IsTrue(Math.Abs((times[i] - expected[i].LocalDateTime).TotalSeconds) < 1, $"Expected a task at {expected[i].LocalDateTime}, found {times[i]}.");
+			}
 		}
 
 		[TestMethod]
@@ -285,7 +395,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
 			var ev = SaveEventWithNodeScript(api);
-			SuspendNode(simulation, ev, DateTimeOffset.UtcNow.AddMinutes(5));
+			SimulateNodeScript(simulation, ev, suspends: _ => true);
 			api.Orchestration.ExecuteEventsNow([ev.ID], api.GetMediaOpsPlanHelper());
 
 			api.Orchestration.ExecuteEventsNow([ev.ID], api.GetMediaOpsPlanHelper());
@@ -356,7 +466,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			return SaveEventWithNodeScript(api, out _);
 		}
 
-		private static OrchestrationEventConfiguration SaveEventWithNodeScript(MediaOpsLiveApi api, out string jobReference)
+		private static OrchestrationEventConfiguration SaveEventWithNodeScript(MediaOpsLiveApi api, out string jobReference, string script = "Script_Success", string globalScript = null)
 		{
 			var ev = new OrchestrationEventConfiguration
 			{
@@ -364,11 +474,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 				EventState = EventState.Confirmed,
 				EventType = EventType.Other,
 				Name = "Cloud Event",
+				GlobalOrchestrationScript = globalScript,
 				Configuration =
 				{
 					NodeConfigurations =
 					{
-						new NodeConfiguration { NodeId = NodeId, NodeLabel = "Transport", OrchestrationScriptName = "Script_Success" },
+						new NodeConfiguration { NodeId = NodeId, NodeLabel = "Transport", OrchestrationScriptName = script },
 					},
 				},
 			};
@@ -379,6 +490,34 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			api.Orchestration.SaveOrchestrationJobConfiguration(job);
 
 			return ev;
+		}
+
+		// Stands in for a node script with phases: it takes over any pending resume and, when asked, suspends on a long wait.
+		private static void SimulateNodeScript(MediaOpsLiveSimulation simulation, OrchestrationEvent ev, Func<bool, bool> suspends)
+		{
+			simulation.Dms.Scripts.Single(x => x.Name == "Script_Success").OnOrchestrate = metadata =>
+			{
+				string nodeId = metadata[OrchestrationScriptInternalInput.NodeIdMetadataKey];
+				var repository = simulation.Api.Orchestration.NodePhases;
+				var nodePhases = repository.GetOrCreateNodePhases(ev.JobInfoReference.Value.ID, ev.ID, nodeId);
+
+				new OrchestrationResumeScheduler(simulation.Api.Connection, LocalAgentId).DeleteResumeTask(nodePhases.ResumeSchedulerReference);
+				nodePhases.ResumeSchedulerReference = null;
+				nodePhases.ResumePhaseIndex = null;
+				nodePhases.ResumeTime = null;
+				nodePhases.WaitStarted = null;
+				repository.CreateOrUpdate(nodePhases);
+
+				if (suspends(metadata.ContainsKey(OrchestrationScriptInternalInput.ResumeMetadataKey)))
+				{
+					SuspendNode(simulation, ev, DateTimeOffset.UtcNow.AddMinutes(5), nodeId);
+				}
+			};
+		}
+
+		private static List<SimulatedSchedulerTask> GetResumeTasks(MediaOpsLiveSimulation simulation)
+		{
+			return simulation.Dms.GetAllDmsSchedulerTasks().Where(x => x.Description == OrchestrationResumeScheduler.ResumeTaskNaming).ToList();
 		}
 
 		// Stands in for a node script that suspended on a long wait.

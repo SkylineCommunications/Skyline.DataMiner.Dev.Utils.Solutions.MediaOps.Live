@@ -47,11 +47,16 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		public static PhaseStatus Completed(string message = null) => new PhaseStatus(PhaseState.Completed, message);
 
 		/// <summary>
-		/// Creates a status indicating the phase failed.
+		/// Creates a status indicating the phase failed. The reason is shown to the operator, on the phase and in the failure info of the event.
 		/// </summary>
-		/// <param name="message">Optional reason of the failure.</param>
+		/// <param name="reason">The reason why the phase failed.</param>
 		/// <returns>The status.</returns>
-		public static PhaseStatus Failed(string message = null) => new PhaseStatus(PhaseState.Failed, message);
+		public static PhaseStatus Failed(string reason = null) => new PhaseStatus(PhaseState.Failed, reason);
+
+		/// <summary>
+		/// Gets the reason why the phase failed, or <see langword="null"/> when it did not fail.
+		/// </summary>
+		public string FailureReason => State == PhaseState.Failed ? Message : null;
 
 		/// <inheritdoc/>
 		public override string ToString()

@@ -19,7 +19,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			bool resume,
 			IEventNodes eventNodes,
 			Action<TimeSpan> sleep = null,
-			Func<DateTimeOffset> now = null)
+			Func<DateTimeOffset> now = null,
+			bool canSuspend = true)
 		{
 			// A changed script, or a trigger that is not a resume, walks all phases from the first one.
 			ResumePoint resumePoint = resume ? store.GetResumePoint() : null;
@@ -28,7 +29,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			resumeScheduler.DeleteResumeTask(store.PendingResumeTask);
 			store.ClearSuspension();
 
-			PhaseRunResult result = new PhaseRunner(phases, context, store, sleep, now, canSuspend: true, eventNodes: eventNodes).Run(resumePoint);
+			PhaseRunResult result = new PhaseRunner(phases, context, store, sleep, now, canSuspend, eventNodes: eventNodes).Run(resumePoint);
 			if (!result.IsSuspended)
 			{
 				return result;

@@ -331,6 +331,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 				return true;
 			}
 
+			public bool TryResolveJobNode(string reference, out EventNode node, out string failure) => TryResolveNode(reference, out node, out failure);
+
 			public PhaseStatus GetStoredStatus(string nodeId, string phaseKey)
 			{
 				Reads++;

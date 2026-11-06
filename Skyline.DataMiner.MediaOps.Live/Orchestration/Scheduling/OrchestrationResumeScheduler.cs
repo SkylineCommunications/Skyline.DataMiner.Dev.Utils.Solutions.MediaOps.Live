@@ -2,11 +2,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling
 {
 	using System;
 	using System.Collections.Generic;
+	using System.Linq;
 
 	using Newtonsoft.Json;
 
 	using Skyline.DataMiner.Core.DataMinerSystem.Common;
 	using Skyline.DataMiner.Net;
+	using Skyline.DataMiner.Net.Messages;
 
 	/// <summary>
 	/// Schedules the tasks that resume a node orchestration that is waiting on a phase.
@@ -51,6 +53,52 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling
 
 			// A task that no longer exists is fine: it already ran or was removed.
 			_dms.Value.GetAgent(taskId.DmaId).Scheduler.DeleteTask(taskId.TaskId);
+		}
+
+		/// <summary>
+		/// Gets the resume tasks that were due before the given time, with the event each one resumes.
+		/// </summary>
+		internal IReadOnlyCollection<KeyValuePair<ScheduledTaskId, Guid>> GetResumeTasksBefore(DateTimeOffset time)
+		{
+			var tasks = new List<KeyValuePair<ScheduledTaskId, Guid>>();
+
+			foreach (SchedulerTask task in OrchestrationScheduler.LoadSchedulerTasks(_connection))
+			{
+				if (task.Description != ResumeTaskNaming
+					|| new DateTimeOffset(DateTime.SpecifyKind(task.StartTime, DateTimeKind.Local)) >= time
+					|| !TryGetEventId(task, out Guid eventId))
+				{
+					continue;
+				}
+
+				tasks.Add(new KeyValuePair<ScheduledTaskId, Guid>(new ScheduledTaskId(task.HandlingDMA, task.Id), eventId));
+			}
+
+			return tasks;
+		}
+
+		private static bool TryGetEventId(SchedulerTask task, out Guid eventId)
+		{
+			eventId = Guid.Empty;
+
+			SchedulerAction action = task.Actions?.FirstOrDefault(x =>
+				x.ActionType == SchedulerActionType.Automation && x.ScriptInstance?.ScriptName == Constants.OrchestrationScriptName);
+
+			if (!(action?.ScriptInstance.ParameterIdToValue[0] is AutomationScriptInstanceInfo parameter))
+			{
+				return false;
+			}
+
+			try
+			{
+				eventId = JsonConvert.DeserializeObject<List<Guid>>(parameter.Value)?.FirstOrDefault() ?? Guid.Empty;
+			}
+			catch (JsonException)
+			{
+				return false;
+			}
+
+			return eventId != Guid.Empty;
 		}
 
 		internal static object[] GenerateTaskData(Guid eventId, DateTimeOffset resumeTime)

@@ -5,6 +5,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 	using System.Linq;
 
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Enums;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases;
@@ -17,6 +18,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 	{
 		private const string TransportId = "node-transport";
 		private const string EncoderId = "node-encoder";
+		private const string RecorderId = "node-recorder";
 		private const int LocalAgentId = 123;
 
 		private readonly FakeClock _clock = new FakeClock();
@@ -115,13 +117,35 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		}
 
 		[TestMethod]
-		public void PhaseContext_JobValuesOfANodeThatIsNotPartOfTheEvent_CannotBeRead()
+		public void PhaseContext_JobValuesOfANodeThatIsNotPartOfTheJob_CannotBeRead()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 			var context = CreateContext(api, EncoderId);
 
 			var exception = Assert.ThrowsExactly<ArgumentException>(() => context.Job.Values.ForNode("Unknown"));
-			StringAssert.Contains(exception.Message, "node 'Unknown' is not part of the event");
+			StringAssert.Contains(exception.Message, "node 'Unknown' is not part of the job");
+		}
+
+		[TestMethod]
+		public void PhaseContext_JobValuesOfANodeOfAnotherEvent_CanBeReadById()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+			string recording = null;
+
+			RunNode(api, RecorderId, new OrchestrationPhase[] { Phase.Execute("record", ctx => { ctx.Job.Values.Set("recordingId", "rec-1"); return PhaseStatus.Completed(); }) }, eventId: Guid.NewGuid());
+			RunNode(api, EncoderId, new OrchestrationPhase[] { Phase.Execute("configure", ctx => { recording = ctx.Job.Values.ForNode(RecorderId).Get("recordingId"); return PhaseStatus.Completed(); }) });
+
+			Assert.AreEqual("rec-1", recording);
+		}
+
+		[TestMethod]
+		public void PhaseContext_LabelOfANodeOfAnotherEvent_IsNotAccepted()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+			var context = CreateContext(api, EncoderId);
+
+			var exception = Assert.ThrowsExactly<ArgumentException>(() => context.Job.Values.ForNode("Recorder"));
+			StringAssert.Contains(exception.Message, "node 'Recorder' is not part of the job");
 		}
 
 		[TestMethod]
@@ -179,6 +203,48 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		}
 
 		[TestMethod]
+		public void PhaseContext_Event_ExposesTheNodesAndConnections()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+			var context = CreateContext(api, EncoderId);
+
+			Assert.AreNotEqual(Guid.Empty, context.Event.Id);
+			Assert.AreEqual("Preroll Start", context.Event.Name);
+			Assert.AreEqual(EventType.PrerollStart, context.Event.Type);
+
+			var transport = context.Event.Nodes.Single(node => node.Label == "Transport");
+			Assert.AreEqual(TransportId, transport.Id);
+			Assert.AreEqual("Transport Script", transport.OrchestrationScriptName);
+
+			var connection = context.Event.Connections.Single();
+			Assert.AreEqual(TransportId, connection.SourceNodeId);
+			Assert.AreEqual(EncoderId, connection.DestinationNodeId);
+
+			Assert.AreEqual("Transport", context.Event.Nodes.Single(node => node.Id == connection.SourceNodeId).Label);
+		}
+
+		[TestMethod]
+		public void PhaseContext_Job_ExposesTheJobInfo()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+			var context = CreateContext(api, EncoderId);
+
+			Assert.AreEqual("JOB-1", context.Job.Reference);
+			Assert.AreEqual("Cloud Job", context.Job.Name);
+			Assert.AreEqual(default, context.Job.MonitoringService);
+		}
+
+		[TestMethod]
+		public void PhaseContext_OutsideOfAnEvent_HasNoEventAndNoJob()
+		{
+			var context = new OrchestrationPhaseContext(null);
+
+			Assert.IsNull(context.Event);
+			var exception = Assert.ThrowsExactly<InvalidOperationException>(() => context.Job.Reference);
+			Assert.AreEqual(OrchestrationJobContext.NoEvent, exception.Message);
+		}
+
+		[TestMethod]
 		public void PhaseContext_Node_ExposesTheIdAndLabel()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
@@ -212,8 +278,32 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 
 			return new OrchestrationPhaseContext(
 				null,
-				new OrchestrationJobContext(OrchestrationJobValues.Create(api.Orchestration.NodeContextValues, _jobInfoId, nodeId, eventNodes)),
-				new OrchestrationNodeContext(nodeId, nodeId == TransportId ? "Transport" : "Encoder"));
+				new OrchestrationJobContext(
+					() => new OrchestrationJobInfo { JobReference = "JOB-1", JobName = "Cloud Job" },
+					OrchestrationJobValues.Create(api.Orchestration.NodeContextValues, _jobInfoId, nodeId, eventNodes)),
+				new OrchestrationNodeContext(nodeId, nodeId == TransportId ? "Transport" : "Encoder"),
+				OrchestrationEventContext.From(CreateEvent()));
+		}
+
+		private static OrchestrationEventConfiguration CreateEvent()
+		{
+			return new OrchestrationEventConfiguration
+			{
+				Name = "Preroll Start",
+				EventType = EventType.PrerollStart,
+				Configuration =
+				{
+					NodeConfigurations =
+					{
+						new NodeConfiguration { NodeId = TransportId, NodeLabel = "Transport", OrchestrationScriptName = "Transport Script" },
+						new NodeConfiguration { NodeId = EncoderId, NodeLabel = "Encoder" },
+					},
+					Connections =
+					{
+						new Connection { SourceNodeId = TransportId, DestinationNodeId = EncoderId },
+					},
+				},
+			};
 		}
 
 		private static StoredEventNodes CreateEventNodes(MediaOpsLiveApi api, string nodeId, Guid eventId)
@@ -226,6 +316,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 				{
 					new NodeConfiguration { NodeId = TransportId, NodeLabel = "Transport" },
 					new NodeConfiguration { NodeId = EncoderId, NodeLabel = "Encoder" },
+				},
+				() => new[]
+				{
+					new NodeConfiguration { NodeId = TransportId, NodeLabel = "Transport" },
+					new NodeConfiguration { NodeId = EncoderId, NodeLabel = "Encoder" },
+					new NodeConfiguration { NodeId = RecorderId, NodeLabel = "Recorder" },
 				});
 		}
 

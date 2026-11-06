@@ -277,6 +277,61 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			Assert.AreEqual(PhaseState.InProgress, PhaseStatus.InProgress("busy").State);
 		}
 
+		[TestMethod]
+		public void OrchestrationPhases_ScriptTimeoutInStatusMethod_FailsThePhaseAndEndsTheScript()
+		{
+			int calls = 0;
+			var runner = CreateRunner(
+				Phase.Execute("spin-up", _ => PhaseStatus.Completed()).WithStatus(_ => { calls++; throw new ScriptTimeoutException(); }));
+
+			Assert.ThrowsExactly<ScriptTimeoutException>(() => runner.Run());
+
+			Assert.AreEqual(1, calls, "Expected a script timeout not to be retried.");
+			Assert.AreEqual(PhaseState.Failed, runner.Statuses["spin-up"].State);
+			Assert.AreEqual("The script timed out while retrieving the status of phase 'spin-up'.", runner.Statuses["spin-up"].FailureReason);
+		}
+
+		[TestMethod]
+		public void OrchestrationPhases_ScriptTimeoutInExecution_FailsThePhaseAndEndsTheScript()
+		{
+			var runner = CreateRunner(Phase.Execute("spin-up", _ => throw new ScriptTimeoutException()));
+
+			Assert.ThrowsExactly<ScriptTimeoutException>(() => runner.Run());
+
+			Assert.AreEqual("The script timed out while executing phase 'spin-up'.", runner.Statuses["spin-up"].FailureReason);
+		}
+
+		[TestMethod]
+		public void OrchestrationPhases_ScriptTimeoutWhileWaiting_FailsThePhaseAfterTheWait()
+		{
+			var phases = new OrchestrationPhase[]
+			{
+				Phase.Execute("spin-up", _ => PhaseStatus.InProgress()).WithStatus(_ => PhaseStatus.InProgress()),
+				Phase.WaitFor("spin-up"),
+				Phase.Execute("configure", _ => PhaseStatus.Completed()),
+			};
+			var runner = new PhaseRunner(phases, CreateContext(), sleep: _ => throw new ScriptTimeoutException());
+
+			Assert.ThrowsExactly<ScriptTimeoutException>(() => runner.Run());
+
+			Assert.AreEqual("The script timed out while waiting on phase 'spin-up'.", runner.Statuses["configure"].FailureReason);
+		}
+
+		[TestMethod]
+		public void OrchestrationPhases_ScriptTimeoutThatCannotBeRecorded_StillEndsTheScript()
+		{
+			var runner = new PhaseRunner(new[] { Phase.Execute("spin-up", _ => throw new ScriptTimeoutException()) }, CreateContext(), new UnavailableStore());
+
+			Assert.ThrowsExactly<ScriptTimeoutException>(() => runner.Run());
+		}
+
+		private sealed class UnavailableStore : IPhaseStatusStore
+		{
+			public IReadOnlyDictionary<string, PhaseStatus> Load() => new Dictionary<string, PhaseStatus>();
+
+			public void Record(string key, PhaseStatus status, DateTimeOffset? executionStarted) => throw new InvalidOperationException("Storage unavailable.");
+		}
+
 		private static PhaseRunner CreateRunner(params OrchestrationPhase[] phases)
 		{
 			return CreateRunner(null, phases);

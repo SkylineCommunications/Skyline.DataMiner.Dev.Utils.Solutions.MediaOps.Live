@@ -8,7 +8,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 	/// <summary>
 	/// The job context values of the current node, shared by all events of the job.
-	/// A node writes only its own values, and can read the values of the other nodes of the event through <see cref="ForNode"/>.
+	/// A node writes only its own values, and can read the values of the other nodes of the job through <see cref="ForNode"/>.
 	/// </summary>
 	public sealed class OrchestrationJobValues : IOrchestrationWritableValues
 	{
@@ -37,9 +37,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		public bool Remove(string key) => _ownValues.Remove(key);
 
 		/// <summary>
-		/// Gets a read-only view on the job context values of another node of the event.
+		/// Gets a read-only view on the job context values of another node of the job.
 		/// </summary>
-		/// <param name="node">The ID or label of the node.</param>
+		/// <param name="node">The ID or label of a node of the current event, or the ID of a node of another event of the job.</param>
 		/// <returns>The values of that node.</returns>
 		public IOrchestrationValues ForNode(string node)
 		{
@@ -57,7 +57,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				new OrchestrationValues(new JobValueBackend(repository, jobInfoId, nodeId)),
 				node =>
 				{
-					if (!eventNodes.TryResolveNode(node, out EventNode resolved, out string failure))
+					if (!eventNodes.TryResolveJobNode(node, out EventNode resolved, out string failure))
 					{
 						throw new ArgumentException($"Unable to read the job context values of node '{node}': {failure}.", nameof(node));
 					}
