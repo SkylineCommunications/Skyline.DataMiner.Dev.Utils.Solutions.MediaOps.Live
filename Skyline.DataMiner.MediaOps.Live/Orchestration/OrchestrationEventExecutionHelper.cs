@@ -456,7 +456,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 
 					if (connection.LevelMappings != null && connection.LevelMappings.Any())
 					{
-						levels = allInvolvedLevels
+						// Skipping an unknown level could leave the list empty, which means "disconnect all levels".
+						levels = connection.LevelMappings
+							.Select(map => allInvolvedLevels.FirstOrDefault(level => level.Number == map.Destination.Number)
+								?? throw new InvalidOperationException($"Level with number '{map.Destination.Number}' could not be found."))
 							.Select(level => level.Reference)
 							.Distinct()
 							.ToList();

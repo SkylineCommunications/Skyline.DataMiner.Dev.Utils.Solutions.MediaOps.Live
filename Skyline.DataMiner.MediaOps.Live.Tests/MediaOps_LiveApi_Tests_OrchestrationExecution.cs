@@ -1,6 +1,7 @@
 namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 {
 	using System;
+	using System.Collections.Concurrent;
 	using System.Collections.Generic;
 	using System.Linq;
 
@@ -189,6 +190,61 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 			Assert.AreEqual(EventState.Failed, connectEvent.EventState);
 		}
 
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationExecution_DisconnectOnlyAffectsLevelsOfEachConnection()
+		{
+			// Arrange
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var destinationVsg1 = api.VirtualSignalGroups.Query().First(x => x.Name == "Destination 1");
+			var destinationVsg2 = api.VirtualSignalGroups.Query().First(x => x.Name == "Destination 2");
+
+			var capturingTakeHelper = new CapturingDisconnectTakeHelper(api);
+			var mockApi = new Mock<MediaOpsLiveApi>(api.Connection) { CallBase = true };
+			mockApi.Setup(x => x.GetConnectionHandler()).Returns(capturingTakeHelper);
+
+			var orchestrationEvent = new OrchestrationEventConfiguration
+			{
+				Name = "Test Disconnect Event",
+				EventTime = DateTimeOffset.UtcNow,
+				EventType = EventType.Stop,
+				EventState = EventState.Draft,
+				Configuration =
+				{
+					Connections = new List<Connection>
+					{
+						new Connection
+						{
+							DestinationNodeId = "1",
+							DestinationVsg = destinationVsg1.ID,
+							LevelMappings = new List<LevelMapping> { new LevelMapping(new Level("Video", 1), new Level("Video", 1)) },
+						},
+						new Connection
+						{
+							DestinationNodeId = "2",
+							DestinationVsg = destinationVsg2.ID,
+							LevelMappings = new List<LevelMapping> { new LevelMapping(new Level("Audio", 2), new Level("Audio", 2)) },
+						},
+					},
+				},
+			};
+
+			var planHelper = new Mock<IMediaOpsPlanHelper>().Object;
+			var settings = new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(5) };
+			var helper = new OrchestrationEventExecutionHelper(mockApi.Object, planHelper, settings);
+
+			// Act
+			using var performanceCollector = new PerformanceCollector(Mock.Of<IPerformanceLogger>());
+			using var performanceTracker = new PerformanceTracker(performanceCollector);
+			helper.ExecuteConnections(orchestrationEvent, performanceTracker);
+
+			// Assert
+			CollectionAssert.AreEquivalent(
+				new[] { "Video Destination 1", "Audio Destination 2" },
+				capturingTakeHelper.DisconnectedDestinations.ToList());
+		}
+
 		private static OrchestrationEventConfiguration CreateDisconnectEvent(params VirtualSignalGroup[] destinationVsgs)
 		{
 			var connections = new List<Connection>();
@@ -281,6 +337,35 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 				if (action == ConnectionHandlerScriptAction.Disconnect)
 				{
 					throw new InvalidOperationException("Disconnect is not supported by this connection handler.");
+				}
+
+				base.ExecuteConnectionHandlerScript(script, action, inputData, performanceTracker);
+			}
+		}
+
+		/// <summary>
+		/// A TakeHelper subclass that records the destinations passed to the disconnect connection handler script.
+		/// </summary>
+		private class CapturingDisconnectTakeHelper : TakeHelper
+		{
+			internal CapturingDisconnectTakeHelper(MediaOpsLiveApi api) : base(api)
+			{
+			}
+
+			public ConcurrentBag<string> DisconnectedDestinations { get; } = new();
+
+			protected override void ExecuteConnectionHandlerScript(
+				string script,
+				ConnectionHandlerScriptAction action,
+				IConnectionHandlerInputData inputData,
+				PerformanceTracker performanceTracker)
+			{
+				if (action == ConnectionHandlerScriptAction.Disconnect && inputData is DisconnectDestinationsInputData disconnectData)
+				{
+					foreach (var destination in disconnectData.Destinations)
+					{
+						DisconnectedDestinations.Add(destination.Name);
+					}
 				}
 
 				base.ExecuteConnectionHandlerScript(script, action, inputData, performanceTracker);
