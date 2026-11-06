@@ -380,6 +380,73 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			Assert.HasCount(1, GetResumeTasks(simulation));
 		}
 
+		[TestMethod]
+		public void OrchestrationPhaseResume_NodeOwnedByAnotherExecution_LeavesTheEventToThatExecution()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+			var ev = SaveEventWithNodeScript(api);
+			SetEventState(api, ev.ID, EventState.Configuring);
+			SuspendNode(simulation, ev, DateTimeOffset.UtcNow.AddMinutes(5));
+			MakeResumeDue(api, ev.ID);
+
+			// The owning execution already took over the resume, so this one is stopped by the guard.
+			simulation.Dms.Scripts.Single(x => x.Name == "Script_Success").OnOrchestrate = _ =>
+			{
+				ClearResume(simulation, ev.ID);
+				return new Dictionary<string, string> { [Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Script.OrchestrationScriptConstants.ScriptOutputSkipped] = "Already being executed." };
+			};
+
+			api.Orchestration.ExecuteEventsNow([ev.ID], api.GetMediaOpsPlanHelper());
+
+			var stored = GetEvent(api, ev.ID);
+			Assert.AreEqual(EventState.Configuring, stored.EventState);
+			Assert.IsTrue(String.IsNullOrEmpty(stored.FailureInfo), stored.FailureInfo);
+		}
+
+		[TestMethod]
+		public void OrchestrationPhaseResume_FailureSavedByAConcurrentExecution_IsKept()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+			var ev = SaveEventWithNodeScript(api);
+			SetEventState(api, ev.ID, EventState.Configuring);
+			SuspendNode(simulation, ev, DateTimeOffset.UtcNow.AddMinutes(5));
+			MakeResumeDue(api, ev.ID);
+
+			// While this node runs, the resume of another node fails the event.
+			simulation.Dms.Scripts.Single(x => x.Name == "Script_Success").OnOrchestrate = _ =>
+			{
+				ClearResume(simulation, ev.ID);
+
+				var concurrent = GetEvent(api, ev.ID);
+				concurrent.InternalSetState(EventState.Failed);
+				concurrent.AppendFailureInfo("Node 'other' failed.");
+				new Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestration.OrchestrationEventRepository(api).CreateOrUpdate(concurrent);
+
+				return null;
+			};
+
+			api.Orchestration.ExecuteEventsNow([ev.ID], api.GetMediaOpsPlanHelper());
+
+			var stored = GetEvent(api, ev.ID);
+			Assert.AreEqual(EventState.Failed, stored.EventState);
+			StringAssert.Contains(stored.FailureInfo, "Node 'other' failed.");
+		}
+
+		private static void ClearResume(MediaOpsLiveSimulation simulation, Guid eventId)
+		{
+			var repository = simulation.Api.Orchestration.NodePhases;
+			var nodePhases = repository.GetNodePhases(eventId, NodeId);
+
+			new OrchestrationResumeScheduler(simulation.Api.Connection, LocalAgentId).DeleteResumeTask(nodePhases.ResumeSchedulerReference);
+			nodePhases.ResumeSchedulerReference = null;
+			nodePhases.ResumePhaseIndex = null;
+			nodePhases.ResumeTime = null;
+			nodePhases.WaitStarted = null;
+			repository.CreateOrUpdate(nodePhases);
+		}
+
 		private static void HasTimes(IReadOnlyList<DateTime> times, params DateTimeOffset[] expected)
 		{
 			Assert.HasCount(expected.Length, times);
@@ -512,6 +579,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 				{
 					SuspendNode(simulation, ev, DateTimeOffset.UtcNow.AddMinutes(5), nodeId);
 				}
+
+				return null;
 			};
 		}
 

@@ -113,6 +113,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 					Data = HandleRequestInfoEntryPoint(inputData.Data),
 				};
 			}
+			catch (PhaseExecutionInProgressException e)
+			{
+				return new RequestScriptInfoOutput
+				{
+					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.ScriptOutputSkipped, e.Message } },
+				};
+			}
 			catch (Exception e)
 			{
 				return new RequestScriptInfoOutput
@@ -235,7 +242,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			if (!result.HadError)
 			{
-				return NodeOrchestrationResult.Succeeded(nodeConfig.NodeId);
+				// A global script continues after the node, so a node that another execution still orchestrates is not done.
+				return result.IsSkipped
+					? NodeOrchestrationResult.Failed(nodeConfig.NodeId, String.Join("\n", result.ErrorMessages ?? Enumerable.Empty<string>()))
+					: NodeOrchestrationResult.Succeeded(nodeConfig.NodeId);
 			}
 
 			string reason = String.Join("\n", result.ErrorMessages ?? Enumerable.Empty<string>());
@@ -325,7 +335,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 			if (!PhaseExecutionGuard.TryAcquire(jobInfoId, eventId, nodeId, out PhaseExecutionGuard guard))
 			{
-				throw new InvalidOperationException($"The phases of node '{nodeId}' are already being executed for this event by another execution. This execution was stopped.");
+				throw new PhaseExecutionInProgressException($"The phases of node '{nodeId}' are already being executed for this event by another execution. This execution was stopped.");
 			}
 
 			using (guard)

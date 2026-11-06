@@ -769,6 +769,7 @@ Waiting in another process only happens for a node of an event. In other executi
 The event stays `Configuring` as long as one of its nodes waits for a resume.
 The execution that ends the last wait sets the event to `Completed` or `Failed`, sets the orchestration duration, and reports the result to MediaOps Plan.
 When a phase fails while other nodes still wait, the event fails right away and the other nodes continue their waits. An event that already failed or was cancelled keeps its state.
+Several executions of the same event can run at the same time, for example the resumes of two nodes that wait. A failure saved by one of them is never overwritten by another one that succeeds.
 
 ### Trigger an event again
 
@@ -780,6 +781,7 @@ An event that already ran is triggered again with `RetryEvents` (see [Retry an e
 
 Only one execution at a time can run the phases of a node for an event. A second one stops right away with
 "The phases of node 'x' are already being executed for this event by another execution. This execution was stopped.".
+This doesn't fail the event: the execution that runs the phases saves the result. Only a global script that runs the node with `OrchestrateNode` sees it as a failure of the node, because it can't continue before the node is done.
 This guard lives in the SLAutomation process, so it only covers executions on the same DataMiner Agent, and is released when that process stops.
 
 ### Context

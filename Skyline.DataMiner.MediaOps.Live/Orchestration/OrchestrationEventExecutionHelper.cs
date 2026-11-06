@@ -47,6 +47,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 		private readonly IMediaOpsPlanHelper _planHelper;
 		private readonly OrchestrationSettings _settings;
 		private readonly NodePhasesRepository _nodePhasesRepository;
+		private readonly ConcurrentHashSet<Guid> _eventsWithSkippedNodes = new();
 
 		internal OrchestrationEventExecutionHelper(MediaOpsLiveApi api, IMediaOpsPlanHelper planHelper, OrchestrationSettings settings)
 		{
@@ -158,6 +159,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteJobEventAsync)))
 			{
+				var loaded = new LoadedEventState(orchestrationEvent);
 				SetConfiguringState(orchestrationEvent, writeBuffer, retry);
 
 				try
@@ -186,7 +188,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 				}
 				finally
 				{
-					SaveOrchestrationResult(orchestrationEvent, writeBuffer, performanceTracker);
+					SaveOrchestrationResult(orchestrationEvent, loaded, writeBuffer, performanceTracker);
 				}
 			}
 		}
@@ -266,18 +268,54 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			writeBuffer.Enqueue(orchestrationEvent);
 		}
 
-		private void SaveOrchestrationResult(OrchestrationEventConfiguration orchestrationEventConfiguration, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
+		private void SaveOrchestrationResult(OrchestrationEventConfiguration orchestrationEventConfiguration, LoadedEventState loaded, WriteBuffer<OrchestrationEvent> writeBuffer, PerformanceTracker performanceTracker)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				// The event stays Configuring while a node waits for a resume; the last resume completes it.
-				if (orchestrationEventConfiguration.EventState != EventState.Failed && HasPendingResumes(orchestrationEventConfiguration))
+				KeepConcurrentFailure(orchestrationEventConfiguration, loaded);
+
+				if (orchestrationEventConfiguration.EventState != EventState.Failed)
 				{
-					writeBuffer.Enqueue(orchestrationEventConfiguration);
-					return;
+					// The execution that owns a skipped node saves the result once that node is done.
+					if (_eventsWithSkippedNodes.Contains(orchestrationEventConfiguration.ID))
+					{
+						return;
+					}
+
+					// The event stays Configuring while a node waits for a resume; the last resume completes it.
+					if (HasPendingResumes(orchestrationEventConfiguration))
+					{
+						writeBuffer.Enqueue(orchestrationEventConfiguration);
+						return;
+					}
 				}
 
 				CompleteEvent(orchestrationEventConfiguration, writeBuffer);
+			}
+		}
+
+		// Executions of the same event can run at the same time, for example the resumes of two waiting nodes, and an event is saved as a whole.
+		// A failure another execution saved after this one loaded the event must therefore not be overwritten.
+		private void KeepConcurrentFailure(OrchestrationEventConfiguration orchestrationEvent, LoadedEventState loaded)
+		{
+			OrchestrationEvent stored = new OrchestrationEventRepository(_api).Read(orchestrationEvent.ID);
+
+			if (stored == null
+				|| stored.EventState != EventState.Failed
+				|| (loaded.State == EventState.Failed && stored.FailureInfo == loaded.FailureInfo))
+			{
+				return;
+			}
+
+			orchestrationEvent.InternalSetState(EventState.Failed);
+
+			string current = orchestrationEvent.FailureInfo ?? String.Empty;
+			foreach (string failure in (stored.FailureInfo ?? String.Empty).Split(new[] { Environment.NewLine }, StringSplitOptions.RemoveEmptyEntries))
+			{
+				if (!current.Contains(failure))
+				{
+					orchestrationEvent.AppendFailureInfo(failure);
+				}
 			}
 		}
 
@@ -334,6 +372,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			}
 
 			EventState stateBefore = orchestrationEvent.EventState;
+			var loaded = new LoadedEventState(orchestrationEvent);
 
 			try
 			{
@@ -366,12 +405,13 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			if (stateBefore != EventState.Configuring)
 			{
 				// Only an event that is still being orchestrated changes state; the failure info is kept.
+				KeepConcurrentFailure(orchestrationEvent, loaded);
 				orchestrationEvent.InternalSetState(stateBefore);
 				writeBuffer.Enqueue(orchestrationEvent);
 				return;
 			}
 
-			SaveOrchestrationResult(orchestrationEvent, writeBuffer, performanceTracker);
+			SaveOrchestrationResult(orchestrationEvent, loaded, writeBuffer, performanceTracker);
 		}
 
 		private void CancelResume(OrchestrationNodePhases nodePhases)
@@ -388,6 +428,19 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 		private IReadOnlyDictionary<string, OrchestrationNodePhases> GetPendingResumesByNode(Guid eventId)
 		{
 			return _nodePhasesRepository.GetPendingResumes(eventId).ToDictionary(x => x.NodeId);
+		}
+
+		private sealed class LoadedEventState
+		{
+			public LoadedEventState(OrchestrationEvent orchestrationEvent)
+			{
+				State = orchestrationEvent.EventState;
+				FailureInfo = orchestrationEvent.FailureInfo;
+			}
+
+			public EventState State { get; }
+
+			public string FailureInfo { get; }
 		}
 
 		// A script that takes over a resume replaces or clears it; one that is left unchanged would otherwise stay behind, for example when the script failed to start.
@@ -727,6 +780,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 								CancelUnhandledResume(pendingResume);
 							}
 
+							if (nodeScriptResult.IsSkipped)
+							{
+								_eventsWithSkippedNodes.TryAdd(orchestrationEventConfiguration.ID);
+							}
+
 							if (nodeScriptResult.HadError)
 							{
 								errors.TryAdd($"\nError during orchestration for node {DescribeNode(nodeConfiguration)}: " +
@@ -826,6 +884,16 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 				{
 					ErrorMessages = [errors],
 					HadError = true,
+				};
+			}
+
+			if (result.EntryPointResult?.Result is RequestScriptInfoOutput skippedOutput
+				&& skippedOutput.Data.TryGetValue(OrchestrationScriptConstants.ScriptOutputSkipped, out string skipReason))
+			{
+				return new OrchestrationScriptResult
+				{
+					ErrorMessages = [skipReason],
+					IsSkipped = true,
 				};
 			}
 

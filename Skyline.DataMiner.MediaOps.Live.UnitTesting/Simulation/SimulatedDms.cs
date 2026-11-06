@@ -678,12 +678,19 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 			// Like a real orchestration script, Script_Fail only fails when it orchestrates, not when it describes its inputs.
 			int returnCode = msg.ScriptName == "Script_Fail" && !IsScriptInfoRequest(msg) ? -1 : 0;
 
+			IReadOnlyDictionary<string, string> additionalOutput = null;
 			if (!IsScriptInfoRequest(msg))
 			{
-				script.OnOrchestrate?.Invoke(GetScriptMetadata(msg));
+				additionalOutput = script.OnOrchestrate?.Invoke(GetScriptMetadata(msg));
 			}
 
 			var scriptInfo = script.GetOrchestrationScriptInfo(GetProvidedInputValues(msg));
+
+			var output = new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } };
+			foreach (var entry in additionalOutput ?? new Dictionary<string, string>())
+			{
+				output[entry.Key] = entry.Value;
+			}
 
 			yield return new ExecuteScriptResponseMessage
 			{
@@ -693,7 +700,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 				]),
 				EntryPointResult = new AutomationEntryPointResult(new RequestScriptInfoOutput
 				{
-					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } },
+					Data = output,
 				}),
 			};
 
