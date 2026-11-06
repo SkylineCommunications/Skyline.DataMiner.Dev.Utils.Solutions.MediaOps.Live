@@ -9,13 +9,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
 	/// </summary>
 	public sealed class OrchestrationEventPhase
 	{
-		internal OrchestrationEventPhase(string nodeId, OrchestrationPhaseStatus status)
+		internal OrchestrationEventPhase(Guid eventId, string nodeId, OrchestrationPhaseStatus status)
 		{
 			if (status == null)
 			{
 				throw new ArgumentNullException(nameof(status));
 			}
 
+			EventId = eventId;
 			NodeId = nodeId;
 			Key = status.Key;
 			Order = status.Order;
@@ -25,6 +26,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
 			Started = status.Started;
 			Ended = status.Ended;
 		}
+
+		/// <summary>
+		/// Gets the ID of the orchestration event the phase belongs to.
+		/// </summary>
+		public Guid EventId { get; }
 
 		/// <summary>
 		/// Gets the ID of the node the phase belongs to.

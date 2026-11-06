@@ -8,6 +8,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestrati
 	using Skyline.DataMiner.Net.Messages.SLDataGateway;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
+	using Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration;
 	using Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Tools;
 
@@ -62,8 +63,59 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Repositories.Orchestrati
 		{
 			return GetNodePhasesForEvent(eventId).Values
 				.OrderBy(x => x.NodeId, StringComparer.Ordinal)
-				.SelectMany(node => node.Phases.OrderBy(x => x.Order).Select(phase => new OrchestrationEventPhase(node.NodeId, phase)))
+				.SelectMany(ToEventPhases)
 				.ToList();
+		}
+
+		internal IReadOnlyDictionary<Guid, IReadOnlyList<OrchestrationEventPhase>> GetEventPhases(IEnumerable<Guid> eventIds)
+		{
+			if (eventIds == null)
+			{
+				throw new ArgumentNullException(nameof(eventIds));
+			}
+
+			List<Guid> ids = eventIds.Where(x => x != Guid.Empty).Distinct().ToList();
+
+			Dictionary<Guid, IReadOnlyList<OrchestrationEventPhase>> phasesByEvent = FilterQueryExecutor.RetrieveFilteredItems(ids, CreateEventFilter, x => ReadDom(x))
+				.GroupBy(x => x.EventReference.ID)
+				.ToDictionary(
+					byEvent => byEvent.Key,
+					byEvent => (IReadOnlyList<OrchestrationEventPhase>)byEvent
+						.GroupBy(x => x.NodeId)
+						.Select(SelectNewest)
+						.OrderBy(x => x.NodeId, StringComparer.Ordinal)
+						.SelectMany(ToEventPhases)
+						.ToList());
+
+			foreach (Guid id in ids.Where(x => !phasesByEvent.ContainsKey(x)))
+			{
+				phasesByEvent[id] = Array.Empty<OrchestrationEventPhase>();
+			}
+
+			return phasesByEvent;
+		}
+
+		internal static IReadOnlyList<OrchestrationEventPhase> ToEventPhases(OrchestrationNodePhases nodePhases)
+		{
+			return nodePhases.Phases
+				.OrderBy(x => x.Order)
+				.Select(phase => new OrchestrationEventPhase(nodePhases.EventReference.ID, nodePhases.NodeId, phase))
+				.ToList();
+		}
+
+		/// <summary>
+		/// Subscribes to the phases of all events, or of one event.
+		/// </summary>
+		internal RepositorySubscription<OrchestrationNodePhases> SubscribeOnPhases(Guid? eventId)
+		{
+			FilterElement<DomInstance> filter = DomInstanceExposers.DomDefinitionId.Equal(SlcOrchestrationIds.Definitions.OrchestrationNodePhases.Id);
+
+			if (eventId.HasValue)
+			{
+				filter = filter.AND(CreateEventFilter(eventId.Value));
+			}
+
+			return new RepositorySubscription<OrchestrationNodePhases>(this, filter);
 		}
 
 		/// <summary>

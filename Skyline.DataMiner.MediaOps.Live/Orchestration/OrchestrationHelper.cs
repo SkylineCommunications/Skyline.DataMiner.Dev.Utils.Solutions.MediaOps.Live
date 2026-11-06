@@ -817,6 +817,41 @@ public class OrchestrationHelper
 	}
 
 	/// <summary>
+	/// Gets the phases of several orchestration events at once, ordered by node ID and then by the order of the phases in the script.
+	/// Use this instead of <see cref="OrchestrationEvent.Phases"/> when reading the phases of many events.
+	/// </summary>
+	/// <param name="eventIds">The IDs of the events.</param>
+	/// <returns>The phases per event ID. An event without phases has an empty list.</returns>
+	public IReadOnlyDictionary<Guid, IReadOnlyList<OrchestrationEventPhase>> GetEventPhases(IEnumerable<Guid> eventIds)
+	{
+		return _nodePhasesRepository.GetEventPhases(eventIds);
+	}
+
+	/// <summary>
+	/// Provides a subscription to the phases of all orchestration events.
+	/// </summary>
+	/// <returns>A subscription that reports the current phases of every node whose phases changed. It must be disposed when no longer needed.</returns>
+	public OrchestrationEventPhasesSubscription SubscribeOnEventPhases()
+	{
+		return new OrchestrationEventPhasesSubscription(_nodePhasesRepository, null);
+	}
+
+	/// <summary>
+	/// Provides a subscription to the phases of one orchestration event.
+	/// </summary>
+	/// <param name="eventId">The ID of the event.</param>
+	/// <returns>A subscription that reports the current phases of every node of the event whose phases changed. It must be disposed when no longer needed.</returns>
+	public OrchestrationEventPhasesSubscription SubscribeOnEventPhases(Guid eventId)
+	{
+		if (eventId == Guid.Empty)
+		{
+			throw new ArgumentException("The event ID cannot be empty.", nameof(eventId));
+		}
+
+		return new OrchestrationEventPhasesSubscription(_nodePhasesRepository, eventId);
+	}
+
+	/// <summary>
 	/// Retrieve all events in the given time range.
 	/// </summary>
 	/// <param name="start">The start time.</param>

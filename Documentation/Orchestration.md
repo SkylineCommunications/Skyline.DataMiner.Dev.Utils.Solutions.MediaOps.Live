@@ -903,6 +903,38 @@ foreach (OrchestrationEventPhase phase in orchestrationEvent.Phases)
 - The phases are read once, the first time `Phases` is accessed. Read the event again to see later changes.
 - Only phases of node scripts are stored. An event without node scripts with phases, or that didn't run yet, has no phases.
 
+To read the phases of many events, for example to list events with their progress, use `GetEventPhases` instead: it reads them in one go instead of once per event.
+
+```csharp
+IReadOnlyDictionary<Guid, IReadOnlyList<OrchestrationEventPhase>> phasesByEvent = api.Orchestration.GetEventPhases(eventIds);
+```
+
+#### Follow phases in real time
+
+The phases are stored apart from the event, so a subscription on the events doesn't report them. Subscribe on the phases instead, for all events or for one:
+
+```csharp
+using (OrchestrationEventPhasesSubscription subscription = api.Orchestration.SubscribeOnEventPhases(eventId))
+{
+    subscription.Changed += (sender, changes) =>
+    {
+        foreach (OrchestrationNodePhasesChange change in changes)
+        {
+            // All current phases of the node; phases that are no longer listed were removed.
+            IReadOnlyList<OrchestrationEventPhase> phases = change.Phases;
+            bool removed = change.IsRemoved;
+        }
+    };
+}
+```
+
+- Every change carries all current phases of the node, not only the phase that changed, so it can replace what was shown for that node.
+- `IsRemoved` is `true` when the node no longer has phases, for example because the event was deleted.
+- A phase status is written whenever it's evaluated, so a node that waits reports a change on every poll.
+- The subscription must be disposed when no longer needed.
+
+The GQI data sources `ORC-GQIDS-Events` (phase summary per event) and `ORC-GQIDS-EventPhases` (one row per phase of an event) of the MediaOps Live solution use these methods.
+
 ### Storage
 
 Phase statuses and job context values are stored in the `(slc)orchestration` DOM module:
