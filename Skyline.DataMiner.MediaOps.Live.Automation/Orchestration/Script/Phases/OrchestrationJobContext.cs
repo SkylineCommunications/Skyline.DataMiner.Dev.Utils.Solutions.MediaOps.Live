@@ -40,7 +40,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		/// <summary>
 		/// Gets the job context values of the current node. They are kept for the lifetime of the job, so later phases,
 		/// executions and events of the node can read them, for example the stop event reading what the start event provisioned.
-		/// Only available when the script runs for a node of an event.
+		/// Only a node of an event has values of its own; the global script of an event can only read the values of the nodes
+		/// through <see cref="OrchestrationJobValues.ForNode"/>.
 		/// </summary>
 		public OrchestrationJobValues Values { get; }
 	}

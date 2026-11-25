@@ -130,6 +130,12 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
         public bool IsSuccess { get; }
         public string NodeId { get; }
     }
+    public sealed class OrchestrationConnectionFailedException : System.Exception
+    {
+        public string DestinationNodeId { get; }
+        public string FailureReason { get; }
+        public string SourceNodeId { get; }
+    }
     public sealed class OrchestrationNodeFailedException : System.Exception
     {
         public string FailureReason { get; }
@@ -150,6 +156,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
         [Skyline.DataMiner.Automation.AutomationEntryPoint(Skyline.DataMiner.Automation.AutomationEntryPointType.Types.OnRequestScriptInfo)]
         public Skyline.DataMiner.Net.Automation.RequestScriptInfoOutput OnRequestScriptInfoRequest(Skyline.DataMiner.Automation.IEngine engine, Skyline.DataMiner.Net.Automation.RequestScriptInfoInput inputData) { }
         public void OrchestrateAllConnections(int timeoutSeconds = 60) { }
+        public void OrchestrateConnection(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.Connection connection, int timeoutSeconds = 60) { }
         public void OrchestrateNode(Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.NodeConfiguration nodeConfig) { }
         public void Run(Skyline.DataMiner.Automation.IEngine engine) { }
         public virtual Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId SetupService(Skyline.DataMiner.Automation.IEngine engine) { }

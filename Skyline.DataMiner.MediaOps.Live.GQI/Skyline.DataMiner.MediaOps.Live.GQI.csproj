@@ -24,7 +24,7 @@
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/SkylineCommunications/Skyline.DataMiner.Dev.Utils.Solutions.MediaOps.Live</RepositoryUrl>
 		<GitVersion>false</GitVersion>
-		<Version>1.3.0-dev-alpha001</Version>
+		<Version>1.3.0-dev-alpha004</Version>
 	</PropertyGroup>
 
 	<ItemGroup>

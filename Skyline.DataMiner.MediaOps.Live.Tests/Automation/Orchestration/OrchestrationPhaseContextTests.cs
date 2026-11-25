@@ -52,6 +52,27 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		}
 
 		[TestMethod]
+		public void PhaseContext_GlobalScriptOfAnEvent_ReadsTheValuesOfTheNodesButHasNoneOfItsOwn()
+		{
+			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
+			RunNode(api, TransportId, new OrchestrationPhase[] { Phase.Execute("session", ctx => { ctx.Job.Values.Set("sessionName", "transport-1"); return PhaseStatus.Completed(); }) });
+			RunNode(api, RecorderId, new OrchestrationPhase[] { Phase.Execute("record", ctx => { ctx.Job.Values.Set("recordingId", "rec-1"); return PhaseStatus.Completed(); }) }, eventId: Guid.NewGuid());
+
+			var values = OrchestrationJobValues.ReadOnlyForEvent(api.Orchestration.NodeContextValues, _jobInfoId, CreateEventNodes(api, null, _eventId), OrchestrationPhaseContext.NoOwnValuesInGlobalScript);
+
+			Assert.AreEqual("transport-1", values.ForNode("Transport").Get("sessionName"));
+			Assert.AreEqual("transport-1", values.ForNode(TransportId).Get("sessionName"));
+			Assert.AreEqual("rec-1", values.ForNode(RecorderId).Get("recordingId"));
+			Assert.IsFalse(values.ForNode("Encoder").TryGet("sessionName", out _));
+			Assert.IsNotInstanceOfType<IOrchestrationWritableValues>(values.ForNode("Transport"));
+
+			var exception = Assert.ThrowsExactly<InvalidOperationException>(() => values.Set("key", "value"));
+			Assert.AreEqual(OrchestrationPhaseContext.NoOwnValuesInGlobalScript, exception.Message);
+			Assert.ThrowsExactly<InvalidOperationException>(() => values.TryGet("key", out _));
+			StringAssert.Contains(Assert.ThrowsExactly<ArgumentException>(() => values.ForNode("Unknown")).Message, "node 'Unknown' is not part of the job");
+		}
+
+		[TestMethod]
 		public void PhaseContext_JobValues_SurviveASuspensionAndAreReadAfterTheResume()
 		{
 			var simulation = new MediaOpsLiveSimulation();

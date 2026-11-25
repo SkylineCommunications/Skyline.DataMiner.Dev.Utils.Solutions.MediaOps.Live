@@ -30,6 +30,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 	using Skyline.DataMiner.Utils.InteractiveAutomationScript;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer;
 	using Skyline.DataMiner.Utils.PerformanceAnalyzer.Loggers;
+	using Connection = Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.Connection;
 	using DropdownParameterDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.DropdownParameterDisplayInfo;
 	using GroupPresetOption = Skyline.DataMiner.Utils.InteractiveAutomationScript.Option<Mvc.DisplayTypes.PresetGroupDisplayInfo.PresetInfo>;
 	using NumericParameterDisplayInfo = Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Mvc.DisplayTypes.NumericParameterDisplayInfo;
@@ -169,7 +170,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		// A failed phase is an expected outcome with a reason for the operator, not a defect to debug.
 		private static string DescribeError(Exception e)
 		{
-			return e is OrchestrationPhaseFailedException || e is OrchestrationNodeFailedException || e is ScriptTimeoutException ? e.Message : e.ToString();
+			return e is OrchestrationPhaseFailedException || e is OrchestrationNodeFailedException || e is OrchestrationConnectionFailedException || e is ScriptTimeoutException
+				? e.Message
+				: e.ToString();
 		}
 
 		public bool TryGetMetadataValue(string metadataParam, out string metadataValue)
@@ -217,7 +220,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		/// <returns>The outcome of the orchestration of the node.</returns>
 		public NodeOrchestrationResult TryOrchestrateNode(NodeConfiguration nodeConfig)
 		{
-			if (_context != OrchestrationScriptContext.Event || _orchestrationLevel != OrchestrationLevel.Global)
+			if (!IsGlobalScriptOfEvent)
 			{
 				return NodeOrchestrationResult.NotExecuted(nodeConfig?.NodeId);
 			}
@@ -263,15 +266,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		/// <param name="timeoutSeconds">Optional argument to override timeout (default 60 seconds).</param>
 		public void OrchestrateAllConnections(int timeoutSeconds = 60)
 		{
-			if (_context != OrchestrationScriptContext.Event || _orchestrationLevel != OrchestrationLevel.Global)
+			if (!IsGlobalScriptOfEvent)
 			{
 				return;
 			}
-
-			var api = new EngineMediaOpsLiveApi(_engine);
-			var planHelper = api.GetMediaOpsPlanHelper();
-
-			var orchestrationEventExecutionHelper = new OrchestrationEventExecutionHelper(api, planHelper, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
 
 			IPerformanceLogger performanceLogger = PerformanceLoggerFactory.Create("ORC-OrchestrateAllConnections");
 
@@ -283,8 +281,52 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 					return;
 				}
 
-				orchestrationEventExecutionHelper.ExecuteConnections(EventConfiguration, performanceTracker);
+				CreateExecutionHelper(timeoutSeconds).ExecuteConnections(EventConfiguration, performanceTracker);
 			}
+		}
+
+		/// <summary>
+		/// Orchestrates a single connection of the event and waits until it is done, so connections can be made in a chosen order,
+		/// for example from the source to the destination of a chain. Based on the event type, this connects or disconnects.
+		/// Only has effect in the global script of an event.
+		/// </summary>
+		/// <param name="connection">A connection of <see cref="EventConfiguration"/>.</param>
+		/// <param name="timeoutSeconds">Optional argument to override timeout (default 60 seconds).</param>
+		/// <exception cref="OrchestrationConnectionFailedException">The connection could not be made.</exception>
+		public void OrchestrateConnection(Connection connection, int timeoutSeconds = 60)
+		{
+			if (connection == null)
+			{
+				throw new ArgumentNullException(nameof(connection));
+			}
+
+			if (!IsGlobalScriptOfEvent)
+			{
+				return;
+			}
+
+			IPerformanceLogger performanceLogger = PerformanceLoggerFactory.Create("ORC-OrchestrateConnection");
+
+			using (PerformanceCollector collector = new PerformanceCollector(performanceLogger))
+			using (PerformanceTracker performanceTracker = new PerformanceTracker(collector))
+			{
+				IReadOnlyList<string> failures = CreateExecutionHelper(timeoutSeconds).ExecuteConnections(EventConfiguration, new List<Connection> { connection }, performanceTracker);
+
+				if (failures.Count > 0)
+				{
+					throw new OrchestrationConnectionFailedException(connection, String.Join("\n", failures));
+				}
+			}
+		}
+
+		private bool IsGlobalScriptOfEvent => _context == OrchestrationScriptContext.Event && _orchestrationLevel == OrchestrationLevel.Global;
+
+		private OrchestrationEventExecutionHelper CreateExecutionHelper(int timeoutSeconds)
+		{
+			var api = new EngineMediaOpsLiveApi(_engine);
+			var planHelper = api.GetMediaOpsPlanHelper();
+
+			return new OrchestrationEventExecutionHelper(api, planHelper, new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(timeoutSeconds) });
 		}
 
 		internal abstract IEnumerable<IOrchestrationParameters> GetProfileParameters();
@@ -327,7 +369,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			{
 				var standaloneContext = new OrchestrationPhaseContext(
 					engine,
-					new OrchestrationJobContext(LoadJobInfo(engine), OrchestrationJobValues.Unavailable(OrchestrationPhaseContext.NoNodeOfEvent)),
+					new OrchestrationJobContext(LoadJobInfo(engine), CreateValuesOutsideOfANode(engine)),
 					orchestrationEvent: _context == OrchestrationScriptContext.Event ? OrchestrationEventContext.From(EventConfiguration) : null);
 
 				return new PhaseRunner(phases, standaloneContext, new InMemoryPhaseStatusStore()).Run();
@@ -366,6 +408,20 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			}
 
 			return () => EventConfiguration.GetJobInfo(engine.GetMediaOpsLiveApi());
+		}
+
+		// The global script of an event has no node of its own, but it coordinates the nodes, so it can read what they stored.
+		private OrchestrationJobValues CreateValuesOutsideOfANode(IEngine engine)
+		{
+			if (!IsGlobalScriptOfEvent || EventConfiguration?.JobInfoReference == null)
+			{
+				return OrchestrationJobValues.Unavailable(OrchestrationPhaseContext.NoNodeOfEvent);
+			}
+
+			var orchestration = engine.GetMediaOpsLiveApi().Orchestration;
+			var eventNodes = new StoredEventNodes(orchestration.NodePhases, EventConfiguration.ID, currentNodeId: null, EventConfiguration.Configuration?.NodeConfigurations, () => LoadJobNodes(engine));
+
+			return OrchestrationJobValues.ReadOnlyForEvent(orchestration.NodeContextValues, EventConfiguration.JobInfoReference.Value.ID, eventNodes, OrchestrationPhaseContext.NoOwnValuesInGlobalScript);
 		}
 
 		private IEnumerable<NodeConfiguration> LoadJobNodes(IEngine engine)

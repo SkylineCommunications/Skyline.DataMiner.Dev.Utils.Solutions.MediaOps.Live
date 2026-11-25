@@ -245,6 +245,45 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests
 				capturingTakeHelper.DisconnectedDestinations.ToList());
 		}
 
+		[TestMethod]
+		public void MediaOps_LiveApi_Tests_OrchestrationExecution_SingleConnection_OnlyAffectsThatConnectionAndReportsItsFailure()
+		{
+			// Arrange
+			var simulation = new MediaOpsLiveSimulation();
+			var api = simulation.Api;
+
+			var destinationVsg1 = api.VirtualSignalGroups.Query().First(x => x.Name == "Destination 1");
+			var destinationVsg2 = api.VirtualSignalGroups.Query().First(x => x.Name == "Destination 2");
+
+			var capturingTakeHelper = new CapturingDisconnectTakeHelper(api);
+			var mockApi = new Mock<MediaOpsLiveApi>(api.Connection) { CallBase = true };
+			mockApi.Setup(x => x.GetConnectionHandler()).Returns(capturingTakeHelper);
+
+			var orchestrationEvent = CreateDisconnectEvent(destinationVsg1, destinationVsg2);
+			var planHelper = new Mock<IMediaOpsPlanHelper>().Object;
+			var settings = new OrchestrationSettings { Timeout = TimeSpan.FromSeconds(5) };
+			var helper = new OrchestrationEventExecutionHelper(mockApi.Object, planHelper, settings);
+
+			using var performanceCollector = new PerformanceCollector(Mock.Of<IPerformanceLogger>());
+			using var performanceTracker = new PerformanceTracker(performanceCollector);
+
+			// Act - only the second connection
+			var failures = helper.ExecuteConnections(orchestrationEvent, new List<Connection> { orchestrationEvent.Configuration.Connections[1] }, performanceTracker);
+
+			// Assert
+			Assert.AreEqual(0, failures.Count);
+			CollectionAssert.AreEqual(new[] { "Video Destination 2" }, capturingTakeHelper.DisconnectedDestinations.ToList());
+			Assert.AreEqual(EventState.Draft, orchestrationEvent.EventState);
+
+			// Act - a connection that fails is reported to the caller instead of failing the event
+			mockApi.Setup(x => x.GetConnectionHandler()).Returns(new FailingDisconnectTakeHelper(api));
+			failures = helper.ExecuteConnections(orchestrationEvent, new List<Connection> { orchestrationEvent.Configuration.Connections[0] }, performanceTracker);
+
+			Assert.AreEqual(1, failures.Count);
+			StringAssert.StartsWith(failures[0], "Error during connection operations:");
+			Assert.AreEqual(EventState.Draft, orchestrationEvent.EventState);
+		}
+
 		private static OrchestrationEventConfiguration CreateDisconnectEvent(params VirtualSignalGroup[] destinationVsgs)
 		{
 			var connections = new List<Connection>();

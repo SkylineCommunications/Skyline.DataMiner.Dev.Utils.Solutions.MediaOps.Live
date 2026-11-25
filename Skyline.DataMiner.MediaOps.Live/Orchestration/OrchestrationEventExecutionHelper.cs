@@ -461,6 +461,16 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			ExecuteConnectionsAsync(orchestrationEvent, performanceTracker).GetAwaiter().GetResult();
 		}
 
+		/// <summary>
+		/// Connects or disconnects (depending on the event type) only the given connections of the event, and reports the failures
+		/// instead of changing the state of the event.
+		/// </summary>
+		/// <returns>One message per connection that failed; empty when all connections succeeded.</returns>
+		internal IReadOnlyList<string> ExecuteConnections(OrchestrationEventConfiguration orchestrationEvent, IList<Connection> connections, PerformanceTracker performanceTracker)
+		{
+			return ExecuteConnectionsCoreAsync(orchestrationEvent, connections, performanceTracker).GetAwaiter().GetResult();
+		}
+
 		private async Task ExecuteConnectionsAsync(OrchestrationEventConfiguration orchestrationEvent, PerformanceTracker performanceTracker)
 		{
 			if (!orchestrationEvent.HasConnections)
@@ -470,43 +480,53 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 
 			using (performanceTracker = new PerformanceTracker(performanceTracker, nameof(OrchestrationEventExecutionHelper), nameof(ExecuteConnectionsAsync)))
 			{
-				try
-				{
-					var connections = orchestrationEvent.Configuration.Connections.ToList();
+				IReadOnlyList<string> failures = await ExecuteConnectionsCoreAsync(orchestrationEvent, orchestrationEvent.Configuration.Connections.ToList(), performanceTracker);
 
-					if (orchestrationEvent.IsConnectEvent)
-					{
-						var results = await ExecuteConnectionsAndReturnResultsAsync(orchestrationEvent, connections, performanceTracker);
-
-						foreach (var result in results.Where(r => !r.IsSuccessful))
-						{
-							var source = result.Request.Source.Name;
-							var destination = result.Request.Destination.Name;
-
-							orchestrationEvent.InternalSetState(EventState.Failed);
-							orchestrationEvent.AppendFailureInfo($"Could not connect {source} to {destination}");
-						}
-					}
-
-					if (orchestrationEvent.IsDisconnectEvent)
-					{
-						var results = await ExecuteDisconnectionsAndReturnResultsAsync(orchestrationEvent, connections, performanceTracker);
-
-						foreach (var result in results.Where(r => !r.IsSuccessful))
-						{
-							var destination = result.Request.Destination.Name;
-
-							orchestrationEvent.InternalSetState(EventState.Failed);
-							orchestrationEvent.AppendFailureInfo($"Could not disconnect from {destination}");
-						}
-					}
-				}
-				catch (Exception e)
+				foreach (string failure in failures)
 				{
 					orchestrationEvent.InternalSetState(EventState.Failed);
-					orchestrationEvent.AppendFailureInfo($"Error during connection operations: {e.Message}");
+					orchestrationEvent.AppendFailureInfo(failure);
 				}
 			}
+		}
+
+		private async Task<IReadOnlyList<string>> ExecuteConnectionsCoreAsync(OrchestrationEventConfiguration orchestrationEvent, IList<Connection> connections, PerformanceTracker performanceTracker)
+		{
+			var failures = new List<string>();
+
+			try
+			{
+				if (orchestrationEvent.IsConnectEvent)
+				{
+					var results = await ExecuteConnectionsAndReturnResultsAsync(orchestrationEvent, connections, performanceTracker);
+
+					foreach (var result in results.Where(r => !r.IsSuccessful))
+					{
+						var source = result.Request.Source.Name;
+						var destination = result.Request.Destination.Name;
+
+						failures.Add($"Could not connect {source} to {destination}");
+					}
+				}
+
+				if (orchestrationEvent.IsDisconnectEvent)
+				{
+					var results = await ExecuteDisconnectionsAndReturnResultsAsync(orchestrationEvent, connections, performanceTracker);
+
+					foreach (var result in results.Where(r => !r.IsSuccessful))
+					{
+						var destination = result.Request.Destination.Name;
+
+						failures.Add($"Could not disconnect from {destination}");
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				failures.Add($"Error during connection operations: {e.Message}");
+			}
+
+			return failures;
 		}
 
 		private async Task<ICollection<VsgDisconnectResult>> ExecuteDisconnectionsAndReturnResultsAsync(OrchestrationEventConfiguration orchestrationEvent, IList<Connection> disconnects, PerformanceTracker performanceTracker)

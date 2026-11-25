@@ -9,6 +9,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 	/// <summary>
 	/// The job context values of the current node, shared by all events of the job.
 	/// A node writes only its own values, and can read the values of the other nodes of the job through <see cref="ForNode"/>.
+	/// The global script of an event has no values of its own, but reads the values of the nodes through <see cref="ForNode"/>.
 	/// </summary>
 	public sealed class OrchestrationJobValues : IOrchestrationWritableValues
 	{
@@ -55,15 +56,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		{
 			return new OrchestrationJobValues(
 				new OrchestrationValues(new JobValueBackend(repository, jobInfoId, nodeId)),
-				node =>
-				{
-					if (!eventNodes.TryResolveJobNode(node, out EventNode resolved, out string failure))
-					{
-						throw new ArgumentException($"Unable to read the job context values of node '{node}': {failure}.", nameof(node));
-					}
-
-					return new ReadOnlyOrchestrationValues(new JobValueBackend(repository, jobInfoId, resolved.NodeId));
-				});
+				ForNodeResolver(repository, jobInfoId, eventNodes));
 		}
 
 		internal static OrchestrationJobValues Unavailable(string reason)
@@ -71,6 +64,30 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			return new OrchestrationJobValues(
 				new OrchestrationValues(new UnavailableValueBackend(reason)),
 				_ => throw new InvalidOperationException(reason));
+		}
+
+		/// <summary>
+		/// Values for a script that runs for an event but not for one of its nodes (the global script): it has no values of its own,
+		/// but reads the values of the nodes of the job through <see cref="ForNode"/>.
+		/// </summary>
+		internal static OrchestrationJobValues ReadOnlyForEvent(NodeContextValueRepository repository, Guid jobInfoId, IEventNodes eventNodes, string unavailableReason)
+		{
+			return new OrchestrationJobValues(
+				new OrchestrationValues(new UnavailableValueBackend(unavailableReason)),
+				ForNodeResolver(repository, jobInfoId, eventNodes));
+		}
+
+		private static Func<string, IOrchestrationValues> ForNodeResolver(NodeContextValueRepository repository, Guid jobInfoId, IEventNodes eventNodes)
+		{
+			return node =>
+			{
+				if (!eventNodes.TryResolveJobNode(node, out EventNode resolved, out string failure))
+				{
+					throw new ArgumentException($"Unable to read the job context values of node '{node}': {failure}.", nameof(node));
+				}
+
+				return new ReadOnlyOrchestrationValues(new JobValueBackend(repository, jobInfoId, resolved.NodeId));
+			};
 		}
 	}
 }

@@ -8,6 +8,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 	public sealed class OrchestrationPhaseContext
 	{
 		internal const string NoNodeOfEvent = "The job context values are only available when the script runs for a node of an event.";
+		internal const string NoOwnValuesInGlobalScript = "The global script of an event has no job context values of its own; read the values of a node with ForNode.";
 
 		internal OrchestrationPhaseContext(IEngine engine, OrchestrationJobContext job = null, OrchestrationNodeContext node = null, OrchestrationEventContext orchestrationEvent = null)
 		{
