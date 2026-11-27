@@ -130,11 +130,7 @@
 
 		protected internal override OrchestrationEvent CreateInstance(DomInstance domInstance)
 		{
-			var orchestrationEvent = new OrchestrationEvent(domInstance);
-			Guid eventId = orchestrationEvent.ID;
-			orchestrationEvent.SetPhasesLoader(() => _nodePhasesRepository.GetEventPhases(eventId));
-
-			return orchestrationEvent;
+			return new OrchestrationEvent(domInstance);
 		}
 
 		protected override void ValidateBeforeSave(ICollection<OrchestrationEvent> instances)

@@ -15,7 +15,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			_backend = backend ?? throw new ArgumentNullException(nameof(backend));
 		}
 
-		public IReadOnlyCollection<string> Keys => _backend.ReadAll().Keys.ToList();
+		public IReadOnlyCollection<string> GetKeys() => _backend.ReadAll().Keys.ToList();
 
 		public string Get(string key)
 		{

@@ -22,9 +22,6 @@
 		private readonly OrchestrationEventInstance _domInstance;
 		private readonly object _lock = new object();
 
-		private Func<IReadOnlyList<OrchestrationEventPhase>> _phasesLoader;
-		private Lazy<IReadOnlyList<OrchestrationEventPhase>> _phases = new Lazy<IReadOnlyList<OrchestrationEventPhase>>(() => Array.Empty<OrchestrationEventPhase>());
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="OrchestrationEvent"/> class.
 		/// </summary>
@@ -43,13 +40,6 @@
 		}
 
 		internal static DomDefinitionId DomDefinition => SlcOrchestrationIds.Definitions.OrchestrationEvent;
-
-		/// <summary>
-		/// Gets the phases of the orchestration scripts of the nodes of this event, with their recorded state,
-		/// ordered by node and by their position in the script. Empty when no node uses phases or the event did not run yet.
-		/// The phases are read the first time this property is accessed.
-		/// </summary>
-		public IReadOnlyList<OrchestrationEventPhase> Phases => _phases.Value;
 
 		/// <summary>
 		/// Gets or sets the name of the event.
@@ -293,16 +283,7 @@
 
 		internal OrchestrationEventConfiguration ToOrchestrationEventConfiguration(DomInstance configurationDomInstance)
 		{
-			var configuration = new OrchestrationEventConfiguration(_domInstance, new ConfigurationInstance(configurationDomInstance));
-			configuration.SetPhasesLoader(_phasesLoader);
-
-			return configuration;
-		}
-
-		internal void SetPhasesLoader(Func<IReadOnlyList<OrchestrationEventPhase>> loader)
-		{
-			_phasesLoader = loader;
-			_phases = new Lazy<IReadOnlyList<OrchestrationEventPhase>>(() => loader?.Invoke() ?? Array.Empty<OrchestrationEventPhase>());
+			return new OrchestrationEventConfiguration(_domInstance, new ConfigurationInstance(configurationDomInstance));
 		}
 
 		internal void InternalSetState(EventState state)

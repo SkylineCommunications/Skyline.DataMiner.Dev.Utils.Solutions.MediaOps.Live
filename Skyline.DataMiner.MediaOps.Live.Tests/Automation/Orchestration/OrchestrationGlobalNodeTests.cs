@@ -75,7 +75,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		}
 
 		[TestMethod]
-		public void TryOrchestrateNode_RunsTheNodeScriptWithoutSuspending()
+		public void TryOrchestrateNode_AllowsTheNodeScriptToSuspend()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var ev = SaveEvent(simulation.Api, "Script_Success");
@@ -85,9 +85,35 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 
 			Assert.IsTrue(script.Result.IsSuccess);
 			var metadata = GetNodeScriptMetadata(simulation);
-			Assert.AreEqual(Boolean.TrueString, metadata[OrchestrationScriptInternalInput.HoldWaitsMetadataKey]);
+			Assert.IsFalse(metadata.ContainsKey(OrchestrationScriptInternalInput.HoldWaitsMetadataKey));
 			Assert.AreEqual(NodeId, metadata[OrchestrationScriptInternalInput.NodeIdMetadataKey]);
 			Assert.AreEqual(nameof(OrchestrationLevel.Node), metadata[OrchestrationScriptInternalInput.OrchestrationLevelMetadataKey]);
+		}
+
+		[TestMethod]
+		public void GlobalPhases_ArePersistedVisibleAndResumed()
+		{
+			var simulation = new MediaOpsLiveSimulation();
+			var ev = SaveEvent(simulation.Api, "Script_Success");
+			int polls = 0;
+			var script = new GlobalPhasedScript(() => ++polls == 1 ? PhaseStatus.InProgress() : PhaseStatus.Completed());
+			var engine = CreateEngine(simulation);
+
+			var firstOutput = script.OnRequestScriptInfoRequest(engine, CreateGlobalRequest(ev.ID));
+
+			Assert.IsFalse(firstOutput.Data.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out string firstError), firstError);
+			Assert.HasCount(1, simulation.Api.Orchestration.NodePhases.GetPendingResumes(ev.ID));
+			var persisted = simulation.Api.Orchestration.GetEventPhases(new[] { ev.ID })[ev.ID].Single();
+			Assert.AreEqual(OrchestrationNodePhases.GlobalNodeId, persisted.NodeId);
+			Assert.AreEqual(PhaseState.InProgress, persisted.State);
+
+			var resumeOutput = script.OnRequestScriptInfoRequest(engine, CreateGlobalRequest(ev.ID, resume: true));
+
+			Assert.IsFalse(resumeOutput.Data.TryGetValue(OrchestrationScriptConstants.ScriptOutputError, out string resumeError), resumeError);
+			Assert.IsEmpty(simulation.Api.Orchestration.NodePhases.GetPendingResumes(ev.ID));
+			var completed = simulation.Api.Orchestration.GetEventPhases(new[] { ev.ID })[ev.ID].Single();
+			Assert.AreEqual(PhaseState.Completed, completed.State);
+			Assert.AreEqual(2, polls);
 		}
 
 		[TestMethod]
@@ -150,11 +176,15 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			return engine.Object;
 		}
 
-		private static RequestScriptInfoInput CreateGlobalRequest(Guid eventId)
+		private static RequestScriptInfoInput CreateGlobalRequest(Guid eventId, bool resume = false)
 		{
 			var input = new OrchestrationScriptInput();
 			input.Metadata[OrchestrationScriptInternalInput.OrchestrationLevelMetadataKey] = nameof(OrchestrationLevel.Global);
 			input.Metadata[OrchestrationScriptInternalInput.EventIdMetadataKey] = eventId.ToString();
+			if (resume)
+			{
+				input.Metadata[OrchestrationScriptInternalInput.ResumeMetadataKey] = Boolean.TrueString;
+			}
 
 			return new RequestScriptInfoInput
 			{
@@ -230,6 +260,23 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 				}
 
 				ContinuedAfterNode = true;
+			}
+
+			public override IEnumerable<IOrchestrationParameters> GetParameters() => Array.Empty<IOrchestrationParameters>();
+		}
+
+		private sealed class GlobalPhasedScript : OrchestrationScript
+		{
+			private readonly Func<PhaseStatus> _status;
+
+			public GlobalPhasedScript(Func<PhaseStatus> status)
+			{
+				_status = status;
+			}
+
+			public override IEnumerable<OrchestrationPhase> GetPhases()
+			{
+				yield return Phase.Execute("global-work", _ => PhaseStatus.Completed()).WithStatus(_ => _status());
 			}
 
 			public override IEnumerable<IOrchestrationParameters> GetParameters() => Array.Empty<IOrchestrationParameters>();

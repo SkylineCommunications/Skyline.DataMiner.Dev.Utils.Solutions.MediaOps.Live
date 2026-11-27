@@ -13,8 +13,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		internal OrchestrationPhaseContext(IEngine engine, OrchestrationJobContext job = null, OrchestrationNodeContext node = null, OrchestrationEventContext orchestrationEvent = null)
 		{
 			Engine = engine;
-			Job = job ?? new OrchestrationJobContext(null, OrchestrationJobValues.Unavailable(NoNodeOfEvent));
-			Node = node ?? new OrchestrationNodeContext(null, null);
+			Job = job ?? new OrchestrationJobContext(null);
+			Node = node ?? new OrchestrationNodeContext(null, null, OrchestrationNodeValues.Unavailable(NoNodeOfEvent));
 			Event = orchestrationEvent;
 		}
 

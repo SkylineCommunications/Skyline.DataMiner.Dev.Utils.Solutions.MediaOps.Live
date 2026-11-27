@@ -12,7 +12,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			_values = new OrchestrationValues(backend ?? throw new ArgumentNullException(nameof(backend)));
 		}
 
-		public IReadOnlyCollection<string> Keys => _values.Keys;
+		public IReadOnlyCollection<string> GetKeys() => _values.GetKeys();
 
 		public string Get(string key) => _values.Get(key);
 

@@ -70,13 +70,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			bool resumes = resumePoint != null
 				&& resumePoint.PhaseIndex >= 0
 				&& resumePoint.PhaseIndex < _phases.Count
-				&& _phases[resumePoint.PhaseIndex] is WaitPhase;
+				&& (_phases[resumePoint.PhaseIndex] is WaitPhase
+					|| _phases[resumePoint.PhaseIndex] is ExecutionPhase execution && execution.StatusMethod != null);
 
 			for (int i = resumes ? resumePoint.PhaseIndex : 0; i < _phases.Count; i++)
 			{
 				PhaseRunResult result = _phases[i] is WaitPhase wait
-					? RunWait(wait, i, resumes && i == resumePoint.PhaseIndex ? resumePoint.WaitStarted : (DateTimeOffset?)null)
-					: RunExecution((ExecutionPhase)_phases[i]);
+					? RunWait(_waitTargets[i], i, resumes && i == resumePoint.PhaseIndex ? resumePoint.WaitStarted : null, wait.PollingInterval, wait.TimeoutDuration, FindNextExecutionPhase(i)?.Key)
+					: RunExecution((ExecutionPhase)_phases[i], i, resumes && i == resumePoint.PhaseIndex ? resumePoint.WaitStarted : null);
 
 				if (result != null)
 				{
@@ -187,7 +188,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			return true;
 		}
 
-		private PhaseRunResult RunExecution(ExecutionPhase phase)
+		private PhaseRunResult RunExecution(ExecutionPhase phase, int index, DateTimeOffset? waitStarted)
 		{
 			PhaseStatus status;
 
@@ -197,6 +198,30 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				{
 					Record(phase.Key, PhaseStatus.Failed(statusFailure));
 					return PhaseRunResult.Failure(statusFailure);
+				}
+
+				if (status.State == PhaseState.InProgress)
+				{
+					if (index + 1 < _phases.Count
+						&& _phases[index + 1] is WaitPhase wait
+						&& wait.Node == null
+						&& String.Equals(wait.PhaseKey, phase.Key, StringComparison.Ordinal))
+					{
+						return null;
+					}
+
+					return RunWait(
+						WaitTarget.ForCurrentNode(phase),
+						index,
+						waitStarted,
+						WaitPhase.DefaultPollingInterval,
+						WaitPhase.DefaultTimeout,
+						phase.Key);
+				}
+
+				if (status.State == PhaseState.Failed)
+				{
+					status = PhaseStatus.NotStarted(status.Message);
 				}
 			}
 			else
@@ -217,10 +242,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			return status.State == PhaseState.Failed ? PhaseRunResult.Failure(FormatFailure($"phase '{phase.Key}'", status)) : null;
 		}
 
-		private PhaseRunResult RunWait(WaitPhase wait, int index, DateTimeOffset? waitStarted)
+		private PhaseRunResult RunWait(WaitTarget target, int index, DateTimeOffset? waitStarted, TimeSpan pollingInterval, TimeSpan timeout, string waitingPhaseKey)
 		{
-			WaitTarget target = _waitTargets[index];
-			ExecutionPhase next = FindNextExecutionPhase(index);
 			DateTimeOffset started = waitStarted ?? _now();
 			bool reported = false;
 
@@ -229,7 +252,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				if (!TryPoll(target, out PhaseStatus status, out string pollFailure))
 				{
 					// A phase of another node is never written here; its failure is reported on the phase after the wait.
-					Record(target.Phase?.Key ?? next?.Key, PhaseStatus.Failed(pollFailure));
+					Record(target.Phase?.Key ?? waitingPhaseKey, PhaseStatus.Failed(pollFailure));
 					return PhaseRunResult.Failure(pollFailure);
 				}
 
@@ -251,30 +274,34 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 					string failed = FormatFailure(target.Description, status);
 					if (target.Phase == null)
 					{
-						Record(next?.Key, PhaseStatus.Failed(failed));
+						Record(waitingPhaseKey, PhaseStatus.Failed(failed));
 					}
 
 					return PhaseRunResult.Failure(failed);
 				}
 
 				TimeSpan elapsed = _now() - started;
-				if (elapsed >= wait.TimeoutDuration)
+				if (elapsed >= timeout)
 				{
 					string outcome = reported ? "did not complete" : "never reported a status";
-					string timeout = $"{Capitalize(target.Description)} {outcome} within '{FormatDuration(wait.TimeoutDuration)}'.";
-					Record(next?.Key, PhaseStatus.Failed(timeout));
+					string timeoutMessage = $"{Capitalize(target.Description)} {outcome} within '{FormatDuration(timeout)}'.";
+					Record(waitingPhaseKey, PhaseStatus.Failed(timeoutMessage));
 
-					return PhaseRunResult.Failure(timeout);
+					return PhaseRunResult.Failure(timeoutMessage);
 				}
 
-				Record(next?.Key, PhaseStatus.NotStarted($"Waiting on {target.Description}."));
+				Record(
+					waitingPhaseKey,
+					target.Phase == null
+						? PhaseStatus.NotStarted($"Waiting on {target.Description}.")
+						: PhaseStatus.InProgress($"Waiting on {target.Description}."));
 
-				TimeSpan remaining = wait.TimeoutDuration - elapsed;
-				TimeSpan untilNextPoll = remaining < wait.PollingInterval ? remaining : wait.PollingInterval;
+				TimeSpan remaining = timeout - elapsed;
+				TimeSpan untilNextPoll = remaining < pollingInterval ? remaining : pollingInterval;
 
 				if (_canSuspend && untilNextPoll >= HoldThreshold)
 				{
-					return PhaseRunResult.Suspended(new ResumePoint(index, started), _now() + untilNextPoll, next?.Key);
+					return PhaseRunResult.Suspended(new ResumePoint(index, started), _now() + untilNextPoll, waitingPhaseKey);
 				}
 
 				try
@@ -283,7 +310,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				}
 				catch (ScriptTimeoutException)
 				{
-					RecordScriptTimeout(next?.Key, $"waiting on {target.Description}");
+					RecordScriptTimeout(waitingPhaseKey, $"waiting on {target.Description}");
 					throw;
 				}
 			}
@@ -302,6 +329,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 			}
 			catch (Exception e) when (!IsAbort(e))
 			{
+				_context.Engine?.GenerateInformation(e.ToString());
 				return PhaseStatus.Failed(e.Message);
 			}
 		}

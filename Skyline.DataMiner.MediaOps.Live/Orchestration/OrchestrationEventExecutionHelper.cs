@@ -193,11 +193,11 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 			}
 		}
 
-		private void ExecuteGlobalOrchestrationScriptEvent(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker)
+		private void ExecuteGlobalOrchestrationScriptEvent(OrchestrationEventConfiguration orchestrationEventConfiguration, PerformanceTracker performanceTracker, bool resume = false)
 		{
 			using (performanceTracker = new PerformanceTracker(performanceTracker))
 			{
-				IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(orchestrationEventConfiguration.ID, OrchestrationLevel.Global).ToMetadataArguments();
+				IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(orchestrationEventConfiguration.ID, OrchestrationLevel.Global, resume: resume).ToMetadataArguments();
 				IReadOnlyDictionary<string, OrchestrationNodePhases> pendingResumes = GetPendingResumesByNode(orchestrationEventConfiguration.ID);
 
 				OrchestrationScriptResult globalScriptResult = ExecuteOrchestrationScript(
@@ -376,9 +376,21 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
 
 			try
 			{
+				OrchestrationNodePhases globalResume = dueResumes.FirstOrDefault(x => x.NodeId == OrchestrationNodePhases.GlobalNodeId);
+				if (globalResume != null && orchestrationEvent.HasGlobalOrchestrationScript)
+				{
+					ExecuteGlobalOrchestrationScriptEvent(orchestrationEvent, performanceTracker, resume: true);
+				}
+				else if (globalResume != null)
+				{
+					CancelResume(globalResume);
+					orchestrationEvent.InternalSetState(EventState.Failed);
+					orchestrationEvent.AppendFailureInfo("The global orchestration script could not be resumed because it is no longer configured.");
+				}
+
 				var nodes = new List<NodeConfiguration>();
 
-				foreach (OrchestrationNodePhases resume in dueResumes)
+				foreach (OrchestrationNodePhases resume in dueResumes.Where(x => x.NodeId != OrchestrationNodePhases.GlobalNodeId))
 				{
 					NodeConfiguration node = orchestrationEvent.Configuration?.NodeConfigurations
 						.FirstOrDefault(x => x.NodeId == resume.NodeId && !String.IsNullOrEmpty(x.OrchestrationScriptName));

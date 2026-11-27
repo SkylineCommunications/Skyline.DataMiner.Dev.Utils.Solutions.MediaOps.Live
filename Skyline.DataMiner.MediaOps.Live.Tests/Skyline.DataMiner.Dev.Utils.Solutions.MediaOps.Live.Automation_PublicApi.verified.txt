@@ -282,7 +282,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
     }
     public interface IOrchestrationValues
     {
-        System.Collections.Generic.IReadOnlyCollection<string> Keys { get; }
+        System.Collections.Generic.IReadOnlyCollection<string> GetKeys();
         string Get(string key);
         bool TryGet(string key, out string value);
     }
@@ -316,21 +316,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
         public Skyline.DataMiner.Core.DataMinerSystem.Common.DmsServiceId MonitoringService { get; }
         public string Name { get; }
         public string Reference { get; }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.OrchestrationJobValues Values { get; }
-    }
-    public sealed class OrchestrationJobValues : Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.IOrchestrationValues, Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.IOrchestrationWritableValues
-    {
-        public System.Collections.Generic.IReadOnlyCollection<string> Keys { get; }
-        public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.IOrchestrationValues ForNode(string node) { }
-        public string Get(string key) { }
-        public bool Remove(string key) { }
-        public void Set(string key, string value) { }
-        public bool TryGet(string key, out string value) { }
     }
     public sealed class OrchestrationNodeContext
     {
         public string Id { get; }
         public string Label { get; }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.IOrchestrationValues Values { get; }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.IOrchestrationWritableValues WritableValues { get; }
+        public Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Script.Phases.IOrchestrationValues ForNode(string node) { }
     }
     public abstract class OrchestrationPhase { }
     public sealed class OrchestrationPhaseContext

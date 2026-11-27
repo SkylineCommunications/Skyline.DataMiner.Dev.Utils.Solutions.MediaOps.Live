@@ -14,6 +14,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
 	/// </summary>
 	internal class OrchestrationNodePhases : ApiObject<OrchestrationNodePhases>
 	{
+		internal const string GlobalNodeId = "__global__";
+
 		private readonly OrchestrationNodePhasesInstance _domInstance;
 		private readonly WrappedList<PhaseStatusSection, OrchestrationPhaseStatus> _wrappedPhases;
 

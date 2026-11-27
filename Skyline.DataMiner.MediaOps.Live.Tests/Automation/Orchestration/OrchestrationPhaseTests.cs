@@ -27,6 +27,48 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		}
 
 		[TestMethod]
+		public void OrchestrationPhases_InProgressStatusWithoutWait_PollsBeforeContinuing()
+		{
+			int polls = 0;
+			bool executed = false;
+			bool followingPhaseExecuted = false;
+			var sleeps = new List<TimeSpan>();
+			var clock = new FakeClock();
+			var runner = new PhaseRunner(
+				new OrchestrationPhase[]
+				{
+					Phase.Execute("spin-up", _ => { executed = true; return PhaseStatus.Completed(); })
+						.WithStatus(_ => ++polls < 3 ? PhaseStatus.InProgress() : PhaseStatus.Completed()),
+					Phase.Execute("configure", _ => { followingPhaseExecuted = true; return PhaseStatus.Completed(); }),
+				},
+				CreateContext(),
+				sleep: duration => { sleeps.Add(duration); clock.Advance(duration); },
+				now: clock.Now);
+
+			var result = runner.Run();
+
+			Assert.IsTrue(result.IsSuccess);
+			Assert.IsFalse(executed);
+			Assert.IsTrue(followingPhaseExecuted);
+			Assert.AreEqual(3, polls);
+			Assert.HasCount(2, sleeps);
+			Assert.AreEqual(PhaseState.Completed, runner.Statuses["spin-up"].State);
+		}
+
+		[TestMethod]
+		public void OrchestrationPhases_FailedStatus_RetriesThePhase()
+		{
+			bool executed = false;
+			var runner = CreateRunner(
+				Phase.Execute("spin-up", _ => { executed = true; return PhaseStatus.Completed(); })
+					.WithStatus(_ => PhaseStatus.Failed("The previous attempt failed.")));
+
+			Assert.IsTrue(runner.Run().IsSuccess);
+			Assert.IsTrue(executed);
+			Assert.AreEqual(PhaseState.Completed, runner.Statuses["spin-up"].State);
+		}
+
+		[TestMethod]
 		public void OrchestrationPhases_ScriptWithPhases_RunsPhasesInsteadOfOrchestrate()
 		{
 			var script = new PhasedScript();
@@ -86,6 +128,22 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 
 			Assert.AreEqual("Phase 'spin-up' failed: Cloud unreachable.", result.FailureMessage);
 			Assert.AreEqual(PhaseState.Failed, runner.Statuses["spin-up"].State);
+		}
+
+		[TestMethod]
+		public void OrchestrationPhases_ThrowingPhase_LogsTheFullException()
+		{
+			var engine = new Mock<IEngine>();
+			var runner = new PhaseRunner(
+				new[] { Phase.Execute("spin-up", _ => throw new InvalidOperationException("Cloud unreachable.")) },
+				new OrchestrationPhaseContext(engine.Object));
+
+			runner.Run();
+
+			engine.Verify(x => x.GenerateInformation(It.Is<string>(message =>
+				message.Contains(typeof(InvalidOperationException).FullName)
+				&& message.Contains("Cloud unreachable.")
+				&& message.Contains("PhaseRunner.Execute"))), Times.Once);
 		}
 
 		[TestMethod]

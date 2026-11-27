@@ -14,11 +14,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 		private readonly Lazy<OrchestrationJobInfo> _info;
 
-		internal OrchestrationJobContext(Func<OrchestrationJobInfo> loadInfo, OrchestrationJobValues values)
+		internal OrchestrationJobContext(Func<OrchestrationJobInfo> loadInfo)
 		{
 			_info = new Lazy<OrchestrationJobInfo>(() => (loadInfo ?? throw new InvalidOperationException(NoEvent))()
 				?? throw new InvalidOperationException("The job of the event could not be found."));
-			Values = values ?? throw new ArgumentNullException(nameof(values));
 		}
 
 		/// <summary>
@@ -37,12 +36,5 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		/// </summary>
 		public DmsServiceId MonitoringService => _info.Value.MonitoringService;
 
-		/// <summary>
-		/// Gets the job context values of the current node. They are kept for the lifetime of the job, so later phases,
-		/// executions and events of the node can read them, for example the stop event reading what the start event provisioned.
-		/// Only a node of an event has values of its own; the global script of an event can only read the values of the nodes
-		/// through <see cref="OrchestrationJobValues.ForNode"/>.
-		/// </summary>
-		public OrchestrationJobValues Values { get; }
 	}
 }

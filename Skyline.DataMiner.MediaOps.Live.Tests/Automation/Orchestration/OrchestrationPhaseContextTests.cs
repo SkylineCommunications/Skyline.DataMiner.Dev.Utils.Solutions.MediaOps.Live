@@ -26,14 +26,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		private readonly Guid _eventId = Guid.NewGuid();
 
 		[TestMethod]
-		public void PhaseContext_JobValues_ArePassedToTheFollowingPhases()
+		public void PhaseContext_NodeValues_ArePassedToTheFollowingPhases()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 			string configuredWith = null;
 			var phases = new OrchestrationPhase[]
 			{
-				Phase.Execute("spin-up", ctx => { ctx.Job.Values.Set("cloudServiceId", "svc-1"); return PhaseStatus.Completed(); }),
-				Phase.Execute("configure", ctx => { configuredWith = ctx.Job.Values.Get("cloudServiceId"); return PhaseStatus.Completed(); }),
+				Phase.Execute("spin-up", ctx => { ctx.Node.WritableValues.Set("cloudServiceId", "svc-1"); return PhaseStatus.Completed(); }),
+				Phase.Execute("configure", ctx => { configuredWith = ctx.Node.Values.Get("cloudServiceId"); return PhaseStatus.Completed(); }),
 			};
 
 			Assert.IsTrue(RunNode(api, TransportId, phases).IsSuccess);
@@ -45,9 +45,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		{
 			var context = new OrchestrationPhaseContext(null);
 
-			var exception = Assert.ThrowsExactly<InvalidOperationException>(() => context.Job.Values.Set("key", "value"));
+			Assert.IsNull(context.Node.WritableValues);
+			var exception = Assert.ThrowsExactly<InvalidOperationException>(() => context.Node.Values.Get("key"));
 			Assert.AreEqual(OrchestrationPhaseContext.NoNodeOfEvent, exception.Message);
-			Assert.ThrowsExactly<InvalidOperationException>(() => context.Job.Values.ForNode("Transport"));
+			Assert.ThrowsExactly<InvalidOperationException>(() => context.Node.ForNode("Transport"));
 			Assert.IsNull(context.Node.Id);
 		}
 
@@ -55,35 +56,37 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		public void PhaseContext_GlobalScriptOfAnEvent_ReadsTheValuesOfTheNodesButHasNoneOfItsOwn()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
-			RunNode(api, TransportId, new OrchestrationPhase[] { Phase.Execute("session", ctx => { ctx.Job.Values.Set("sessionName", "transport-1"); return PhaseStatus.Completed(); }) });
-			RunNode(api, RecorderId, new OrchestrationPhase[] { Phase.Execute("record", ctx => { ctx.Job.Values.Set("recordingId", "rec-1"); return PhaseStatus.Completed(); }) }, eventId: Guid.NewGuid());
+			RunNode(api, TransportId, new OrchestrationPhase[] { Phase.Execute("session", ctx => { ctx.Node.WritableValues.Set("sessionName", "transport-1"); return PhaseStatus.Completed(); }) });
+			RunNode(api, RecorderId, new OrchestrationPhase[] { Phase.Execute("record", ctx => { ctx.Node.WritableValues.Set("recordingId", "rec-1"); return PhaseStatus.Completed(); }) }, eventId: Guid.NewGuid());
 
-			var values = OrchestrationJobValues.ReadOnlyForEvent(api.Orchestration.NodeContextValues, _jobInfoId, CreateEventNodes(api, null, _eventId), OrchestrationPhaseContext.NoOwnValuesInGlobalScript);
+			var values = OrchestrationNodeValues.ReadOnlyForEvent(api.Orchestration.NodeContextValues, _jobInfoId, CreateEventNodes(api, null, _eventId), OrchestrationPhaseContext.NoOwnValuesInGlobalScript);
+			var node = new OrchestrationNodeContext(null, null, values);
 
-			Assert.AreEqual("transport-1", values.ForNode("Transport").Get("sessionName"));
-			Assert.AreEqual("transport-1", values.ForNode(TransportId).Get("sessionName"));
-			Assert.AreEqual("rec-1", values.ForNode(RecorderId).Get("recordingId"));
-			Assert.IsFalse(values.ForNode("Encoder").TryGet("sessionName", out _));
-			Assert.IsNotInstanceOfType<IOrchestrationWritableValues>(values.ForNode("Transport"));
+			Assert.AreEqual("transport-1", node.ForNode("Transport").Get("sessionName"));
+			Assert.AreEqual("transport-1", node.ForNode(TransportId).Get("sessionName"));
+			Assert.AreEqual("rec-1", node.ForNode(RecorderId).Get("recordingId"));
+			Assert.IsFalse(node.ForNode("Encoder").TryGet("sessionName", out _));
+			Assert.IsNotInstanceOfType<IOrchestrationWritableValues>(node.ForNode("Transport"));
 
-			var exception = Assert.ThrowsExactly<InvalidOperationException>(() => values.Set("key", "value"));
+			Assert.IsNull(node.WritableValues);
+			var exception = Assert.ThrowsExactly<InvalidOperationException>(() => node.Values.Get("key"));
 			Assert.AreEqual(OrchestrationPhaseContext.NoOwnValuesInGlobalScript, exception.Message);
-			Assert.ThrowsExactly<InvalidOperationException>(() => values.TryGet("key", out _));
-			StringAssert.Contains(Assert.ThrowsExactly<ArgumentException>(() => values.ForNode("Unknown")).Message, "node 'Unknown' is not part of the job");
+			Assert.ThrowsExactly<InvalidOperationException>(() => node.Values.TryGet("key", out _));
+			StringAssert.Contains(Assert.ThrowsExactly<ArgumentException>(() => node.ForNode("Unknown")).Message, "node 'Unknown' is not part of the job");
 		}
 
 		[TestMethod]
-		public void PhaseContext_JobValues_SurviveASuspensionAndAreReadAfterTheResume()
+		public void PhaseContext_NodeValues_SurviveASuspensionAndAreReadAfterTheResume()
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			int polls = 0;
 			string configuredWith = null;
 			var phases = new OrchestrationPhase[]
 			{
-				Phase.Execute("spin-up", ctx => { ctx.Job.Values.Set("cloudServiceId", "svc-1"); return PhaseStatus.InProgress(); })
+				Phase.Execute("spin-up", ctx => { ctx.Node.WritableValues.Set("cloudServiceId", "svc-1"); return PhaseStatus.InProgress(); })
 					.WithStatus(ctx => ++polls switch { 1 => PhaseStatus.NotStarted(), 2 => PhaseStatus.InProgress(), _ => PhaseStatus.Completed() }),
 				Phase.WaitFor("spin-up").PollEvery(TimeSpan.FromMinutes(1)),
-				Phase.Execute("configure", ctx => { configuredWith = ctx.Job.Values.Get("cloudServiceId"); return PhaseStatus.Completed(); }),
+				Phase.Execute("configure", ctx => { configuredWith = ctx.Node.Values.Get("cloudServiceId"); return PhaseStatus.Completed(); }),
 			};
 
 			Assert.IsTrue(RunNode(simulation.Api, TransportId, phases, resume: false).IsSuspended);
@@ -95,31 +98,31 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		}
 
 		[TestMethod]
-		public void PhaseContext_JobValues_AreSharedBetweenTheEventsOfTheJob()
+		public void PhaseContext_NodeValues_AreSharedBetweenTheEventsOfTheJob()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 			string tornDown = null;
 
-			RunNode(api, TransportId, new OrchestrationPhase[] { Phase.Execute("spin-up", ctx => { ctx.Job.Values.Set("cloudServiceId", "svc-1"); return PhaseStatus.Completed(); }) });
-			RunNode(api, TransportId, new OrchestrationPhase[] { Phase.Execute("tear-down", ctx => { tornDown = ctx.Job.Values.Get("cloudServiceId"); return PhaseStatus.Completed(); }) }, eventId: Guid.NewGuid());
+			RunNode(api, TransportId, new OrchestrationPhase[] { Phase.Execute("spin-up", ctx => { ctx.Node.WritableValues.Set("cloudServiceId", "svc-1"); return PhaseStatus.Completed(); }) });
+			RunNode(api, TransportId, new OrchestrationPhase[] { Phase.Execute("tear-down", ctx => { tornDown = ctx.Node.Values.Get("cloudServiceId"); return PhaseStatus.Completed(); }) }, eventId: Guid.NewGuid());
 
 			Assert.AreEqual("svc-1", tornDown);
 		}
 
 		[TestMethod]
-		public void PhaseContext_JobValuesOfAnotherNode_CanBeRead()
+		public void PhaseContext_NodeValuesOfAnotherNode_CanBeRead()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 			string streamUrl = null;
 			bool ownCopy = true;
 
-			RunNode(api, TransportId, new OrchestrationPhase[] { Phase.Execute("spin-up", ctx => { ctx.Job.Values.Set("streamUrl", "srt://transport"); return PhaseStatus.Completed(); }) });
+			RunNode(api, TransportId, new OrchestrationPhase[] { Phase.Execute("spin-up", ctx => { ctx.Node.WritableValues.Set("streamUrl", "srt://transport"); return PhaseStatus.Completed(); }) });
 			RunNode(api, EncoderId, new OrchestrationPhase[]
 			{
 				Phase.Execute("configure", ctx =>
 				{
-					streamUrl = ctx.Job.Values.ForNode("Transport").Get("streamUrl");
-					ownCopy = ctx.Job.Values.TryGet("streamUrl", out _);
+					streamUrl = ctx.Node.ForNode("Transport").Get("streamUrl");
+					ownCopy = ctx.Node.Values.TryGet("streamUrl", out _);
 					return PhaseStatus.Completed();
 				}),
 			});
@@ -129,21 +132,21 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		}
 
 		[TestMethod]
-		public void PhaseContext_JobValuesOfAnotherNode_AreReadOnly()
+		public void PhaseContext_NodeValuesOfAnotherNode_AreReadOnly()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 			var context = CreateContext(api, EncoderId);
 
-			Assert.IsNotInstanceOfType<IOrchestrationWritableValues>(context.Job.Values.ForNode("Transport"));
+			Assert.IsNotInstanceOfType<IOrchestrationWritableValues>(context.Node.ForNode("Transport"));
 		}
 
 		[TestMethod]
-		public void PhaseContext_JobValuesOfANodeThatIsNotPartOfTheJob_CannotBeRead()
+		public void PhaseContext_NodeValuesOfANodeThatIsNotPartOfTheJob_CannotBeRead()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 			var context = CreateContext(api, EncoderId);
 
-			var exception = Assert.ThrowsExactly<ArgumentException>(() => context.Job.Values.ForNode("Unknown"));
+			var exception = Assert.ThrowsExactly<ArgumentException>(() => context.Node.ForNode("Unknown"));
 			StringAssert.Contains(exception.Message, "node 'Unknown' is not part of the job");
 		}
 
@@ -153,8 +156,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 			string recording = null;
 
-			RunNode(api, RecorderId, new OrchestrationPhase[] { Phase.Execute("record", ctx => { ctx.Job.Values.Set("recordingId", "rec-1"); return PhaseStatus.Completed(); }) }, eventId: Guid.NewGuid());
-			RunNode(api, EncoderId, new OrchestrationPhase[] { Phase.Execute("configure", ctx => { recording = ctx.Job.Values.ForNode(RecorderId).Get("recordingId"); return PhaseStatus.Completed(); }) });
+			RunNode(api, RecorderId, new OrchestrationPhase[] { Phase.Execute("record", ctx => { ctx.Node.WritableValues.Set("recordingId", "rec-1"); return PhaseStatus.Completed(); }) }, eventId: Guid.NewGuid());
+			RunNode(api, EncoderId, new OrchestrationPhase[] { Phase.Execute("configure", ctx => { recording = ctx.Node.ForNode(RecorderId).Get("recordingId"); return PhaseStatus.Completed(); }) });
 
 			Assert.AreEqual("rec-1", recording);
 		}
@@ -165,21 +168,21 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 			var context = CreateContext(api, EncoderId);
 
-			var exception = Assert.ThrowsExactly<ArgumentException>(() => context.Job.Values.ForNode("Recorder"));
+			var exception = Assert.ThrowsExactly<ArgumentException>(() => context.Node.ForNode("Recorder"));
 			StringAssert.Contains(exception.Message, "node 'Recorder' is not part of the job");
 		}
 
 		[TestMethod]
-		public void PhaseContext_JobValues_SupportGetTryGetRemoveAndKeys()
+		public void PhaseContext_NodeValues_SupportGetTryGetRemoveAndGetKeys()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
-			IOrchestrationWritableValues values = CreateContext(api, TransportId).Job.Values;
+			IOrchestrationWritableValues values = CreateContext(api, TransportId).Node.WritableValues;
 
 			values.Set("a", "1");
 			values.Set("b", "2");
 			values.Set("a", "3");
 
-			CollectionAssert.AreEquivalent(new[] { "a", "b" }, values.Keys.ToList());
+			CollectionAssert.AreEquivalent(new[] { "a", "b" }, values.GetKeys().ToList());
 			Assert.AreEqual("3", values.Get("a"));
 			Assert.IsTrue(values.Remove("a"));
 			Assert.IsFalse(values.Remove("a"));
@@ -188,10 +191,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		}
 
 		[TestMethod]
-		public void PhaseContext_JobValues_EnforceTheLimits()
+		public void PhaseContext_NodeValues_EnforceTheLimits()
 		{
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
-			IOrchestrationWritableValues values = CreateContext(api, TransportId).Job.Values;
+			IOrchestrationWritableValues values = CreateContext(api, TransportId).Node.WritableValues;
 
 			var tooLongKey = Assert.ThrowsExactly<ArgumentException>(() => values.Set(new string('k', NodeContextValueRepository.MaxKeyLength + 1), "value"));
 			StringAssert.Contains(tooLongKey.Message, $"exceeds {NodeContextValueRepository.MaxKeyLength} characters");
@@ -215,7 +218,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			MediaOpsLiveApi api = new MediaOpsLiveApiMock();
 			var phases = new OrchestrationPhase[]
 			{
-				Phase.Execute("spin-up", ctx => { ctx.Job.Values.Set("cloudServiceId", new string('v', 5000)); return PhaseStatus.Completed(); }),
+				Phase.Execute("spin-up", ctx => { ctx.Node.WritableValues.Set("cloudServiceId", new string('v', 5000)); return PhaseStatus.Completed(); }),
 			};
 
 			var result = RunNode(api, TransportId, phases);
@@ -299,10 +302,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 
 			return new OrchestrationPhaseContext(
 				null,
-				new OrchestrationJobContext(
-					() => new OrchestrationJobInfo { JobReference = "JOB-1", JobName = "Cloud Job" },
-					OrchestrationJobValues.Create(api.Orchestration.NodeContextValues, _jobInfoId, nodeId, eventNodes)),
-				new OrchestrationNodeContext(nodeId, nodeId == TransportId ? "Transport" : "Encoder"),
+				new OrchestrationJobContext(() => new OrchestrationJobInfo { JobReference = "JOB-1", JobName = "Cloud Job" }),
+				new OrchestrationNodeContext(nodeId, nodeId == TransportId ? "Transport" : "Encoder", OrchestrationNodeValues.Create(api.Orchestration.NodeContextValues, _jobInfoId, nodeId, eventNodes)),
 				OrchestrationEventContext.From(CreateEvent()));
 		}
 

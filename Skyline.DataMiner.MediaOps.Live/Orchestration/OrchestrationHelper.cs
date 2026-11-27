@@ -67,6 +67,7 @@ public class OrchestrationHelper
 	///     Executes a sync for the current timing window (default 1 hour in the past and 12 hours into the future).
 	///     This consists of deleting past orchestration tasks and prepare tasks for upcoming events.
 	/// </summary>
+	[Obsolete("Pass an IMediaOpsPlanHelper to SyncCurrentSlidingWindow(IMediaOpsPlanHelper).")]
 	public void SyncCurrentSlidingWindow()
 	{
 		_slidingWindowScheduler.SyncSchedulerWithWindow();
@@ -93,6 +94,7 @@ public class OrchestrationHelper
 	///     This consists of deleting orchestration tasks before the window start and preparing tasks for upcoming events.
 	/// </summary>
 	/// <param name="baseTime">The base time to anchor the sliding window to.</param>
+	[Obsolete("Pass an IMediaOpsPlanHelper to SyncCurrentSlidingWindow(DateTimeOffset, IMediaOpsPlanHelper).")]
 	public void SyncCurrentSlidingWindow(DateTimeOffset baseTime)
 	{
 		new OrchestrationSlidingWindowScheduler(
@@ -593,7 +595,7 @@ public class OrchestrationHelper
 	/// <param name="orchestrationIds">The IDs of the events to run again.</param>
 	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
 	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
-	/// <exception cref="InvalidOperationException">An event is not <see cref="EventState.Configuring"/>, <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.</exception>
+	/// <exception cref="InvalidOperationException">An event is not <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.</exception>
 	public void RetryEvents(IEnumerable<Guid> orchestrationIds, IMediaOpsPlanHelper mediaOpsPlanHelper, OrchestrationSettings settings = null)
 	{
 		if (orchestrationIds is null)
@@ -618,7 +620,7 @@ public class OrchestrationHelper
 	/// <param name="orchestrationEvents">The events to run again.</param>
 	/// <param name="mediaOpsPlanHelper">The MediaOps.PLAN helper.</param>
 	/// <param name="settings">Additional settings can be passed to override default orchestration settings.</param>
-	/// <exception cref="InvalidOperationException">An event is not <see cref="EventState.Configuring"/>, <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.</exception>
+	/// <exception cref="InvalidOperationException">An event is not <see cref="EventState.Completed"/> or <see cref="EventState.Failed"/>.</exception>
 	public void RetryEvents(IEnumerable<OrchestrationEvent> orchestrationEvents, IMediaOpsPlanHelper mediaOpsPlanHelper, OrchestrationSettings settings = null)
 	{
 		if (orchestrationEvents is null)
@@ -637,8 +639,7 @@ public class OrchestrationHelper
 			return;
 		}
 
-		// Draft and Confirmed events haven't run yet, and a cancelled event must not run.
-		OrchestrationEvent notRetryable = events.FirstOrDefault(x => x.EventState != EventState.Configuring && x.EventState != EventState.Completed && x.EventState != EventState.Failed);
+		OrchestrationEvent notRetryable = events.FirstOrDefault(x => x.EventState != EventState.Completed && x.EventState != EventState.Failed);
 		if (notRetryable != null)
 		{
 			throw new InvalidOperationException($"Event '{notRetryable.Name}' ({notRetryable.ID}) is {notRetryable.EventState} and cannot be retried. Only events that already ran can be retried.");
@@ -818,7 +819,7 @@ public class OrchestrationHelper
 
 	/// <summary>
 	/// Gets the phases of several orchestration events at once, ordered by node ID and then by the order of the phases in the script.
-	/// Use this instead of <see cref="OrchestrationEvent.Phases"/> when reading the phases of many events.
+	/// Reads the phases of the requested events from the repository in one call.
 	/// </summary>
 	/// <param name="eventIds">The IDs of the events.</param>
 	/// <returns>The phases per event ID. An event without phases has an empty list.</returns>

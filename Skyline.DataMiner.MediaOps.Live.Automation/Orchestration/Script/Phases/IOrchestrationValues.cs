@@ -10,7 +10,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		/// <summary>
 		/// Gets the keys that hold a value.
 		/// </summary>
-		IReadOnlyCollection<string> Keys { get; }
+		IReadOnlyCollection<string> GetKeys();
 
 		/// <summary>
 		/// Gets the value of the specified key.

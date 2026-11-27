@@ -82,8 +82,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		[TestMethod]
 		[DataRow(EventState.Draft)]
 		[DataRow(EventState.Confirmed)]
+		[DataRow(EventState.Configuring)]
 		[DataRow(EventState.Cancelled)]
-		public void OrchestrationEventRetry_EventThatDidNotRun_Throws(EventState state)
+		public void OrchestrationEventRetry_EventThatIsNotCompletedOrFailed_Throws(EventState state)
 		{
 			var simulation = new MediaOpsLiveSimulation();
 			var api = simulation.Api;
@@ -113,8 +114,9 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			encoder.Phases.Add(new OrchestrationPhaseStatus { Key = "go-live", Order = 0, State = PhaseState.InProgress, Message = "Starting.", LastUpdated = now, Started = now });
 			api.Orchestration.NodePhases.CreateOrUpdate(encoder);
 
-			var fromEvent = GetEvent(api, ev.ID).Phases;
-			var fromJob = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference).OrchestrationEvents.Single().Phases;
+			var fromEvent = api.Orchestration.GetEventPhases(new[] { ev.ID })[ev.ID];
+			var fromJobEvent = api.Orchestration.GetOrCreateNewOrchestrationJob(jobReference).OrchestrationEvents.Single();
+			var fromJob = api.Orchestration.GetEventPhases(new[] { fromJobEvent.ID })[fromJobEvent.ID];
 
 			foreach (var phases in new[] { fromEvent, fromJob })
 			{
@@ -140,8 +142,8 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			var api = simulation.Api;
 			var ev = SaveEvent(api, out _);
 
-			Assert.IsEmpty(GetEvent(api, ev.ID).Phases);
-			Assert.IsEmpty(new OrchestrationEventConfiguration().Phases);
+			Assert.IsEmpty(api.Orchestration.GetEventPhases(new[] { ev.ID })[ev.ID]);
+			Assert.IsEmpty(api.Orchestration.GetEventPhases(new[] { Guid.NewGuid() }).Values.Single());
 		}
 
 		[TestMethod]

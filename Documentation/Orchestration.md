@@ -162,8 +162,8 @@ api.Orchestration.ExecuteEventsNow(new List<OrchestrationEventConfiguration> { o
 
 ### Retry an event
 
-An event that already ran can be run again, for example after it failed. Only events in the 'Configuring', 'Completed' or 'Failed' state can be retried.
-Retrying a 'Draft', 'Confirmed' or 'Cancelled' event throws an `InvalidOperationException`.
+An event that already ran can be run again, for example after it failed. Only events in the 'Completed' or 'Failed' state can be retried.
+Retrying a 'Draft', 'Confirmed', 'Configuring' or 'Cancelled' event throws an `InvalidOperationException`.
 
 ```csharp
 using Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration;
@@ -645,14 +645,14 @@ public class Script : OrchestrationScript
     private PhaseStatus SpinUp(OrchestrationPhaseContext context)
     {
         var cloudServiceId = cloud.StartService();
-        context.Job.Values.Set("cloudServiceId", cloudServiceId);
+        context.Node.WritableValues.Set("cloudServiceId", cloudServiceId);
 
         return PhaseStatus.InProgress($"Cloud service {cloudServiceId} requested.");
     }
 
     private PhaseStatus IsSpunUp(OrchestrationPhaseContext context)
     {
-        if (!context.Job.Values.TryGet("cloudServiceId", out var cloudServiceId))
+        if (!context.Node.Values.TryGet("cloudServiceId", out var cloudServiceId))
         {
             return PhaseStatus.NotStarted("No cloud service requested yet.");
         }
@@ -710,13 +710,15 @@ The phases are walked in order. For every phase, the status method is called fir
 | --- | --- |
 | `Completed` | The phase is skipped. |
 | `NotStarted` | The phase is executed. The status it returns is recorded and acted on in the same way. |
-| `InProgress` | The phase is not executed again. The next phase is expected to be a wait on it. |
-| `Failed` | The following phases are not executed and the event fails. |
+| `InProgress` | The phase is not executed again. A following wait phase polls it; otherwise the runner polls with the default interval and timeout before continuing. |
+| `Failed` | The phase is executed again, so a retry can recover a failed phase. |
 
 The status method, not the recorded status, decides. A phase that completed earlier is executed again when its status method reports `NotStarted`, for example because the configuration of the device was changed.
 A phase without a status method is skipped when it was recorded as `Completed`, and executed otherwise.
+Because its actual state can't be checked, a phase without a status method is re-executed when it was recorded as `InProgress` or `Failed`.
+Make such a phase safe to repeat, or give it a status method that can determine whether its work already completed.
 
-- A phase that throws an exception is marked `Failed`, with the exception message as reason.
+- A phase that throws an exception is marked `Failed`, with the exception message as reason; the full exception is also written to the script log.
 - A status method that throws or returns `null` is retried up to 3 times. When it keeps failing, the phase is marked `Failed` with "Unable to retrieve status of 'spin-up' phase: ..." and is not executed.
 - Aborting the script (`engine.ExitFail`, `engine.ExitSuccess`) and script timeouts are not caught; they end the script as usual.
 - When the script times out, the phase that was busy is marked `Failed` first, for example "The script timed out while retrieving the status of phase 'spin-up'.",
@@ -759,14 +761,14 @@ When it's 10 seconds or more away, the script ends and a scheduler task resumes 
   This is done by `SyncCurrentSlidingWindow(IMediaOpsPlanHelper)`; the overload without a MediaOps.PLAN helper keeps such resumes.
 - A resumed execution continues at the wait, without evaluating the earlier phases again.
   When the phases of the script changed in the meantime, it walks all phases from the first one instead, and waits start their timeout anew.
-- Only the node scripts that are waiting are resumed. The global orchestration script of the event isn't run again.
+- Only the phases that are waiting are resumed, including phases of the global orchestration script.
 - When the resume task can't be created, the phase after the wait and the event fail with "Unable to schedule the resume of the orchestration: ...".
 
-Waiting in another process only happens for a node of an event. In other executions, such as running the script manually, the script always waits in-process.
+Waiting in another process happens for phases of an event. In other executions, such as running the script manually, the script always waits in-process.
 
 ### Event state
 
-The event stays `Configuring` as long as one of its nodes waits for a resume.
+The event stays `Configuring` as long as one of its node or global scripts waits for a resume.
 The execution that ends the last wait sets the event to `Completed` or `Failed`, sets the orchestration duration, and reports the result to MediaOps Plan.
 When a phase fails while other nodes still wait, the event fails right away and the other nodes continue their waits. An event that already failed or was cancelled keeps its state.
 Several executions of the same event can run at the same time, for example the resumes of two nodes that wait. A failure saved by one of them is never overwritten by another one that succeeds.
@@ -792,7 +794,9 @@ Every phase and status method receives an `OrchestrationPhaseContext`:
 | --- | --- |
 | `Engine` | The link with the SLAutomation process. |
 | `Job.Reference`, `Job.Name`, `Job.MonitoringService` | The job the orchestration runs for, read once per execution. |
-| `Job.Values` | The job context values of the current node (see below). |
+| `Node.Values` | The read-only values of the current node. |
+| `Node.WritableValues` | The read/write values of the current node, available only when the script runs for an event node. |
+| `Node.ForNode(node)` | The read-only values of another node in the job. |
 | `Node.Id`, `Node.Label` | The node the orchestration runs for. |
 | `Event` | The event: `Id`, `Name`, `Type`, its `Nodes` (`Id`, `Label`, `OrchestrationScriptName`) and its `Connections` (`SourceNodeId`, `DestinationNodeId`). |
 
@@ -800,20 +804,20 @@ The phases are methods of the script, so they can also use the script itself, fo
 
 #### Job context values
 
-`context.Job.Values` keeps plain text values per job and per node. A phase writes what later phases, later executions and later events of the node need,
+`context.Node.Values` reads the plain text values stored per job and node. A phase writes what later phases, later executions and later events of the node need,
 for example the ID of the cloud service it started, so the stop event can tear it down. The values survive the end of the execution, a failure, and a restart of the system.
 
 ```csharp
-context.Job.Values.Set("cloudServiceId", cloudServiceId);
+context.Node.WritableValues.Set("cloudServiceId", cloudServiceId);
 
-string id = context.Job.Values.Get("cloudServiceId");          // throws KeyNotFoundException when missing
-bool exists = context.Job.Values.TryGet("cloudServiceId", out id);
-bool removed = context.Job.Values.Remove("cloudServiceId");
-IReadOnlyCollection<string> keys = context.Job.Values.Keys;
+string id = context.Node.Values.Get("cloudServiceId");          // throws KeyNotFoundException when missing
+bool exists = context.Node.Values.TryGet("cloudServiceId", out id);
+bool removed = context.Node.WritableValues.Remove("cloudServiceId");
+IReadOnlyCollection<string> keys = context.Node.Values.GetKeys();
 
 // The values of another node of the job are read-only.
 var transport = context.Event.Nodes.Single(node => node.Label == "Transport");
-string streamUrl = context.Job.Values.ForNode(transport.Id).Get("streamUrl");
+string streamUrl = context.Node.ForNode(transport.Id).Get("streamUrl");
 ```
 
 - A node only writes its own values; keys of different nodes never collide. The values of other nodes can be read, not changed.
@@ -828,18 +832,18 @@ string streamUrl = context.Job.Values.ForNode(transport.Id).Get("streamUrl");
 
 ### Where phases are available
 
-| Execution | Phase statuses | Long waits | Waits on other nodes | `Job.Values` |
+| Execution | Phase statuses | Long waits | Waits on other nodes | `Node.Values` |
 | --- | --- | --- | --- | --- |
 | Node script of an event | Stored per event and node | Resumed by a scheduler task | Yes | Yes |
-| Node script run by a global script | Stored per event and node | Wait in-process | Yes | Yes |
-| Global script of an event | Only for this execution | Wait in-process | No | No |
+| Node script run by a global script | Stored per event and node | Resumed by a scheduler task | Yes | Yes |
+| Global script of an event | Stored per event and global script | Resumed by a scheduler task | Yes | No |
 | Run manually | Only for this execution | Wait in-process | No | No |
 
 Using an unavailable feature fails with an explicit message, for example "The job context values are only available when the script runs for a node of an event.".
 
 ### Orchestrate nodes from a global script
 
-A global script runs the script of a node with `OrchestrateNode` or `TryOrchestrateNode`. Both return only when the node completed or failed.
+A global script runs the script of a node with `OrchestrateNode` or `TryOrchestrateNode`.
 
 ```csharp
 public override void Orchestrate(IEngine engine)
@@ -863,13 +867,14 @@ public override void Orchestrate(IEngine engine)
 }
 ```
 
-- `OrchestrateNode` throws an `OrchestrationNodeFailedException` when the node fails. Unless the global script catches it, the event fails with
+- `OrchestrateNode` throws an `OrchestrationNodeFailedException` when the node reports an immediate failure. Unless the global script catches it, the event fails with
   "Error during global orchestration: Node 'Transport' failed: Phase 'spin-up' failed: Encoder offline.", without a stack trace.
 - `TryOrchestrateNode` doesn't throw. It returns a `NodeOrchestrationResult` with `IsSuccess` and `FailureReason`.
-  A failure the global script handled this way doesn't fail the event; the failed phases of the node remain visible on the [phases of the event](#read-the-phases-of-an-event).
+- When a node suspends for a long phase wait, the call returns and the global script continues with the next node; any failure after the node resumes is reported on the event.
+  A failure the global script handled this way doesn't fail the event; the failed phases of the node remain visible through [the phases of the event](#read-the-phases-of-an-event).
 - `IsExecuted` is `false` when nothing was run: the node has no orchestration script, or the script doesn't run as the global script of an event.
-- A node run by a global script never ends while it waits: its long waits are held in-process, so the global script only continues when the node is done.
-  The node script stays busy during the wait, so its script timeout must be longer than its waits. When it isn't, the phase after the wait fails with "The script timed out while waiting on phase '...'.".
+- A node run by a global script can suspend for a long phase wait, allowing the global script to continue orchestrating other nodes.
+  The resumed node reports later failures on the event.
 - Its phase statuses are stored per event and node like for any node script. When the event is retried, the global script runs again, and the node continues where it stopped.
 
 > [!NOTE]
@@ -878,12 +883,12 @@ public override void Orchestrate(IEngine engine)
 
 ### Read the phases of an event
 
-Every event exposes the phases of its node scripts through the read-only `Phases` property, ordered by node ID and then by the order of the phases in the script.
+Use `GetEventPhases` to read the recorded phases for an event. It reads phase data from the repository instead of adding a lazy repository query to every event object. Phases of a global script use the reserved node ID `__global__`.
 
 ```csharp
-OrchestrationEvent orchestrationEvent = api.Orchestration.GetEventConfigurationsById(new List<Guid> { eventId }).Single();
+IReadOnlyList<OrchestrationEventPhase> phases = api.Orchestration.GetEventPhases(new[] { eventId })[eventId];
 
-foreach (OrchestrationEventPhase phase in orchestrationEvent.Phases)
+foreach (OrchestrationEventPhase phase in phases)
 {
     // For example: "node-a/spin-up: Failed (Encoder ENC-A is offline.)"
     string line = $"{phase.NodeId}/{phase.Key}: {phase.State}";

@@ -199,7 +199,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		}
 
 		/// <summary>
-		/// Runs the orchestration script of a node and waits until it completed or failed. Only has effect in the global script of an event.
+		/// Runs the orchestration script of a node. Long phase waits are scheduled so the global script can continue with other nodes.
 		/// </summary>
 		/// <param name="nodeConfig">The node to orchestrate.</param>
 		/// <exception cref="OrchestrationNodeFailedException">The orchestration of the node failed.</exception>
@@ -213,7 +213,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		}
 
 		/// <summary>
-		/// Runs the orchestration script of a node and waits until it completed or failed, without throwing when it failed.
+		/// Runs the orchestration script of a node without throwing when an immediate failure is reported.
 		/// Only has effect in the global script of an event.
 		/// </summary>
 		/// <param name="nodeConfig">The node to orchestrate.</param>
@@ -235,7 +235,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				return NodeOrchestrationResult.NotExecuted(nodeConfig.NodeId);
 			}
 
-			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node, nodeConfig.NodeId, holdWaits: true).ToMetadataArguments();
+			IEnumerable<OrchestrationScriptArgument> addedInputParams = new OrchestrationScriptInternalInput(EventConfiguration.ID, OrchestrationLevel.Node, nodeConfig.NodeId).ToMetadataArguments();
 
 			OrchestrationScriptResult result = OrchestrationEventExecutionHelper.ExecuteOrchestrationScript(
 				_engine.GetUserConnection(),
@@ -364,17 +364,26 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 		private PhaseRunResult RunPhases(IEngine engine, IReadOnlyCollection<OrchestrationPhase> phases)
 		{
-			// Statuses are only persisted for a node of an event; other executions keep them in memory.
-			if (!TryGetNodeScope(out Guid jobInfoId, out Guid eventId, out string nodeId))
+			if (TryGetNodeScope(out Guid jobInfoId, out Guid eventId, out string nodeId))
 			{
-				var standaloneContext = new OrchestrationPhaseContext(
-					engine,
-					new OrchestrationJobContext(LoadJobInfo(engine), CreateValuesOutsideOfANode(engine)),
-					orchestrationEvent: _context == OrchestrationScriptContext.Event ? OrchestrationEventContext.From(EventConfiguration) : null);
-
-				return new PhaseRunner(phases, standaloneContext, new InMemoryPhaseStatusStore()).Run();
+				return RunNodePhases(engine, phases, jobInfoId, eventId, nodeId);
 			}
 
+			if (IsGlobalScriptOfEvent && EventConfiguration?.JobInfoReference != null)
+			{
+				return RunGlobalPhases(engine, phases);
+			}
+
+			var standaloneContext = new OrchestrationPhaseContext(
+				engine,
+				new OrchestrationJobContext(LoadJobInfo(engine)),
+				new OrchestrationNodeContext(null, null, CreateValuesOutsideOfANode(engine)),
+				orchestrationEvent: _context == OrchestrationScriptContext.Event ? OrchestrationEventContext.From(EventConfiguration) : null);
+			return new PhaseRunner(phases, standaloneContext, new InMemoryPhaseStatusStore()).Run();
+		}
+
+		private PhaseRunResult RunNodePhases(IEngine engine, IReadOnlyCollection<OrchestrationPhase> phases, Guid jobInfoId, Guid eventId, string nodeId)
+		{
 			if (!PhaseExecutionGuard.TryAcquire(engine, jobInfoId, eventId, nodeId, out PhaseExecutionGuard guard))
 			{
 				throw new PhaseExecutionInProgressException($"The phases of node '{nodeId}' are already being executed for this event by another execution. This execution was stopped.");
@@ -392,12 +401,30 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 
 				var context = new OrchestrationPhaseContext(
 					engine,
-					new OrchestrationJobContext(LoadJobInfo(engine), OrchestrationJobValues.Create(orchestration.NodeContextValues, jobInfoId, nodeId, eventNodes)),
-					new OrchestrationNodeContext(nodeId, nodes?.FirstOrDefault(x => x.NodeId == nodeId)?.NodeLabel),
+					new OrchestrationJobContext(LoadJobInfo(engine)),
+					new OrchestrationNodeContext(nodeId, nodes?.FirstOrDefault(x => x.NodeId == nodeId)?.NodeLabel, OrchestrationNodeValues.Create(orchestration.NodeContextValues, jobInfoId, nodeId, eventNodes)),
 					OrchestrationEventContext.From(EventConfiguration));
 
 				return NodePhasesExecution.Run(phases, context, store, resumeScheduler, eventId, IsResume(), eventNodes, canSuspend: !IsFlagSet(OrchestrationScriptInternalInput.HoldWaitsMetadataKey));
 			}
+		}
+
+		private PhaseRunResult RunGlobalPhases(IEngine engine, IReadOnlyCollection<OrchestrationPhase> phases)
+		{
+			Guid jobInfoId = EventConfiguration.JobInfoReference.Value.ID;
+			Guid eventId = EventConfiguration.ID;
+			var api = engine.GetMediaOpsLiveApi();
+			IList<NodeConfiguration> nodes = EventConfiguration.Configuration?.NodeConfigurations;
+			var eventNodes = new StoredEventNodes(api.Orchestration.NodePhases, eventId, currentNodeId: null, nodes, () => LoadJobNodes(engine));
+			var store = new NodePhasesStatusStore(api.Orchestration.NodePhases, jobInfoId, eventId, OrchestrationNodePhases.GlobalNodeId, phases);
+			var resumeScheduler = new OrchestrationResumeScheduler(engine.GetUserConnection());
+			var context = new OrchestrationPhaseContext(
+				engine,
+				new OrchestrationJobContext(LoadJobInfo(engine)),
+				new OrchestrationNodeContext(null, null, CreateValuesOutsideOfANode(engine)),
+				OrchestrationEventContext.From(EventConfiguration));
+
+			return NodePhasesExecution.Run(phases, context, store, resumeScheduler, eventId, IsResume(), eventNodes, canSuspend: true);
 		}
 
 		private Func<OrchestrationJobInfo> LoadJobInfo(IEngine engine)
@@ -411,17 +438,17 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 		}
 
 		// The global script of an event has no node of its own, but it coordinates the nodes, so it can read what they stored.
-		private OrchestrationJobValues CreateValuesOutsideOfANode(IEngine engine)
+		private OrchestrationNodeValues CreateValuesOutsideOfANode(IEngine engine)
 		{
 			if (!IsGlobalScriptOfEvent || EventConfiguration?.JobInfoReference == null)
 			{
-				return OrchestrationJobValues.Unavailable(OrchestrationPhaseContext.NoNodeOfEvent);
+				return OrchestrationNodeValues.Unavailable(OrchestrationPhaseContext.NoNodeOfEvent);
 			}
 
 			var orchestration = engine.GetMediaOpsLiveApi().Orchestration;
 			var eventNodes = new StoredEventNodes(orchestration.NodePhases, EventConfiguration.ID, currentNodeId: null, EventConfiguration.Configuration?.NodeConfigurations, () => LoadJobNodes(engine));
 
-			return OrchestrationJobValues.ReadOnlyForEvent(orchestration.NodeContextValues, EventConfiguration.JobInfoReference.Value.ID, eventNodes, OrchestrationPhaseContext.NoOwnValuesInGlobalScript);
+			return OrchestrationNodeValues.ReadOnlyForEvent(orchestration.NodeContextValues, EventConfiguration.JobInfoReference.Value.ID, eventNodes, OrchestrationPhaseContext.NoOwnValuesInGlobalScript);
 		}
 
 		private IEnumerable<NodeConfiguration> LoadJobNodes(IEngine engine)

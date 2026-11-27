@@ -885,7 +885,6 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration
         public string FailureInfo { get; }
         public string Name { get; set; }
         public System.TimeSpan? OrchestrationDuration { get; }
-        public System.Collections.Generic.IReadOnlyList<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEventPhase> Phases { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration.Scheduling.ScheduledTaskId SchedulerReference { get; }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationJobInfo GetJobInfo(Skyline.DataMiner.Solutions.MediaOps.Live.API.IMediaOpsLiveApi api) { }
     }
@@ -1683,8 +1682,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Orchestration
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions.OrchestrationEventPhasesSubscription SubscribeOnEventPhases() { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions.OrchestrationEventPhasesSubscription SubscribeOnEventPhases(System.Guid eventId) { }
         public Skyline.DataMiner.Solutions.MediaOps.Live.API.Subscriptions.RepositorySubscription<Skyline.DataMiner.Solutions.MediaOps.Live.API.Objects.Orchestration.OrchestrationEvent> SubscribeOnEvents() { }
+        [System.ObsoleteAttribute("Pass an IMediaOpsPlanHelper to SyncCurrentSlidingWindow(IMediaOpsPlanHelper).")]
         public void SyncCurrentSlidingWindow() { }
         public void SyncCurrentSlidingWindow(Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper) { }
+        [System.ObsoleteAttribute("Pass an IMediaOpsPlanHelper to SyncCurrentSlidingWindow(DateTimeOffset, IMediaOpsPlanHelper).")]
         public void SyncCurrentSlidingWindow(System.DateTimeOffset baseTime) { }
         public void SyncCurrentSlidingWindow(System.DateTimeOffset baseTime, Skyline.DataMiner.Solutions.MediaOps.Live.Plan.IMediaOpsPlanHelper mediaOpsPlanHelper) { }
     }
