@@ -28,37 +28,56 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 	{
 		private readonly Guid _jobInfoId = Guid.NewGuid();
 		private readonly Guid _eventId = Guid.NewGuid();
+		private readonly IEngine _engine = new Mock<IEngine>().Object;
 
 		[TestMethod]
 		public void PhaseExecutionGuard_SecondExecutionForTheSameNode_IsRefusedUntilTheFirstReleases()
 		{
-			using (var holder = new GuardHolder(_jobInfoId, _eventId, "node-a"))
-			{
-				Assert.IsTrue(holder.Acquired);
-				Assert.IsFalse(TryAcquireOnOtherThread(_jobInfoId, _eventId, "node-a"));
-			}
+			Assert.IsTrue(PhaseExecutionGuard.TryAcquire(_engine, _jobInfoId, _eventId, "node-a", out var guard));
+			Assert.IsFalse(PhaseExecutionGuard.TryAcquire(_engine, _jobInfoId, _eventId, "node-a", out var refused));
+			Assert.IsNull(refused);
 
-			Assert.IsTrue(TryAcquireOnOtherThread(_jobInfoId, _eventId, "node-a"));
+			guard.Dispose();
+
+			Assert.IsTrue(PhaseExecutionGuard.TryAcquire(_engine, _jobInfoId, _eventId, "node-a", out var next));
+			next.Dispose();
 		}
 
 		[TestMethod]
 		public void PhaseExecutionGuard_OtherNodeOrEvent_IsNotBlocked()
 		{
-			using (new GuardHolder(_jobInfoId, _eventId, "node-a"))
+			using (Acquire(_jobInfoId, _eventId, "node-a"))
+			using (Acquire(_jobInfoId, _eventId, "node-b"))
+			using (Acquire(_jobInfoId, Guid.NewGuid(), "node-a"))
 			{
-				Assert.IsTrue(TryAcquireOnOtherThread(_jobInfoId, _eventId, "node-b"));
-				Assert.IsTrue(TryAcquireOnOtherThread(_jobInfoId, Guid.NewGuid(), "node-a"));
 			}
 		}
 
 		[TestMethod]
-		public void PhaseExecutionGuard_OwnerThatEndsWithoutReleasing_DoesNotBlockTheNextExecution()
+		public void PhaseExecutionGuard_OwnerThatDoesNotRelease_IsReleasedWhenTheLeaseExpires()
 		{
-			var thread = new Thread(() => PhaseExecutionGuard.TryAcquire(_jobInfoId, _eventId, "node-a", out _));
+			var locks = new PhaseExecutionGuard.InMemoryPhaseLocks();
+			string lockId = PhaseExecutionGuard.GetName(_jobInfoId, _eventId, "node-a");
+
+			Assert.IsTrue(PhaseExecutionGuard.TryAcquire(locks, lockId, TimeSpan.FromMilliseconds(50), out _));
+			Assert.IsFalse(PhaseExecutionGuard.TryAcquire(locks, lockId, TimeSpan.FromMilliseconds(50), out _));
+
+			Thread.Sleep(100);
+
+			Assert.IsTrue(PhaseExecutionGuard.TryAcquire(locks, lockId, TimeSpan.FromMilliseconds(50), out var guard));
+			guard.Dispose();
+		}
+
+		[TestMethod]
+		public void PhaseExecutionGuard_ReleasedOnAnotherThread_DoesNotBlockTheNextExecution()
+		{
+			var guard = Acquire(_jobInfoId, _eventId, "node-a");
+
+			var thread = new Thread(() => guard.Dispose());
 			thread.Start();
 			thread.Join();
 
-			Assert.IsTrue(TryAcquireOnOtherThread(_jobInfoId, _eventId, "node-a"));
+			Acquire(_jobInfoId, _eventId, "node-a").Dispose();
 		}
 
 		[TestMethod]
@@ -66,15 +85,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 		{
 			string name = PhaseExecutionGuard.GetName(_jobInfoId, _eventId, @"Encoder\1 / ""main""");
 
-			Assert.IsFalse(name.Substring(@"Local\".Length).Contains(@"\"));
-			Assert.IsTrue(PhaseExecutionGuard.TryAcquire(_jobInfoId, _eventId, @"Encoder\1 / ""main""", out var guard));
-			guard.Dispose();
+			StringAssert.Matches(name, new System.Text.RegularExpressions.Regex(@"^[A-Za-z0-9.]+$"));
+			Acquire(_jobInfoId, _eventId, @"Encoder\1 / ""main""").Dispose();
 		}
 
 		[TestMethod]
 		public void PhaseExecutionGuard_Dispose_CanBeCalledTwice()
 		{
-			Assert.IsTrue(PhaseExecutionGuard.TryAcquire(_jobInfoId, _eventId, "node-a", out var guard));
+			var guard = Acquire(_jobInfoId, _eventId, "node-a");
 
 			guard.Dispose();
 			guard.Dispose();
@@ -90,7 +108,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			var script = new PhasedScript();
 
 			RequestScriptInfoOutput output;
-			using (new GuardHolder(ev.JobInfoReference.Value.ID, ev.ID, "node-a"))
+			using (Acquire(ev.JobInfoReference.Value.ID, ev.ID, "node-a"))
 			{
 				output = script.OnRequestScriptInfoRequest(engine.Object, CreateNodeRequest(ev.ID, "node-a"));
 			}
@@ -141,50 +159,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Tests.Automation.Orchestrati
 			};
 		}
 
-		private static bool TryAcquireOnOtherThread(Guid jobInfoId, Guid eventId, string nodeId)
+		private PhaseExecutionGuard Acquire(Guid jobInfoId, Guid eventId, string nodeId)
 		{
-			bool acquired = false;
-			var thread = new Thread(() =>
-			{
-				acquired = PhaseExecutionGuard.TryAcquire(jobInfoId, eventId, nodeId, out var guard);
-				guard?.Dispose();
-			});
-
-			thread.Start();
-			thread.Join();
-			return acquired;
-		}
-
-		// Holds the guard on a dedicated thread, since a mutex must be released by the thread that owns it.
-		private sealed class GuardHolder : IDisposable
-		{
-			private readonly ManualResetEventSlim _acquired = new ManualResetEventSlim();
-			private readonly ManualResetEventSlim _release = new ManualResetEventSlim();
-			private readonly Thread _thread;
-
-			public GuardHolder(Guid jobInfoId, Guid eventId, string nodeId)
-			{
-				_thread = new Thread(() =>
-				{
-					Acquired = PhaseExecutionGuard.TryAcquire(jobInfoId, eventId, nodeId, out var guard);
-					_acquired.Set();
-					_release.Wait();
-					guard?.Dispose();
-				});
-
-				_thread.Start();
-				_acquired.Wait();
-			}
-
-			public bool Acquired { get; private set; }
-
-			public void Dispose()
-			{
-				_release.Set();
-				_thread.Join();
-				_acquired.Dispose();
-				_release.Dispose();
-			}
+			Assert.IsTrue(PhaseExecutionGuard.TryAcquire(_engine, jobInfoId, eventId, nodeId, out var guard));
+			return guard;
 		}
 
 		private sealed class PhasedScript : OrchestrationScript

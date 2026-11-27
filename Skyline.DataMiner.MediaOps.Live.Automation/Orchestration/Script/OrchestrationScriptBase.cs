@@ -375,7 +375,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.Automation.Orchestration.Scr
 				return new PhaseRunner(phases, standaloneContext, new InMemoryPhaseStatusStore()).Run();
 			}
 
-			if (!PhaseExecutionGuard.TryAcquire(jobInfoId, eventId, nodeId, out PhaseExecutionGuard guard))
+			if (!PhaseExecutionGuard.TryAcquire(engine, jobInfoId, eventId, nodeId, out PhaseExecutionGuard guard))
 			{
 				throw new PhaseExecutionInProgressException($"The phases of node '{nodeId}' are already being executed for this event by another execution. This execution was stopped.");
 			}
