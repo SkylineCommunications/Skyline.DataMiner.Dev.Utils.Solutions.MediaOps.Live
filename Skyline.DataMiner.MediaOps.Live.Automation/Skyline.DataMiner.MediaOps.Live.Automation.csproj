@@ -37,6 +37,7 @@
 		<InternalsVisibleTo Include="SLC-AS-MediaOps.LIVE.Tests" />
 	</ItemGroup>
 	<ItemGroup>
+		<PackageReference Include="Skyline.DataMiner.ConnectorAPI.SkylineLockManager" />
 		<PackageReference Include="Skyline.DataMiner.Core.DataMinerSystem.Automation" />
 		<PackageReference Include="Skyline.DataMiner.Core.InterAppCalls.Common" />
 		<PackageReference Include="Skyline.DataMiner.Dev.Automation" />

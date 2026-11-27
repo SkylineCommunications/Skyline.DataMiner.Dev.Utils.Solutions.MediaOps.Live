@@ -9,5 +9,6 @@
 		internal static readonly string ScriptInputRequestScriptInfoKey = "OrchestrationScriptInput";
 		internal static readonly string ScriptOutputRequestScriptInfoKey = "OrchestrationScriptOutput";
 		internal static readonly string ScriptOutputError = "OrchestrationScriptError";
+		internal static readonly string ScriptOutputSkipped = "OrchestrationScriptSkipped";
 	}
 }

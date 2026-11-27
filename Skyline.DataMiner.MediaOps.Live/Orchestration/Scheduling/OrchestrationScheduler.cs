@@ -42,9 +42,23 @@
 		private HashSet<OrchestrationSchedulerTask> LoadInternalTaskList()
 		{
 			HashSet<OrchestrationSchedulerTask> list = [];
+
+			foreach (SchedulerTask task in LoadSchedulerTasks(_connection))
+			{
+				if (OrchestrationSchedulerTask.TryParseFromSchedulerTask(task, out OrchestrationSchedulerTask orchestrationTask))
+				{
+					list.Add(orchestrationTask);
+				}
+			}
+
+			return list;
+		}
+
+		internal static IEnumerable<SchedulerTask> LoadSchedulerTasks(IConnection connection)
+		{
 			GetInfoMessage getSchedulerTaskInfoMessage = new(InfoType.SchedulerTasks);
 
-			AsyncProgress progress = _connection.Async.Launch(getSchedulerTaskInfoMessage);
+			AsyncProgress progress = connection.Async.Launch(getSchedulerTaskInfoMessage);
 
 			/*var pool = AsyncResponseHandler*/
 
@@ -67,17 +81,7 @@
 				throw new InvalidOperationException("Scheduler task could not be retrieved.");
 			}
 
-			foreach (object taskObject in getSchedulerTasksResponse.Tasks)
-			{
-				SchedulerTask task = (SchedulerTask)taskObject;
-
-				if (OrchestrationSchedulerTask.TryParseFromSchedulerTask(task, out OrchestrationSchedulerTask orchestrationTask))
-				{
-					list.Add(orchestrationTask);
-				}
-			}
-
-			return list;
+			return getSchedulerTasksResponse.Tasks.Cast<SchedulerTask>().ToList();
 		}
 
 		/// <summary>

@@ -678,7 +678,19 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 			// Like a real orchestration script, Script_Fail only fails when it orchestrates, not when it describes its inputs.
 			int returnCode = msg.ScriptName == "Script_Fail" && !IsScriptInfoRequest(msg) ? -1 : 0;
 
+			IReadOnlyDictionary<string, string> additionalOutput = null;
+			if (!IsScriptInfoRequest(msg))
+			{
+				additionalOutput = script.OnOrchestrate?.Invoke(GetScriptMetadata(msg));
+			}
+
 			var scriptInfo = script.GetOrchestrationScriptInfo(GetProvidedInputValues(msg));
+
+			var output = new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } };
+			foreach (var entry in additionalOutput ?? new Dictionary<string, string>())
+			{
+				output[entry.Key] = entry.Value;
+			}
 
 			yield return new ExecuteScriptResponseMessage
 			{
@@ -688,7 +700,7 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 				]),
 				EntryPointResult = new AutomationEntryPointResult(new RequestScriptInfoOutput
 				{
-					Data = new Dictionary<string, string> { { OrchestrationScriptConstants.OrchestrationScriptInfoRequestScriptInfoKey, JsonConvert.SerializeObject(scriptInfo) } },
+					Data = output,
 				}),
 			};
 
@@ -702,6 +714,20 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.UnitTesting.Simulation
 			return metaData != null
 				&& metaData.TryGetValue(nameof(OrchestrationScriptAction), out var action)
 				&& action == nameof(OrchestrationScriptAction.OrchestrationScriptInfo);
+		}
+
+		private static Dictionary<string, string> GetScriptMetadata(ExecuteScriptMessage msg)
+		{
+			var metaData = msg.CustomEntryPoint?.Parameters?.OfType<RequestScriptInfoInput>().FirstOrDefault()?.Data;
+
+			if (metaData == null
+				|| !metaData.TryGetValue(OrchestrationScriptConstants.ScriptInputRequestScriptInfoKey, out var serializedInput)
+				|| String.IsNullOrWhiteSpace(serializedInput))
+			{
+				return new Dictionary<string, string>();
+			}
+
+			return JsonConvert.DeserializeObject<OrchestrationScriptInput>(serializedInput)?.Metadata ?? new Dictionary<string, string>();
 		}
 
 		private static OrchestrationInputValues GetProvidedInputValues(ExecuteScriptMessage msg)

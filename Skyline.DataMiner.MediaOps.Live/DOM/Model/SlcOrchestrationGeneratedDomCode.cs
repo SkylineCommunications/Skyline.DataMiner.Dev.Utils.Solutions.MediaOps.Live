@@ -36,6 +36,14 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration
 				Failed = 4,
 				Draft = 5
 			}
+
+			public enum PhaseState
+			{
+				NotStarted = 0,
+				InProgress = 1,
+				Completed = 2,
+				Failed = 3
+			}
 		}
 
 		public static class Sections
@@ -103,6 +111,43 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration
 				public static FieldDescriptorID JobURL { get; } = new FieldDescriptorID(new Guid("771a106d-b114-441a-851e-57ed923dde4d"));
 				public static FieldDescriptorID JobDescription { get; } = new FieldDescriptorID(new Guid("5b2f8c41-7e93-4a06-9d52-8c1a6b4f3e72"));
 			}
+
+			public static class NodePhasesInfo
+			{
+				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("b23480f1-c5eb-423b-8aab-3165df0cad68"))
+				{ ModuleId = "(slc)orchestration" };
+				public static FieldDescriptorID JobInformation { get; } = new FieldDescriptorID(new Guid("b68fed92-dbb6-4710-8be5-70aa591ec8aa"));
+				public static FieldDescriptorID OrchestrationEvent { get; } = new FieldDescriptorID(new Guid("0f9d08f6-240b-4178-bceb-5add2cf81b84"));
+				public static FieldDescriptorID NodeID { get; } = new FieldDescriptorID(new Guid("d2bda778-9710-4fcf-8d70-92dbfa26abb8"));
+				public static FieldDescriptorID PhaseLayoutFingerprint { get; } = new FieldDescriptorID(new Guid("de85109f-cb23-47b1-a45d-f6a6996a1d66"));
+				public static FieldDescriptorID ResumeSchedulerReference { get; } = new FieldDescriptorID(new Guid("7163ae60-78eb-401b-ad23-8cf18c06023a"));
+				public static FieldDescriptorID WaitStarted { get; } = new FieldDescriptorID(new Guid("6f3dd50a-33ed-4bae-8cb9-802b0c02687f"));
+				public static FieldDescriptorID ResumePhaseIndex { get; } = new FieldDescriptorID(new Guid("db5cee08-50ec-487e-811e-f1b93c332c4a"));
+				public static FieldDescriptorID ResumeTime { get; } = new FieldDescriptorID(new Guid("7c05f0e6-e7ad-488b-8703-844c7580d170"));
+			}
+
+			public static class PhaseStatus
+			{
+				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("8aa39058-e94d-45f2-92b4-7a21633c4568"))
+				{ ModuleId = "(slc)orchestration" };
+				public static FieldDescriptorID PhaseKey { get; } = new FieldDescriptorID(new Guid("db99371f-7638-49f6-a0e8-18c07f91baf8"));
+				public static FieldDescriptorID Order { get; } = new FieldDescriptorID(new Guid("c1547c03-09d2-4c5b-adff-5e1e2de36bb3"));
+				public static FieldDescriptorID State { get; } = new FieldDescriptorID(new Guid("eadd2649-2f94-4b9a-a305-8e4cf68cb783"));
+				public static FieldDescriptorID Message { get; } = new FieldDescriptorID(new Guid("3b47e1b2-267a-4a6f-b98d-7349ae0e724f"));
+				public static FieldDescriptorID LastUpdated { get; } = new FieldDescriptorID(new Guid("41b45f8a-e64d-4a16-8286-02a927a6d5cc"));
+				public static FieldDescriptorID Started { get; } = new FieldDescriptorID(new Guid("4cf6d44d-52a9-4088-9af1-d4de5738d334"));
+				public static FieldDescriptorID Ended { get; } = new FieldDescriptorID(new Guid("6a07da6f-eb95-429f-b407-e376db859a3c"));
+			}
+
+			public static class ContextValue
+			{
+				public static SectionDefinitionID Id { get; } = new SectionDefinitionID(new Guid("ee7fa15b-8a9e-4260-af8f-8e694e98f920"))
+				{ ModuleId = "(slc)orchestration" };
+				public static FieldDescriptorID JobInformation { get; } = new FieldDescriptorID(new Guid("ff2e8183-6692-44a2-9740-aaa6dd854c5c"));
+				public static FieldDescriptorID NodeID { get; } = new FieldDescriptorID(new Guid("ef8f8b7a-386f-4c64-87f5-761f78ae4cf1"));
+				public static FieldDescriptorID Key { get; } = new FieldDescriptorID(new Guid("e1fabdf7-8f8f-4033-8cde-334dbfb19512"));
+				public static FieldDescriptorID Value { get; } = new FieldDescriptorID(new Guid("73ddb45c-5d71-481b-91aa-3feba12b9607"));
+			}
 		}
 
 		public static class Definitions
@@ -112,6 +157,10 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration
 			public static DomDefinitionId OrchestrationJobInfo { get; } = new DomDefinitionId(new Guid("f78aaf2c-2400-4af6-ae7b-1f7eff3e2ebf"))
 			{ ModuleId = "(slc)orchestration" };
 			public static DomDefinitionId Configuration { get; } = new DomDefinitionId(new Guid("b9c839e6-9167-4265-8483-43b192e49f93"))
+			{ ModuleId = "(slc)orchestration" };
+			public static DomDefinitionId OrchestrationNodePhases { get; } = new DomDefinitionId(new Guid("0d5e03c1-b895-4ecc-a7d5-e45a77ef066a"))
+			{ ModuleId = "(slc)orchestration" };
+			public static DomDefinitionId OrchestrationNodeContextValue { get; } = new DomDefinitionId(new Guid("519ff786-36b4-4e07-87cd-bdcf9abc6b25"))
 			{ ModuleId = "(slc)orchestration" };
 		}
 
@@ -505,6 +554,236 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration
 		{
 			Connection = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.Connection.Id)).Select(section => new ConnectionSection(section)).ToList();
 			NodeConfiguration = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.NodeConfiguration.Id)).Select(section => new NodeConfigurationSection(section)).ToList();
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a OrchestrationNodePhasesInstance DOM instance.
+	/// The <see cref="OrchestrationNodePhasesInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class OrchestrationNodePhasesInstance : DomInstanceBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationNodePhasesInstance"/> class. Creates an empty <see cref="OrchestrationNodePhasesInstance"/> instance with default settings.
+		/// </summary>
+		public OrchestrationNodePhasesInstance() : base(SlcOrchestrationIds.Definitions.OrchestrationNodePhases)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationNodePhasesInstance"/> class. Creates an empty <see cref="OrchestrationNodePhasesInstance"/> instance with default settings and a specific ID.
+		/// </summary>
+		public OrchestrationNodePhasesInstance(Guid id) : base(SlcOrchestrationIds.Definitions.OrchestrationNodePhases, id)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationNodePhasesInstance"/> class using the specified <paramref name="domInstance"/> for initializing the object.
+		/// </summary>
+		/// <param name="domInstance">The <see cref="DomInstance"/> object that provides data for initializing the <see cref="OrchestrationNodePhasesInstance"/>.</param>
+		public OrchestrationNodePhasesInstance(DomInstance domInstance) : base(domInstance)
+		{
+			if (!domInstance.DomDefinitionId.Equals(SlcOrchestrationIds.Definitions.OrchestrationNodePhases))
+				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcOrchestrationIds.Definitions.OrchestrationNodePhases)}'", nameof(domInstance));
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Gets or sets the NodePhasesInfo section of the DOM Instance.
+		/// </summary>
+		public NodePhasesInfoSection NodePhasesInfo { get; set; }
+
+		/// <summary>
+		/// Gets the PhaseStatus sections of the DOM Instance.
+		/// </summary>
+		public IList<PhaseStatusSection> PhaseStatus { get; private set; }
+
+		public static explicit operator OrchestrationNodePhasesInstance(DomInstance instance)
+		{
+			return new OrchestrationNodePhasesInstance(instance);
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="OrchestrationNodePhasesInstance"/>.
+		/// </summary>
+		/// <returns>A new <see cref="OrchestrationNodePhasesInstance"/> object that is a deep copy of this instance.</returns>
+		public OrchestrationNodePhasesInstance Clone()
+		{
+			return new OrchestrationNodePhasesInstance((DomInstance)this.ToInstance().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="OrchestrationNodePhasesInstance"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="OrchestrationNodePhasesInstance"/> object that is a copy of this instance but with a different id.</returns>
+		public OrchestrationNodePhasesInstance Duplicate()
+		{
+			var instance = (DomInstance)this.ToInstance().Clone();
+			instance.ID = new DomInstanceId(Guid.NewGuid())
+			{ ModuleId = ModuleId };
+			foreach (var section in instance.Sections)
+			{
+				section.ID = new Skyline.DataMiner.Net.Sections.SectionID(Guid.NewGuid());
+			}
+
+			return new OrchestrationNodePhasesInstance(instance);
+		}
+
+		/// <inheritdoc />
+		protected sealed override DomInstance InternalToInstance()
+		{
+			domInstance.Sections.Clear();
+			domInstance.Sections.Add(NodePhasesInfo.ToSection());
+			foreach (var item in PhaseStatus)
+			{
+				domInstance.Sections.Add(item.ToSection());
+			}
+
+			return domInstance;
+		}
+
+		/// <inheritdoc />
+		public sealed override void Save(DomHelper helper)
+		{
+			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
+			var instance = ToInstance();
+			if (exist == null)
+			{
+				domInstance = helper.DomInstances.Create(instance);
+			}
+			else
+			{
+				domInstance = helper.DomInstances.Update(instance);
+			}
+		}
+
+		protected sealed override void InitializeProperties()
+		{
+			var _nodePhasesInfo = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.NodePhasesInfo.Id));
+			if (_nodePhasesInfo is null)
+			{
+				NodePhasesInfo = new NodePhasesInfoSection();
+			}
+			else
+			{
+				NodePhasesInfo = new NodePhasesInfoSection(_nodePhasesInfo);
+			}
+
+			PhaseStatus = domInstance.Sections.Where(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.PhaseStatus.Id)).Select(section => new PhaseStatusSection(section)).ToList();
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a OrchestrationNodeContextValueInstance DOM instance.
+	/// The <see cref="OrchestrationNodeContextValueInstance"/> class provides simplified access to the data and functionality of the underlying DOM instance, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class OrchestrationNodeContextValueInstance : DomInstanceBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationNodeContextValueInstance"/> class. Creates an empty <see cref="OrchestrationNodeContextValueInstance"/> instance with default settings.
+		/// </summary>
+		public OrchestrationNodeContextValueInstance() : base(SlcOrchestrationIds.Definitions.OrchestrationNodeContextValue)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationNodeContextValueInstance"/> class. Creates an empty <see cref="OrchestrationNodeContextValueInstance"/> instance with default settings and a specific ID.
+		/// </summary>
+		public OrchestrationNodeContextValueInstance(Guid id) : base(SlcOrchestrationIds.Definitions.OrchestrationNodeContextValue, id)
+		{
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="OrchestrationNodeContextValueInstance"/> class using the specified <paramref name="domInstance"/> for initializing the object.
+		/// </summary>
+		/// <param name="domInstance">The <see cref="DomInstance"/> object that provides data for initializing the <see cref="OrchestrationNodeContextValueInstance"/>.</param>
+		public OrchestrationNodeContextValueInstance(DomInstance domInstance) : base(domInstance)
+		{
+			if (!domInstance.DomDefinitionId.Equals(SlcOrchestrationIds.Definitions.OrchestrationNodeContextValue))
+				throw new ArgumentException($"The given domInstance, is not of type '{nameof(SlcOrchestrationIds.Definitions.OrchestrationNodeContextValue)}'", nameof(domInstance));
+			InitializeProperties();
+			AfterLoad();
+		}
+
+		/// <summary>
+		/// Gets or sets the ContextValue section of the DOM Instance.
+		/// </summary>
+		public ContextValueSection ContextValue { get; set; }
+
+		public static explicit operator OrchestrationNodeContextValueInstance(DomInstance instance)
+		{
+			return new OrchestrationNodeContextValueInstance(instance);
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="OrchestrationNodeContextValueInstance"/>.
+		/// </summary>
+		/// <returns>A new <see cref="OrchestrationNodeContextValueInstance"/> object that is a deep copy of this instance.</returns>
+		public OrchestrationNodeContextValueInstance Clone()
+		{
+			return new OrchestrationNodeContextValueInstance((DomInstance)this.ToInstance().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="OrchestrationNodeContextValueInstance"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="OrchestrationNodeContextValueInstance"/> object that is a copy of this instance but with a different id.</returns>
+		public OrchestrationNodeContextValueInstance Duplicate()
+		{
+			var instance = (DomInstance)this.ToInstance().Clone();
+			instance.ID = new DomInstanceId(Guid.NewGuid())
+			{ ModuleId = ModuleId };
+			foreach (var section in instance.Sections)
+			{
+				section.ID = new Skyline.DataMiner.Net.Sections.SectionID(Guid.NewGuid());
+			}
+
+			return new OrchestrationNodeContextValueInstance(instance);
+		}
+
+		/// <inheritdoc />
+		protected sealed override DomInstance InternalToInstance()
+		{
+			domInstance.Sections.Clear();
+			domInstance.Sections.Add(ContextValue.ToSection());
+			return domInstance;
+		}
+
+		/// <inheritdoc />
+		public sealed override void Save(DomHelper helper)
+		{
+			var exist = helper.DomInstances.Read(DomInstanceExposers.Id.Equal(domInstance.ID)).FirstOrDefault();
+			var instance = ToInstance();
+			if (exist == null)
+			{
+				domInstance = helper.DomInstances.Create(instance);
+			}
+			else
+			{
+				domInstance = helper.DomInstances.Update(instance);
+			}
+		}
+
+		protected sealed override void InitializeProperties()
+		{
+			var _contextValue = domInstance.Sections.FirstOrDefault(section => section.SectionDefinitionID.Equals(SlcOrchestrationIds.Sections.ContextValue.Id));
+			if (_contextValue is null)
+			{
+				ContextValue = new ContextValueSection();
+			}
+			else
+			{
+				ContextValue = new ContextValueSection(_contextValue);
+			}
 		}
 	}
 }
@@ -2017,6 +2296,628 @@ namespace Skyline.DataMiner.Solutions.MediaOps.Live.DOM.Model.SlcOrchestration
 		{
 			if (section.GetValue<String>(SlcOrchestrationIds.Sections.JobInfo.JobReference) == null)
 				throw new InvalidOperationException("'JobReference' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			return section;
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a NodePhasesInfoSection section.
+	/// The <see cref="NodePhasesInfoSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class NodePhasesInfoSection : DomSectionBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="NodePhasesInfoSection"/> class. Creates an empty <see cref="NodePhasesInfoSection"/> object with default settings.
+		/// </summary>
+		public NodePhasesInfoSection() : base(SlcOrchestrationIds.Sections.NodePhasesInfo.Id)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="NodePhasesInfoSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// </summary>
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="NodePhasesInfoSection"/>.</param>
+		public NodePhasesInfoSection(Section section) : base(section, SlcOrchestrationIds.Sections.NodePhasesInfo.Id)
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the JobInformation field of the DOM Instance.
+		/// </summary>
+		public Guid? JobInformation
+		{
+			get
+			{
+				var wrapper = section.GetValue<Guid>(SlcOrchestrationIds.Sections.NodePhasesInfo.JobInformation);
+				return wrapper != null ? (Guid?)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.NodePhasesInfo.JobInformation);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.NodePhasesInfo.JobInformation, (Guid)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the OrchestrationEvent field of the DOM Instance.
+		/// </summary>
+		public Guid? OrchestrationEvent
+		{
+			get
+			{
+				var wrapper = section.GetValue<Guid>(SlcOrchestrationIds.Sections.NodePhasesInfo.OrchestrationEvent);
+				return wrapper != null ? (Guid?)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.NodePhasesInfo.OrchestrationEvent);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.NodePhasesInfo.OrchestrationEvent, (Guid)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the NodeID field of the DOM Instance.
+		/// </summary>
+		public String NodeID
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.NodePhasesInfo.NodeID);
+				return wrapper != null ? (String)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.NodePhasesInfo.NodeID);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.NodePhasesInfo.NodeID, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the PhaseLayoutFingerprint field of the DOM Instance.
+		/// </summary>
+		public String PhaseLayoutFingerprint
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.NodePhasesInfo.PhaseLayoutFingerprint);
+				return wrapper != null ? (String)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.NodePhasesInfo.PhaseLayoutFingerprint);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.NodePhasesInfo.PhaseLayoutFingerprint, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the ResumeSchedulerReference field of the DOM Instance.
+		/// </summary>
+		public String ResumeSchedulerReference
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.NodePhasesInfo.ResumeSchedulerReference);
+				return wrapper != null ? (String)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.NodePhasesInfo.ResumeSchedulerReference);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.NodePhasesInfo.ResumeSchedulerReference, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the WaitStarted field of the DOM Instance.
+		/// </summary>
+		public DateTime? WaitStarted
+		{
+			get
+			{
+				var wrapper = section.GetValue<DateTime>(SlcOrchestrationIds.Sections.NodePhasesInfo.WaitStarted);
+				return wrapper != null ? (DateTime?)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.NodePhasesInfo.WaitStarted);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.NodePhasesInfo.WaitStarted, (DateTime)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the ResumePhaseIndex field of the DOM Instance.
+		/// </summary>
+		public Int64? ResumePhaseIndex
+		{
+			get
+			{
+				var wrapper = section.GetValue<Int64>(SlcOrchestrationIds.Sections.NodePhasesInfo.ResumePhaseIndex);
+				return wrapper != null ? (Int64?)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.NodePhasesInfo.ResumePhaseIndex);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.NodePhasesInfo.ResumePhaseIndex, (Int64)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the ResumeTime field of the DOM Instance.
+		/// </summary>
+		public DateTime? ResumeTime
+		{
+			get
+			{
+				var wrapper = section.GetValue<DateTime>(SlcOrchestrationIds.Sections.NodePhasesInfo.ResumeTime);
+				return wrapper != null ? (DateTime?)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.NodePhasesInfo.ResumeTime);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.NodePhasesInfo.ResumeTime, (DateTime)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="NodePhasesInfoSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="NodePhasesInfoSection"/> object that is a deep copy of this section.</returns>
+		public NodePhasesInfoSection Clone()
+		{
+			return new NodePhasesInfoSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="NodePhasesInfoSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="NodePhasesInfoSection"/> object that is a copy of this section but with a different id.</returns>
+		public NodePhasesInfoSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new NodePhasesInfoSection(section);
+		}
+
+		/// <inheritdoc />
+		protected override Section InternalToSection()
+		{
+			if (section.GetValue<Guid>(SlcOrchestrationIds.Sections.NodePhasesInfo.JobInformation) == null)
+				throw new InvalidOperationException("'JobInformation' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			if (section.GetValue<Guid>(SlcOrchestrationIds.Sections.NodePhasesInfo.OrchestrationEvent) == null)
+				throw new InvalidOperationException("'OrchestrationEvent' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			if (section.GetValue<String>(SlcOrchestrationIds.Sections.NodePhasesInfo.NodeID) == null)
+				throw new InvalidOperationException("'NodeID' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			return section;
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a PhaseStatusSection section.
+	/// The <see cref="PhaseStatusSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class PhaseStatusSection : DomSectionBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="PhaseStatusSection"/> class. Creates an empty <see cref="PhaseStatusSection"/> object with default settings.
+		/// </summary>
+		public PhaseStatusSection() : base(SlcOrchestrationIds.Sections.PhaseStatus.Id)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="PhaseStatusSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// </summary>
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="PhaseStatusSection"/>.</param>
+		public PhaseStatusSection(Section section) : base(section, SlcOrchestrationIds.Sections.PhaseStatus.Id)
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the PhaseKey field of the DOM Instance.
+		/// </summary>
+		public String PhaseKey
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.PhaseStatus.PhaseKey);
+				return wrapper != null ? (String)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.PhaseStatus.PhaseKey);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.PhaseStatus.PhaseKey, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the Order field of the DOM Instance.
+		/// </summary>
+		public Int64? Order
+		{
+			get
+			{
+				var wrapper = section.GetValue<Int64>(SlcOrchestrationIds.Sections.PhaseStatus.Order);
+				return wrapper != null ? (Int64?)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.PhaseStatus.Order);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.PhaseStatus.Order, (Int64)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the State field of the DOM Instance.
+		/// </summary>
+		public SlcOrchestrationIds.Enums.PhaseState? State
+		{
+			get
+			{
+				var wrapper = section.GetValue<Int32>(SlcOrchestrationIds.Sections.PhaseStatus.State);
+				return wrapper != null ? (SlcOrchestrationIds.Enums.PhaseState?)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.PhaseStatus.State);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.PhaseStatus.State, (Int32)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the Message field of the DOM Instance.
+		/// </summary>
+		public String Message
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.PhaseStatus.Message);
+				return wrapper != null ? (String)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.PhaseStatus.Message);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.PhaseStatus.Message, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the LastUpdated field of the DOM Instance.
+		/// </summary>
+		public DateTime? LastUpdated
+		{
+			get
+			{
+				var wrapper = section.GetValue<DateTime>(SlcOrchestrationIds.Sections.PhaseStatus.LastUpdated);
+				return wrapper != null ? (DateTime?)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.PhaseStatus.LastUpdated);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.PhaseStatus.LastUpdated, (DateTime)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the Started field of the DOM Instance.
+		/// </summary>
+		public DateTime? Started
+		{
+			get
+			{
+				var wrapper = section.GetValue<DateTime>(SlcOrchestrationIds.Sections.PhaseStatus.Started);
+				return wrapper != null ? (DateTime?)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.PhaseStatus.Started);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.PhaseStatus.Started, (DateTime)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the Ended field of the DOM Instance.
+		/// </summary>
+		public DateTime? Ended
+		{
+			get
+			{
+				var wrapper = section.GetValue<DateTime>(SlcOrchestrationIds.Sections.PhaseStatus.Ended);
+				return wrapper != null ? (DateTime?)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.PhaseStatus.Ended);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.PhaseStatus.Ended, (DateTime)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="PhaseStatusSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="PhaseStatusSection"/> object that is a deep copy of this section.</returns>
+		public PhaseStatusSection Clone()
+		{
+			return new PhaseStatusSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="PhaseStatusSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="PhaseStatusSection"/> object that is a copy of this section but with a different id.</returns>
+		public PhaseStatusSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new PhaseStatusSection(section);
+		}
+
+		/// <inheritdoc />
+		protected override Section InternalToSection()
+		{
+			if (section.GetValue<String>(SlcOrchestrationIds.Sections.PhaseStatus.PhaseKey) == null)
+				throw new InvalidOperationException("'PhaseKey' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			if (section.GetValue<Int64>(SlcOrchestrationIds.Sections.PhaseStatus.Order) == null)
+				throw new InvalidOperationException("'Order' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			if (section.GetValue<Int32>(SlcOrchestrationIds.Sections.PhaseStatus.State) == null)
+				throw new InvalidOperationException("'State' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			if (section.GetValue<DateTime>(SlcOrchestrationIds.Sections.PhaseStatus.LastUpdated) == null)
+				throw new InvalidOperationException("'LastUpdated' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			return section;
+		}
+	}
+
+	/// <summary>
+	/// Represents a wrapper class for accessing a ContextValueSection section.
+	/// The <see cref="ContextValueSection"/> class provides simplified access to the data and functionality of the underlying DOM section, allowing for easier manipulation and retrieval of data from DOM.
+	/// </summary>
+	internal partial class ContextValueSection : DomSectionBase
+	{
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ContextValueSection"/> class. Creates an empty <see cref="ContextValueSection"/> object with default settings.
+		/// </summary>
+		public ContextValueSection() : base(SlcOrchestrationIds.Sections.ContextValue.Id)
+		{
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ContextValueSection"/> class using the specified <paramref name="section"/> for initializing the object.
+		/// </summary>
+		/// <param name="section">The <see cref="Section"/> object that provides data for initializing the <see cref="ContextValueSection"/>.</param>
+		public ContextValueSection(Section section) : base(section, SlcOrchestrationIds.Sections.ContextValue.Id)
+		{
+		}
+
+		/// <summary>
+		/// Gets or sets the JobInformation field of the DOM Instance.
+		/// </summary>
+		public Guid? JobInformation
+		{
+			get
+			{
+				var wrapper = section.GetValue<Guid>(SlcOrchestrationIds.Sections.ContextValue.JobInformation);
+				return wrapper != null ? (Guid?)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.ContextValue.JobInformation);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.ContextValue.JobInformation, (Guid)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the NodeID field of the DOM Instance.
+		/// </summary>
+		public String NodeID
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.ContextValue.NodeID);
+				return wrapper != null ? (String)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.ContextValue.NodeID);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.ContextValue.NodeID, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the Key field of the DOM Instance.
+		/// </summary>
+		public String Key
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.ContextValue.Key);
+				return wrapper != null ? (String)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.ContextValue.Key);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.ContextValue.Key, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the Value field of the DOM Instance.
+		/// </summary>
+		public String Value
+		{
+			get
+			{
+				var wrapper = section.GetValue<String>(SlcOrchestrationIds.Sections.ContextValue.Value);
+				return wrapper != null ? (String)wrapper.Value : null;
+			}
+
+			set
+			{
+				if (value == null)
+				{
+					section.RemoveFieldValueById(SlcOrchestrationIds.Sections.ContextValue.Value);
+				}
+				else
+				{
+					section.AddOrUpdateValue(SlcOrchestrationIds.Sections.ContextValue.Value, (String)value);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a deep copy of the current <see cref="ContextValueSection"/>.
+		/// </summary>
+		/// <returns>A new <see cref="ContextValueSection"/> object that is a deep copy of this section.</returns>
+		public ContextValueSection Clone()
+		{
+			return new ContextValueSection((Section)this.ToSection().Clone());
+		}
+
+		/// <summary>
+		/// Creates a duplicate of the current <see cref="ContextValueSection"/> with a new id.
+		/// </summary>
+		/// <returns>A new <see cref="ContextValueSection"/> object that is a copy of this section but with a different id.</returns>
+		public ContextValueSection Duplicate()
+		{
+			var section = (Section)this.ToSection().Clone();
+			section.ID = new SectionID(Guid.NewGuid());
+			return new ContextValueSection(section);
+		}
+
+		/// <inheritdoc />
+		protected override Section InternalToSection()
+		{
+			if (section.GetValue<Guid>(SlcOrchestrationIds.Sections.ContextValue.JobInformation) == null)
+				throw new InvalidOperationException("'JobInformation' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			if (section.GetValue<String>(SlcOrchestrationIds.Sections.ContextValue.NodeID) == null)
+				throw new InvalidOperationException("'NodeID' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			if (section.GetValue<String>(SlcOrchestrationIds.Sections.ContextValue.Key) == null)
+				throw new InvalidOperationException("'Key' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
+			if (section.GetValue<String>(SlcOrchestrationIds.Sections.ContextValue.Value) == null)
+				throw new InvalidOperationException("'Value' is required. Please fill it in before saving, or mark it as optional with the DOM Editor.");
 			return section;
 		}
 	}
